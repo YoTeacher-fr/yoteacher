@@ -1,170 +1,11 @@
-// ===== TRADUCTIONS =====
-const translations = {
-    fr: {
-        // Navigation
-        'title': 'Yoann - Professeur de Français pour Adultes',
-        'nav.about': 'À propos',
-        'nav.courses': 'Cours',
-        'nav.testimonials': 'Témoignages',
-        'nav.contact': 'Contact',
-        'nav.login': 'Connexion',
-        'nav.language': 'English (EN)',
-        
-        // Hero
-        'hero.title': 'Apprenez le français simplement',
-        'hero.subtitle': 'Professeur natif • Cours chaleureux et personnalisés pour adultes',
-        'stats.years.desktop': 'Ans d\'expérience',
-        'stats.years.mobile': 'Ans d\'expérience',
-        'stats.students.desktop': 'Étudiants',
-        'stats.students.mobile': 'Étudiants accompagnés',
-        'stats.lessons': 'Leçons données',
-        'buttons.trial': 'Réserver un cours d\'essai',
-        'buttons.account': 'Créer un compte gratuit',
-        
-        // About
-        'about.label': 'À propos de Yoann',
-        'about.title': 'Votre guide vers la maîtrise du',
-        'about.language': 'français',
-        'about.text1': 'Bonjour ! Je suis Yoann, professeur de français passionné depuis 4 ans. Originaire de Marseille, dans le sud de la France, j\'ai décidé de quitter ma carrière de comptable pour suivre ma vraie passion : enseigner le français et voyager à travers le monde.',
-        'about.text2': 'Avec plus de 75 pays visités en 6 ans, j\'apporte une richesse culturelle unique à mes cours. Cette expérience me permet d\'aborder des sujets variés et de comprendre les défis spécifiques de chaque culture dans l\'apprentissage du français.',
-        'about.highlight1': 'Originaire de Marseille',
-        'about.highlight2': '75 pays visités',
-        'about.highlight3': 'Ancien comptable reconverti',
-        'about.highlight4': 'Certifié en anglais',
-        'about.personality.title': 'Ce que mes étudiants disent de moi :',
-        'about.personality.tag1': 'Professionnel',
-        'about.personality.tag2': 'Chaleureux et sociable',
-        'about.personality.tag3': 'Ouvert d\'esprit',
-        'about.personality.tag4': 'Aventureux',
-        'about.personality.tag5': 'Bienveillant',
-        'about.personality.tag6': 'Dynamique',
-        
-        // Courses
-        'courses.label': 'Mes cours',
-        'courses.title': 'Des formules adaptées à',
-        'courses.title.highlight': 'vos besoins',
-        'courses.subtitle': 'Choisissez la formule qui vous convient et commencez votre voyage linguistique',
-        
-        // Testimonials
-        'testimonials.label': 'Témoignages',
-        'testimonials.title': 'Ce que disent mes',
-        'testimonials.title.highlight': 'étudiants',
-        'testimonials.subtitle': 'Plus de 500 étudiants satisfaits à travers le monde',
-        
-        // CTA
-        'cta.title': 'Prêt à commencer votre voyage vers la',
-        'cta.title.highlight': 'maîtrise du français',
-        'cta.title.question': '?',
-        'cta.subtitle': 'Rejoignez plus de 500 étudiants satisfaits. Réservez votre cours d\'essai aujourd\'hui et découvrez une nouvelle façon d\'apprendre le français.',
-        'cta.button.trial': 'Essayer maintenant - 5€',
-        'cta.button.account': 'Créer un compte gratuit',
-        'cta.note': '🔒 Paiement sécurisé • Annulation gratuite 24h avant',
-        
-        // Footer
-        'footer.brand': 'Teacher',
-        'footer.description': 'Cours de français en ligne pour adultes. Apprenez avec confiance et plaisir avec un professeur natif passionné.',
-        'footer.stat1': 'Professeur natif de Marseille',
-        'footer.stat2': '75 pays visités',
-        'footer.stat3': '500+ étudiants',
-        'footer.links.title': 'Liens rapides',
-        'footer.links.home': 'Accueil',
-        'footer.links.about': 'À propos',
-        'footer.links.courses': 'Cours',
-        'footer.links.testimonials': 'Témoignages',
-        'footer.links.contact': 'Contact',
-        'footer.legal.title': 'Mentions légales',
-        'footer.legal.legal': 'Mentions légales',
-        'footer.legal.terms': 'Conditions Générales de Vente',
-        'footer.legal.privacy': 'Politique de confidentialité',
-        'footer.legal.cancellation': 'Politique d\'annulation',
-        'footer.copyright': '© 2024 YoTeacher. Fait avec',
-        'footer.location': 'à Marseille'
-    },
-    
-    en: {
-        // Navigation
-        'title': 'Yoann - French Teacher for Adults',
-        'nav.about': 'About',
-        'nav.courses': 'Courses',
-        'nav.testimonials': 'Testimonials',
-        'nav.contact': 'Contact',
-        'nav.login': 'Login',
-        'nav.language': 'Français (FR)',
-        
-        // Hero
-        'hero.title': 'Learn French Simply',
-        'hero.subtitle': 'Native Teacher • Warm and Personalized Lessons for Adults',
-        'stats.years.desktop': 'Years of Experience',
-        'stats.years.mobile': 'Years of Experience',
-        'stats.students.desktop': 'Students',
-        'stats.students.mobile': 'Students Assisted',
-        'stats.lessons': 'Lessons Given',
-        'buttons.trial': 'Book a Trial Lesson',
-        'buttons.account': 'Create Free Account',
-        
-        // About
-        'about.label': 'About Yoann',
-        'about.title': 'Your Guide to Mastering',
-        'about.language': 'French',
-        'about.text1': 'Hello! I\'m Yoann, a passionate French teacher for 4 years. Originally from Marseille in the south of France, I decided to leave my accounting career to follow my true passion: teaching French and traveling around the world.',
-        'about.text2': 'With over 75 countries visited in 6 years, I bring unique cultural richness to my lessons. This experience allows me to discuss varied topics and understand the specific challenges of each culture in learning French.',
-        'about.highlight1': 'From Marseille',
-        'about.highlight2': '75 Countries Visited',
-        'about.highlight3': 'Former Accountant Retrained',
-        'about.highlight4': 'English Certified',
-        'about.personality.title': 'What my students say about me:',
-        'about.personality.tag1': 'Professional',
-        'about.personality.tag2': 'Warm and Sociable',
-        'about.personality.tag3': 'Open-minded',
-        'about.personality.tag4': 'Adventurous',
-        'about.personality.tag5': 'Kind',
-        'about.personality.tag6': 'Dynamic',
-        
-        // Courses
-        'courses.label': 'My Courses',
-        'courses.title': 'Formulas Adapted to',
-        'courses.title.highlight': 'Your Needs',
-        'courses.subtitle': 'Choose the formula that suits you and start your language journey',
-        
-        // Testimonials
-        'testimonials.label': 'Testimonials',
-        'testimonials.title': 'What My',
-        'testimonials.title.highlight': 'Students Say',
-        'testimonials.subtitle': 'Over 500 Satisfied Students Worldwide',
-        
-        // CTA
-        'cta.title': 'Ready to Start Your Journey to',
-        'cta.title.highlight': 'French Mastery',
-        'cta.title.question': '?',
-        'cta.subtitle': 'Join over 500 satisfied students. Book your trial lesson today and discover a new way to learn French.',
-        'cta.button.trial': 'Try Now - 5€',
-        'cta.button.account': 'Create Free Account',
-        'cta.note': '🔒 Secure Payment • Free Cancellation 24h Before',
-        
-        // Footer
-        'footer.brand': 'Teacher',
-        'footer.description': 'Online French lessons for adults. Learn with confidence and pleasure with a passionate native teacher.',
-        'footer.stat1': 'Native Teacher from Marseille',
-        'footer.stat2': '75 Countries Visited',
-        'footer.stat3': '500+ Students',
-        'footer.links.title': 'Quick Links',
-        'footer.links.home': 'Home',
-        'footer.links.about': 'About',
-        'footer.links.courses': 'Courses',
-        'footer.links.testimonials': 'Testimonials',
-        'footer.links.contact': 'Contact',
-        'footer.legal.title': 'Legal',
-        'footer.legal.legal': 'Legal Notice',
-        'footer.legal.terms': 'Terms of Service',
-        'footer.legal.privacy': 'Privacy Policy',
-        'footer.legal.cancellation': 'Cancellation Policy',
-        'footer.copyright': '© 2024 YoTeacher. Made with',
-        'footer.location': 'in Marseille'
-    }
+// ===== CONFIGURATION =====
+const CONFIG = {
+    autoScrollOffset: 80,
+    coursesScrollOffset: 200
 };
 
-// ===== DONNÉES DES COURS FRANÇAIS =====
-const coursesDataFR = [
+// ===== DONNÉES DES COURS MODIFIÉES =====
+const coursesData = [
     {
         id: 1,
         type: "Conversation",
@@ -222,67 +63,8 @@ const coursesDataFR = [
     }
 ];
 
-// ===== DONNÉES DES COURS ANGLAIS =====
-const coursesDataEN = [
-    {
-        id: 1,
-        type: "Conversation",
-        focus: "Speaking Only",
-        price: 20,
-        duration: "60 minutes",
-        features: [
-            "Oral Fluency",
-            "Everyday Vocabulary",
-            "Real-time Correction",
-            "Varied Current Topics"
-        ],
-        details: [
-            { duration: "30min", price: 10 },
-            { duration: "45min", price: 15 },
-            { duration: "10-lesson Pack", price: 190, discount: "(-5%)" }
-        ],
-        buttonText: "Book Now",
-        featured: false
-    },
-    {
-        id: 2,
-        type: "Complete Curriculum",
-        focus: "Grammar, Exercises, Structure",
-        price: 35,
-        duration: "60 minutes",
-        features: [
-            "In-depth Grammar",
-            "Personalized Exercises",
-            "Complete Structure",
-            "Tailored Program"
-        ],
-        details: [
-            { duration: "10-lesson Pack", price: 332.50, discount: "(-5%)" }
-        ],
-        buttonText: "Choose This Course",
-        featured: true
-    },
-    {
-        id: 3,
-        type: "Trial Lesson",
-        focus: "First Contact, Evaluation",
-        price: 5,
-        duration: "15 minutes",
-        features: [
-            "Level Evaluation",
-            "Goal Setting",
-            "Method Discovery"
-        ],
-        details: [
-            { duration: "Automatic Confirmation" }
-        ],
-        buttonText: "Try It",
-        featured: false
-    }
-];
-
-// ===== DONNÉES DES TÉMOIGNAGES FRANÇAIS =====
-const testimonialsDataFR = [
+// ===== DONNÉES DES TÉMOIGNAGES =====
+const testimonialsData = [
     {
         id: 1,
         name: "Marina",
@@ -357,190 +139,10 @@ const testimonialsDataFR = [
     }
 ];
 
-// ===== DONNÉES DES TÉMOIGNAGES ANGLAIS =====
-const testimonialsDataEN = [
-    {
-        id: 1,
-        name: "Marina",
-        country: "🇧🇷 Brazil",
-        content: "Yoann is a fantastic teacher! His classes are dynamic and he really knows how to make me feel comfortable. I've made incredible progress in just a few months.",
-        rating: 5,
-        lessons: "42 lessons"
-    },
-    {
-        id: 2,
-        name: "Kay",
-        country: "🇺🇸 USA",
-        content: "I love learning with Yoann. He is patient, professional, and his classes are always well prepared. He perfectly adapts to my level and needs.",
-        rating: 5,
-        lessons: "28 lessons"
-    },
-    {
-        id: 3,
-        name: "Julia",
-        country: "🇩🇪 Germany",
-        content: "Classes with Yoann are a real pleasure! He creates a relaxed atmosphere where I'm not afraid to make mistakes. My confidence in French has really increased.",
-        rating: 5,
-        lessons: "15 lessons"
-    },
-    {
-        id: 4,
-        name: "Octavi",
-        country: "🇪🇸 Spain",
-        content: "Yoann is warm and open-minded. His travels to 75 countries make our conversations very interesting. Highly recommended!",
-        rating: 5,
-        lessons: "56 lessons"
-    },
-    {
-        id: 5,
-        name: "Nahéma",
-        country: "🇨🇦 Canada",
-        content: "Thanks to Yoann, I passed my DELF B2 exam! His preparation method is effective and he knows exactly how to prepare you for success.",
-        rating: 5,
-        lessons: "24 lessons"
-    },
-    {
-        id: 6,
-        name: "Chen",
-        country: "🇨🇳 China",
-        content: "Very professional and kind teacher. He takes the time to explain grammar clearly and classes are always lively and dynamic.",
-        rating: 5,
-        lessons: "37 lessons"
-    },
-    {
-        id: 7,
-        name: "Luca",
-        country: "🇮🇹 Italy",
-        content: "I'm preparing for DELF B1 with Yoann and his advice is valuable. He knows the exam requirements perfectly.",
-        rating: 5,
-        lessons: "18 lessons"
-    },
-    {
-        id: 8,
-        name: "Sofia",
-        country: "🇦🇷 Argentina",
-        content: "Classes with Yoann are always well structured and interesting. I've made great progress in oral comprehension.",
-        rating: 5,
-        lessons: "32 lessons"
-    },
-    {
-        id: 9,
-        name: "Ahmed",
-        country: "🇲🇦 Morocco",
-        content: "Exceptional teacher! Yoann knows how to adapt to each student and makes learning French enjoyable.",
-        rating: 5,
-        lessons: "25 lessons"
-    }
-];
-
-// ===== CONFIGURATION =====
-const CONFIG = {
-    autoScrollOffset: 80,
-    coursesScrollOffset: 200
-};
-
 // ===== ÉTAT GLOBAL =====
 let state = {
     testimonialsLoaded: false,
     currentTestimonialSlide: 0
-};
-
-// ===== GESTIONNAIRE DE LANGUE =====
-const languageManager = {
-    currentLang: 'fr',
-    
-    init: () => {
-        // Restaurer la langue sauvegardée
-        const savedLang = localStorage.getItem('siteLanguage');
-        if (savedLang) {
-            languageManager.currentLang = savedLang;
-        }
-        
-        // Événements desktop
-        const languageSwitcher = document.getElementById('languageSwitcher');
-        if (languageSwitcher) {
-            languageSwitcher.addEventListener('click', (e) => {
-                e.preventDefault();
-                languageManager.toggleLanguage();
-            });
-        }
-        
-        // Événements mobile
-        const mobileLanguageSwitcher = document.getElementById('mobileLanguageSwitcher');
-        if (mobileLanguageSwitcher) {
-            mobileLanguageSwitcher.addEventListener('click', (e) => {
-                e.preventDefault();
-                languageManager.toggleLanguage();
-                mobileMenuManager.closeMobileMenu();
-            });
-        }
-        
-        // Mettre à jour les textes et l'affichage du bouton
-        languageManager.updateAllTexts();
-        languageManager.updateLanguageDisplay();
-        
-        console.log('Language manager initialisé, langue:', languageManager.currentLang);
-    },
-    
-    toggleLanguage: () => {
-        languageManager.currentLang = languageManager.currentLang === 'fr' ? 'en' : 'fr';
-        localStorage.setItem('siteLanguage', languageManager.currentLang);
-        
-        // Mettre à jour tous les textes
-        languageManager.updateAllTexts();
-        
-        // Mettre à jour l'affichage du bouton (opposé)
-        languageManager.updateLanguageDisplay();
-        
-        // Regénérer les sections dynamiques
-        coursesManager.init();
-        testimonialsManager.init();
-    },
-    
-    updateLanguageDisplay: () => {
-        const languageText = document.querySelector('.language-switcher span:not(.flag)');
-        const mobileLanguageText = document.querySelector('#mobileLanguageSwitcher span:not(.flag)');
-        
-        // AFFICHAGE OPPOSÉ : Montrer la langue VERS LAQUELLE on peut basculer
-        if (languageText) {
-            // Si on est en français, on montre "EN" (pour basculer en anglais)
-            // Si on est en anglais, on montre "FR" (pour basculer en français)
-            languageText.textContent = languageManager.currentLang === 'fr' ? 'EN' : 'FR';
-        }
-        
-        if (mobileLanguageText) {
-            // Même logique pour le menu mobile
-            mobileLanguageText.textContent = languageManager.currentLang === 'fr' 
-                ? 'English (EN)'   // On est en français, on propose anglais
-                : 'Français (FR)'; // On est en anglais, on propose français
-        }
-    },
-    
-    updateAllTexts: () => {
-        const lang = languageManager.currentLang;
-        const langData = translations[lang];
-        
-        if (!langData) return;
-        
-        // Mettre à jour les éléments avec data-i18n
-        document.querySelectorAll('[data-i18n]').forEach(element => {
-            const key = element.getAttribute('data-i18n');
-            if (langData[key]) {
-                element.textContent = langData[key];
-            }
-        });
-        
-        // Mettre à jour le titre de la page
-        if (langData['title']) {
-            document.title = langData['title'];
-        }
-        
-        console.log('Textes mis à jour en', lang);
-    },
-    
-    getCurrentLanguage: () => {
-        return languageManager.currentLang;
-    }
 };
 
 // ===== FONCTIONS UTILITAIRES =====
@@ -587,12 +189,9 @@ const coursesManager = {
         if (!container) return;
         
         container.innerHTML = '';
+        coursesData.forEach(course => coursesManager.createCourseCard(course, container));
         
-        // Utiliser les données selon la langue
-        const currentLang = languageManager.getCurrentLanguage();
-        const dataToUse = currentLang === 'fr' ? coursesDataFR : coursesDataEN;
-        
-        dataToUse.forEach(course => coursesManager.createCourseCard(course, container));
+        // Ajouter les événements aux boutons
         coursesManager.addCourseEvents();
     },
     
@@ -607,7 +206,7 @@ const coursesManager = {
         if (course.id === 1) {
             priceDetailsHTML = `
                 <div style="margin-top: 10px; color: #666; font-weight: 500;">
-                    ${course.details[0].duration} : ${course.details[0].price}€ │ ${course.details[1].duration} : ${course.details[1].price}€
+                    30min : 10€ │ 45min : 15€
                 </div>
             `;
         }
@@ -675,17 +274,10 @@ const coursesManager = {
         document.querySelectorAll('.course-book-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const courseId = e.target.getAttribute('data-course');
-                const currentLang = languageManager.getCurrentLanguage();
-                const dataToUse = currentLang === 'fr' ? coursesDataFR : coursesDataEN;
-                const course = dataToUse.find(c => c.id == courseId);
+                const course = coursesData.find(c => c.id == courseId);
                 
                 if (course) {
-                    utils.showNotification(
-                        currentLang === 'fr' 
-                            ? `Réservation du cours "${course.type}" - Redirection en cours...` 
-                            : `Booking "${course.type}" course - Redirecting...`,
-                        'success'
-                    );
+                    utils.showNotification(`Réservation du cours "${course.type}" - Redirection en cours...`, 'success');
                     
                     setTimeout(() => {
                         window.open('#', '_blank');
@@ -720,12 +312,9 @@ const testimonialsManager = {
         // Calculer le nombre de slides en fonction de l'écran
         testimonialsManager.calculateSlidesPerView();
         
-        // Générer les témoignages selon la langue
-        const currentLang = languageManager.getCurrentLanguage();
-        const dataToUse = currentLang === 'fr' ? testimonialsDataFR : testimonialsDataEN;
-        
+        // Générer les témoignages
         container.innerHTML = '';
-        dataToUse.forEach((testimonial, index) => {
+        testimonialsData.forEach((testimonial, index) => {
             const card = testimonialsManager.createTestimonialCard(testimonial);
             container.appendChild(card);
             
@@ -800,9 +389,7 @@ const testimonialsManager = {
     generateIndicators: (container) => {
         if (!container) return;
         
-        const currentLang = languageManager.getCurrentLanguage();
-        const dataToUse = currentLang === 'fr' ? testimonialsDataFR : testimonialsDataEN;
-        const totalSlides = Math.ceil(dataToUse.length / testimonialsManager.slidesPerView);
+        const totalSlides = Math.ceil(testimonialsData.length / testimonialsManager.slidesPerView);
         container.innerHTML = '';
         
         for (let i = 0; i < totalSlides; i++) {
@@ -850,25 +437,19 @@ const testimonialsManager = {
     },
     
     prevSlide: () => {
-        const currentLang = languageManager.getCurrentLanguage();
-        const dataToUse = currentLang === 'fr' ? testimonialsDataFR : testimonialsDataEN;
-        const totalSlides = Math.ceil(dataToUse.length / testimonialsManager.slidesPerView);
+        const totalSlides = Math.ceil(testimonialsData.length / testimonialsManager.slidesPerView);
         testimonialsManager.currentSlide = (testimonialsManager.currentSlide - 1 + totalSlides) % totalSlides;
         testimonialsManager.updateSlider();
     },
     
     nextSlide: () => {
-        const currentLang = languageManager.getCurrentLanguage();
-        const dataToUse = currentLang === 'fr' ? testimonialsDataFR : testimonialsDataEN;
-        const totalSlides = Math.ceil(dataToUse.length / testimonialsManager.slidesPerView);
+        const totalSlides = Math.ceil(testimonialsData.length / testimonialsManager.slidesPerView);
         testimonialsManager.currentSlide = (testimonialsManager.currentSlide + 1) % totalSlides;
         testimonialsManager.updateSlider();
     },
     
     goToSlide: (slideIndex) => {
-        const currentLang = languageManager.getCurrentLanguage();
-        const dataToUse = currentLang === 'fr' ? testimonialsDataFR : testimonialsDataEN;
-        const totalSlides = Math.ceil(dataToUse.length / testimonialsManager.slidesPerView);
+        const totalSlides = Math.ceil(testimonialsData.length / testimonialsManager.slidesPerView);
         if (slideIndex >= 0 && slideIndex < totalSlides) {
             testimonialsManager.currentSlide = slideIndex;
             testimonialsManager.updateSlider();
@@ -891,7 +472,7 @@ const testimonialsManager = {
         const startIndex = testimonialsManager.currentSlide * testimonialsManager.slidesPerView;
         const endIndex = startIndex + testimonialsManager.slidesPerView;
         
-        for (let i = startIndex; i < endIndex && i < cards.length; i++) {
+        for (let i = startIndex; i < endIndex && i < testimonialsData.length; i++) {
             if (cards[i]) {
                 cards[i].style.display = 'block';
             }
@@ -909,9 +490,7 @@ const testimonialsManager = {
         // Mettre à jour les boutons de navigation
         const prevBtn = document.getElementById('prevTestimonial');
         const nextBtn = document.getElementById('nextTestimonial');
-        const currentLang = languageManager.getCurrentLanguage();
-        const dataToUse = currentLang === 'fr' ? testimonialsDataFR : testimonialsDataEN;
-        const totalSlides = Math.ceil(dataToUse.length / testimonialsManager.slidesPerView);
+        const totalSlides = Math.ceil(testimonialsData.length / testimonialsManager.slidesPerView);
         
         if (prevBtn) {
             prevBtn.disabled = testimonialsManager.currentSlide === 0;
@@ -999,39 +578,38 @@ const navigationManager = {
 // ===== INTERACTIONS UTILISATEUR =====
 const uiManager = {
     init: () => {
+        // Changement de langue
+        const languageSwitcher = document.querySelector('.language-switcher');
+        if (languageSwitcher) {
+            languageSwitcher.addEventListener('click', () => {
+                utils.showNotification('Fonctionnalité de changement de langue à venir', 'info');
+            });
+        }
+        
         // Bouton connexion desktop
         const loginBtn = document.querySelector('.login-btn');
         if (loginBtn) {
             loginBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                const currentLang = languageManager.getCurrentLanguage();
-                utils.showNotification(
-                    currentLang === 'fr' 
-                        ? 'Page de connexion en développement' 
-                        : 'Login page under development',
-                    'info'
-                );
+                utils.showNotification('Page de connexion en développement', 'info');
             });
         }
         
-        // Bouton connexion MOBILE
+        // Bouton connexion MOBILE (nouveau)
         const mobileLoginBtn = document.querySelector('.mobile-login-btn-header');
         if (mobileLoginBtn) {
             mobileLoginBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                const currentLang = languageManager.getCurrentLanguage();
-                utils.showNotification(
-                    currentLang === 'fr' 
-                        ? 'Page de connexion en développement' 
-                        : 'Login page under development',
-                    'info'
-                );
+                utils.showNotification('Page de connexion en développement', 'info');
+                // Fermer le menu mobile si ouvert
                 mobileMenuManager.closeMobileMenu();
             });
         }
         
         // Gestion du scroll pour le header
         window.addEventListener('scroll', uiManager.handleScroll);
+        
+        // Initialiser le header
         uiManager.handleScroll();
     },
     
@@ -1127,6 +705,8 @@ const mobileMenuManager = {
                 mobileMenuManager.closeMobileMenu();
             }
         });
+        
+        console.log('Menu mobile initialisé');
     },
     
     toggleMobileMenu: () => {
@@ -1188,8 +768,7 @@ const app = {
         // Ajuster le padding pour le header fixe
         document.body.style.paddingTop = '80px';
         
-        // Initialiser les managers - D'ABORD le gestionnaire de langue
-        languageManager.init();
+        // Initialiser les managers
         mobileMenuManager.init();
         coursesManager.init();
         testimonialsManager.init();
@@ -1203,7 +782,67 @@ const app = {
             testimonialsManager.updateSlider();
         }, 250));
         
-        console.log('Application prête ! Langue:', languageManager.getCurrentLanguage());
+        // Ajouter les styles de notification
+        app.addNotificationStyles();
+        
+        // Debug
+        console.log('Application prête !');
+        console.log('Bouton connexion mobile:', document.querySelector('.mobile-login-btn-header'));
+    },
+    
+    addNotificationStyles: () => {
+        const style = document.createElement('style');
+        style.textContent = `
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                z-index: 10000;
+                transform: translateX(120%);
+                transition: transform 0.3s ease;
+                border-left: 4px solid #1e88e5;
+            }
+            
+            .notification.show {
+                transform: translateX(0);
+            }
+            
+            .notification-success {
+                border-left-color: #4CAF50;
+            }
+            
+            .notification-error {
+                border-left-color: #e74c3c;
+            }
+            
+            .notification-info {
+                border-left-color: #1e88e5;
+            }
+            
+            .notification i {
+                font-size: 1.2rem;
+            }
+            
+            .notification-success i {
+                color: #4CAF50;
+            }
+            
+            .notification-error i {
+                color: #e74c3c;
+            }
+            
+            .notification-info i {
+                color: #1e88e5;
+            }
+        `;
+        document.head.appendChild(style);
     }
 };
 
@@ -1230,13 +869,5 @@ window.appDebug = {
     
     testMenu: () => {
         mobileMenuManager.toggleMobileMenu();
-    },
-    
-    switchLanguage: () => {
-        languageManager.toggleLanguage();
-    },
-    
-    getCurrentLanguage: () => {
-        return languageManager.getCurrentLanguage();
     }
 };

@@ -111,12 +111,10 @@ button {
 
 .main-header:not(.scrolled) .language-switcher {
     color: rgba(255, 255, 255, 0.9);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .main-header:not(.scrolled) .language-switcher:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .main-header:not(.scrolled) .login-btn {
@@ -199,46 +197,19 @@ button {
     width: 100%;
 }
 
-/* ===== BOUTON DE LANGUE ===== */
 .language-switcher {
     display: flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    padding: 8px 15px;
+    padding: 8px 12px;
     border-radius: 50px;
-    transition: all var(--transition-fast);
+    transition: background-color var(--transition-fast);
     font-weight: 500;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    color: var(--neutral-dark);
-}
-
-.main-header.scrolled .language-switcher {
-    background: var(--neutral-light);
-    color: var(--neutral-dark);
-    border: 1px solid var(--border-color);
 }
 
 .language-switcher:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.main-header.scrolled .language-switcher:hover {
-    background: #e9ecef;
-}
-
-/* Pour le header non-scrolled */
-.main-header:not(.scrolled) .language-switcher {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.main-header:not(.scrolled) .language-switcher:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background-color: var(--neutral-light);
 }
 
 .login-btn {
@@ -362,7 +333,6 @@ button {
     transform: translateX(5px);
 }
 
-/* Bouton de langue mobile */
 .mobile-language {
     display: flex;
     align-items: center;
@@ -372,16 +342,6 @@ button {
     border-radius: 50px;
     margin-top: 20px;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-    max-width: 250px;
-    justify-content: center;
-}
-
-.mobile-language:hover {
-    background: rgba(30, 136, 229, 0.15);
-    transform: translateX(5px);
 }
 
 /* MODIFICATION: Bouton connexion menu sandwich en #4f9ad1 */
@@ -1342,56 +1302,6 @@ button {
     animation: fadeInUp 0.8s ease-out forwards;
 }
 
-/* ===== STYLES DE NOTIFICATION ===== */
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: white;
-    padding: 15px 20px;
-    border-radius: 10px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 10000;
-    transform: translateX(120%);
-    transition: transform 0.3s ease;
-    border-left: 4px solid #1e88e5;
-}
-
-.notification.show {
-    transform: translateX(0);
-}
-
-.notification-success {
-    border-left-color: #4CAF50;
-}
-
-.notification-error {
-    border-left-color: #e74c3c;
-}
-
-.notification-info {
-    border-left-color: #1e88e5;
-}
-
-.notification i {
-    font-size: 1.2rem;
-}
-
-.notification-success i {
-    color: #4CAF50;
-}
-
-.notification-error i {
-    color: #e74c3c;
-}
-
-.notification-info i {
-    color: #1e88e5;
-}
-
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 1200px) {
     .container {
@@ -1502,10 +1412,6 @@ button {
     .logo-section {
         justify-content: center;
         text-align: center;
-    }
-    
-    .language-switcher {
-        display: none !important;
     }
 }
 
