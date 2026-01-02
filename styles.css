@@ -344,11 +344,21 @@ button {
     font-weight: 500;
 }
 
+/* MODIFICATION: Bouton connexion menu sandwich en #4f9ad1 */
 .mobile-login-btn {
     width: 100%;
     max-width: 250px;
     margin-top: 20px;
     padding: 12px 25px;
+    background-color: #4f9ad1 !important;
+    color: white !important;
+    border: 2px solid #4f9ad1 !important;
+}
+
+.mobile-login-btn:hover {
+    background-color: #3f8ac1 !important;
+    border-color: #3f8ac1 !important;
+    transform: translateY(-2px);
 }
 
 /* ===== HERO SECTION ===== */
@@ -1394,7 +1404,7 @@ button {
 
 /* MOBILE - MODIFICATIONS UNIQUEMENT POUR MOBILE */
 @media (max-width: 768px) {
-    /* 1. HEADER MOBILE AVEC BOUTON CONNEXION À DROITE */
+    /* 1. HEADER MOBILE AVEC LOGO CENTRÉ ET BOUTON CONNEXION À DROITE */
     .header-content {
         flex-direction: row;
         justify-content: space-between;
@@ -1435,18 +1445,31 @@ button {
         order: 1;
         margin-right: 0;
         position: static;
+        flex-shrink: 0;
     }
     
-    /* Logo centré */
+    /* LOGO YOANN + DRAPEAU PARFAITEMENT CENTRÉ */
     .logo-section {
         position: absolute;
         left: 50%;
-        transform: translateX(-50%);
         top: 50%;
         transform: translate(-50%, -50%);
         order: 2;
         margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         text-align: center;
+        width: auto;
+    }
+    
+    .logo {
+        font-size: 1.6rem;
+    }
+    
+    .flag {
+        font-size: 1.3rem;
+        margin-left: 5px;
     }
     
     /* Cacher le bouton connexion desktop sur mobile */
@@ -1665,6 +1688,14 @@ button {
     .hamburger-menu {
         width: 24px;
         height: 18px;
+    }
+    
+    .logo {
+        font-size: 1.4rem;
+    }
+    
+    .flag {
+        font-size: 1.2rem;
     }
     
     .hero h1 {
