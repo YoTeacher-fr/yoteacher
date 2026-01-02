@@ -1404,17 +1404,51 @@ button {
 
 /* MOBILE - MODIFICATIONS UNIQUEMENT POUR MOBILE */
 @media (max-width: 768px) {
-    /* 1. HEADER MOBILE AVEC LOGO CENTRÉ ET BOUTON CONNEXION À DROITE */
+    /* 1. HEADER MOBILE AVEC LOGO À ÉGALE DISTANCE */
     .header-content {
-        flex-direction: row;
+        display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 15px 0;
-        gap: 10px;
         position: relative;
+        width: 100%;
     }
     
-    /* Bouton connexion mobile visible */
+    /* 3 colonnes égales pour des distances égales */
+    .hamburger-menu {
+        order: 1;
+        flex: 1;
+        display: flex;
+        justify-content: flex-start;
+        margin-right: 0;
+        min-width: 30px;
+    }
+    
+    /* Logo PARFAITEMENT centré avec distances égales */
+    .logo-section {
+        order: 2;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        position: static;
+        transform: none;
+        left: auto;
+        top: auto;
+        margin: 0;
+    }
+    
+    .logo {
+        font-size: 1.6rem;
+    }
+    
+    .flag {
+        font-size: 1.3rem;
+        margin-left: 5px;
+    }
+    
+    /* Bouton connexion à droite - 3ème colonne */
     .mobile-login-btn-header {
         display: block !important;
         background-color: #4f9ad1;
@@ -1431,6 +1465,9 @@ button {
         text-align: center;
         line-height: 1.4;
         order: 3;
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
         margin-left: auto;
         z-index: 1001;
     }
@@ -1438,38 +1475,6 @@ button {
     .mobile-login-btn-header:hover {
         background-color: #3f8ac1;
         transform: translateY(-2px);
-    }
-    
-    /* Hamburger à gauche */
-    .hamburger-menu {
-        order: 1;
-        margin-right: 0;
-        position: static;
-        flex-shrink: 0;
-    }
-    
-    /* LOGO YOANN + DRAPEAU PARFAITEMENT CENTRÉ */
-    .logo-section {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        order: 2;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        width: auto;
-    }
-    
-    .logo {
-        font-size: 1.6rem;
-    }
-    
-    .flag {
-        font-size: 1.3rem;
-        margin-left: 5px;
     }
     
     /* Cacher le bouton connexion desktop sur mobile */
@@ -1681,7 +1686,7 @@ button {
 /* TRÈS PETITS ÉCRANS */
 @media (max-width: 480px) {
     .mobile-login-btn-header {
-        padding: 6px 12px;
+        padding: 6px 10px;
         font-size: 0.8rem;
     }
     
