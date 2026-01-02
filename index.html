@@ -11,32 +11,58 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="main-header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo-section">
-                    <a href="#" class="logo">Yoann</a>
-                    <div class="flag">🇫🇷</div>
+  <!-- Header -->
+<header class="main-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="logo-section">
+                <a href="#" class="logo">Yoann</a>
+                <div class="flag">🇫🇷</div>
+            </div>
+            
+            <!-- Menu Desktop -->
+            <nav class="nav-menu desktop-menu">
+                <div class="nav-spacer"></div>
+                <a href="#about" class="nav-link">À propos</a>
+                <a href="#courses" class="nav-link">Cours</a>
+                <a href="#testimonials" class="nav-link">Témoignages</a>
+                <a href="#contact" class="nav-link">Contact</a>
+                
+                <div class="language-switcher">
+                    <span class="flag">🌐</span>
+                    <span>FR</span>
                 </div>
                 
-                <nav class="nav-menu">
-                    <div class="nav-spacer"></div>
-                    <a href="#about" class="nav-link">À propos</a>
-                    <a href="#courses" class="nav-link">Cours</a>
-                    <a href="#testimonials" class="nav-link">Témoignages</a>
-                    <a href="#contact" class="nav-link">Contact</a>
-                    
-                    <div class="language-switcher">
-                        <span class="flag">🌐</span>
-                        <span>FR</span>
-                    </div>
-                    
-                    <a href="#" class="login-btn">Connexion</a>
-                </nav>
-            </div>
+                <a href="#" class="login-btn">Connexion</a>
+            </nav>
+            
+            <!-- Menu Hamburger (Mobile) -->
+            <button class="hamburger-menu" id="hamburgerBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
-    </header>
+    </div>
+    
+    <!-- Menu Mobile -->
+    <div class="mobile-menu-overlay" id="mobileMenu">
+        <nav class="mobile-nav">
+            <button class="close-menu" id="closeMenuBtn">×</button>
+            <a href="#about" class="mobile-nav-link" onclick="closeMobileMenu()">À propos</a>
+            <a href="#courses" class="mobile-nav-link" onclick="closeMobileMenu()">Cours</a>
+            <a href="#testimonials" class="mobile-nav-link" onclick="closeMobileMenu()">Témoignages</a>
+            <a href="#contact" class="mobile-nav-link" onclick="closeMobileMenu()">Contact</a>
+            
+            <div class="mobile-language">
+                <span class="flag">🌐</span>
+                <span>Français (FR)</span>
+            </div>
+            
+            <a href="#" class="btn btn-primary mobile-login-btn">Connexion</a>
+        </nav>
+    </div>
+</header>
 
     <!-- Section Hero avec texte à gauche -->
     <section class="hero">
@@ -61,8 +87,8 @@
                 </div>
                 
                 <div class="cta-buttons-left">
-                    <a href="#courses" class="btn btn-primary">Essayer un cours tranquille 💬</a>
-                    <a href="#about" class="btn btn-secondary">Découvrir ma méthode</a>
+                    <a href="#courses" class="btn btn-primary">Essayer un cours maintenant 💬</a>
+                    <a href="#about" class="btn btn-secondary">Créer un compte gratuit</a>
                 </div>
             </div>
         </div>

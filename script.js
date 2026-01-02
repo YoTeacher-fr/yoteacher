@@ -9,7 +9,7 @@ const coursesData = [
     {
         id: 1,
         type: "Conversation",
-        focus: "Discussion libre, amélioration orale",
+        focus: "Discussion uniquement",
         price: 20,
         duration: "60 minutes",
         features: [
@@ -782,4 +782,104 @@ window.appDebug = {
     testScrollToCourses: () => {
         navigationManager.scrollToSection('#courses');
     }
+};
+// ===== GESTION DU MENU MOBILE =====
+const mobileMenuManager = {
+    init: () => {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const closeBtn = document.getElementById('closeMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        if (hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', () => {
+                mobileMenuManager.toggleMobileMenu();
+            });
+        }
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                mobileMenuManager.closeMobileMenu();
+            });
+        }
+        
+        // Fermer le menu en cliquant en dehors
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', (e) => {
+                if (e.target === mobileMenu) {
+                    mobileMenuManager.closeMobileMenu();
+                }
+            });
+        }
+        
+        // Fermer le menu avec la touche Échap
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                mobileMenuManager.closeMobileMenu();
+            }
+        });
+    },
+    
+    toggleMobileMenu: () => {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        if (mobileMenu.classList.contains('active')) {
+            mobileMenu.classList.remove('active');
+            hamburgerBtn.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        } else {
+            mobileMenu.classList.add('active');
+            hamburgerBtn.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    },
+    
+    closeMobileMenu: () => {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        mobileMenu.classList.remove('active');
+        hamburgerBtn.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+};
+
+// Fonction globale pour fermer le menu (utilisée dans les liens)
+function closeMobileMenu() {
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    
+    if (mobileMenu && hamburgerBtn) {
+        mobileMenu.classList.remove('active');
+        hamburgerBtn.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// Ajoutez mobileMenuManager.init() dans app.setup()
+// Modifiez la fonction app.setup() :
+app.setup = () => {
+    console.log('Configuration des modules...');
+    
+    // Ajuster le padding pour le header fixe
+    document.body.style.paddingTop = '80px';
+    
+    // Initialiser les managers
+    coursesManager.init();
+    testimonialsManager.init();
+    navigationManager.init();
+    uiManager.init();
+    imageManager.init();
+    mobileMenuManager.init(); // ← AJOUTEZ CETTE LIGNE
+    
+    // Gestion du redimensionnement
+    window.addEventListener('resize', utils.debounce(() => {
+        testimonialsManager.calculateSlidesPerView();
+        testimonialsManager.updateSlider();
+    }, 250));
+    
+    // Ajouter les styles de notification
+    app.addNotificationStyles();
+    
+    console.log('Application prête !');
 };
