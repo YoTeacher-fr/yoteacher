@@ -450,6 +450,15 @@ button {
     text-overflow: ellipsis;
 }
 
+/* MODIFICATION: Texte différent pour desktop/mobile */
+.desktop-stat {
+    display: block;
+}
+
+.mobile-stat {
+    display: none;
+}
+
 .cta-buttons-left {
     display: flex;
     gap: 20px;
@@ -1495,6 +1504,15 @@ button {
     .mobile-login-btn-header:hover {
         background-color: #3f8ac1;
         transform: translateY(-2px);
+    }
+    
+    /* MODIFICATION: Changer le texte pour mobile */
+    .desktop-stat {
+        display: none;
+    }
+    
+    .mobile-stat {
+        display: block;
     }
     
     /* Cacher le bouton connexion desktop sur mobile */
