@@ -182,7 +182,7 @@ const utils = {
     }
 };
 
-// ===== GÉNÉRATION DES COURS - VERSION CORRIGÉE =====
+// ===== GÉNÉRATION DES COURS =====
 const coursesManager = {
     init: () => {
         const container = document.getElementById('coursesContainer');
@@ -200,11 +200,10 @@ const coursesManager = {
         card.className = `course-card ${course.featured ? 'featured' : ''}`;
         card.setAttribute('data-course-id', course.id);
         
-        // Générer les détails de prix selon le format demandé
+        // Générer les détails de prix
         let priceDetailsHTML = '';
         
         if (course.id === 1) {
-            // Format spécial pour la carte Conversation avec "30min : 10€ │ 45min :15€"
             priceDetailsHTML = `
                 <div style="margin-top: 10px; color: #666; font-weight: 500;">
                     30min : 10€ │ 45min : 15€
@@ -221,7 +220,6 @@ const coursesManager = {
                     </div>
                 `;
             } else if (detail.price && course.id !== 1) {
-                // Pour les autres cartes, ajouter les forfaits
                 priceDetailsHTML += `
                     <div style="margin-top: 10px; color: #666; font-weight: 500;">
                         ${detail.duration}: ${detail.price}€
@@ -241,10 +239,8 @@ const coursesManager = {
         // HTML pour le prix avec "/h" en plus petit
         let priceHTML = '';
         if (course.id === 3) {
-            // Cours d'essai sans "/h"
             priceHTML = `<span class="price-main">${course.price}€</span>`;
         } else {
-            // Conversation et Curriculum avec "/h" en plus petit
             priceHTML = `
                 <span class="price-main">${course.price}€<span class="price-per-hour">/h</span></span>
             `;
@@ -283,7 +279,6 @@ const coursesManager = {
                 if (course) {
                     utils.showNotification(`Réservation du cours "${course.type}" - Redirection en cours...`, 'success');
                     
-                    // Simulation de redirection
                     setTimeout(() => {
                         window.open('#', '_blank');
                     }, 1500);
@@ -337,8 +332,6 @@ const testimonialsManager = {
         // Ajouter les événements
         testimonialsManager.addTestimonialEvents();
         testimonialsManager.setupNavigation();
-        
-        console.log(`${testimonialsData.length} témoignages générés, affichage de ${testimonialsManager.slidesPerView} à la fois`);
     },
     
     calculateSlidesPerView: () => {
@@ -521,7 +514,7 @@ const testimonialsManager = {
     }
 };
 
-// ===== NAVIGATION CORRIGÉE =====
+// ===== NAVIGATION =====
 const navigationManager = {
     init: () => {
         // Navigation fluide
@@ -548,19 +541,14 @@ const navigationManager = {
     },
     
     scrollToSection: (selector) => {
-        console.log('Scrolling to:', selector);
-        
         const target = document.querySelector(selector);
         if (!target) return;
         
-        // Pour la section cours, on veut scroller vers les cartes
+        // Pour la section cours
         if (selector === '#courses') {
-            // Attendre un peu pour que tout soit prêt
             setTimeout(() => {
-                // Trouver le conteneur des cartes
                 const coursesContainer = document.querySelector('.courses-container');
                 if (coursesContainer) {
-                    // Calculer la position exacte pour voir les cartes
                     const containerRect = coursesContainer.getBoundingClientRect();
                     const scrollPosition = window.pageYOffset + containerRect.top - 120;
                     
@@ -569,7 +557,6 @@ const navigationManager = {
                         behavior: 'smooth'
                     });
                 } else {
-                    // Fallback: scroller vers la section avec un offset plus grand
                     window.scrollTo({
                         top: target.offsetTop - 150,
                         behavior: 'smooth'
@@ -621,11 +608,9 @@ const uiManager = {
         
         if (!header) return;
         
-        // Position de la section À propos
         const aboutOffset = aboutSection ? aboutSection.offsetTop : 0;
         const scrollPosition = window.scrollY;
         
-        // Si on a scrollé plus de 100px OU qu'on est dans la section À propos
         if (scrollPosition > 100 || 
             (scrollPosition >= aboutOffset - 100 && scrollPosition <= aboutOffset + aboutSection.offsetHeight)) {
             header.classList.add('scrolled');
@@ -641,13 +626,11 @@ const imageManager = {
         const yoannImage = document.getElementById('yoannImage');
         
         if (yoannImage) {
-            // Si l'image ne se charge pas, utiliser une image de remplacement
             yoannImage.addEventListener('error', () => {
                 yoannImage.src = 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
                 yoannImage.alt = 'Professeur de français';
             });
             
-            // Animation au chargement
             yoannImage.addEventListener('load', () => {
                 yoannImage.style.opacity = '1';
                 yoannImage.style.transform = 'scale(1)';
@@ -656,14 +639,101 @@ const imageManager = {
     }
 };
 
+// ===== GESTION DU MENU MOBILE =====
+const mobileMenuManager = {
+    init: () => {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const closeBtn = document.getElementById('closeMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileLinks = document.querySelectorAll('.mobile-nav-link');
+        
+        if (hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', () => {
+                mobileMenuManager.toggleMobileMenu();
+            });
+        }
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                mobileMenuManager.closeMobileMenu();
+            });
+        }
+        
+        // Fermer le menu en cliquant sur les liens
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenuManager.closeMobileMenu();
+                // Scroller vers la section
+                const href = link.getAttribute('href');
+                if (href && href !== '#') {
+                    setTimeout(() => {
+                        const target = document.querySelector(href);
+                        if (target) {
+                            window.scrollTo({
+                                top: target.offsetTop - 100,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }, 300);
+                }
+            });
+        });
+        
+        // Fermer le menu en cliquant en dehors
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', (e) => {
+                if (e.target === mobileMenu) {
+                    mobileMenuManager.closeMobileMenu();
+                }
+            });
+        }
+        
+        // Fermer le menu avec la touche Échap
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                mobileMenuManager.closeMobileMenu();
+            }
+        });
+        
+        console.log('Menu mobile initialisé');
+    },
+    
+    toggleMobileMenu: () => {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        if (mobileMenu.classList.contains('active')) {
+            mobileMenu.classList.remove('active');
+            hamburgerBtn.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        } else {
+            mobileMenu.classList.add('active');
+            hamburgerBtn.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    },
+    
+    closeMobileMenu: () => {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        mobileMenu.classList.remove('active');
+        hamburgerBtn.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+};
+
 // ===== INITIALISATION =====
 const app = {
     init: () => {
         console.log('Initialisation de l\'application...');
-         window.addEventListener('beforeunload', () => {
+        
+        // Empêcher le retour en haut au rafraîchissement
+        window.addEventListener('beforeunload', () => {
             sessionStorage.setItem('scrollPosition', window.scrollY);
         });
-if (sessionStorage.getItem('scrollPosition')) {
+        
+        if (sessionStorage.getItem('scrollPosition')) {
             window.addEventListener('load', () => {
                 const savedPosition = parseInt(sessionStorage.getItem('scrollPosition'));
                 setTimeout(() => {
@@ -672,6 +742,7 @@ if (sessionStorage.getItem('scrollPosition')) {
                 }, 100);
             });
         }
+        
         // Vérifier que le DOM est chargé
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', app.setup);
@@ -686,7 +757,8 @@ if (sessionStorage.getItem('scrollPosition')) {
         // Ajuster le padding pour le header fixe
         document.body.style.paddingTop = '80px';
         
-        // Initialiser les managers
+        // Initialiser les managers - IMPORTANT: mobileMenuManager EN PREMIER
+        mobileMenuManager.init();
         coursesManager.init();
         testimonialsManager.init();
         navigationManager.init();
@@ -702,7 +774,10 @@ if (sessionStorage.getItem('scrollPosition')) {
         // Ajouter les styles de notification
         app.addNotificationStyles();
         
+        // Debug
         console.log('Application prête !');
+        console.log('Menu hamburger:', document.getElementById('hamburgerBtn'));
+        console.log('Menu mobile:', document.getElementById('mobileMenu'));
     },
     
     addNotificationStyles: () => {
@@ -762,7 +837,6 @@ if (sessionStorage.getItem('scrollPosition')) {
 };
 
 // ===== DÉMARRAGE DE L'APPLICATION =====
-
 app.init();
 
 // Exposer certaines fonctions globalement pour le débogage
@@ -781,105 +855,9 @@ window.appDebug = {
     
     testScrollToCourses: () => {
         navigationManager.scrollToSection('#courses');
-    }
-};
-// ===== GESTION DU MENU MOBILE =====
-const mobileMenuManager = {
-    init: () => {
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const closeBtn = document.getElementById('closeMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        if (hamburgerBtn) {
-            hamburgerBtn.addEventListener('click', () => {
-                mobileMenuManager.toggleMobileMenu();
-            });
-        }
-        
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                mobileMenuManager.closeMobileMenu();
-            });
-        }
-        
-        // Fermer le menu en cliquant en dehors
-        if (mobileMenu) {
-            mobileMenu.addEventListener('click', (e) => {
-                if (e.target === mobileMenu) {
-                    mobileMenuManager.closeMobileMenu();
-                }
-            });
-        }
-        
-        // Fermer le menu avec la touche Échap
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                mobileMenuManager.closeMobileMenu();
-            }
-        });
     },
     
-    toggleMobileMenu: () => {
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        if (mobileMenu.classList.contains('active')) {
-            mobileMenu.classList.remove('active');
-            hamburgerBtn.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        } else {
-            mobileMenu.classList.add('active');
-            hamburgerBtn.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-    },
-    
-    closeMobileMenu: () => {
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        mobileMenu.classList.remove('active');
-        hamburgerBtn.classList.remove('active');
-        document.body.style.overflow = 'auto';
+    testMenu: () => {
+        mobileMenuManager.toggleMobileMenu();
     }
-};
-
-// Fonction globale pour fermer le menu (utilisée dans les liens)
-function closeMobileMenu() {
-    const hamburgerBtn = document.getElementById('hamburgerBtn');
-    const mobileMenu = document.getElementById('mobileMenu');
-    
-    if (mobileMenu && hamburgerBtn) {
-        mobileMenu.classList.remove('active');
-        hamburgerBtn.classList.remove('active');
-        document.body.style.overflow = 'auto';
-    }
-}
-
-// Ajoutez mobileMenuManager.init() dans app.setup()
-// Modifiez la fonction app.setup() :
-app.setup = () => {
-    console.log('Configuration des modules...');
-    
-    // Ajuster le padding pour le header fixe
-    document.body.style.paddingTop = '80px';
-    
-    // Initialiser les managers
-    coursesManager.init();
-    testimonialsManager.init();
-    navigationManager.init();
-    uiManager.init();
-    imageManager.init();
-    mobileMenuManager.init(); // ← AJOUTEZ CETTE LIGNE
-    
-    // Gestion du redimensionnement
-    window.addEventListener('resize', utils.debounce(() => {
-        testimonialsManager.calculateSlidesPerView();
-        testimonialsManager.updateSlider();
-    }, 250));
-    
-    // Ajouter les styles de notification
-    app.addNotificationStyles();
-    
-    console.log('Application prête !');
 };
