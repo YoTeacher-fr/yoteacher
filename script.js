@@ -8,7 +8,7 @@ const translations = {
         'nav.testimonials': 'Témoignages',
         'nav.contact': 'Contact',
         'nav.login': 'Connexion',
-        'nav.language': 'Français (FR)',
+        'nav.language': 'English (EN)',
         
         // Hero
         'hero.title': 'Apprenez le français simplement',
@@ -44,8 +44,6 @@ const translations = {
         'courses.title': 'Des formules adaptées à',
         'courses.title.highlight': 'vos besoins',
         'courses.subtitle': 'Choisissez la formule qui vous convient et commencez votre voyage linguistique',
-        
-        // Course data will be in separate arrays
         
         // Testimonials
         'testimonials.label': 'Témoignages',
@@ -91,7 +89,7 @@ const translations = {
         'nav.testimonials': 'Testimonials',
         'nav.contact': 'Contact',
         'nav.login': 'Login',
-        'nav.language': 'English (EN)',
+        'nav.language': 'Français (FR)',
         
         // Hero
         'hero.title': 'Learn French Simply',
@@ -456,7 +454,6 @@ const languageManager = {
         const savedLang = localStorage.getItem('siteLanguage');
         if (savedLang) {
             languageManager.currentLang = savedLang;
-            languageManager.updateLanguageDisplay();
         }
         
         // Événements desktop
@@ -478,8 +475,9 @@ const languageManager = {
             });
         }
         
-        // Mettre à jour les textes
+        // Mettre à jour les textes et l'affichage du bouton
         languageManager.updateAllTexts();
+        languageManager.updateLanguageDisplay();
         
         console.log('Language manager initialisé, langue:', languageManager.currentLang);
     },
@@ -488,37 +486,33 @@ const languageManager = {
         languageManager.currentLang = languageManager.currentLang === 'fr' ? 'en' : 'fr';
         localStorage.setItem('siteLanguage', languageManager.currentLang);
         
-        // Mettre à jour l'affichage
-        languageManager.updateLanguageDisplay();
-        
         // Mettre à jour tous les textes
         languageManager.updateAllTexts();
+        
+        // Mettre à jour l'affichage du bouton (opposé)
+        languageManager.updateLanguageDisplay();
         
         // Regénérer les sections dynamiques
         coursesManager.init();
         testimonialsManager.init();
-        
-        // Notification
-        utils.showNotification(
-            languageManager.currentLang === 'fr' 
-                ? 'Langue changée en Français' 
-                : 'Language changed to English',
-            'success'
-        );
     },
     
     updateLanguageDisplay: () => {
         const languageText = document.querySelector('.language-switcher span:not(.flag)');
         const mobileLanguageText = document.querySelector('#mobileLanguageSwitcher span:not(.flag)');
         
+        // AFFICHAGE OPPOSÉ : Montrer la langue VERS LAQUELLE on peut basculer
         if (languageText) {
-            languageText.textContent = languageManager.currentLang === 'fr' ? 'FR' : 'EN';
+            // Si on est en français, on montre "EN" (pour basculer en anglais)
+            // Si on est en anglais, on montre "FR" (pour basculer en français)
+            languageText.textContent = languageManager.currentLang === 'fr' ? 'EN' : 'FR';
         }
         
         if (mobileLanguageText) {
+            // Même logique pour le menu mobile
             mobileLanguageText.textContent = languageManager.currentLang === 'fr' 
-                ? translations.fr['nav.language'] 
-                : translations.en['nav.language'];
+                ? 'English (EN)'   // On est en français, on propose anglais
+                : 'Français (FR)'; // On est en anglais, on propose français
         }
     },
     
@@ -1208,12 +1202,6 @@ const app = {
             testimonialsManager.calculateSlidesPerView();
             testimonialsManager.updateSlider();
         }, 250));
-        
-        // Écouter les changements de langue
-        window.addEventListener('languageChanged', () => {
-            coursesManager.init();
-            testimonialsManager.init();
-        });
         
         console.log('Application prête ! Langue:', languageManager.getCurrentLanguage());
     }
