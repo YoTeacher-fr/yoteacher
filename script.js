@@ -586,12 +586,23 @@ const uiManager = {
             });
         }
         
-        // Bouton connexion
+        // Bouton connexion desktop
         const loginBtn = document.querySelector('.login-btn');
         if (loginBtn) {
             loginBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 utils.showNotification('Page de connexion en développement', 'info');
+            });
+        }
+        
+        // Bouton connexion MOBILE (nouveau)
+        const mobileLoginBtn = document.querySelector('.mobile-login-btn-header');
+        if (mobileLoginBtn) {
+            mobileLoginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                utils.showNotification('Page de connexion en développement', 'info');
+                // Fermer le menu mobile si ouvert
+                mobileMenuManager.closeMobileMenu();
             });
         }
         
@@ -757,7 +768,7 @@ const app = {
         // Ajuster le padding pour le header fixe
         document.body.style.paddingTop = '80px';
         
-        // Initialiser les managers - IMPORTANT: mobileMenuManager EN PREMIER
+        // Initialiser les managers
         mobileMenuManager.init();
         coursesManager.init();
         testimonialsManager.init();
@@ -776,8 +787,7 @@ const app = {
         
         // Debug
         console.log('Application prête !');
-        console.log('Menu hamburger:', document.getElementById('hamburgerBtn'));
-        console.log('Menu mobile:', document.getElementById('mobileMenu'));
+        console.log('Bouton connexion mobile:', document.querySelector('.mobile-login-btn-header'));
     },
     
     addNotificationStyles: () => {

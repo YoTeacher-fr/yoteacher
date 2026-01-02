@@ -227,6 +227,11 @@ button {
     box-shadow: 0 8px 20px rgba(79, 154, 209, 0.3);
 }
 
+/* ===== BOUTON CONNEXION MOBILE ===== */
+.mobile-login-btn-header {
+    display: none;
+}
+
 /* ===== MENU HAMBURGER (MOBILE) ===== */
 .hamburger-menu {
     display: none;
@@ -238,7 +243,6 @@ button {
     border: none;
     cursor: pointer;
     z-index: 1001;
-    order: -1;
 }
 
 .hamburger-menu span {
@@ -1388,21 +1392,69 @@ button {
     }
 }
 
-/* MOBILE */
+/* MOBILE - MODIFICATIONS UNIQUEMENT POUR MOBILE */
 @media (max-width: 768px) {
+    /* 1. HEADER MOBILE AVEC BOUTON CONNEXION À DROITE */
     .header-content {
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
         padding: 15px 0;
         gap: 10px;
+        position: relative;
     }
     
+    /* Bouton connexion mobile visible */
+    .mobile-login-btn-header {
+        display: block !important;
+        background-color: #4f9ad1;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+        line-height: 1.4;
+        order: 3;
+        margin-left: auto;
+        z-index: 1001;
+    }
+    
+    .mobile-login-btn-header:hover {
+        background-color: #3f8ac1;
+        transform: translateY(-2px);
+    }
+    
+    /* Hamburger à gauche */
     .hamburger-menu {
-        order: -1;
+        order: 1;
         margin-right: 0;
+        position: static;
     }
     
+    /* Logo centré */
+    .logo-section {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 50%;
+        transform: translate(-50%, -50%);
+        order: 2;
+        margin: 0;
+        text-align: center;
+    }
+    
+    /* Cacher le bouton connexion desktop sur mobile */
+    .login-btn {
+        display: none;
+    }
+    
+    /* 2. HERO SECTION */
     .hero {
         padding: 100px 0 150px 0;
         text-align: center;
@@ -1421,6 +1473,7 @@ button {
         font-size: 1.1rem;
     }
     
+    /* Statistiques centrées */
     .stats-left {
         align-items: center;
         flex-direction: row;
@@ -1446,6 +1499,7 @@ button {
         white-space: normal;
     }
     
+    /* Boutons CTA */
     .cta-buttons-left {
         justify-content: center;
         flex-direction: column;
@@ -1458,6 +1512,12 @@ button {
         margin: 0 auto;
     }
     
+    /* 3. ENLEVER L'ICÔNE BULLE DU BOUTON HERO SUR MOBILE */
+    .mobile-course-btn .emoji {
+        display: none;
+    }
+    
+    /* 4. COURS ET TÉMOIGNAGES */
     .courses-container,
     .testimonials-slider {
         grid-template-columns: 1fr;
@@ -1465,6 +1525,7 @@ button {
         margin: 0 auto;
     }
     
+    /* 5. CONTACT ET FOOTER - TOUT CENTRÉ */
     .contact-grid {
         grid-template-columns: 1fr;
         gap: 35px;
@@ -1476,6 +1537,45 @@ button {
         transform: translateX(-50%);
     }
     
+    /* Centrer les statistiques du brand */
+    .brand-info {
+        text-align: center;
+        align-items: center;
+    }
+    
+    .brand-info p {
+        text-align: center;
+    }
+    
+    .brand-stats {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .brand-stats div {
+        justify-content: center;
+        text-align: center;
+        width: 100%;
+    }
+    
+    /* Centrer l'adresse email */
+    .legal-links {
+        align-items: center;
+    }
+    
+    .email-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        width: 100%;
+    }
+    
+    /* 6. TITRES ET SOUS-TITRES */
     .section-title {
         font-size: 1.8rem;
     }
@@ -1485,6 +1585,7 @@ button {
         font-size: 1rem;
     }
     
+    /* 7. CARTES DE COURS */
     .course-type {
         font-size: 1.4rem;
     }
@@ -1493,10 +1594,12 @@ button {
         font-size: 2.2rem;
     }
     
+    /* 8. HIGHLIGHTS GRID */
     .highlights-grid {
         grid-template-columns: 1fr;
     }
     
+    /* 9. BOUTONS FINAL CTA */
     .final-cta-buttons {
         flex-direction: column;
         align-items: center;
@@ -1507,6 +1610,7 @@ button {
         max-width: 280px;
     }
     
+    /* 10. SLIDER TÉMOIGNAGES */
     .testimonials-slider-container {
         padding: 0 45px;
         gap: 5px;
@@ -1518,12 +1622,13 @@ button {
         font-size: 1.1rem;
     }
     
+    /* 11. FOOTER BOTTOM */
     .footer-bottom {
         text-align: center;
         justify-content: center;
     }
     
-    /* CORRECTION IMAGE SUR MOBILE */
+    /* 12. CORRECTION IMAGE SUR MOBILE */
     .about-image-col {
         margin-top: 0 !important;
     }
@@ -1532,6 +1637,7 @@ button {
         height: 400px !important;
     }
     
+    /* 13. TAGS DE PERSONNALITÉ */
     .personality-tags {
         justify-content: center;
     }
@@ -1542,12 +1648,23 @@ button {
     }
 }
 
+/* Cacher le bouton mobile sur desktop */
+@media (min-width: 769px) {
+    .mobile-login-btn-header {
+        display: none !important;
+    }
+}
+
 /* TRÈS PETITS ÉCRANS */
 @media (max-width: 480px) {
-    .nav-menu {
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
+    .mobile-login-btn-header {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .hamburger-menu {
+        width: 24px;
+        height: 18px;
     }
     
     .hero h1 {
