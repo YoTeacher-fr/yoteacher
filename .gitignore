@@ -13,3 +13,10 @@ config.js
 node_modules/
 dist/
 build/
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
