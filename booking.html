@@ -1,3 +1,5 @@
+[file name]: booking.html
+[file content begin]
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -537,7 +539,9 @@
 
             // Initialiser le calendrier
             initCalendar();
-            loadAvailableSlots();
+            // Charger les créneaux pour aujourd'hui par défaut
+            const today = new Date().toISOString().split('T')[0];
+            selectToday(today);
 
             // Navigation du calendrier
             document.getElementById('prevMonth').addEventListener('click', () => {
@@ -559,7 +563,12 @@
             });
 
             // Changement de type de cours
-            document.getElementById('courseType').addEventListener('change', updateSummary);
+            document.getElementById('courseType').addEventListener('change', function() {
+                if (selectedDate) {
+                    loadAvailableSlots(selectedDate);
+                }
+                updateSummary();
+            });
 
             // Soumission du formulaire
             bookingForm.addEventListener('submit', async function(e) {
@@ -586,15 +595,10 @@
                 submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation en cours...';
 
                 try {
-                    // Calculer l'heure de fin
-                    const startTime = new Date(selectedDate + 'T' + selectedTime);
-                    const endTime = new Date(startTime);
-                    
-                    // Déterminer la durée en fonction du type de cours
-                    let duration = 60; // Par défaut 60 minutes
-                    if (courseType === 'essai') duration = 15;
-                    
-                    endTime.setMinutes(endTime.getMinutes() + duration);
+                    // Utiliser les données du créneau sélectionné
+                    if (!selectedSlot) {
+                        throw new Error('Aucun créneau sélectionné');
+                    }
 
                     // Calculer le prix
                     let price = 20; // Par défaut conversation
@@ -603,8 +607,8 @@
 
                     const bookingData = {
                         eventType: courseType,
-                        startTime: startTime.toISOString(),
-                        endTime: endTime.toISOString(),
+                        startTime: selectedSlot.start,
+                        endTime: selectedSlot.end,
                         name: name,
                         email: email,
                         notes: notes,
@@ -671,6 +675,9 @@
                     const dayElement = document.createElement('div');
                     dayElement.className = 'calendar-day';
                     dayElement.textContent = day;
+                    dayElement.setAttribute('data-date', 
+                        `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                    );
                     
                     // Marquer aujourd'hui
                     if (date.getDate() === today.getDate() && 
@@ -683,10 +690,26 @@
                     if (date < today) {
                         dayElement.classList.add('disabled');
                     } else {
-                        dayElement.addEventListener('click', () => selectDate(day));
+                        dayElement.addEventListener('click', () => selectDate(
+                            `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                        ));
                     }
 
                     calendarDays.appendChild(dayElement);
+                }
+            }
+
+            function selectToday(today) {
+                // Sélectionner la date d'aujourd'hui par défaut
+                const todayElement = document.querySelector(`.calendar-day[data-date="${today}"]`);
+                if (todayElement && !todayElement.classList.contains('disabled')) {
+                    selectDate(today);
+                } else {
+                    // Sinon, sélectionner la première date disponible
+                    const firstAvailable = document.querySelector('.calendar-day:not(.disabled)');
+                    if (firstAvailable) {
+                        selectDate(firstAvailable.getAttribute('data-date'));
+                    }
                 }
             }
 
@@ -695,7 +718,12 @@
                     // Afficher un message de chargement
                     timeSlots.innerHTML = '<div class="loading-slots"><i class="fas fa-spinner fa-spin"></i> Chargement des créneaux...</div>';
                     
-                    const slots = await window.bookingManager.getAvailableSlots();
+                    // Récupérer le type de cours sélectionné
+                    const courseType = document.getElementById('courseType').value || 'essai';
+                    
+                    // Appeler l'API avec la date et le type de cours
+                    const slots = await window.bookingManager.getAvailableSlots(courseType, date);
+                    
                     timeSlots.innerHTML = '';
                     
                     if (slots.length === 0) {
@@ -708,10 +736,10 @@
                     
                     slots.forEach(slot => {
                         const slotDate = new Date(slot.start);
-                        const today = new Date();
+                        const now = new Date();
                         
                         // Ne montrer que les créneaux futurs
-                        if (slotDate > today) {
+                        if (slotDate > now) {
                             hasFutureSlots = true;
                             const slotElement = document.createElement('div');
                             slotElement.className = 'time-slot';
@@ -741,7 +769,7 @@
                             <i class="fas fa-exclamation-triangle"></i>
                             <p>Erreur lors du chargement des créneaux</p>
                             <p class="error-details">${error.message || 'Veuillez réessayer'}</p>
-                            <button onclick="loadAvailableSlots()" class="retry-btn">
+                            <button onclick="loadAvailableSlots('${date}')" class="retry-btn">
                                 <i class="fas fa-redo"></i> Réessayer
                             </button>
                         </div>
@@ -749,18 +777,15 @@
                 }
             }
 
-            function selectDate(day) {
-                selectedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            function selectDate(date) {
+                selectedDate = date;
                 
                 // Mettre à jour la sélection visuelle
                 document.querySelectorAll('.calendar-day').forEach(dayEl => {
                     dayEl.classList.remove('selected');
                 });
                 
-                const selectedDayElement = Array.from(document.querySelectorAll('.calendar-day')).find(el => 
-                    el.textContent == day && !el.classList.contains('disabled')
-                );
-                
+                const selectedDayElement = document.querySelector(`.calendar-day[data-date="${date}"]`);
                 if (selectedDayElement) {
                     selectedDayElement.classList.add('selected');
                 }
@@ -843,3 +868,4 @@
     </script>
 </body>
 </html>
+[file content end]
