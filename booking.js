@@ -28,12 +28,15 @@ class BookingManager {
     }
 
     // Créer les headers pour l'authentification
-    getAuthHeaders() {
+    getAuthHeaders(endpoint = 'slots') {
+        // /slots utilise 2024-09-04, /bookings utilise 2024-08-13
+        const apiVersion = endpoint === 'bookings' ? '2024-08-13' : '2024-09-04';
+        
         return {
             'Authorization': `Bearer ${this.calcomApiKey}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'cal-api-version': '2024-08-13' // Version API requise
+            'cal-api-version': apiVersion
         };
     }
 
@@ -51,23 +54,20 @@ class BookingManager {
 
             console.log(`🔍 Recherche créneaux pour eventTypeId: ${eventTypeId}, date: ${targetDate}, timeZone: ${this.timeZone}`);
 
-            // API v2 - Format requis en UTC
-            const startTime = `${targetDate}T00:00:00Z`;
-            const endTime = `${targetDate}T23:59:59Z`;
-
-            // Méthode GET avec query parameters pour /slots
+            // API v2 - Paramètres requis : start et end (pas startTime/endTime)
+            // Format : YYYY-MM-DD (pas ISO complet)
             const queryParams = new URLSearchParams({
                 eventTypeId: eventTypeId,
-                startTime: startTime,
-                endTime: endTime,
+                start: targetDate,  // Format : 2026-01-03
+                end: targetDate,    // Même jour pour voir les créneaux du jour
                 timeZone: this.timeZone
             });
 
             const response = await fetch(
                 `${this.apiBaseUrl}/slots?${queryParams}`,
                 {
-                    method: 'GET', // GET pour récupérer les slots
-                    headers: this.getAuthHeaders()
+                    method: 'GET',
+                    headers: this.getAuthHeaders('slots')
                 }
             );
             
@@ -208,7 +208,7 @@ class BookingManager {
             console.log(`🔍 Vérification de l'event type ID: ${eventTypeId}`);
             
             const response = await fetch(`${this.apiBaseUrl}/event-types`, {
-                headers: this.getAuthHeaders()
+                headers: this.getAuthHeaders('slots')
             });
             
             if (response.ok) {
@@ -279,7 +279,7 @@ class BookingManager {
                 `${this.apiBaseUrl}/bookings`,
                 {
                     method: 'POST',
-                    headers: this.getAuthHeaders(),
+                    headers: this.getAuthHeaders('bookings'),
                     body: JSON.stringify(bookingPayload)
                 }
             );
@@ -454,7 +454,7 @@ window.debugCalcomConfig = async function() {
     if (config.CALCOM_API_KEY) {
         try {
             const response = await fetch(`${manager.apiBaseUrl}/event-types`, {
-                headers: manager.getAuthHeaders()
+                headers: manager.getAuthHeaders('slots')
             });
             
             if (response.ok) {
@@ -578,7 +578,7 @@ window.checkCalcomHealth = async function() {
     
     try {
         const response = await fetch(`${manager.apiBaseUrl}/event-types`, {
-            headers: manager.getAuthHeaders()
+            headers: manager.getAuthHeaders('slots')
         });
         
         const data = response.ok ? await response.json() : null;
