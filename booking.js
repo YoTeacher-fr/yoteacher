@@ -4,7 +4,7 @@ class BookingManager {
         const config = window.YOTEACHER_CONFIG || {};
         this.calcomApiKey = config.CALCOM_API_KEY;
         this.calcomUsername = config.CALCOM_USERNAME || 'yoann-bourbia-6ido9g';
-        this.apiBaseUrl = 'https://api.cal.com/api/v2';
+        this.apiBaseUrl = 'https://api.cal.com/v2';
         this.eventTypeMap = {
             'essai': config.CALCOM_EVENT_TYPE_ESSAI || '4139074',
             'conversation': config.CALCOM_EVENT_TYPE_CONVERSATION || '',
@@ -27,6 +27,16 @@ class BookingManager {
         return true;
     }
 
+    // Créer les headers pour l'authentification
+    getAuthHeaders() {
+        return {
+            'Authorization': `Bearer ${this.calcomApiKey}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'cal-api-version': '2024-08-13' // Version API requise
+        };
+    }
+
     // Récupérer les créneaux disponibles (API v2)
     async getAvailableSlots(eventType = 'essai', date = null) {
         try {
@@ -41,24 +51,23 @@ class BookingManager {
 
             console.log(`🔍 Recherche créneaux pour eventTypeId: ${eventTypeId}, date: ${targetDate}, timeZone: ${this.timeZone}`);
 
-            // API v2 - Format requis
-            const startTime = `${targetDate}T00:00:00.000Z`;
-            const endTime = `${targetDate}T23:59:59.999Z`;
+            // API v2 - Format requis en UTC
+            const startTime = `${targetDate}T00:00:00Z`;
+            const endTime = `${targetDate}T23:59:59Z`;
+
+            // Méthode GET avec query parameters pour /slots
+            const queryParams = new URLSearchParams({
+                eventTypeId: eventTypeId,
+                startTime: startTime,
+                endTime: endTime,
+                timeZone: this.timeZone
+            });
 
             const response = await fetch(
-                `${this.apiBaseUrl}/slots?apiKey=${this.calcomApiKey}`,
+                `${this.apiBaseUrl}/slots?${queryParams}`,
                 {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        eventTypeId: parseInt(eventTypeId),
-                        startTime: startTime,
-                        endTime: endTime,
-                        timeZone: this.timeZone
-                    })
+                    method: 'GET', // GET pour récupérer les slots
+                    headers: this.getAuthHeaders()
                 }
             );
             
@@ -70,7 +79,6 @@ class BookingManager {
                     text: errorText 
                 });
                 
-                // Essayons de voir plus de détails
                 try {
                     const errorData = JSON.parse(errorText);
                     console.error('Détails erreur:', errorData);
@@ -79,8 +87,8 @@ class BookingManager {
                         throw new Error('Paramètres invalides pour l\'API Cal.com');
                     }
                     
-                    if (errorData.message && errorData.message.includes('Unauthorized')) {
-                        throw new Error('Clé API Cal.com invalide ou expirée');
+                    if (errorData.message && (errorData.message.includes('Unauthorized') || errorData.message.includes('unauthorized'))) {
+                        throw new Error('Clé API Cal.com invalide ou expirée. Vérifiez votre clé dans config.js');
                     }
                     
                     if (errorData.message && errorData.message.includes('not found')) {
@@ -91,6 +99,9 @@ class BookingManager {
                     throw new Error(`API Cal.com: ${errorData.message || 'Erreur inconnue'}`);
                     
                 } catch (parseError) {
+                    if (response.status === 401) {
+                        throw new Error('Authentification échouée. Vérifiez que votre clé API est valide et commence par "cal_live_" ou "cal_test_"');
+                    }
                     throw new Error(`API Cal.com: ${response.status} - ${errorText || response.statusText}`);
                 }
             }
@@ -100,24 +111,26 @@ class BookingManager {
             // Log pour débogage
             console.log('📅 Données reçues de Cal.com v2:', data);
             
-            if (!data || !data.slots) {
+            if (!data || !data.data || !data.data.slots) {
                 console.warn('Aucun créneau disponible ou format de réponse inattendu');
                 return [];
             }
             
             // Convertir le format des créneaux pour notre interface
-            const formattedSlots = data.slots.map(slot => ({
-                id: slot.time,
-                start: slot.time,
-                end: this.calculateEndTime(slot.time, eventType),
-                time: new Date(slot.time).toLocaleTimeString('fr-FR', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                }),
-                duration: this.getDuration(eventType),
-                seatsAvailable: slot.seatsAvailable || 1,
-                eventTypeId: eventTypeId
-            }));
+            const slots = data.data.slots;
+            const formattedSlots = Object.entries(slots).flatMap(([date, times]) => {
+                return times.map(time => ({
+                    id: time,
+                    start: time,
+                    end: this.calculateEndTime(time, eventType),
+                    time: new Date(time).toLocaleTimeString('fr-FR', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    }),
+                    duration: this.getDuration(eventType),
+                    eventTypeId: eventTypeId
+                }));
+            });
             
             console.log(`✅ ${formattedSlots.length} créneau(x) disponible(s)`);
             return formattedSlots;
@@ -173,14 +186,13 @@ class BookingManager {
         
         // Générer des créneaux toutes les heures de 9h à 18h
         for (let hour = 9; hour <= 18; hour++) {
-            const slotTime = `${baseDate}T${hour.toString().padStart(2, '0')}:00:00.000Z`;
+            const slotTime = `${baseDate}T${hour.toString().padStart(2, '0')}:00:00Z`;
             slots.push({
                 id: `mock_${hour}`,
                 start: slotTime,
                 end: this.calculateEndTime(slotTime, eventType),
                 time: `${hour}:00`,
                 duration: this.getDuration(eventType),
-                seatsAvailable: 1,
                 eventTypeId: this.eventTypeMap[eventType],
                 isMock: true
             });
@@ -195,14 +207,13 @@ class BookingManager {
         try {
             console.log(`🔍 Vérification de l'event type ID: ${eventTypeId}`);
             
-            const response = await fetch(`${this.apiBaseUrl}/event-types?apiKey=${this.calcomApiKey}`, {
-                headers: {
-                    'Accept': 'application/json'
-                }
+            const response = await fetch(`${this.apiBaseUrl}/event-types`, {
+                headers: this.getAuthHeaders()
             });
             
             if (response.ok) {
-                const data = await response.json();
+                const result = await response.json();
+                const data = result.data || result;
                 console.log('📋 Vos event types disponibles:', data);
                 
                 if (data.eventTypes) {
@@ -246,13 +257,14 @@ class BookingManager {
 
             // Préparer les données pour l'API v2
             const bookingPayload = {
-                eventTypeId: parseInt(eventTypeId),
                 start: bookingData.startTime,
-                end: bookingData.endTime,
-                name: bookingData.name,
-                email: bookingData.email,
-                timeZone: this.timeZone,
-                language: 'fr',
+                eventTypeId: parseInt(eventTypeId),
+                attendee: {
+                    name: bookingData.name,
+                    email: bookingData.email,
+                    timeZone: this.timeZone,
+                    language: 'fr'
+                },
                 metadata: {
                     userId: user?.id || null,
                     courseType: bookingData.courseType,
@@ -264,13 +276,10 @@ class BookingManager {
             console.log('📤 Envoi de la réservation à Cal.com:', bookingPayload);
 
             const response = await fetch(
-                `${this.apiBaseUrl}/bookings?apiKey=${this.calcomApiKey}`,
+                `${this.apiBaseUrl}/bookings`,
                 {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
+                    headers: this.getAuthHeaders(),
                     body: JSON.stringify(bookingPayload)
                 }
             );
@@ -290,18 +299,19 @@ class BookingManager {
                 }
             }
 
-            const data = await response.json();
+            const result = await response.json();
+            const data = result.data || result;
             console.log('✅ Réservation créée:', data);
             
             // Enregistrer dans Supabase
-            if (data.booking && user) {
-                await this.saveBookingToSupabase(data.booking, user.id);
+            if (data && user) {
+                await this.saveBookingToSupabase(data, user.id);
             }
 
             return {
                 success: true,
                 data: data,
-                booking: data.booking || data
+                booking: data
             };
             
         } catch (error) {
@@ -324,24 +334,21 @@ class BookingManager {
                 const mockBooking = {
                     id: `mock_${Date.now()}`,
                     uid: `mock_${Date.now()}`,
-                    startTime: bookingData.startTime,
-                    endTime: bookingData.endTime,
+                    start: bookingData.startTime,
+                    end: bookingData.endTime,
                     title: `Cours ${bookingData.courseType}`,
                     description: bookingData.notes || '',
                     attendees: [{
                         email: bookingData.email,
                         name: bookingData.name
-                    }],
-                    paymentRequired: bookingData.price > 0,
-                    paymentAmount: bookingData.price,
-                    paymentCurrency: 'EUR'
+                    }]
                 };
                 
                 console.log('✅ Réservation simulée créée:', mockBooking);
                 
                 resolve({
                     success: true,
-                    data: { booking: mockBooking },
+                    data: mockBooking,
                     booking: mockBooking,
                     message: 'Réservation simulée réussie (mode développement)'
                 });
@@ -361,10 +368,10 @@ class BookingManager {
                 user_id: userId,
                 calcom_id: calcomBooking.id || calcomBooking.uid,
                 event_type: calcomBooking.eventType || 'essai',
-                start_time: calcomBooking.startTime || calcomBooking.start,
-                end_time: calcomBooking.endTime || calcomBooking.end,
+                start_time: calcomBooking.start || calcomBooking.startTime,
+                end_time: calcomBooking.end || calcomBooking.endTime,
                 status: calcomBooking.status || 'confirmed',
-                meet_link: calcomBooking.videoCallData?.url || calcomBooking.meetingUrl,
+                meet_link: calcomBooking.meetingUrl,
                 booking_data: calcomBooking,
                 created_at: new Date().toISOString()
             };
@@ -377,7 +384,6 @@ class BookingManager {
 
             if (error) {
                 console.warn('Erreur sauvegarde Supabase:', error);
-                // Ne pas lancer d'erreur car la réservation Cal.com a déjà réussi
                 return false;
             }
             
@@ -447,23 +453,30 @@ window.debugCalcomConfig = async function() {
     // Tester la connexion API avec l'endpoint /event-types
     if (config.CALCOM_API_KEY) {
         try {
-            const response = await fetch(`${manager.apiBaseUrl}/event-types?apiKey=${config.CALCOM_API_KEY}`);
+            const response = await fetch(`${manager.apiBaseUrl}/event-types`, {
+                headers: manager.getAuthHeaders()
+            });
+            
             if (response.ok) {
-                const data = await response.json();
+                const result = await response.json();
+                const data = result.data || result;
                 console.log('✅ Connexion API réussie');
                 console.log('Event types disponibles:', data.eventTypes || data);
                 
                 // Vérifier chaque event type configuré
                 Object.entries(manager.eventTypeMap).forEach(([key, value]) => {
                     if (value) {
-                        const found = (data.eventTypes || []).find(e => e.id == value || e.id === parseInt(value));
+                        const eventTypes = data.eventTypes || [];
+                        const found = eventTypes.find(e => e.id == value || e.id === parseInt(value));
                         console.log(`${key} (ID: ${value}):`, found ? `✅ Trouvé: "${found.title}"` : '❌ Non trouvé');
                     } else {
                         console.log(`${key}: ❌ Non configuré`);
                     }
                 });
             } else {
+                const errorText = await response.text();
                 console.error('❌ Erreur connexion API:', response.status, response.statusText);
+                console.error('Détails:', errorText);
             }
         } catch (error) {
             console.error('❌ Erreur connexion API:', error);
@@ -564,14 +577,18 @@ window.checkCalcomHealth = async function() {
     }
     
     try {
-        const response = await fetch(`${manager.apiBaseUrl}/event-types?apiKey=${manager.calcomApiKey}`);
-        const data = await response.ok ? await response.json() : null;
+        const response = await fetch(`${manager.apiBaseUrl}/event-types`, {
+            headers: manager.getAuthHeaders()
+        });
+        
+        const data = response.ok ? await response.json() : null;
         
         console.log(`Status: ${response.status} ${response.statusText}`);
         console.log('Health:', response.ok ? '✅ API fonctionnelle' : '❌ API non fonctionnelle');
         
-        if (data && data.eventTypes) {
-            console.log(`Event types disponibles: ${data.eventTypes.length}`);
+        if (data && (data.eventTypes || data.data?.eventTypes)) {
+            const eventTypes = data.eventTypes || data.data.eventTypes;
+            console.log(`Event types disponibles: ${eventTypes.length}`);
         }
         
         return response.ok;
