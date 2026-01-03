@@ -110,20 +110,36 @@ class BookingManager {
             
             // Log pour débogage
             console.log('📅 Données reçues de Cal.com v2:', data);
+            console.log('📅 Structure data.data:', data.data);
             
-            if (!data || !data.data || !data.data.slots) {
+            if (!data || !data.data || typeof data.data !== 'object') {
                 console.warn('Aucun créneau disponible ou format de réponse inattendu');
                 return [];
             }
             
+            // data.data est un objet avec des dates comme clés
+            // Exemple: { "2026-01-03": [{ start: "...", ... }], "2026-01-04": [...] }
+            const slotsData = data.data;
+            
+            // Vérifier s'il y a des créneaux
+            const allSlots = Object.values(slotsData).flat();
+            if (allSlots.length === 0) {
+                console.warn('Aucun créneau disponible pour cette date');
+                return [];
+            }
+            
             // Convertir le format des créneaux pour notre interface
-            const slots = data.data.slots;
-            const formattedSlots = Object.entries(slots).flatMap(([date, times]) => {
-                return times.map(time => ({
-                    id: time,
-                    start: time,
-                    end: this.calculateEndTime(time, eventType),
-                    time: new Date(time).toLocaleTimeString('fr-FR', { 
+            const formattedSlots = Object.entries(slotsData).flatMap(([date, slots]) => {
+                if (!Array.isArray(slots)) {
+                    console.warn(`Slots pour ${date} n'est pas un tableau:`, slots);
+                    return [];
+                }
+                
+                return slots.map(slot => ({
+                    id: slot.time,
+                    start: slot.time,
+                    end: this.calculateEndTime(slot.time, eventType),
+                    time: new Date(slot.time).toLocaleTimeString('fr-FR', { 
                         hour: '2-digit', 
                         minute: '2-digit' 
                     }),
