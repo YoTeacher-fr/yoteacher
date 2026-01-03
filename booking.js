@@ -1,15 +1,16 @@
-// Gestion des réservations avec Cal.com
+// Gestion des réservations avec Cal.com (API v2)
 class BookingManager {
     constructor() {
         const config = window.YOTEACHER_CONFIG || {};
         this.calcomApiKey = config.CALCOM_API_KEY;
         this.calcomUsername = config.CALCOM_USERNAME || 'yoann-bourbia-6ido9g';
-        this.apiVersion = 'v1'; // Utiliser v1 qui est plus stable
+        this.apiBaseUrl = 'https://api.cal.com/api/v2';
         this.eventTypeMap = {
             'essai': config.CALCOM_EVENT_TYPE_ESSAI || '4139074',
             'conversation': config.CALCOM_EVENT_TYPE_CONVERSATION || '',
             'curriculum': config.CALCOM_EVENT_TYPE_CURRICULUM || ''
         };
+        this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
 
     // Vérifier la configuration Cal.com
@@ -26,7 +27,7 @@ class BookingManager {
         return true;
     }
 
-    // Récupérer les créneaux disponibles
+    // Récupérer les créneaux disponibles (API v2)
     async getAvailableSlots(eventType = 'essai', date = null) {
         try {
             this.checkCalcomConfig();
@@ -38,79 +39,200 @@ class BookingManager {
                 throw new Error(`Type de cours "${eventType}" non configuré dans Cal.com`);
             }
 
-            console.log(`🔍 Recherche créneaux pour eventTypeId: ${eventTypeId}, date: ${targetDate}`);
+            console.log(`🔍 Recherche créneaux pour eventTypeId: ${eventTypeId}, date: ${targetDate}, timeZone: ${this.timeZone}`);
 
-            // API v1 (plus stable et documentée)
-            const params = new URLSearchParams({
-                apiKey: this.calcomApiKey,
-                eventTypeId: eventTypeId,
-                date: targetDate
-            });
+            // API v2 - Format requis
+            const startTime = `${targetDate}T00:00:00.000Z`;
+            const endTime = `${targetDate}T23:59:59.999Z`;
 
             const response = await fetch(
-                `https://api.cal.com/v1/availability?${params.toString()}`,
+                `${this.apiBaseUrl}/slots?apiKey=${this.calcomApiKey}`,
                 {
+                    method: 'POST',
                     headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        eventTypeId: parseInt(eventTypeId),
+                        startTime: startTime,
+                        endTime: endTime,
+                        timeZone: this.timeZone
+                    })
                 }
             );
             
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Réponse API Cal.com:', { status: response.status, text: errorText });
+                console.error('Réponse API Cal.com v2:', { 
+                    status: response.status, 
+                    statusText: response.statusText,
+                    text: errorText 
+                });
                 
-                // Si 404, tester si l'event type existe
-                if (response.status === 404) {
-                    await this.verifyEventTypeExists(eventTypeId);
+                // Essayons de voir plus de détails
+                try {
+                    const errorData = JSON.parse(errorText);
+                    console.error('Détails erreur:', errorData);
+                    
+                    if (errorData.message && errorData.message.includes('invalid_type')) {
+                        throw new Error('Paramètres invalides pour l\'API Cal.com');
+                    }
+                    
+                    if (errorData.message && errorData.message.includes('Unauthorized')) {
+                        throw new Error('Clé API Cal.com invalide ou expirée');
+                    }
+                    
+                    if (errorData.message && errorData.message.includes('not found')) {
+                        await this.verifyEventTypeExists(eventTypeId);
+                        throw new Error(`Type d'événement non trouvé (ID: ${eventTypeId})`);
+                    }
+                    
+                    throw new Error(`API Cal.com: ${errorData.message || 'Erreur inconnue'}`);
+                    
+                } catch (parseError) {
+                    throw new Error(`API Cal.com: ${response.status} - ${errorText || response.statusText}`);
                 }
-                
-                throw new Error(`API Cal.com: ${response.status} - ${errorText || response.statusText}`);
             }
             
             const data = await response.json();
             
             // Log pour débogage
-            console.log('📅 Données reçues de Cal.com:', data);
+            console.log('📅 Données reçues de Cal.com v2:', data);
             
-            return data.availableSlots || [];
+            if (!data || !data.slots) {
+                console.warn('Aucun créneau disponible ou format de réponse inattendu');
+                return [];
+            }
+            
+            // Convertir le format des créneaux pour notre interface
+            const formattedSlots = data.slots.map(slot => ({
+                id: slot.time,
+                start: slot.time,
+                end: this.calculateEndTime(slot.time, eventType),
+                time: new Date(slot.time).toLocaleTimeString('fr-FR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                }),
+                duration: this.getDuration(eventType),
+                seatsAvailable: slot.seatsAvailable || 1,
+                eventTypeId: eventTypeId
+            }));
+            
+            console.log(`✅ ${formattedSlots.length} créneau(x) disponible(s)`);
+            return formattedSlots;
             
         } catch (error) {
-            console.error('Erreur Cal.com:', error);
-            throw error;
+            console.error('❌ Erreur Cal.com:', error);
+            
+            // Mode dégradé : simuler des créneaux pour le développement
+            if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+                console.warn('⚠️ Mode développement : simulation de créneaux');
+                return this.generateMockSlots(date, eventType);
+            }
+            
+            throw new Error(`Impossible de charger les créneaux : ${error.message}`);
         }
+    }
+
+    // Calculer l'heure de fin en fonction du type de cours
+    calculateEndTime(startTime, eventType) {
+        const start = new Date(startTime);
+        let duration = 60; // minutes par défaut
+        
+        switch(eventType) {
+            case 'essai':
+                duration = 15;
+                break;
+            case 'conversation':
+                duration = 60;
+                break;
+            case 'curriculum':
+                duration = 60;
+                break;
+        }
+        
+        const end = new Date(start.getTime() + duration * 60000);
+        return end.toISOString();
+    }
+
+    // Obtenir la durée en texte
+    getDuration(eventType) {
+        switch(eventType) {
+            case 'essai': return '15 min';
+            case 'conversation': return '60 min';
+            case 'curriculum': return '60 min';
+            default: return '60 min';
+        }
+    }
+
+    // Générer des créneaux simulés pour le développement
+    generateMockSlots(date, eventType) {
+        const baseDate = date || this.getToday();
+        const slots = [];
+        
+        // Générer des créneaux toutes les heures de 9h à 18h
+        for (let hour = 9; hour <= 18; hour++) {
+            const slotTime = `${baseDate}T${hour.toString().padStart(2, '0')}:00:00.000Z`;
+            slots.push({
+                id: `mock_${hour}`,
+                start: slotTime,
+                end: this.calculateEndTime(slotTime, eventType),
+                time: `${hour}:00`,
+                duration: this.getDuration(eventType),
+                seatsAvailable: 1,
+                eventTypeId: this.eventTypeMap[eventType],
+                isMock: true
+            });
+        }
+        
+        console.log(`⚠️ Mode simulation: ${slots.length} créneaux générés`);
+        return slots;
     }
 
     // Vérifier si l'event type existe
     async verifyEventTypeExists(eventTypeId) {
         try {
-            const response = await fetch('https://api.cal.com/v1/event-types', {
+            console.log(`🔍 Vérification de l'event type ID: ${eventTypeId}`);
+            
+            const response = await fetch(`${this.apiBaseUrl}/event-types?apiKey=${this.calcomApiKey}`, {
                 headers: {
-                    'Authorization': `Bearer ${this.calcomApiKey}`,
                     'Accept': 'application/json'
                 }
             });
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('📋 Vos event types disponibles:', data.event_types || data);
+                console.log('📋 Vos event types disponibles:', data);
                 
-                const foundEvent = (data.event_types || data).find(
-                    event => event.id == eventTypeId || event.id === parseInt(eventTypeId)
-                );
-                
-                if (!foundEvent) {
-                    console.error(`❌ Event type ID ${eventTypeId} non trouvé dans vos event types`);
-                    console.log('IDs disponibles:', (data.event_types || data).map(e => ({ id: e.id, slug: e.slug, title: e.title })));
+                if (data.eventTypes) {
+                    const foundEvent = data.eventTypes.find(
+                        event => event.id == eventTypeId || event.id === parseInt(eventTypeId)
+                    );
+                    
+                    if (!foundEvent) {
+                        console.error(`❌ Event type ID ${eventTypeId} non trouvé dans vos event types`);
+                        console.log('IDs disponibles:', data.eventTypes.map(e => ({ 
+                            id: e.id, 
+                            slug: e.slug, 
+                            title: e.title,
+                            length: e.length 
+                        })));
+                    } else {
+                        console.log(`✅ Event type trouvé: ${foundEvent.title} (${foundEvent.length} min)`);
+                    }
+                } else {
+                    console.warn('Format de réponse inattendu pour /event-types');
                 }
+            } else {
+                console.warn('Impossible de vérifier les event types, status:', response.status);
             }
         } catch (error) {
-            console.warn('Impossible de vérifier les event types:', error);
+            console.warn('Erreur lors de la vérification des event types:', error);
         }
     }
 
-    // Créer une réservation
+    // Créer une réservation (API v2)
     async createBooking(bookingData) {
         try {
             this.checkCalcomConfig();
@@ -122,49 +244,109 @@ class BookingManager {
                 throw new Error(`Type de cours "${bookingData.eventType}" non configuré`);
             }
 
-            const booking = {
+            // Préparer les données pour l'API v2
+            const bookingPayload = {
                 eventTypeId: parseInt(eventTypeId),
                 start: bookingData.startTime,
                 end: bookingData.endTime,
                 name: bookingData.name,
                 email: bookingData.email,
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                notes: bookingData.notes || '',
+                timeZone: this.timeZone,
+                language: 'fr',
                 metadata: {
                     userId: user?.id || null,
                     courseType: bookingData.courseType,
-                    price: bookingData.price
+                    price: bookingData.price,
+                    notes: bookingData.notes || ''
                 }
             };
 
-            // API v1 pour la création aussi
-            const params = new URLSearchParams({ apiKey: this.calcomApiKey });
-            const response = await fetch(`https://api.cal.com/v1/bookings?${params.toString()}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(booking)
-            });
+            console.log('📤 Envoi de la réservation à Cal.com:', bookingPayload);
+
+            const response = await fetch(
+                `${this.apiBaseUrl}/bookings?apiKey=${this.calcomApiKey}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(bookingPayload)
+                }
+            );
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`API Cal.com: ${response.status} - ${errorText}`);
+                console.error('Erreur création réservation:', { 
+                    status: response.status, 
+                    text: errorText 
+                });
+                
+                try {
+                    const errorData = JSON.parse(errorText);
+                    throw new Error(errorData.message || 'Erreur lors de la création de la réservation');
+                } catch (e) {
+                    throw new Error(`API Cal.com: ${response.status} - ${errorText}`);
+                }
             }
 
             const data = await response.json();
+            console.log('✅ Réservation créée:', data);
             
             // Enregistrer dans Supabase
             if (data.booking && user) {
                 await this.saveBookingToSupabase(data.booking, user.id);
             }
 
-            return data;
+            return {
+                success: true,
+                data: data,
+                booking: data.booking || data
+            };
             
         } catch (error) {
-            console.error('Erreur création réservation:', error);
-            throw error;
+            console.error('❌ Erreur création réservation:', error);
+            
+            // Mode développement : simuler une réservation réussie
+            if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+                console.warn('⚠️ Mode développement : simulation de réservation');
+                return this.mockBooking(bookingData);
+            }
+            
+            throw new Error(`Échec de la réservation : ${error.message}`);
         }
+    }
+
+    // Simulation de réservation pour le développement
+    async mockBooking(bookingData) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const mockBooking = {
+                    id: `mock_${Date.now()}`,
+                    uid: `mock_${Date.now()}`,
+                    startTime: bookingData.startTime,
+                    endTime: bookingData.endTime,
+                    title: `Cours ${bookingData.courseType}`,
+                    description: bookingData.notes || '',
+                    attendees: [{
+                        email: bookingData.email,
+                        name: bookingData.name
+                    }],
+                    paymentRequired: bookingData.price > 0,
+                    paymentAmount: bookingData.price,
+                    paymentCurrency: 'EUR'
+                };
+                
+                console.log('✅ Réservation simulée créée:', mockBooking);
+                
+                resolve({
+                    success: true,
+                    data: { booking: mockBooking },
+                    booking: mockBooking,
+                    message: 'Réservation simulée réussie (mode développement)'
+                });
+            }, 1000);
+        });
     }
 
     // Enregistrer la réservation dans Supabase
@@ -175,24 +357,28 @@ class BookingManager {
                 return false;
             }
 
+            const bookingData = {
+                user_id: userId,
+                calcom_id: calcomBooking.id || calcomBooking.uid,
+                event_type: calcomBooking.eventType || 'essai',
+                start_time: calcomBooking.startTime || calcomBooking.start,
+                end_time: calcomBooking.endTime || calcomBooking.end,
+                status: calcomBooking.status || 'confirmed',
+                meet_link: calcomBooking.videoCallData?.url || calcomBooking.meetingUrl,
+                booking_data: calcomBooking,
+                created_at: new Date().toISOString()
+            };
+
+            console.log('💾 Sauvegarde dans Supabase:', bookingData);
+
             const { error } = await supabase
                 .from('bookings')
-                .insert([
-                    {
-                        user_id: userId,
-                        calcom_id: calcomBooking.id || calcomBooking.bookingId,
-                        event_type: calcomBooking.eventType || 'essai',
-                        start_time: calcomBooking.startTime || calcomBooking.start,
-                        end_time: calcomBooking.endTime || calcomBooking.end,
-                        status: calcomBooking.status || 'confirmed',
-                        meet_link: calcomBooking.meetingUrl || calcomBooking.videoCallUrl,
-                        created_at: new Date().toISOString()
-                    }
-                ]);
+                .insert([bookingData]);
 
             if (error) {
                 console.warn('Erreur sauvegarde Supabase:', error);
-                throw error;
+                // Ne pas lancer d'erreur car la réservation Cal.com a déjà réussi
+                return false;
             }
             
             console.log('✅ Réservation sauvegardée dans Supabase');
@@ -200,10 +386,11 @@ class BookingManager {
             
         } catch (error) {
             console.error('Exception sauvegarde Supabase:', error);
-            throw error;
+            return false;
         }
     }
 
+    // Obtenir la date d'aujourd'hui au format YYYY-MM-DD
     getToday() {
         return new Date().toISOString().split('T')[0];
     }
@@ -217,11 +404,27 @@ class BookingManager {
                 minute: '2-digit',
                 weekday: 'long',
                 day: 'numeric',
-                month: 'long'
+                month: 'long',
+                year: 'numeric'
             });
         } catch (error) {
             console.warn('Erreur formatage date:', error);
             return dateTime || 'Date non disponible';
+        }
+    }
+
+    // Formater la date pour l'affichage
+    formatDate(dateString) {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch (error) {
+            return dateString;
         }
     }
 }
@@ -230,7 +433,7 @@ class BookingManager {
 window.bookingManager = new BookingManager();
 
 // Fonction de débogage pour vérifier la configuration
-window.debugCalcomConfig = function() {
+window.debugCalcomConfig = async function() {
     const config = window.YOTEACHER_CONFIG || {};
     const manager = window.bookingManager;
     
@@ -238,37 +441,142 @@ window.debugCalcomConfig = function() {
     console.log('API Key présente:', !!config.CALCOM_API_KEY);
     console.log('Username configuré:', config.CALCOM_USERNAME);
     console.log('Event Type IDs:', manager.eventTypeMap);
+    console.log('Fuseau horaire:', manager.timeZone);
+    console.log('URL API:', manager.apiBaseUrl);
     
-    // Tester la connexion API
+    // Tester la connexion API avec l'endpoint /event-types
     if (config.CALCOM_API_KEY) {
-        fetch('https://api.cal.com/v1/event-types', {
-            headers: {
-                'Authorization': `Bearer ${config.CALCOM_API_KEY}`
+        try {
+            const response = await fetch(`${manager.apiBaseUrl}/event-types?apiKey=${config.CALCOM_API_KEY}`);
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Connexion API réussie');
+                console.log('Event types disponibles:', data.eventTypes || data);
+                
+                // Vérifier chaque event type configuré
+                Object.entries(manager.eventTypeMap).forEach(([key, value]) => {
+                    if (value) {
+                        const found = (data.eventTypes || []).find(e => e.id == value || e.id === parseInt(value));
+                        console.log(`${key} (ID: ${value}):`, found ? `✅ Trouvé: "${found.title}"` : '❌ Non trouvé');
+                    } else {
+                        console.log(`${key}: ❌ Non configuré`);
+                    }
+                });
+            } else {
+                console.error('❌ Erreur connexion API:', response.status, response.statusText);
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('✅ Connexion API réussie');
-            console.log('Event types disponibles:', data.event_types || data);
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('❌ Erreur connexion API:', error);
-        });
+        }
+    } else {
+        console.error('❌ Aucune clé API configurée');
     }
+    
+    // Tester la récupération de créneaux
+    console.log('\n🧪 Test récupération créneaux:');
+    try {
+        const slots = await manager.getAvailableSlots('essai');
+        console.log(`📅 Créneaux disponibles: ${slots.length}`);
+        if (slots.length > 0) {
+            slots.slice(0, 3).forEach(slot => {
+                console.log(`  • ${manager.formatTime(slot.start)} (${slot.duration})`);
+            });
+            if (slots.length > 3) console.log(`  ... et ${slots.length - 3} autres`);
+        }
+    } catch (error) {
+        console.error('❌ Erreur récupération créneaux:', error.message);
+    }
+    
     console.groupEnd();
 };
 
 // Vérification de configuration au démarrage
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
-        console.log('🔧 BookingManager configuré:', {
+        console.log('🔧 BookingManager configuré avec API v2');
+        console.log('Configuration:', {
             hasApiKey: !!window.YOTEACHER_CONFIG?.CALCOM_API_KEY,
-            eventTypes: window.bookingManager?.eventTypeMap
+            eventTypes: window.bookingManager?.eventTypeMap,
+            apiVersion: 'v2',
+            baseUrl: window.bookingManager?.apiBaseUrl
         });
         
-        // Lancer le debug si en mode développement
-        if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+        // Afficher un avertissement si en mode développement sans clé API
+        if ((window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) && 
+            !window.YOTEACHER_CONFIG?.CALCOM_API_KEY) {
+            console.warn('⚠️ Mode développement : Aucune clé API Cal.com configurée. Les créneaux seront simulés.');
+            
+            // Afficher une notification à l'utilisateur
+            const devWarning = document.createElement('div');
+            devWarning.style.cssText = `
+                position: fixed;
+                bottom: 70px;
+                right: 20px;
+                background: #ff9800;
+                color: white;
+                padding: 10px 15px;
+                border-radius: 8px;
+                z-index: 9999;
+                font-size: 12px;
+                max-width: 250px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            devWarning.textContent = 'Mode développement : Créneaux simulés';
+            document.body.appendChild(devWarning);
+            
+            setTimeout(() => {
+                if (devWarning.parentElement) devWarning.remove();
+            }, 10000);
+        }
+        
+        // Lancer le debug si en mode développement et demandé
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('debug') === 'calcom') {
             window.debugCalcomConfig();
         }
     }, 1000);
 });
+
+// Fonction utilitaire pour tester rapidement depuis la console
+window.testCalcomSlots = async function(date = null, eventType = 'essai') {
+    console.log(`🧪 Test Cal.com slots pour ${eventType} le ${date || 'aujourd\'hui'}`);
+    try {
+        const slots = await window.bookingManager.getAvailableSlots(eventType, date);
+        console.log(`✅ ${slots.length} créneau(x) trouvé(s):`);
+        slots.forEach(slot => {
+            console.log(`  • ${window.bookingManager.formatTime(slot.start)} (${slot.duration})`);
+        });
+        return slots;
+    } catch (error) {
+        console.error(`❌ Erreur: ${error.message}`);
+        return [];
+    }
+};
+
+// Fonction pour vérifier la santé de l'API
+window.checkCalcomHealth = async function() {
+    console.log('🏥 Vérification santé API Cal.com...');
+    const manager = window.bookingManager;
+    
+    if (!manager.calcomApiKey) {
+        console.error('❌ Pas de clé API configurée');
+        return false;
+    }
+    
+    try {
+        const response = await fetch(`${manager.apiBaseUrl}/event-types?apiKey=${manager.calcomApiKey}`);
+        const data = await response.ok ? await response.json() : null;
+        
+        console.log(`Status: ${response.status} ${response.statusText}`);
+        console.log('Health:', response.ok ? '✅ API fonctionnelle' : '❌ API non fonctionnelle');
+        
+        if (data && data.eventTypes) {
+            console.log(`Event types disponibles: ${data.eventTypes.length}`);
+        }
+        
+        return response.ok;
+    } catch (error) {
+        console.error('❌ Erreur santé API:', error.message);
+        return false;
+    }
+};
