@@ -1,5 +1,5 @@
 // ===== CONFIGURATION =====
-const CONFIG = {
+const APP_CONFIG = {
     autoScrollOffset: 80,
     coursesScrollOffset: 200
 };

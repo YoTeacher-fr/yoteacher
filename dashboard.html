@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Dashboard - YoTeacher</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .dashboard {
+            padding: 100px 20px 60px;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: 25px;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, #3c84f6, #1e88e5);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(60, 132, 246, 0.2);
+        }
+
+        .welcome-message h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .welcome-message p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-header i {
+            font-size: 1.5rem;
+            color: #3c84f6;
+            background: rgba(60, 132, 246, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-header h2 {
+            font-size: 1.4rem;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3c84f6;
+            display: block;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .next-lesson {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border: 2px solid #4caf50;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .lesson-time {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .lesson-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-outline {
+            padding: 12px 24px;
+            border: 2px solid #3c84f6;
+            color: #3c84f6;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-outline:hover {
+            background: #3c84f6;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #3c84f6;
+        }
+
+        .error-message {
+            background: #ffeaea;
+            color: #d32f2f;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: 80px 15px 40px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .welcome-message h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header existant (sera mis à jour par auth.js) -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <button class="hamburger-menu" id="hamburgerBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
+                <div class="logo-section">
+                    <a href="index.html" class="logo">Yoann</a>
+                    <div class="flag">🇫🇷</div>
+                </div>
+                
+                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                
+                <nav class="nav-menu desktop-menu">
+                    <div class="nav-spacer"></div>
+                    <a href="index.html#about" class="nav-link">À propos</a>
+                    <a href="index.html#courses" class="nav-link">Cours</a>
+                    <a href="index.html#testimonials" class="nav-link">Témoignages</a>
+                    <a href="index.html#contact" class="nav-link">Contact</a>
+                    
+                    <div class="language-switcher">
+                        <span class="flag">🌐</span>
+                        <span>FR</span>
+                    </div>
+                    
+                    <a href="login.html" class="login-btn">Connexion</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="dashboard">
+        <div class="dashboard-container">
+            <div class="dashboard-header welcome-message" id="welcomeMessage">
+                <h1>Chargement...</h1>
+                <p>Veuillez patienter pendant le chargement de votre dashboard.</p>
+            </div>
+
+            <div class="loading" id="loadingSection">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Chargement de vos données...</p>
+            </div>
+
+            <div class="error-message" id="errorSection" style="display: none;">
+                <h3><i class="fas fa-exclamation-triangle"></i> Erreur de chargement</h3>
+                <p id="errorText"></p>
+                <a href="index.html" class="btn-outline">Retour à l'accueil</a>
+            </div>
+
+            <div class="dashboard-grid" id="dashboardContent" style="display: none;">
+                <!-- Vue d'ensemble -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line"></i>
+                        <h2>Vue d'ensemble</h2>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <span class="stat-number" id="creditsCount">0</span>
+                            <span class="stat-label">Cours restants</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-number" id="completedCount">0</span>
+                            <span class="stat-label">Cours terminés</span>
+                        </div>
+                    </div>
+                    <div id="nextLessonContainer">
+                        <!-- Prochain cours sera inséré ici -->
+                    </div>
+                </div>
+
+                <!-- Réserver un cours -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-calendar-plus"></i>
+                        <h2>Réserver un cours</h2>
+                    </div>
+                    <p>Choisissez le type de cours et sélectionnez un créneau disponible.</p>
+                    <div class="btn-group">
+                        <a href="booking.html?type=essai" class="btn-outline">
+                            <i class="fas fa-play-circle"></i> Cours d'essai (5€)
+                        </a>
+                        <a href="booking.html?type=conversation" class="btn-outline">
+                            <i class="fas fa-comments"></i> Conversation
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Mes forfaits -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-gift"></i>
+                        <h2>Mes forfaits</h2>
+                    </div>
+                    <div id="packagesList">
+                        <p>Aucun forfait actif.</p>
+                    </div>
+                    <a href="packages.html" class="btn-outline" style="margin-top: 15px;">
+                        <i class="fas fa-shopping-cart"></i> Acheter un forfait
+                    </a>
+                </div>
+
+                <!-- Historique des cours -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-history"></i>
+                        <h2>Résumés récents</h2>
+                    </div>
+                    <div id="lessonHistory">
+                        <p>Aucun cours terminé.</p>
+                    </div>
+                    <a href="history.html" class="btn-outline" style="margin-top: 15px;">
+                        <i class="fas fa-list"></i> Voir tout l'historique
+                    </a>
+                </div>
+
+                <!-- Mon profil -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-user-cog"></i>
+                        <h2>Mon profil</h2>
+                    </div>
+                    <div id="profileInfo">
+                        <p><strong>Email:</strong> <span id="userEmail"></span></p>
+                        <p><strong>Statut:</strong> <span id="userStatus" class="status-badge">Standard</span></p>
+                        <p><strong>Inscrit depuis:</strong> <span id="joinDate"></span></p>
+                    </div>
+                    <div class="btn-group">
+                        <a href="profile.html" class="btn-outline">
+                            <i class="fas fa-edit"></i> Modifier profil
+                        </a>
+                        <button id="logoutBtn" class="btn-outline" style="color: #e74c3c; border-color: #e74c3c;">
+                            <i class="fas fa-sign-out-alt"></i> Déconnexion
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+<script src="config.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="auth.js"></script>
+    <script src="booking.js"></script>
+    <script>
+        // Gestion du dashboard
+        async function loadDashboard() {
+            const user = window.authManager?.getCurrentUser();
+            
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                // Charger les données utilisateur
+                await loadUserData(user);
+                
+                // Masquer le chargement, afficher le contenu
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'grid';
+                
+                // Gestion de la déconnexion
+                document.getElementById('logoutBtn').addEventListener('click', async () => {
+                    await window.authManager.signOut();
+                    window.location.href = 'index.html';
+                });
+                
+            } catch (error) {
+                showError('Impossible de charger les données: ' + error.message);
+            }
+        }
+        
+        async function loadUserData(user) {
+            // Mettre à jour le message de bienvenue
+            const welcomeDiv = document.getElementById('welcomeMessage');
+            const userName = user.user_metadata?.full_name || user.email.split('@')[0];
+            const now = new Date();
+            const hour = now.getHours();
+            let greeting = 'Bonjour';
+            
+            if (hour < 12) greeting = 'Bonjour';
+            else if (hour < 18) greeting = 'Bon après-midi';
+            else greeting = 'Bonsoir';
+            
+            welcomeDiv.innerHTML = `
+                <h1>${greeting} ${userName} ! 👋</h1>
+                <p>Bienvenue sur votre dashboard YoTeacher</p>
+            `;
+            
+            // Mettre à jour les infos profil
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('joinDate').textContent = new Date(user.created_at).toLocaleDateString('fr-FR');
+            
+            // Charger les données supplémentaires depuis Supabase
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+                
+            if (profile && !error) {
+                if (profile.is_vip) {
+                    document.getElementById('userStatus').textContent = 'VIP';
+                    document.getElementById('userStatus').className = 'status-badge vip';
+                }
+                
+                document.getElementById('creditsCount').textContent = profile.credits || 0;
+            }
+            
+            // Charger les réservations
+            await loadBookings(user.id);
+        }
+        
+        async function loadBookings(userId) {
+            const { data: bookings, error } = await supabase
+                .from('bookings')
+                .select('*')
+                .eq('user_id', userId)
+                .order('start_time', { ascending: true });
+                
+            if (bookings && !error) {
+                const completed = bookings.filter(b => b.status === 'completed');
+                const upcoming = bookings.filter(b => b.status === 'confirmed' && new Date(b.start_time) > new Date());
+                
+                document.getElementById('completedCount').textContent = completed.length;
+                
+                // Afficher le prochain cours
+                if (upcoming.length > 0) {
+                    const nextLesson = upcoming[0];
+                    const nextLessonDiv = document.getElementById('nextLessonContainer');
+                    
+                    nextLessonDiv.innerHTML = `
+                        <div class="next-lesson">
+                            <div class="lesson-time">
+                                <i class="far fa-calendar-check"></i>
+                                ${new Date(nextLesson.start_time).toLocaleDateString('fr-FR', { 
+                                    weekday: 'long', 
+                                    day: 'numeric', 
+                                    month: 'long',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </div>
+                            <p><strong>Type:</strong> ${nextLesson.event_type || 'Cours'}</p>
+                            <div class="lesson-details">
+                                <a href="${nextLesson.meet_link || '#'}" target="_blank" class="btn-outline">
+                                    <i class="fas fa-video"></i> Rejoindre
+                                </a>
+                                <button class="btn-outline" onclick="cancelBooking('${nextLesson.id}')" style="color: #e74c3c; border-color: #e74c3c;">
+                                    <i class="fas fa-times"></i> Annuler
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Afficher l'historique récent
+                const historyDiv = document.getElementById('lessonHistory');
+                if (completed.length > 0) {
+                    const recent = completed.slice(0, 3);
+                    historyDiv.innerHTML = recent.map(lesson => `
+                        <div style="padding: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px;">
+                            <strong>${new Date(lesson.start_time).toLocaleDateString('fr-FR')}</strong><br>
+                            ${lesson.event_type || 'Cours'}
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+        
+        function showError(message) {
+            document.getElementById('loadingSection').style.display = 'none';
+            document.getElementById('errorSection').style.display = 'block';
+            document.getElementById('errorText').textContent = message;
+        }
+        
+        // Démarrer le chargement
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</body>
+</html>
