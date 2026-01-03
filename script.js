@@ -146,41 +146,6 @@ let state = {
 };
 
 // ===== FONCTIONS UTILITAIRES =====
-const utils = {
-    debounce: (func, wait) => {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    },
-    
-    showNotification: (message, type = 'info') => {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-            <span>${message}</span>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 10);
-        
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
-        }, 3000);
-    }
-};
 
 // ===== GÉNÉRATION DES COURS =====
 const coursesManager = {
@@ -277,11 +242,16 @@ const coursesManager = {
                 const course = coursesData.find(c => c.id == courseId);
                 
                 if (course) {
+                    let courseType = 'essai';
+                    if (course.id === 1) courseType = 'conversation';
+                    if (course.id === 2) courseType = 'grammaire';
+                    if (course.id === 3) courseType = 'essai';
+                    
                     utils.showNotification(`Réservation du cours "${course.type}" - Redirection en cours...`, 'success');
                     
                     setTimeout(() => {
-                        window.open('#', '_blank');
-                    }, 1500);
+                        window.location.href = `booking.html?type=${courseType}`;
+                    }, 1000);
                 }
             });
         });
@@ -586,26 +556,6 @@ const uiManager = {
             });
         }
         
-        // Bouton connexion desktop
-        const loginBtn = document.querySelector('.login-btn');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                utils.showNotification('Page de connexion en développement', 'info');
-            });
-        }
-        
-        // Bouton connexion MOBILE (nouveau)
-        const mobileLoginBtn = document.querySelector('.mobile-login-btn-header');
-        if (mobileLoginBtn) {
-            mobileLoginBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                utils.showNotification('Page de connexion en développement', 'info');
-                // Fermer le menu mobile si ouvert
-                mobileMenuManager.closeMobileMenu();
-            });
-        }
-        
         // Gestion du scroll pour le header
         window.addEventListener('scroll', uiManager.handleScroll);
         
@@ -650,90 +600,6 @@ const imageManager = {
     }
 };
 
-// ===== GESTION DU MENU MOBILE =====
-const mobileMenuManager = {
-    init: () => {
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const closeBtn = document.getElementById('closeMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        const mobileLinks = document.querySelectorAll('.mobile-nav-link');
-        
-        if (hamburgerBtn) {
-            hamburgerBtn.addEventListener('click', () => {
-                mobileMenuManager.toggleMobileMenu();
-            });
-        }
-        
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                mobileMenuManager.closeMobileMenu();
-            });
-        }
-        
-        // Fermer le menu en cliquant sur les liens
-        mobileLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenuManager.closeMobileMenu();
-                // Scroller vers la section
-                const href = link.getAttribute('href');
-                if (href && href !== '#') {
-                    setTimeout(() => {
-                        const target = document.querySelector(href);
-                        if (target) {
-                            window.scrollTo({
-                                top: target.offsetTop - 100,
-                                behavior: 'smooth'
-                            });
-                        }
-                    }, 300);
-                }
-            });
-        });
-        
-        // Fermer le menu en cliquant en dehors
-        if (mobileMenu) {
-            mobileMenu.addEventListener('click', (e) => {
-                if (e.target === mobileMenu) {
-                    mobileMenuManager.closeMobileMenu();
-                }
-            });
-        }
-        
-        // Fermer le menu avec la touche Échap
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                mobileMenuManager.closeMobileMenu();
-            }
-        });
-        
-        console.log('Menu mobile initialisé');
-    },
-    
-    toggleMobileMenu: () => {
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        if (mobileMenu.classList.contains('active')) {
-            mobileMenu.classList.remove('active');
-            hamburgerBtn.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        } else {
-            mobileMenu.classList.add('active');
-            hamburgerBtn.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-    },
-    
-    closeMobileMenu: () => {
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        mobileMenu.classList.remove('active');
-        hamburgerBtn.classList.remove('active');
-        document.body.style.overflow = 'auto';
-    }
-};
-
 // ===== INITIALISATION =====
 const app = {
     init: () => {
@@ -769,7 +635,6 @@ const app = {
         document.body.style.paddingTop = '80px';
         
         // Initialiser les managers
-        mobileMenuManager.init();
         coursesManager.init();
         testimonialsManager.init();
         navigationManager.init();
@@ -782,92 +647,10 @@ const app = {
             testimonialsManager.updateSlider();
         }, 250));
         
-        // Ajouter les styles de notification
-        app.addNotificationStyles();
-        
         // Debug
         console.log('Application prête !');
-        console.log('Bouton connexion mobile:', document.querySelector('.mobile-login-btn-header'));
-    },
-    
-    addNotificationStyles: () => {
-        const style = document.createElement('style');
-        style.textContent = `
-            .notification {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: white;
-                padding: 15px 20px;
-                border-radius: 10px;
-                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                z-index: 10000;
-                transform: translateX(120%);
-                transition: transform 0.3s ease;
-                border-left: 4px solid #1e88e5;
-            }
-            
-            .notification.show {
-                transform: translateX(0);
-            }
-            
-            .notification-success {
-                border-left-color: #4CAF50;
-            }
-            
-            .notification-error {
-                border-left-color: #e74c3c;
-            }
-            
-            .notification-info {
-                border-left-color: #1e88e5;
-            }
-            
-            .notification i {
-                font-size: 1.2rem;
-            }
-            
-            .notification-success i {
-                color: #4CAF50;
-            }
-            
-            .notification-error i {
-                color: #e74c3c;
-            }
-            
-            .notification-info i {
-                color: #1e88e5;
-            }
-        `;
-        document.head.appendChild(style);
     }
 };
 
 // ===== DÉMARRAGE DE L'APPLICATION =====
 app.init();
-
-// Exposer certaines fonctions globalement pour le débogage
-window.appDebug = {
-    reloadTestimonials: () => {
-        testimonialsManager.init();
-        utils.showNotification('Témoignages rechargés', 'success');
-    },
-    
-    nextSlide: () => testimonialsManager.nextSlide(),
-    prevSlide: () => testimonialsManager.prevSlide(),
-    
-    showTestNotification: () => {
-        utils.showNotification('Notification de test', 'success');
-    },
-    
-    testScrollToCourses: () => {
-        navigationManager.scrollToSection('#courses');
-    },
-    
-    testMenu: () => {
-        mobileMenuManager.toggleMobileMenu();
-    }
-};

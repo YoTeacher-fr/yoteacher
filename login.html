@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - YoTeacher</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .auth-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 20px 60px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .auth-container {
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: #3c84f6;
+            margin-bottom: 10px;
+        }
+
+        .auth-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            background: #f8f9fa;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3c84f6;
+            background: white;
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3c84f6, #1e88e5);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-auth:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .auth-link {
+            color: #3c84f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-link:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #ffeaea;
+            color: #d32f2f;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .forgot-password a {
+            color: #666;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+
+        .forgot-password a:hover {
+            color: #3c84f6;
+        }
+
+        @media (max-width: 768px) {
+            .auth-section {
+                padding: 100px 15px 40px;
+            }
+            
+            .auth-card {
+                padding: 30px 25px;
+            }
+            
+            .auth-logo {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <button class="hamburger-menu" id="hamburgerBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
+                <div class="logo-section">
+                    <a href="index.html" class="logo">Yoann</a>
+                    <div class="flag">🇫🇷</div>
+                </div>
+                
+                <a href="#" class="mobile-login-btn-header">Connexion</a>
+                
+                <nav class="nav-menu desktop-menu">
+                    <div class="nav-spacer"></div>
+                    <a href="index.html#about" class="nav-link">À propos</a>
+                    <a href="index.html#courses" class="nav-link">Cours</a>
+                    <a href="index.html#testimonials" class="nav-link">Témoignages</a>
+                    <a href="index.html#contact" class="nav-link">Contact</a>
+                    
+                    <div class="language-switcher">
+                        <span class="flag">🌐</span>
+                        <span>FR</span>
+                    </div>
+                    
+                    <a href="#" class="login-btn">Connexion</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="auth-section">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="auth-logo">YoTeacher</div>
+                    <p class="auth-subtitle">Connectez-vous à votre espace étudiant</p>
+                </div>
+
+                <div class="error-message" id="errorMessage">
+                    <i class="fas fa-exclamation-circle"></i> <span id="errorText"></span>
+                </div>
+
+                <div class="success-message" id="successMessage">
+                    <i class="fas fa-check-circle"></i> <span id="successText"></span>
+                </div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="email">Adresse email</label>
+                        <input type="email" id="email" class="form-input" placeholder="votre@email.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Mot de passe</label>
+                        <input type="password" id="password" class="form-input" placeholder="Votre mot de passe" required>
+                    </div>
+
+                    <div class="forgot-password">
+                        <a href="#" id="forgotPasswordLink">Mot de passe oublié ?</a>
+                    </div>
+
+                    <button type="submit" class="btn-auth">
+                        <i class="fas fa-sign-in-alt"></i> Se connecter
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Pas encore de compte ? <a href="signup.html" class="auth-link">S'inscrire gratuitement</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+<script src="config.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+<script src="booking.js"></script>
+<script src="mobile-menu.js"></script>
+<script src="common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('loginForm');
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            const errorText = document.getElementById('errorText');
+            const successText = document.getElementById('successText');
+            const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+
+            // Vérifier si déjà connecté
+            if (window.authManager?.isAuthenticated()) {
+                window.location.href = 'dashboard.html';
+            }
+
+            // Connexion
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                // Validation basique
+                if (!email || !password) {
+                    showError('Veuillez remplir tous les champs');
+                    return;
+                }
+
+                // Masquer les messages précédents
+                hideMessages();
+
+                // Afficher chargement
+                const button = form.querySelector('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connexion en cours...';
+                button.disabled = true;
+
+                try {
+                    const result = await window.authManager.signIn(email, password);
+                    
+                    if (result.success) {
+                        showSuccess('Connexion réussie ! Redirection...');
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1500);
+                    } else {
+                        showError(result.error || 'Erreur de connexion');
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                } catch (error) {
+                    showError('Une erreur est survenue : ' + error.message);
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
+            });
+
+            // Mot de passe oublié
+            forgotPasswordLink.addEventListener('click', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value;
+                
+                if (!email) {
+                    showError('Veuillez entrer votre adresse email pour réinitialiser votre mot de passe');
+                    return;
+                }
+
+                hideMessages();
+                
+                try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: window.location.origin + '/reset-password.html'
+                    });
+
+                    if (error) throw error;
+                    
+                    showSuccess('Un email de réinitialisation a été envoyé à ' + email);
+                } catch (error) {
+                    showError('Erreur : ' + error.message);
+                }
+            });
+
+            // Fonctions d'affichage des messages
+            function showError(message) {
+                errorText.textContent = message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            }
+
+            function showSuccess(message) {
+                successText.textContent = message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+            }
+
+            function hideMessages() {
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

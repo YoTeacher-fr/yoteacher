@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yoann - Professeur de Français pour Adultes</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,12 +25,12 @@
                 
                 <!-- Logo au CENTRE -->
                 <div class="logo-section">
-                    <a href="#" class="logo">Yoann</a>
+                    <a href="index.html" class="logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
                 </div>
                 
                 <!-- Bouton Connexion Mobile (visible uniquement sur mobile) -->
-                <a href="#" class="mobile-login-btn-header">Connexion</a>
+                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
                 
                 <!-- Menu Desktop -->
                 <nav class="nav-menu desktop-menu">
@@ -45,7 +45,7 @@
                         <span>FR</span>
                     </div>
                     
-                    <a href="#" class="login-btn">Connexion</a>
+                    <a href="login.html" class="login-btn">Connexion</a>
                 </nav>
             </div>
         </div>
@@ -64,7 +64,7 @@
                     <span>Français (FR)</span>
                 </div>
                 
-                <a href="#" class="btn btn-primary mobile-login-btn">Connexion</a>
+                <a href="login.html" class="btn btn-primary mobile-login-btn">Connexion</a>
             </nav>
         </div>
     </header>
@@ -95,8 +95,8 @@
                 </div>
                 
                 <div class="cta-buttons-left">
-                    <a href="#courses" class="btn btn-primary mobile-course-btn">Réserver un cours d'essai</span></a>
-                    <a href="#about" class="btn btn-secondary">Créer un compte gratuit</a>
+                    <a href="booking.html?type=essai" class="btn btn-primary mobile-course-btn">Réserver un cours d'essai</a>
+                    <a href="signup.html" class="btn btn-secondary">Créer un compte gratuit</a>
                 </div>
             </div>
         </div>
@@ -246,10 +246,10 @@
                 </p>
 
                 <div class="final-cta-buttons">
-                    <a href="#courses" class="btn btn-accent btn-xl">
+                    <a href="booking.html?type=essai" class="btn btn-accent btn-xl">
                         Essayer maintenant - 5€
                     </a>
-                    <a href="#" class="btn btn-outline-white btn-xl">
+                    <a href="signup.html" class="btn btn-outline-white btn-xl">
                         Créer un compte gratuit
                     </a>
                 </div>
@@ -283,7 +283,7 @@
                 <div class="contact-column">
                     <h3>Liens rapides</h3>
                     <ul class="quick-links">
-                        <li><a href="#">Accueil</a></li>
+                        <li><a href="index.html">Accueil</a></li>
                         <li><a href="#about">À propos</a></li>
                         <li><a href="#courses">Cours</a></li>
                         <li><a href="#testimonials">Témoignages</a></li>
@@ -309,10 +309,13 @@
             </div>
         </div>
     </section>
-	<script src="config.js"></script>
-	<script src="supabase.js"></script>
-	<script src="auth.js"></script>
-	<script src="booking.js"></script>
- 	<script src="script.js"></script>
+<script src="config.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+<script src="booking.js"></script>
+<script src="mobile-menu.js"></script>
+<script src="common.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon profil - YoTeacher</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .profile-section {
+            padding: 100px 20px 60px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+        }
+
+        .profile-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .profile-header {
+            margin-bottom: 40px;
+        }
+
+        .profile-header h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .profile-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+        }
+
+        .profile-sidebar {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 120px;
+        }
+
+        .profile-avatar {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .avatar-large {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3c84f6, #1e88e5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 3rem;
+            color: white;
+            font-weight: 700;
+            border: 5px solid white;
+            box-shadow: 0 10px 30px rgba(60, 132, 246, 0.2);
+        }
+
+        .avatar-upload {
+            position: relative;
+            margin-top: 15px;
+        }
+
+        .avatar-upload input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .avatar-upload label {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .avatar-upload label:hover {
+            background: #e9ecef;
+        }
+
+        .profile-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover {
+            background: #f8f9fa;
+            color: #3c84f6;
+        }
+
+        .nav-item.active {
+            background: rgba(60, 132, 246, 0.1);
+            color: #3c84f6;
+        }
+
+        .profile-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tab-header {
+            margin-bottom: 30px;
+        }
+
+        .tab-header h2 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .tab-header p {
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 0.95rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3c84f6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(60, 132, 246, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .btn-save {
+            padding: 16px 40px;
+            background: #3c84f6;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-save:hover {
+            background: #2c74e6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+        }
+
+        .language-levels {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .language-level {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .level-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .level-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .level-progress {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .level-progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #3c84f6, #1e88e5);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .level-value {
+            text-align: right;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .preferences-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .preference-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .preference-item h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .security-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .security-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .security-status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: rgba(46, 204, 113, 0.1);
+            color: #27ae60;
+        }
+
+        .status-inactive {
+            background: rgba(241, 196, 15, 0.1);
+            color: #f39c12;
+        }
+
+        .btn-action {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #3c84f6;
+            color: #3c84f6;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-action:hover {
+            background: #3c84f6;
+            color: white;
+        }
+
+        .error-message {
+            background: #ffeaea;
+            color: #d32f2f;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            display: none;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            display: none;
+        }
+
+        @media (max-width: 992px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-sidebar {
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-section {
+                padding: 80px 15px 40px;
+            }
+            
+            .profile-header h1 {
+                font-size: 2rem;
+            }
+            
+            .profile-content {
+                padding: 30px 20px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .language-levels,
+            .preferences-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <button class="hamburger-menu" id="hamburgerBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
+                <div class="logo-section">
+                    <a href="index.html" class="logo">Yoann</a>
+                    <div class="flag">🇫🇷</div>
+                </div>
+                
+                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                
+                <nav class="nav-menu desktop-menu">
+                    <div class="nav-spacer"></div>
+                    <a href="index.html#about" class="nav-link">À propos</a>
+                    <a href="index.html#courses" class="nav-link">Cours</a>
+                    <a href="index.html#testimonials" class="nav-link">Témoignages</a>
+                    <a href="index.html#contact" class="nav-link">Contact</a>
+                    
+                    <div class="language-switcher">
+                        <span class="flag">🌐</span>
+                        <span>FR</span>
+                    </div>
+                    
+                    <a href="login.html" class="login-btn">Connexion</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="profile-section">
+        <div class="profile-container">
+            <div class="profile-header">
+                <h1>Mon profil</h1>
+                <p>Gérez vos informations personnelles, préférences et paramètres de sécurité</p>
+            </div>
+
+            <div class="profile-grid">
+                <!-- Sidebar -->
+                <div class="profile-sidebar">
+                    <div class="profile-avatar">
+                        <div class="avatar-large" id="userAvatar">
+                            <!-- Initials will be added by JS -->
+                        </div>
+                        <div class="avatar-upload">
+                            <input type="file" id="avatarInput" accept="image/*">
+                            <label for="avatarInput">
+                                <i class="fas fa-camera"></i> Changer la photo
+                            </label>
+                        </div>
+                    </div>
+
+                    <nav class="profile-nav">
+                        <a href="#" class="nav-item active" data-tab="personal">
+                            <i class="fas fa-user"></i> Informations personnelles
+                        </a>
+                        <a href="#" class="nav-item" data-tab="language">
+                            <i class="fas fa-language"></i> Niveau de français
+                        </a>
+                        <a href="#" class="nav-item" data-tab="preferences">
+                            <i class="fas fa-cog"></i> Préférences
+                        </a>
+                        <a href="#" class="nav-item" data-tab="security">
+                            <i class="fas fa-shield-alt"></i> Sécurité
+                        </a>
+                        <a href="#" class="nav-item" data-tab="notifications">
+                            <i class="fas fa-bell"></i> Notifications
+                        </a>
+                        <a href="#" class="nav-item" data-tab="billing">
+                            <i class="fas fa-credit-card"></i> Facturation
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Main Content -->
+                <div class="profile-content">
+                    <!-- Messages -->
+                    <div class="error-message" id="errorMessage">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="errorText"></span>
+                    </div>
+
+                    <div class="success-message" id="successMessage">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="successText"></span>
+                    </div>
+
+                    <!-- Onglet: Informations personnelles -->
+                    <div class="tab-content active" id="personalTab">
+                        <div class="tab-header">
+                            <h2>Informations personnelles</h2>
+                            <p>Mettez à jour vos informations de contact et personnelles</p>
+                        </div>
+
+                        <form id="personalForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="firstName" class="form-label">Prénom</label>
+                                    <input type="text" id="firstName" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="lastName" class="form-label">Nom</label>
+                                    <input type="text" id="lastName" class="form-input" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email" class="form-label">Adresse email</label>
+                                <input type="email" id="email" class="form-input" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="phone" class="form-label">Téléphone (optionnel)</label>
+                                <input type="tel" id="phone" class="form-input">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="country" class="form-label">Pays</label>
+                                <select id="country" class="form-select">
+                                    <option value="">Sélectionnez votre pays</option>
+                                    <option value="FR">France</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="BE">Belgique</option>
+                                    <option value="CH">Suisse</option>
+                                    <option value="US">États-Unis</option>
+                                    <option value="GB">Royaume-Uni</option>
+                                    <option value="DE">Allemagne</option>
+                                    <option value="ES">Espagne</option>
+                                    <option value="IT">Italie</option>
+                                    <option value="JP">Japon</option>
+                                    <option value="AU">Australie</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="timezone" class="form-label">Fuseau horaire</label>
+                                <select id="timezone" class="form-select">
+                                    <option value="">Sélectionnez votre fuseau horaire</option>
+                                    <option value="Europe/Paris">Europe/Paris (GMT+1)</option>
+                                    <option value="America/New_York">America/New_York (GMT-5)</option>
+                                    <option value="America/Toronto">America/Toronto (GMT-5)</option>
+                                    <option value="America/Los_Angeles">America/Los_Angeles (GMT-8)</option>
+                                    <option value="Europe/London">Europe/London (GMT+0)</option>
+                                    <option value="Asia/Tokyo">Asia/Tokyo (GMT+9)</option>
+                                    <option value="Australia/Sydney">Australia/Sydney (GMT+11)</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn-save">
+                                <i class="fas fa-save"></i> Enregistrer les modifications
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Onglet: Niveau de français -->
+                    <div class="tab-content" id="languageTab">
+                        <div class="tab-header">
+                            <h2>Niveau de français</h2>
+                            <p>Définissez votre niveau actuel et vos objectifs d'apprentissage</p>
+                        </div>
+
+                        <form id="languageForm">
+                            <div class="form-group">
+                                <label for="currentLevel" class="form-label">Niveau actuel (CEFR)</label>
+                                <select id="currentLevel" class="form-select">
+                                    <option value="">Sélectionnez votre niveau</option>
+                                    <option value="A1">A1 - Débutant</option>
+                                    <option value="A2">A2 - Élémentaire</option>
+                                    <option value="B1">B1 - Intermédiaire</option>
+                                    <option value="B2">B2 - Intermédiaire avancé</option>
+                                    <option value="C1">C1 - Avancé</option>
+                                    <option value="C2">C2 - Maîtrise</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="targetLevel" class="form-label">Objectif à atteindre</label>
+                                <select id="targetLevel" class="form-select">
+                                    <option value="">Sélectionnez votre objectif</option>
+                                    <option value="A1">A1 - Débutant</option>
+                                    <option value="A2">A2 - Élémentaire</option>
+                                    <option value="B1">B1 - Intermédiaire</option>
+                                    <option value="B2">B2 - Intermédiaire avancé</option>
+                                    <option value="C1">C1 - Avancé</option>
+                                    <option value="C2">C2 - Maîtrise</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="learningGoals" class="form-label">Objectifs d'apprentissage</label>
+                                <textarea id="learningGoals" class="form-textarea" placeholder="Ex: Préparer le DELF B2, Améliorer mon français professionnel, Voyager en France..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Domaines à travailler</label>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="skills" value="conversation">
+                                        <span>Conversation</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="skills" value="grammar">
+                                        <span>Grammaire</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="skills" value="vocabulary">
+                                        <span>Vocabulaire</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="skills" value="pronunciation">
+                                        <span>Prononciation</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="skills" value="listening">
+                                        <span>Compréhension orale</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="skills" value="writing">
+                                        <span>Expression écrite</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-save">
+                                <i class="fas fa-save"></i> Enregistrer les préférences
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Onglet: Préférences -->
+                    <div class="tab-content" id="preferencesTab">
+                        <div class="tab-header">
+                            <h2>Préférences</h2>
+                            <p>Personnalisez votre expérience d'apprentissage</p>
+                        </div>
+
+                        <form id="preferencesForm">
+                            <div class="form-group">
+                                <label for="lessonDuration" class="form-label">Durée préférée des cours</label>
+                                <select id="lessonDuration" class="form-select">
+                                    <option value="30">30 minutes</option>
+                                    <option value="45">45 minutes</option>
+                                    <option value="60" selected>60 minutes</option>
+                                    <option value="90">90 minutes</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="timeSlots" class="form-label">Créneaux horaires préférés</label>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="timeSlots" value="morning">
+                                        <span>Matin (9h-12h)</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="timeSlots" value="afternoon">
+                                        <span>Après-midi (13h-17h)</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="timeSlots" value="evening">
+                                        <span>Soir (18h-21h)</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="timeSlots" value="weekend">
+                                        <span>Week-end</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="lessonFrequency" class="form-label">Fréquence souhaitée</label>
+                                <select id="lessonFrequency" class="form-select">
+                                    <option value="1">1 fois par semaine</option>
+                                    <option value="2" selected>2 fois par semaine</option>
+                                    <option value="3">3 fois par semaine</option>
+                                    <option value="4">4 fois par semaine</option>
+                                    <option value="5">5 fois par semaine</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="teachingStyle" class="form-label">Style d'enseignement préféré</label>
+                                <select id="teachingStyle" class="form-select">
+                                    <option value="structured">Structuré (beaucoup d'exercices)</option>
+                                    <option value="conversational" selected>Conversationnel (beaucoup de discussion)</option>
+                                    <option value="mixed">Mixte (équilibré)</option>
+                                    <option value="flexible">Flexible (selon les besoins du jour)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="topics" class="form-label">Thèmes d'intérêt (optionnel)</label>
+                                <textarea id="topics" class="form-textarea" placeholder="Ex: Voyage, Technologie, Culture française, Gastronomie, Actualité..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn-save">
+                                <i class="fas fa-save"></i> Enregistrer les préférences
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Onglet: Sécurité -->
+                    <div class="tab-content" id="securityTab">
+                        <div class="tab-header">
+                            <h2>Sécurité du compte</h2>
+                            <p>Gérez la sécurité de votre compte et vos mots de passe</p>
+                        </div>
+
+                        <div class="security-item">
+                            <div class="security-header">
+                                <div>
+                                    <h4>Mot de passe</h4>
+                                    <p>Dernière modification: il y a 30 jours</p>
+                                </div>
+                                <span class="security-status status-active">Actif</span>
+                            </div>
+                            <button class="btn-action" id="changePasswordBtn">
+                                <i class="fas fa-key"></i> Changer le mot de passe
+                            </button>
+                        </div>
+
+                        <div class="security-item">
+                            <div class="security-header">
+                                <div>
+                                    <h4>Authentification à deux facteurs</h4>
+                                    <p>Ajoutez une couche de sécurité supplémentaire</p>
+                                </div>
+                                <span class="security-status status-inactive">Inactif</span>
+                            </div>
+                            <button class="btn-action">
+                                <i class="fas fa-shield-alt"></i> Activer l'authentification 2FA
+                            </button>
+                        </div>
+
+                        <div class="security-item">
+                            <div class="security-header">
+                                <div>
+                                    <h4>Sessions actives</h4>
+                                    <p>Gérez vos sessions de connexion</p>
+                                </div>
+                            </div>
+                            <button class="btn-action">
+                                <i class="fas fa-desktop"></i> Voir toutes les sessions
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Onglet: Notifications -->
+                    <div class="tab-content" id="notificationsTab">
+                        <div class="tab-header">
+                            <h2>Préférences de notifications</h2>
+                            <p>Choisissez les notifications que vous souhaitez recevoir</p>
+                        </div>
+
+                        <form id="notificationsForm">
+                            <div class="preferences-grid">
+                                <div class="preference-item">
+                                    <h4>Rappels de cours</h4>
+                                    <p>Rappels avant vos cours programmés</p>
+                                    <label style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                                        <input type="checkbox" name="lessonReminders" checked>
+                                        <span>Activer</span>
+                                    </label>
+                                </div>
+
+                                <div class="preference-item">
+                                    <h4>Nouveaux messages</h4>
+                                    <p>Notifications lorsque vous recevez un message</p>
+                                    <label style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                                        <input type="checkbox" name="newMessages" checked>
+                                        <span>Activer</span>
+                                    </label>
+                                </div>
+
+                                <div class="preference-item">
+                                    <h4>Promotions et offres</h4>
+                                    <p>Offres spéciales et promotions</p>
+                                    <label style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                                        <input type="checkbox" name="promotions" checked>
+                                        <span>Activer</span>
+                                    </label>
+                                </div>
+
+                                <div class="preference-item">
+                                    <h4>Conseils d'apprentissage</h4>
+                                    <p>Conseils et ressources pour progresser</p>
+                                    <label style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                                        <input type="checkbox" name="learningTips" checked>
+                                        <span>Activer</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Méthode de notification</label>
+                                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="notificationMethods" value="email" checked>
+                                        <span>Email</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="notificationMethods" value="push">
+                                        <span>Notifications push</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" name="notificationMethods" value="sms">
+                                        <span>SMS</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-save">
+                                <i class="fas fa-save"></i> Enregistrer les préférences
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Onglet: Facturation -->
+                    <div class="tab-content" id="billingTab">
+                        <div class="tab-header">
+                            <h2>Informations de facturation</h2>
+                            <p>Gérez vos méthodes de paiement et consultez vos factures</p>
+                        </div>
+
+                        <div class="security-item">
+                            <div class="security-header">
+                                <div>
+                                    <h4>Méthodes de paiement</h4>
+                                    <p>Cartes enregistrées pour les paiements</p>
+                                </div>
+                            </div>
+                            <button class="btn-action">
+                                <i class="fas fa-credit-card"></i> Gérer les méthodes de paiement
+                            </button>
+                        </div>
+
+                        <div class="security-item">
+                            <div class="security-header">
+                                <div>
+                                    <h4>Historique des paiements</h4>
+                                    <p>Consultez toutes vos transactions</p>
+                                </div>
+                            </div>
+                            <button class="btn-action">
+                                <i class="fas fa-history"></i> Voir l'historique
+                            </button>
+                        </div>
+
+                        <div class="security-item">
+                            <div class="security-header">
+                                <div>
+                                    <h4>Abonnements actifs</h4>
+                                    <p>Gérez vos abonnements en cours</p>
+                                </div>
+                            </div>
+                            <button class="btn-action">
+                                <i class="fas fa-sync-alt"></i> Gérer les abonnements
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+<script src="config.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+<script src="booking.js"></script>
+<script src="mobile-menu.js"></script>
+<script src="common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const user = window.authManager?.getCurrentUser();
+            
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            let userProfile = null;
+            
+            // Initialiser l'avatar
+            const initials = user.email.substring(0, 2).toUpperCase();
+            document.getElementById('userAvatar').textContent = initials;
+            
+            // Charger les données du profil
+            async function loadProfile() {
+                try {
+                    const { data: profile, error } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', user.id)
+                        .single();
+                    
+                    if (profile && !error) {
+                        userProfile = profile;
+                        populateForms(profile);
+                    }
+                } catch (error) {
+                    console.error('Erreur lors du chargement du profil:', error);
+                }
+            }
+            
+            // Remplir les formulaires avec les données existantes
+            function populateForms(profile) {
+                // Informations personnelles
+                const fullName = profile.full_name || '';
+                const nameParts = fullName.split(' ');
+                document.getElementById('firstName').value = nameParts[0] || '';
+                document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
+                document.getElementById('email').value = user.email;
+                
+                // Préférences de langue (à partir des métadonnées)
+                const metadata = user.user_metadata || {};
+                if (metadata.currentLevel) {
+                    document.getElementById('currentLevel').value = metadata.currentLevel;
+                }
+                if (metadata.targetLevel) {
+                    document.getElementById('targetLevel').value = metadata.targetLevel;
+                }
+                if (metadata.learningGoals) {
+                    document.getElementById('learningGoals').value = metadata.learningGoals;
+                }
+            }
+            
+            // Gestion des onglets
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Retirer la classe active de tous les onglets
+                    document.querySelectorAll('.nav-item').forEach(i => {
+                        i.classList.remove('active');
+                    });
+                    document.querySelectorAll('.tab-content').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    
+                    // Ajouter la classe active à l'onglet sélectionné
+                    this.classList.add('active');
+                    const tabId = this.dataset.tab + 'Tab';
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Gestion du changement de mot de passe
+            document.getElementById('changePasswordBtn').addEventListener('click', function() {
+                const newPassword = prompt('Entrez votre nouveau mot de passe:');
+                if (newPassword) {
+                    if (newPassword.length < 8) {
+                        alert('Le mot de passe doit contenir au moins 8 caractères');
+                        return;
+                    }
+                    
+                    const confirmPassword = prompt('Confirmez votre nouveau mot de passe:');
+                    if (newPassword === confirmPassword) {
+                        // Ici, vous pouvez ajouter la logique pour changer le mot de passe
+                        alert('La fonctionnalité de changement de mot de passe sera bientôt disponible');
+                    } else {
+                        alert('Les mots de passe ne correspondent pas');
+                    }
+                }
+            });
+            
+            // Gestion de l'upload d'avatar
+            document.getElementById('avatarInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                        alert('La taille de l\'image ne doit pas dépasser 5MB');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const avatar = document.getElementById('userAvatar');
+                        avatar.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Gestion de la soumission du formulaire personnel
+            document.getElementById('personalForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const firstName = document.getElementById('firstName').value;
+                const lastName = document.getElementById('lastName').value;
+                const fullName = `${firstName} ${lastName}`;
+                
+                try {
+                    // Mettre à jour les métadonnées de l'utilisateur
+                    const { error } = await supabase.auth.updateUser({
+                        data: { full_name: fullName }
+                    });
+                    
+                    if (error) throw error;
+                    
+                    // Mettre à jour le profil dans la table profiles
+                    const { error: profileError } = await supabase
+                        .from('profiles')
+                        .upsert({
+                            id: user.id,
+                            full_name: fullName,
+                            updated_at: new Date().toISOString()
+                        });
+                    
+                    if (profileError) throw profileError;
+                    
+                    showSuccess('Profil mis à jour avec succès !');
+                    
+                } catch (error) {
+                    showError('Erreur lors de la mise à jour du profil: ' + error.message);
+                    console.error(error);
+                }
+            });
+            
+            // Gestion des autres formulaires
+            ['languageForm', 'preferencesForm', 'notificationsForm'].forEach(formId => {
+                document.getElementById(formId)?.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    showSuccess('Préférences enregistrées avec succès !');
+                });
+            });
+            
+            function showError(message) {
+                document.getElementById('errorText').textContent = message;
+                document.getElementById('errorMessage').style.display = 'flex';
+                document.getElementById('successMessage').style.display = 'none';
+                
+                setTimeout(() => {
+                    document.getElementById('errorMessage').style.display = 'none';
+                }, 5000);
+            }
+            
+            function showSuccess(message) {
+                document.getElementById('successText').textContent = message;
+                document.getElementById('successMessage').style.display = 'flex';
+                document.getElementById('errorMessage').style.display = 'none';
+                
+                setTimeout(() => {
+                    document.getElementById('successMessage').style.display = 'none';
+                }, 3000);
+            }
+            
+            // Charger le profil
+            await loadProfile();
+        });
+    </script>
+</body>
+</html>

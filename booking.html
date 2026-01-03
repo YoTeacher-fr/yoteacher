@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réserver un cours - YoTeacher</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .booking-section {
+            padding: 120px 20px 60px;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .booking-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .booking-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .booking-title {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .booking-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .booking-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .booking-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeaea;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .calendar-container {
+            margin-bottom: 30px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .month-year {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+
+        .calendar-nav button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .calendar-nav button:hover {
+            background: #f0f0f0;
+            border-color: #3c84f6;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .calendar-day {
+            text-align: center;
+            padding: 12px 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background: #f0f7ff;
+        }
+
+        .calendar-day.selected {
+            background: #3c84f6;
+            color: white;
+        }
+
+        .calendar-day.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .calendar-day.today {
+            border: 2px solid #3c84f6;
+        }
+
+        .time-slots {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .time-slot {
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .time-slot:hover {
+            border-color: #3c84f6;
+            background: #f0f7ff;
+        }
+
+        .time-slot.selected {
+            background: #3c84f6;
+            color: white;
+            border-color: #3c84f6;
+        }
+
+        .time-slot.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .time-slot-time {
+            font-weight: 600;
+        }
+
+        .time-slot-duration {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3c84f6;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .booking-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-item.total {
+            font-weight: 600;
+            font-size: 1.2rem;
+            border-bottom: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #ddd;
+        }
+
+        .btn-booking {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3c84f6, #1e88e5);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-booking:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+        }
+
+        .btn-booking:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #ffeaea;
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .loading-slots {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading-slots i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #3c84f6;
+        }
+
+        .no-slots {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error-slots {
+            text-align: center;
+            padding: 30px;
+            background: #ffeaea;
+            border-radius: 10px;
+            color: #d32f2f;
+        }
+
+        .error-slots i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .error-details {
+            font-size: 0.9rem;
+            margin: 10px 0;
+            opacity: 0.8;
+        }
+
+        .retry-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #3c84f6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .retry-btn:hover {
+            background: #2c74e6;
+        }
+
+        @media (max-width: 768px) {
+            .booking-section {
+                padding: 100px 15px 40px;
+            }
+            
+            .booking-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .booking-title {
+                font-size: 2rem;
+            }
+            
+            .calendar-grid {
+                gap: 3px;
+            }
+            
+            .calendar-day {
+                padding: 8px 3px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <button class="hamburger-menu" id="hamburgerBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
+                <div class="logo-section">
+                    <a href="index.html" class="logo">Yoann</a>
+                    <div class="flag">🇫🇷</div>
+                </div>
+                
+                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                
+                <nav class="nav-menu desktop-menu">
+                    <div class="nav-spacer"></div>
+                    <a href="index.html#about" class="nav-link">À propos</a>
+                    <a href="index.html#courses" class="nav-link">Cours</a>
+                    <a href="index.html#testimonials" class="nav-link">Témoignages</a>
+                    <a href="index.html#contact" class="nav-link">Contact</a>
+                    
+                    <div class="language-switcher">
+                        <span class="flag">🌐</span>
+                        <span>FR</span>
+                    </div>
+                    
+                    <a href="login.html" class="login-btn">Connexion</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="booking-section">
+        <div class="booking-container">
+            <div class="booking-header">
+                <h1 class="booking-title">Réserver un cours</h1>
+                <p class="booking-subtitle">Choisissez la date, l'heure et le type de cours qui vous convient</p>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-circle"></i> <span id="errorText"></span>
+            </div>
+
+            <div class="success-message" id="successMessage">
+                <i class="fas fa-check-circle"></i> <span id="successText"></span>
+            </div>
+
+            <div class="booking-grid">
+                <!-- Colonne gauche : Calendrier et créneaux -->
+                <div class="booking-card">
+                    <h2 class="card-title">Choisir un créneau</h2>
+                    
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <div class="month-year" id="currentMonth">Janvier 2024</div>
+                            <div class="calendar-nav">
+                                <button id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                                <button id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div class="calendar-grid" id="calendarDays">
+                            <!-- Les jours seront générés par JavaScript -->
+                        </div>
+                    </div>
+
+                    <h3 style="margin-bottom: 15px;">Créneaux disponibles</h3>
+                    <div class="time-slots" id="timeSlots">
+                        <!-- Les créneaux seront générés par JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Colonne droite : Formulaire et récapitulatif -->
+                <div class="booking-card">
+                    <h2 class="card-title">Détails de la réservation</h2>
+                    
+                    <form id="bookingForm">
+                        <div class="form-group">
+                            <label class="form-label" for="courseType">Type de cours</label>
+                            <select id="courseType" class="form-select" required>
+                                <option value="">Sélectionnez un type de cours</option>
+                                <option value="essai">Cours d'essai (5€ - 15 min)</option>
+                                <option value="conversation">Conversation (20€/h)</option>
+                                <option value="curriculum">Curriculum complet (35€/h)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="name">Nom complet</label>
+                            <input type="text" id="name" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" id="email" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="notes">Notes pour le professeur (optionnel)</label>
+                            <textarea id="notes" class="form-textarea" placeholder="Votre niveau, objectifs, sujets de discussion préférés..."></textarea>
+                        </div>
+
+                        <div class="booking-summary">
+                            <h3 style="margin-bottom: 15px;">Récapitulatif</h3>
+                            <div class="summary-item">
+                                <span>Type de cours:</span>
+                                <span id="summaryType">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Date:</span>
+                                <span id="summaryDate">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Heure:</span>
+                                <span id="summaryTime">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Durée:</span>
+                                <span id="summaryDuration">-</span>
+                            </div>
+                            <div class="summary-item total">
+                                <span>Total:</span>
+                                <span id="summaryPrice">-</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-booking" id="submitBooking" disabled>
+                            <i class="fas fa-calendar-check"></i> Confirmer la réservation
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="auth.js"></script>
+    <script src="booking.js"></script>
+    <script src="mobile-menu.js"></script>
+    <script src="common.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let selectedDate = null;
+            let selectedTime = null;
+            let selectedSlot = null;
+            let currentMonth = new Date().getMonth();
+            let currentYear = new Date().getFullYear();
+
+            // Éléments DOM
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            const errorText = document.getElementById('errorText');
+            const successText = document.getElementById('successText');
+            const calendarDays = document.getElementById('calendarDays');
+            const timeSlots = document.getElementById('timeSlots');
+            const currentMonthElement = document.getElementById('currentMonth');
+            const bookingForm = document.getElementById('bookingForm');
+            const submitButton = document.getElementById('submitBooking');
+
+            // Récupérer le type de cours depuis l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseTypeParam = urlParams.get('type');
+            if (courseTypeParam) {
+                document.getElementById('courseType').value = courseTypeParam;
+                updateSummary();
+            }
+
+            // Si l'utilisateur est connecté, pré-remplir les infos
+            const user = window.authManager?.getCurrentUser();
+            if (user) {
+                document.getElementById('name').value = user.user_metadata?.full_name || '';
+                document.getElementById('email').value = user.email || '';
+            }
+
+            // Initialiser le calendrier
+            initCalendar();
+            loadAvailableSlots();
+
+            // Navigation du calendrier
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                initCalendar();
+            });
+
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                initCalendar();
+            });
+
+            // Changement de type de cours
+            document.getElementById('courseType').addEventListener('change', updateSummary);
+
+            // Soumission du formulaire
+            bookingForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                if (!selectedDate || !selectedTime) {
+                    showError('Veuillez sélectionner une date et une heure');
+                    return;
+                }
+
+                const courseType = document.getElementById('courseType').value;
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const notes = document.getElementById('notes').value;
+
+                // Validation
+                if (!courseType || !name || !email) {
+                    showError('Veuillez remplir tous les champs obligatoires');
+                    return;
+                }
+
+                hideMessages();
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation en cours...';
+
+                try {
+                    // Calculer l'heure de fin
+                    const startTime = new Date(selectedDate + 'T' + selectedTime);
+                    const endTime = new Date(startTime);
+                    
+                    // Déterminer la durée en fonction du type de cours
+                    let duration = 60; // Par défaut 60 minutes
+                    if (courseType === 'essai') duration = 15;
+                    
+                    endTime.setMinutes(endTime.getMinutes() + duration);
+
+                    // Calculer le prix
+                    let price = 20; // Par défaut conversation
+                    if (courseType === 'essai') price = 5;
+                    else if (courseType === 'curriculum') price = 35;
+
+                    const bookingData = {
+                        eventType: courseType,
+                        startTime: startTime.toISOString(),
+                        endTime: endTime.toISOString(),
+                        name: name,
+                        email: email,
+                        notes: notes,
+                        courseType: courseType,
+                        price: price
+                    };
+
+                    const result = await window.bookingManager.createBooking(bookingData);
+                    
+                    showSuccess('Réservation confirmée ! Un email de confirmation a été envoyé.');
+                    
+                    // Redirection vers le dashboard après 3 secondes
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 3000);
+
+                } catch (error) {
+                    showError('Erreur lors de la réservation : ' + error.message);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-calendar-check"></i> Confirmer la réservation';
+                }
+            });
+
+            // Fonctions
+            function initCalendar() {
+                // Mettre à jour l'affichage du mois
+                const monthNames = [
+                    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+                ];
+                currentMonthElement.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+                // Générer les jours du mois
+                const firstDay = new Date(currentYear, currentMonth, 1);
+                const lastDay = new Date(currentYear, currentMonth + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startingDay = firstDay.getDay();
+
+                // En-têtes des jours
+                const dayHeaders = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+                calendarDays.innerHTML = '';
+
+                // Ajouter les en-têtes
+                dayHeaders.forEach(day => {
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'calendar-day-header';
+                    dayElement.textContent = day;
+                    calendarDays.appendChild(dayElement);
+                });
+
+                // Ajouter les cellules vides pour le début du mois
+                for (let i = 0; i < startingDay; i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'calendar-day disabled';
+                    calendarDays.appendChild(emptyDay);
+                }
+
+                // Ajouter les jours du mois
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(currentYear, currentMonth, day);
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'calendar-day';
+                    dayElement.textContent = day;
+                    
+                    // Marquer aujourd'hui
+                    if (date.getDate() === today.getDate() && 
+                        date.getMonth() === today.getMonth() && 
+                        date.getFullYear() === today.getFullYear()) {
+                        dayElement.classList.add('today');
+                    }
+
+                    // Désactiver les jours passés
+                    if (date < today) {
+                        dayElement.classList.add('disabled');
+                    } else {
+                        dayElement.addEventListener('click', () => selectDate(day));
+                    }
+
+                    calendarDays.appendChild(dayElement);
+                }
+            }
+
+            async function loadAvailableSlots(date = null) {
+                try {
+                    // Afficher un message de chargement
+                    timeSlots.innerHTML = '<div class="loading-slots"><i class="fas fa-spinner fa-spin"></i> Chargement des créneaux...</div>';
+                    
+                    const slots = await window.bookingManager.getAvailableSlots();
+                    timeSlots.innerHTML = '';
+                    
+                    if (slots.length === 0) {
+                        timeSlots.innerHTML = '<p class="no-slots">Aucun créneau disponible pour cette date.</p>';
+                        return;
+                    }
+
+                    // Filtrer et afficher les créneaux
+                    let hasFutureSlots = false;
+                    
+                    slots.forEach(slot => {
+                        const slotDate = new Date(slot.start);
+                        const today = new Date();
+                        
+                        // Ne montrer que les créneaux futurs
+                        if (slotDate > today) {
+                            hasFutureSlots = true;
+                            const slotElement = document.createElement('div');
+                            slotElement.className = 'time-slot';
+                            slotElement.innerHTML = `
+                                <div class="time-slot-time">
+                                    <i class="far fa-clock"></i>
+                                    ${slotDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                                <div class="time-slot-duration">
+                                    ${window.bookingManager.formatTime(slot.start)}
+                                </div>
+                            `;
+                            
+                            slotElement.addEventListener('click', () => selectTimeSlot(slot, slotElement));
+                            timeSlots.appendChild(slotElement);
+                        }
+                    });
+
+                    if (!hasFutureSlots) {
+                        timeSlots.innerHTML = '<p class="no-slots">Tous les créneaux sont complets pour aujourd\'hui.</p>';
+                    }
+
+                } catch (error) {
+                    console.error('Erreur chargement créneaux:', error);
+                    timeSlots.innerHTML = `
+                        <div class="error-slots">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Erreur lors du chargement des créneaux</p>
+                            <p class="error-details">${error.message || 'Veuillez réessayer'}</p>
+                            <button onclick="loadAvailableSlots()" class="retry-btn">
+                                <i class="fas fa-redo"></i> Réessayer
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            function selectDate(day) {
+                selectedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                // Mettre à jour la sélection visuelle
+                document.querySelectorAll('.calendar-day').forEach(dayEl => {
+                    dayEl.classList.remove('selected');
+                });
+                
+                const selectedDayElement = Array.from(document.querySelectorAll('.calendar-day')).find(el => 
+                    el.textContent == day && !el.classList.contains('disabled')
+                );
+                
+                if (selectedDayElement) {
+                    selectedDayElement.classList.add('selected');
+                }
+                
+                loadAvailableSlots(selectedDate);
+                updateSummary();
+            }
+
+            function selectTimeSlot(slot, element) {
+                // Retirer la sélection précédente
+                document.querySelectorAll('.time-slot').forEach(slotEl => {
+                    slotEl.classList.remove('selected');
+                });
+
+                // Ajouter la nouvelle sélection
+                element.classList.add('selected');
+                
+                selectedSlot = slot;
+                selectedTime = new Date(slot.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                
+                updateSummary();
+            }
+
+            function updateSummary() {
+                const courseType = document.getElementById('courseType').value;
+                let courseName = '-';
+                let price = '-';
+                let duration = '-';
+
+                switch(courseType) {
+                    case 'essai':
+                        courseName = 'Cours d\'essai';
+                        price = '5€';
+                        duration = '15 min';
+                        break;
+                    case 'conversation':
+                        courseName = 'Conversation';
+                        price = '20€';
+                        duration = '60 min';
+                        break;
+                    case 'curriculum':
+                        courseName = 'Curriculum complet';
+                        price = '35€';
+                        duration = '60 min';
+                        break;
+                }
+
+                document.getElementById('summaryType').textContent = courseName;
+                document.getElementById('summaryDate').textContent = selectedDate ? 
+                    new Date(selectedDate).toLocaleDateString('fr-FR') : '-';
+                document.getElementById('summaryTime').textContent = selectedTime || '-';
+                document.getElementById('summaryDuration').textContent = duration;
+                document.getElementById('summaryPrice').textContent = price;
+
+                // Activer/désactiver le bouton de soumission
+                if (selectedDate && selectedTime && courseType) {
+                    submitButton.disabled = false;
+                } else {
+                    submitButton.disabled = true;
+                }
+            }
+
+            function showError(message) {
+                errorText.textContent = message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            }
+
+            function showSuccess(message) {
+                successText.textContent = message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+            }
+
+            function hideMessages() {
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

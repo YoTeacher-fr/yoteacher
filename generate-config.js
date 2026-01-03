@@ -1,4 +1,3 @@
-// generate-config.js
 const fs = require('fs');
 const path = require('path');
 
@@ -10,6 +9,9 @@ const config = {
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
   CALCOM_API_KEY: process.env.CALCOM_API_KEY || '',
   CALCOM_USERNAME: process.env.CALCOM_USERNAME || 'yoann',
+  CALCOM_EVENT_TYPE_ESSAI: process.env.CALCOM_EVENT_TYPE_ESSAI || '',
+  CALCOM_EVENT_TYPE_CONVERSATION: process.env.CALCOM_EVENT_TYPE_CONVERSATION || '',
+  CALCOM_EVENT_TYPE_CURRICULUM: process.env.CALCOM_EVENT_TYPE_CURRICULUM || '',
   CONTACT_EMAIL: process.env.CONTACT_EMAIL || 'contact@yoteacher.com',
   SITE_URL: process.env.SITE_URL || '',
   ENV: process.env.NODE_ENV || 'production'
@@ -25,6 +27,25 @@ if (!config.SUPABASE_URL) {
 if (!config.SUPABASE_ANON_KEY) {
   console.error('❌ ERREUR: SUPABASE_ANON_KEY manquante');
   process.exit(1);
+}
+
+// Vérification Cal.com (avertissement seulement)
+if (!config.CALCOM_API_KEY) {
+  console.warn('⚠️  AVERTISSEMENT: CALCOM_API_KEY manquante - Cal.com désactivé');
+} else {
+  console.log('✅ Cal.com API Key configurée');
+  
+  // Vérifier les event types
+  const missingEventTypes = [];
+  if (!config.CALCOM_EVENT_TYPE_ESSAI) missingEventTypes.push('CALCOM_EVENT_TYPE_ESSAI');
+  if (!config.CALCOM_EVENT_TYPE_CONVERSATION) missingEventTypes.push('CALCOM_EVENT_TYPE_CONVERSATION');
+  if (!config.CALCOM_EVENT_TYPE_CURRICULUM) missingEventTypes.push('CALCOM_EVENT_TYPE_CURRICULUM');
+  
+  if (missingEventTypes.length > 0) {
+    console.warn(`⚠️  AVERTISSEMENT: Types d'événements Cal.com manquants: ${missingEventTypes.join(', ')}`);
+  } else {
+    console.log('✅ Tous les types d\'événements Cal.com configurés');
+  }
 }
 
 // Contenu du fichier

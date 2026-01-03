@@ -18,7 +18,7 @@ if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY) {
 }
 
 // Initialiser Supabase
-let supabase = null;
+let supabaseClient = null;
 
 async function initSupabase() {
     try {
@@ -26,7 +26,7 @@ async function initSupabase() {
         const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
         
         // Créer le client
-        supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+        supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
             auth: {
                 persistSession: true,
                 autoRefreshToken: true
@@ -34,7 +34,7 @@ async function initSupabase() {
         });
         
         // Tester la connexion
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabaseClient.auth.getSession();
         
         if (error) {
             console.warn("⚠️ Note:", error.message);
@@ -47,7 +47,7 @@ async function initSupabase() {
             }
         }
         
-        return supabase;
+        return supabaseClient;
         
     } catch (error) {
         console.error("❌ Erreur Supabase:", error);
@@ -97,25 +97,13 @@ function showErrorToUser(message) {
     }
 }
 
-// Exposer Supabase globalement
-(async function() {
-    window.supabase = await initSupabase();
-    
-    if (window.supabase) {
-        console.log("✨ Supabase prêt à l'emploi");
-        
-        // Vérifier les tables nécessaires
-        checkDatabaseTables();
-    }
-})();
-
 // Vérifier si les tables existent
 async function checkDatabaseTables() {
-    if (!window.supabase) return;
+    if (!supabaseClient) return;
     
     try {
         // Vérifier la table profiles
-        const { error: profilesError } = await window.supabase
+        const { error: profilesError } = await supabaseClient
             .from('profiles')
             .select('count', { count: 'exact', head: true });
             
@@ -123,25 +111,38 @@ async function checkDatabaseTables() {
             console.warn("📋 Table 'profiles' manquante");
             console.warn("Exécutez ce SQL dans Supabase :");
             console.warn(`
-CREATE TABLE profiles (
-  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
-  email TEXT,
-  full_name TEXT,
-  is_vip BOOLEAN DEFAULT false,
-  credits INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS profiles (
+    id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+    email TEXT,
+    full_name TEXT,
+    is_vip BOOLEAN DEFAULT false,
+    credits INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );`);
         } else {
             console.log("✅ Table 'profiles' trouvée");
         }
         
         // Vérifier la table bookings
-        const { error: bookingsError } = await window.supabase
+        const { error: bookingsError } = await supabaseClient
             .from('bookings')
             .select('count', { count: 'exact', head: true });
             
         if (bookingsError) {
             console.warn("📋 Table 'bookings' manquante");
+            console.warn("Exécutez ce SQL dans Supabase :");
+            console.warn(`
+CREATE TABLE IF NOT EXISTS bookings (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+    calcom_id TEXT,
+    event_type TEXT,
+    start_time TIMESTAMPTZ,
+    end_time TIMESTAMPTZ,
+    status TEXT DEFAULT 'confirmed',
+    meet_link TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);`);
         } else {
             console.log("✅ Table 'bookings' trouvée");
         }
@@ -151,7 +152,40 @@ CREATE TABLE profiles (
     }
 }
 
+// Exposer Supabase globalement
+window.supabaseInitialized = new Promise(async (resolve) => {
+    try {
+        const client = await initSupabase();
+        
+        if (client) {
+            window.supabase = client;
+            
+            // Vérifier les tables
+            await checkDatabaseTables();
+            
+            console.log("✨ Supabase prêt à l'emploi");
+            resolve(true);
+        } else {
+            console.error("❌ Échec de l'initialisation de Supabase");
+            resolve(false);
+        }
+    } catch (error) {
+        console.error("❌ Erreur lors de l'initialisation:", error);
+        resolve(false);
+    }
+});
+
+// Fonction helper pour attendre Supabase (pour compatibilité)
+window.waitForSupabase = function(callback) {
+    window.supabaseInitialized.then((initialized) => {
+        if (callback) callback();
+    });
+};
+
 // Exporter pour utilisation
-if (typeof module !== 'undefined') {
-    module.exports = { initSupabase };
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { 
+        initSupabase, 
+        supabaseClient 
+    };
 }

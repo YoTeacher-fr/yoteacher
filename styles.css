@@ -1863,3 +1863,82 @@ button {
         min-height: 44px !important;
     }
 }
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
+
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+    margin-left: 15px;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}

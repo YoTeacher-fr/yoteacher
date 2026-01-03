@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forfaits de cours - YoTeacher</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .packages-section {
+            padding: 100px 20px 60px;
+            background: linear-gradient(135deg, #f5f2eb 0%, #e9e5dd 100%);
+            min-height: 100vh;
+        }
+
+        .packages-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .packages-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .packages-header h1 {
+            font-size: 2.8rem;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .packages-header p {
+            color: #666;
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .package-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .package-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .package-card.popular {
+            border-color: #3c84f6;
+            transform: translateY(-5px);
+        }
+
+        .package-card.popular:hover {
+            transform: translateY(-15px);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #3c84f6;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            z-index: 2;
+        }
+
+        .package-header {
+            padding: 40px 30px 30px;
+            text-align: center;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+        }
+
+        .package-card:nth-child(2) .package-header {
+            background: linear-gradient(135deg, #3c84f6, #1e88e5);
+        }
+
+        .package-card:nth-child(3) .package-header {
+            background: linear-gradient(135deg, #2d8de2, #2d8de2);
+        }
+
+        .package-type {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .package-description {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .package-price {
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+
+        .price-amount {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #333;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .price-period {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .price-per-lesson {
+            color: #4CAF50;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .package-features {
+            padding: 30px;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .feature-item:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            color: #4CAF50;
+            margin-right: 15px;
+            font-size: 1.2rem;
+            width: 24px;
+        }
+
+        .feature-text {
+            color: #555;
+            font-size: 1rem;
+        }
+
+        .feature-text.disabled {
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .package-action {
+            padding: 0 30px 30px;
+            text-align: center;
+        }
+
+        .btn-package {
+            width: 100%;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: #3c84f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2c74e6;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #3c84f6;
+            border: 2px solid #3c84f6;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            transform: translateY(-3px);
+        }
+
+        .comparison-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 50px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .comparison-title {
+            text-align: center;
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 40px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th {
+            padding: 20px;
+            text-align: left;
+            border-bottom: 2px solid #e0e0e0;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .feature-check {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .feature-cross {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .faq-section {
+            margin-top: 50px;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .faq-title {
+            text-align: center;
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 40px;
+        }
+
+        .faq-item {
+            margin-bottom: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 20px;
+            background: #f8f9fa;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #333;
+        }
+
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 20px;
+            max-height: 500px;
+        }
+
+        .faq-item.active .faq-question {
+            background: #3c84f6;
+            color: white;
+        }
+
+        @media (max-width: 992px) {
+            .packages-grid {
+                grid-template-columns: 1fr;
+                max-width: 500px;
+                margin: 0 auto 50px;
+            }
+            
+            .comparison-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .packages-section {
+                padding: 80px 15px 40px;
+            }
+            
+            .packages-header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .package-card {
+                margin-bottom: 30px;
+            }
+            
+            .comparison-section,
+            .faq-section {
+                padding: 30px 20px;
+            }
+            
+            .comparison-title,
+            .faq-title {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <button class="hamburger-menu" id="hamburgerBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
+                <div class="logo-section">
+                    <a href="index.html" class="logo">Yoann</a>
+                    <div class="flag">🇫🇷</div>
+                </div>
+                
+                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                
+                <nav class="nav-menu desktop-menu">
+                    <div class="nav-spacer"></div>
+                    <a href="index.html#about" class="nav-link">À propos</a>
+                    <a href="index.html#courses" class="nav-link">Cours</a>
+                    <a href="index.html#testimonials" class="nav-link">Témoignages</a>
+                    <a href="index.html#contact" class="nav-link">Contact</a>
+                    
+                    <div class="language-switcher">
+                        <span class="flag">🌐</span>
+                        <span>FR</span>
+                    </div>
+                    
+                    <a href="login.html" class="login-btn">Connexion</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="packages-section">
+        <div class="packages-container">
+            <div class="packages-header">
+                <h1>Choisissez votre forfait</h1>
+                <p>Des formules adaptées à votre rythme d'apprentissage avec des économies importantes</p>
+            </div>
+
+            <div class="packages-grid">
+                <!-- Forfait Découverte -->
+                <div class="package-card">
+                    <div class="package-header">
+                        <div class="package-type">Découverte</div>
+                        <div class="package-description">Pour les débutants curieux</div>
+                    </div>
+                    
+                    <div class="package-price">
+                        <div class="price-amount">100€</div>
+                        <div class="price-period">Forfait 5 cours</div>
+                        <div class="price-per-lesson">20€/cours</div>
+                    </div>
+                    
+                    <div class="package-features">
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">5 cours de conversation de 60min</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">Support pédagogique inclus</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">Évaluation initiale gratuite</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-times feature-icon"></i>
+                                <span class="feature-text disabled">Accès aux exercices avancés</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-times feature-icon"></i>
+                                <span class="feature-text disabled">Support prioritaire</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="package-action">
+                        <button class="btn-package btn-secondary">
+                            <i class="fas fa-shopping-cart"></i> Choisir ce forfait
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Forfait Standard -->
+                <div class="package-card popular">
+                    <div class="popular-badge">Le plus populaire</div>
+                    <div class="package-header">
+                        <div class="package-type">Standard</div>
+                        <div class="package-description">Pour un apprentissage régulier</div>
+                    </div>
+                    
+                    <div class="package-price">
+                        <div class="price-amount">190€</div>
+                        <div class="price-period">Forfait 10 cours</div>
+                        <div class="price-per-lesson">19€/cours (-5%)</div>
+                    </div>
+                    
+                    <div class="package-features">
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">10 cours de conversation de 60min</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">Support pédagogique complet</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">Évaluation initiale gratuite</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">Accès aux exercices avancés</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-times feature-icon"></i>
+                                <span class="feature-text disabled">Support prioritaire</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="package-action">
+                        <button class="btn-package btn-primary">
+                            <i class="fas fa-shopping-cart"></i> Choisir ce forfait
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Forfait Intensif -->
+                <div class="package-card">
+                    <div class="package-header">
+                        <div class="package-type">Intensif</div>
+                        <div class="package-description">Pour une progression rapide</div>
+                    </div>
+                    
+                    <div class="package-price">
+                        <div class="price-amount">360€</div>
+                        <div class="price-period">Forfait 20 cours</div>
+                        <div class="price-per-lesson">18€/cours (-10%)</div>
+                    </div>
+                    
+                    <div class="package-features">
+                        <ul class="feature-list">
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">20 cours de conversation de 60min</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">Support pédagogique complet</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">Évaluation initiale gratuite</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">Accès aux exercices avancés</span>
+                            </li>
+                            <li class="feature-item">
+                                <i class="fas fa-check feature-icon"></i>
+                                <span class="feature-text">Support prioritaire</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="package-action">
+                        <button class="btn-package btn-secondary">
+                            <i class="fas fa-shopping-cart"></i> Choisir ce forfait
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparaison -->
+            <div class="comparison-section">
+                <h2 class="comparison-title">Comparaison des forfaits</h2>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Fonctionnalités</th>
+                            <th>Découverte</th>
+                            <th>Standard</th>
+                            <th>Intensif</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Nombre de cours</td>
+                            <td>5</td>
+                            <td>10</td>
+                            <td>20</td>
+                        </tr>
+                        <tr>
+                            <td>Durée par cours</td>
+                            <td>60 minutes</td>
+                            <td>60 minutes</td>
+                            <td>60 minutes</td>
+                        </tr>
+                        <tr>
+                            <td>Prix par cours</td>
+                            <td>20€</td>
+                            <td>19€</td>
+                            <td>18€</td>
+                        </tr>
+                        <tr>
+                            <td>Économie totale</td>
+                            <td>0€</td>
+                            <td>10€</td>
+                            <td>40€</td>
+                        </tr>
+                        <tr>
+                            <td>Support pédagogique</td>
+                            <td><span class="feature-check">✓</span></td>
+                            <td><span class="feature-check">✓</span></td>
+                            <td><span class="feature-check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Exercices avancés</td>
+                            <td><span class="feature-cross">✗</span></td>
+                            <td><span class="feature-check">✓</span></td>
+                            <td><span class="feature-check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Support prioritaire</td>
+                            <td><span class="feature-cross">✗</span></td>
+                            <td><span class="feature-cross">✗</span></td>
+                            <td><span class="feature-check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Validité</td>
+                            <td>3 mois</td>
+                            <td>6 mois</td>
+                            <td>12 mois</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- FAQ -->
+            <div class="faq-section">
+                <h2 class="faq-title">Questions fréquentes</h2>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Les forfaits sont-ils remboursables ?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Oui, vous pouvez demander un remboursement dans les 14 jours suivant l'achat si vous n'avez pas encore utilisé de cours. Après le premier cours, les forfaits ne sont plus remboursables mais peuvent être transférés à une autre personne.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Combien de temps dure la validité d'un forfait ?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Les forfaits ont une durée de validité : Découverte (3 mois), Standard (6 mois), Intensif (12 mois). Vous pouvez utiliser tous vos cours pendant cette période.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Puis-je changer de type de cours ?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Oui, les cours d'un forfait peuvent être utilisés pour différents types de cours (conversation, grammaire, préparation d'examen) selon vos besoins.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Comment acheter un forfait ?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Connectez-vous à votre compte, choisissez le forfait souhaité et procédez au paiement sécurisé par carte bancaire. Votre crédit sera disponible immédiatement après confirmation du paiement.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Les forfaits sont-ils transférables ?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Oui, vous pouvez transférer votre forfait à une autre personne. Contactez-nous à contact@yoteacher.com pour effectuer le transfert.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+<script src="config.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+<script src="booking.js"></script>
+<script src="mobile-menu.js"></script>
+<script src="common.js"></script>
+    <script>
+       document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des boutons d'achat de forfaits
+    document.querySelectorAll('.btn-package').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const user = window.authManager?.getCurrentUser();
+            
+            if (!user) {
+                // Rediriger vers la page de connexion
+                window.location.href = 'login.html?redirect=packages';
+                return;
+            }
+            
+            const card = this.closest('.package-card');
+            const packageType = card.querySelector('.package-type').textContent;
+            const price = card.querySelector('.price-amount').textContent;
+            
+            // Ici vous intégrerez votre système de paiement
+            // Pour l'instant, affichage d'un message
+            if (window.utils && window.utils.showNotification) {
+                window.utils.showNotification(`Achat du forfait ${packageType} (${price}) - Redirection vers le paiement...`, 'info');
+            } else {
+                alert(`Achat du forfait ${packageType} (${price}) - Redirection vers le paiement...`);
+            }
+            
+            // Redirection vers une page de paiement (à créer)
+            // window.location.href = 'payment.html?package=' + encodeURIComponent(packageType);
+        });
+    });
+    
+    // Gestion de la FAQ
+    document.querySelectorAll('.faq-question').forEach(question => {
+        question.addEventListener('click', function() {
+            const faqItem = this.closest('.faq-item');
+            faqItem.classList.toggle('active');
+            
+            // Fermer les autres items
+            document.querySelectorAll('.faq-item').forEach(item => {
+                if (item !== faqItem) {
+                    item.classList.remove('active');
+                }
+            });
+        });
+    });
+});
+    </script>
+</body>
+</html>
