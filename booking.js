@@ -151,13 +151,13 @@ class BookingManager {
                 console.log(`📋 Exemple de slot reçu pour ${date}:`, slots[0]);
                 
                 return slots.map(slot => {
-                    // Cal.com peut retourner soit 'time' soit directement la string ISO
-                    const slotTime = slot.time || slot;
+                    // Cal.com retourne un objet avec la propriété 'start'
+                    const slotTime = slot.start || slot.time || slot;
                     
                     try {
                         const startDate = new Date(slotTime);
                         if (isNaN(startDate.getTime())) {
-                            console.warn('Date invalide:', slotTime);
+                            console.warn('Date invalide:', slot);
                             return null;
                         }
                         
