@@ -1,0 +1,15 @@
+# Fichiers de configuration
+config.js
+.env
+.env.local
+.env.*.local
+
+# Clés API
+*.key
+*.pem
+*.cert
+
+# Dossiers de développement
+node_modules/
+dist/
+build/
