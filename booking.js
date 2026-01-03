@@ -3,33 +3,32 @@ class BookingManager {
     constructor() {
         const config = window.YOTEACHER_CONFIG || {};
         this.calcomApiKey = config.CALCOM_API_KEY;
-        this.calcomUsername = config.CALCOM_USERNAME || 'yoann';
-        this.apiVersion = 'v2';
+        this.calcomUsername = config.CALCOM_USERNAME || 'yoann-bourbia-6ido9g';
+        this.apiVersion = 'v1'; // Utiliser v1 qui est plus stable
         this.eventTypeMap = {
-            'essai': config.CALCOM_EVENT_TYPE_ESSAI || '1',
-            'conversation': config.CALCOM_EVENT_TYPE_CONVERSATION || '2',
-            'curriculum': config.CALCOM_EVENT_TYPE_CURRICULUM || '3'
+            'essai': config.CALCOM_EVENT_TYPE_ESSAI || '4139074',
+            'conversation': config.CALCOM_EVENT_TYPE_CONVERSATION || '',
+            'curriculum': config.CALCOM_EVENT_TYPE_CURRICULUM || ''
         };
     }
 
     // Vérifier la configuration Cal.com
-   checkCalcomConfig() {
-    if (!this.calcomApiKey) {
-        throw new Error('CALCOM_API_KEY non configurée. Configurez-la dans config.js');
+    checkCalcomConfig() {
+        if (!this.calcomApiKey) {
+            throw new Error('CALCOM_API_KEY non configurée. Configurez-la dans config.js');
+        }
+        
+        // Clés API Cal.com valides commencent par cal_live_ ou cal_test_
+        if (!this.calcomApiKey.startsWith('cal_live_') && !this.calcomApiKey.startsWith('cal_test_')) {
+            console.warn('Format de clé API Cal.com inhabituel. Vérifiez qu\'elle est correcte.');
+        }
+        
+        return true;
     }
-    
-    // Clés API Cal.com valides commencent par cal_live_ ou cal_test_
-    if (!this.calcomApiKey.startsWith('cal_live_') && !this.calcomApiKey.startsWith('cal_test_')) {
-        console.warn('Format de clé API Cal.com inhabituel. Vérifiez qu\'elle est correcte.');
-    }
-    
-    return true;
-}
 
     // Récupérer les créneaux disponibles
     async getAvailableSlots(eventType = 'essai', date = null) {
         try {
-            // Vérifier la configuration
             this.checkCalcomConfig();
 
             const targetDate = date || this.getToday();
@@ -39,15 +38,17 @@ class BookingManager {
                 throw new Error(`Type de cours "${eventType}" non configuré dans Cal.com`);
             }
 
+            console.log(`🔍 Recherche créneaux pour eventTypeId: ${eventTypeId}, date: ${targetDate}`);
+
+            // API v1 (plus stable et documentée)
             const params = new URLSearchParams({
                 apiKey: this.calcomApiKey,
-                startTime: `${targetDate}T00:00:00.000Z`,
-                endTime: `${targetDate}T23:59:59.999Z`,
-                eventTypeId: eventTypeId
+                eventTypeId: eventTypeId,
+                date: targetDate
             });
 
             const response = await fetch(
-                `https://api.cal.com/v2/availability?${params.toString()}`,
+                `https://api.cal.com/v1/availability?${params.toString()}`,
                 {
                     headers: {
                         'Accept': 'application/json',
@@ -57,20 +58,21 @@ class BookingManager {
             );
             
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(`API Cal.com: ${response.status} - ${errorData.message || response.statusText}`);
+                const errorText = await response.text();
+                console.error('Réponse API Cal.com:', { status: response.status, text: errorText });
+                
+                // Si 404, tester si l'event type existe
+                if (response.status === 404) {
+                    await this.verifyEventTypeExists(eventTypeId);
+                }
+                
+                throw new Error(`API Cal.com: ${response.status} - ${errorText || response.statusText}`);
             }
             
             const data = await response.json();
             
-            // Format de réponse Cal.com v2
-            if (data.slots && Array.isArray(data.slots)) {
-                return data.slots.map(slot => ({
-                    start: slot.time,
-                    end: new Date(new Date(slot.time).getTime() + 60 * 60000).toISOString(),
-                    available: true
-                }));
-            }
+            // Log pour débogage
+            console.log('📅 Données reçues de Cal.com:', data);
             
             return data.availableSlots || [];
             
@@ -80,10 +82,37 @@ class BookingManager {
         }
     }
 
+    // Vérifier si l'event type existe
+    async verifyEventTypeExists(eventTypeId) {
+        try {
+            const response = await fetch('https://api.cal.com/v1/event-types', {
+                headers: {
+                    'Authorization': `Bearer ${this.calcomApiKey}`,
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📋 Vos event types disponibles:', data.event_types || data);
+                
+                const foundEvent = (data.event_types || data).find(
+                    event => event.id == eventTypeId || event.id === parseInt(eventTypeId)
+                );
+                
+                if (!foundEvent) {
+                    console.error(`❌ Event type ID ${eventTypeId} non trouvé dans vos event types`);
+                    console.log('IDs disponibles:', (data.event_types || data).map(e => ({ id: e.id, slug: e.slug, title: e.title })));
+                }
+            }
+        } catch (error) {
+            console.warn('Impossible de vérifier les event types:', error);
+        }
+    }
+
     // Créer une réservation
     async createBooking(bookingData) {
         try {
-            // Vérifier la configuration
             this.checkCalcomConfig();
 
             const user = window.authManager?.getCurrentUser();
@@ -94,7 +123,7 @@ class BookingManager {
             }
 
             const booking = {
-                eventTypeId: eventTypeId,
+                eventTypeId: parseInt(eventTypeId),
                 start: bookingData.startTime,
                 end: bookingData.endTime,
                 name: bookingData.name,
@@ -108,18 +137,19 @@ class BookingManager {
                 }
             };
 
-            const response = await fetch('https://api.cal.com/v2/bookings', {
+            // API v1 pour la création aussi
+            const params = new URLSearchParams({ apiKey: this.calcomApiKey });
+            const response = await fetch(`https://api.cal.com/v1/bookings?${params.toString()}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.calcomApiKey}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(booking)
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(`API Cal.com: ${response.status} - ${errorData.message || response.statusText}`);
+                const errorText = await response.text();
+                throw new Error(`API Cal.com: ${response.status} - ${errorText}`);
             }
 
             const data = await response.json();
@@ -151,7 +181,7 @@ class BookingManager {
                     {
                         user_id: userId,
                         calcom_id: calcomBooking.id || calcomBooking.bookingId,
-                        event_type: calcomBooking.eventType || calcomBooking.eventTypeId,
+                        event_type: calcomBooking.eventType || 'essai',
                         start_time: calcomBooking.startTime || calcomBooking.start,
                         end_time: calcomBooking.endTime || calcomBooking.end,
                         status: calcomBooking.status || 'confirmed',
@@ -199,14 +229,46 @@ class BookingManager {
 // Initialiser le gestionnaire de réservations
 window.bookingManager = new BookingManager();
 
+// Fonction de débogage pour vérifier la configuration
+window.debugCalcomConfig = function() {
+    const config = window.YOTEACHER_CONFIG || {};
+    const manager = window.bookingManager;
+    
+    console.group('🔧 Debug Configuration Cal.com');
+    console.log('API Key présente:', !!config.CALCOM_API_KEY);
+    console.log('Username configuré:', config.CALCOM_USERNAME);
+    console.log('Event Type IDs:', manager.eventTypeMap);
+    
+    // Tester la connexion API
+    if (config.CALCOM_API_KEY) {
+        fetch('https://api.cal.com/v1/event-types', {
+            headers: {
+                'Authorization': `Bearer ${config.CALCOM_API_KEY}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('✅ Connexion API réussie');
+            console.log('Event types disponibles:', data.event_types || data);
+        })
+        .catch(error => {
+            console.error('❌ Erreur connexion API:', error);
+        });
+    }
+    console.groupEnd();
+};
+
 // Vérification de configuration au démarrage
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
-        if (window.bookingManager && window.YOTEACHER_CONFIG) {
-            console.log('🔧 BookingManager configuré:', {
-                hasApiKey: !!window.YOTEACHER_CONFIG.CALCOM_API_KEY,
-                eventTypes: window.bookingManager.eventTypeMap
-            });
+        console.log('🔧 BookingManager configuré:', {
+            hasApiKey: !!window.YOTEACHER_CONFIG?.CALCOM_API_KEY,
+            eventTypes: window.bookingManager?.eventTypeMap
+        });
+        
+        // Lancer le debug si en mode développement
+        if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+            window.debugCalcomConfig();
         }
-    }, 500);
+    }, 1000);
 });
