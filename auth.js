@@ -51,14 +51,12 @@ class AuthManager {
 
     async waitForSupabase() {
         return new Promise((resolve) => {
-            // Si Supabase est déjà initialisé via supabase.js
             if (window.supabase && window.supabase.auth) {
                 this.supabaseReady = true;
                 resolve();
                 return;
             }
 
-            // Si nous avons une promesse d'initialisation
             if (window.supabaseInitialized) {
                 window.supabaseInitialized.then((initialized) => {
                     this.supabaseReady = initialized && window.supabase && window.supabase.auth;
@@ -70,9 +68,8 @@ class AuthManager {
                 return;
             }
 
-            // Fallback: polling pendant 10 secondes max
             let attempts = 0;
-            const maxAttempts = 100; // 100 * 100ms = 10 secondes
+            const maxAttempts = 100;
             
             const checkSupabase = () => {
                 attempts++;
@@ -97,9 +94,7 @@ class AuthManager {
         });
     }
 
-    // Mode dégradé (hors ligne ou Supabase indisponible)
     setupDegradedMode() {
-        // Récupérer l'utilisateur depuis le stockage local
         const storedUser = localStorage.getItem('yoteacher_user');
         if (storedUser) {
             try {
@@ -112,13 +107,10 @@ class AuthManager {
         }
         
         this.updateUI();
-        
-        // Afficher un avertissement discret
         this.showDegradedModeWarning();
     }
 
     showDegradedModeWarning() {
-        // Éviter les doublons
         if (document.getElementById('degraded-mode-warning')) return;
         
         const warning = document.createElement('div');
@@ -148,7 +140,6 @@ class AuthManager {
             <button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;cursor:pointer;margin-left:10px;">×</button>
         `;
         
-        // Ajouter l'animation CSS si nécessaire
         if (!document.getElementById('degraded-mode-styles')) {
             const style = document.createElement('style');
             style.id = 'degraded-mode-styles';
@@ -163,7 +154,6 @@ class AuthManager {
         
         document.body.appendChild(warning);
         
-        // Auto-suppression après 10 secondes
         setTimeout(() => {
             if (warning.parentElement) {
                 warning.style.transition = 'all 0.3s ease';
@@ -174,14 +164,12 @@ class AuthManager {
         }, 10000);
     }
 
-    // Sauvegarder l'utilisateur dans le stockage local
     saveUserToStorage() {
         if (!this.user) {
             localStorage.removeItem('yoteacher_user');
             return;
         }
         
-        // Ne stocker que les informations essentielles
         const userData = {
             id: this.user.id,
             email: this.user.email,
@@ -196,11 +184,9 @@ class AuthManager {
         localStorage.removeItem('yoteacher_user');
     }
 
-    // Inscription
     async signUp(email, password, fullName) {
         try {
             if (!this.supabaseReady) {
-                // Mode dégradé : simuler l'inscription
                 return this.mockSignUp(email, password, fullName);
             }
 
@@ -225,7 +211,6 @@ class AuthManager {
                 throw error;
             }
 
-            // Créer le profil utilisateur
             if (data.user) {
                 try {
                     const { error: profileError } = await supabase
@@ -264,7 +249,6 @@ class AuthManager {
         }
     }
 
-    // Inscription simulée pour le mode dégradé
     mockSignUp(email, password, fullName) {
         return new Promise((resolve) => {
             setTimeout(() => {
@@ -291,11 +275,9 @@ class AuthManager {
         });
     }
 
-    // Connexion
     async signIn(email, password) {
         try {
             if (!this.supabaseReady) {
-                // Mode dégradé : simuler la connexion
                 return this.mockSignIn(email, password);
             }
 
@@ -310,7 +292,6 @@ class AuthManager {
             this.saveUserToStorage();
             this.updateUI();
             
-            // Récupérer l'URL de redirection
             const returnUrl = this.getReturnUrl();
             
             return { 
@@ -327,9 +308,7 @@ class AuthManager {
         }
     }
 
-    // Récupérer l'URL de redirection
     getReturnUrl() {
-        // 1. Vérifier le paramètre d'URL 'redirect'
         const urlParams = new URLSearchParams(window.location.search);
         let returnUrl = urlParams.get('redirect');
         
@@ -337,13 +316,11 @@ class AuthManager {
             return decodeURIComponent(returnUrl);
         }
         
-        // 2. Vérifier le paramètre 'return' (alternative)
         returnUrl = urlParams.get('return');
         if (returnUrl) {
             return decodeURIComponent(returnUrl);
         }
         
-        // 3. Vérifier le référent (d'où vient l'utilisateur)
         const referrer = document.referrer;
         if (referrer && 
             !referrer.includes('login.html') && 
@@ -352,11 +329,9 @@ class AuthManager {
             return referrer;
         }
         
-        // 4. Par défaut : dashboard
         return 'dashboard.html';
     }
 
-    // Connexion simulée pour le mode dégradé
     mockSignIn(email, password) {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
@@ -388,7 +363,6 @@ class AuthManager {
         });
     }
 
-    // Déconnexion
     async signOut() {
         try {
             if (this.supabaseReady && supabase && supabase.auth) {
@@ -400,10 +374,8 @@ class AuthManager {
             this.removeUserFromStorage();
             this.updateUI();
             
-            // Redirection vers index.html avec scroll en haut
             window.location.href = 'index.html#top';
             
-            // Forcer le scroll en haut après chargement
             window.addEventListener('load', function() {
                 window.scrollTo(0, 0);
                 if (!window.location.hash) {
@@ -414,7 +386,6 @@ class AuthManager {
             return { success: true };
         } catch (error) {
             console.error('Erreur déconnexion:', error);
-            // Forcer la déconnexion locale même en cas d'erreur
             this.user = null;
             this.removeUserFromStorage();
             this.updateUI();
@@ -424,163 +395,107 @@ class AuthManager {
         }
     }
 
-    // Mettre à jour l'interface
     updateUI() {
         const user = this.user;
-        
-        // 1. Tous les boutons de connexion dans le header
-        const loginButtons = document.querySelectorAll(
-            '.login-btn, ' +
-            '.mobile-login-btn-header, ' +
-            '.mobile-login-btn'
-        );
-        
-        // 2. Tous les boutons "Créer un compte" dans le contenu
-        const signupButtons = document.querySelectorAll(
-            '.btn-secondary[href="#about"], ' +
-            '.btn-secondary[href="signup.html"], ' +
-            '.btn-outline-white[href="#"], ' +
-            '.btn-outline-white[href="signup.html"], ' +
-            '.btn-secondary, ' +
-            '.btn-outline-white'
-        );
-        
-        // 3. Boutons "Réserver cours d'essai"
-        const bookingButtons = document.querySelectorAll(
-            '.btn-primary[href*="booking"], ' +
-            '.btn-accent[href*="booking"], ' +
-            '.mobile-course-btn'
-        );
+        const isIndexPage = window.location.pathname.includes('index.html') || 
+                           window.location.pathname === '/' || 
+                           window.location.pathname.endsWith('/');
         
         if (user) {
-            // ========== UTILISATEUR CONNECTÉ ==========
+            // Sur TOUTES les pages : ajouter avatar, retirer bouton Connexion header
+            this.removeLoginButtonFromHeader();
+            this.addUserAvatar();
             
-            // 1. Boutons header -> "Dashboard"
-            loginButtons.forEach(btn => {
-                if (btn && btn.textContent) {
-                    btn.textContent = 'Dashboard';
-                    btn.href = 'dashboard.html';
-                    btn.classList.add('connected');
-                    
-                    // S'assurer que le clic fonctionne
-                    btn.onclick = (e) => {
-                        e.preventDefault();
-                        window.location.href = 'dashboard.html';
-                    };
-                }
-            });
+            // Sur index.html seulement : Ne rien changer d'autre
+            if (isIndexPage) {
+                return; // Sortir ici, ne pas modifier les autres boutons
+            }
             
-            // 2. Boutons "Créer un compte" -> "Mon dashboard"
-            signupButtons.forEach(btn => {
-                if (!btn || !btn.textContent) return;
-                
-                const text = btn.textContent.toLowerCase();
-                if (text.includes('créer') || text.includes('creer') || 
-                    (btn.href && (btn.href.includes('signup.html') || btn.href === '#' || btn.href === '#about'))) {
-                    btn.textContent = 'Mon dashboard';
-                    btn.href = 'dashboard.html';
-                    
-                    // Ajuster les classes CSS
-                    if (btn.classList.contains('btn-outline-white')) {
-                        btn.classList.remove('btn-outline-white');
-                        btn.classList.add('btn-outline');
-                    } else if (btn.classList.contains('btn-secondary')) {
-                        btn.classList.remove('btn-secondary');
-                        btn.classList.add('btn-primary');
-                    }
-                    
-                    // S'assurer que le clic fonctionne
-                    btn.onclick = (e) => {
-                        e.preventDefault();
-                        window.location.href = 'dashboard.html';
-                    };
-                }
-            });
-            
-            // 3. Boutons "Réserver cours" -> "Réserver un cours"
-            bookingButtons.forEach(btn => {
-                if (!btn || !btn.textContent) return;
-                
-                const text = btn.textContent.toLowerCase();
-                if (text.includes('réserver') || text.includes('essayer') || text.includes('reserver')) {
-                    btn.textContent = 'Réserver un cours';
-                    btn.href = 'booking.html';
-                }
-            });
-            
-            // 4. Ajouter avatar
-            setTimeout(() => {
-                this.addUserAvatar();
-            }, 100);
+            // Sur les AUTRES pages : modifier tous les boutons
+            this.updateAllButtonsForConnectedUser();
             
         } else {
-            // ========== UTILISATEUR NON CONNECTÉ ==========
-            
-            // 1. Boutons header -> "Connexion"
-            loginButtons.forEach(btn => {
-                if (btn && btn.textContent) {
-                    btn.textContent = 'Connexion';
-                    
-                    // Ajouter le paramètre redirect si nécessaire
-                    const currentUrl = encodeURIComponent(window.location.href);
-                    let href = 'login.html';
-                    
-                    // Ne pas ajouter redirect si on est déjà sur une page d'auth
-                    if (!window.location.pathname.includes('login.html') && 
-                        !window.location.pathname.includes('signup.html')) {
-                        const separator = href.includes('?') ? '&' : '?';
-                        href = `${href}${separator}redirect=${currentUrl}`;
-                    }
-                    
-                    btn.href = href;
-                    btn.classList.remove('connected');
-                    
-                    // Réinitialiser l'événement onclick
-                    btn.onclick = null;
-                }
-            });
-            
-            // 2. Boutons "Mon dashboard" -> "Créer un compte gratuit"
-            signupButtons.forEach(btn => {
-                if (!btn || !btn.textContent) return;
-                
-                const text = btn.textContent.toLowerCase();
-                if (text.includes('dashboard') || text.includes('mon dashboard') ||
-                    (btn.href && btn.href === 'dashboard.html')) {
-                    btn.textContent = 'Créer un compte gratuit';
-                    btn.href = 'signup.html';
-                    
-                    // Ajuster les classes CSS
-                    if (btn.classList.contains('btn-outline')) {
-                        btn.classList.remove('btn-outline');
-                        btn.classList.add('btn-outline-white');
-                    } else if (btn.classList.contains('btn-primary')) {
-                        btn.classList.remove('btn-primary');
-                        btn.classList.add('btn-secondary');
-                    }
-                    
-                    // Réinitialiser l'événement onclick
-                    btn.onclick = null;
-                }
-            });
-            
-            // 3. Boutons "Réserver un cours" -> "Réserver un cours d'essai"
-            bookingButtons.forEach(btn => {
-                if (!btn || !btn.textContent) return;
-                
-                if (btn.textContent === 'Réserver un cours') {
-                    btn.textContent = "Réserver un cours d'essai";
-                    btn.href = 'booking.html?type=essai';
-                }
-            });
-            
-            // 4. Retirer avatar
+            // Utilisateur non connecté
             this.removeUserAvatar();
+            this.restoreLoginButtonInHeader();
+            
+            if (!isIndexPage) {
+                this.restoreAllButtonsForDisconnectedUser();
+            }
         }
     }
 
+    removeLoginButtonFromHeader() {
+        const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header');
+        loginButtons.forEach(btn => {
+            if (btn && btn.parentElement) {
+                btn.style.display = 'none';
+            }
+        });
+    }
+
+    restoreLoginButtonInHeader() {
+        const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header');
+        loginButtons.forEach(btn => {
+            if (btn) {
+                btn.style.display = 'flex';
+                
+                // Ajouter le paramètre redirect si nécessaire
+                if (!window.location.pathname.includes('login.html') && 
+                    !window.location.pathname.includes('signup.html')) {
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    const separator = btn.href.includes('?') ? '&' : '?';
+                    btn.href = `${btn.href.split('?')[0]}${separator}redirect=${currentUrl}`;
+                }
+            }
+        });
+    }
+
+    updateAllButtonsForConnectedUser() {
+        // Boutons "Créer un compte" -> "Mon dashboard"
+        document.querySelectorAll('.btn-secondary, .btn-outline-white').forEach(btn => {
+            if (!btn || !btn.textContent) return;
+            
+            const text = btn.textContent.toLowerCase();
+            if (text.includes('créer') || text.includes('creer') || 
+                (btn.href && (btn.href.includes('signup.html') || btn.href === '#'))) {
+                btn.textContent = 'Mon dashboard';
+                btn.href = 'dashboard.html';
+                
+                if (btn.classList.contains('btn-outline-white')) {
+                    btn.classList.remove('btn-outline-white');
+                    btn.classList.add('btn-outline');
+                } else if (btn.classList.contains('btn-secondary')) {
+                    btn.classList.remove('btn-secondary');
+                    btn.classList.add('btn-primary');
+                }
+            }
+        });
+    }
+
+    restoreAllButtonsForDisconnectedUser() {
+        // Boutons "Mon dashboard" -> "Créer un compte gratuit"
+        document.querySelectorAll('.btn-outline, .btn-primary').forEach(btn => {
+            if (!btn || !btn.textContent) return;
+            
+            const text = btn.textContent.toLowerCase();
+            if (text.includes('dashboard') || text.includes('mon dashboard') ||
+                (btn.href && btn.href === 'dashboard.html')) {
+                btn.textContent = 'Créer un compte gratuit';
+                btn.href = 'signup.html';
+                
+                if (btn.classList.contains('btn-outline')) {
+                    btn.classList.remove('btn-outline');
+                    btn.classList.add('btn-outline-white');
+                } else if (btn.classList.contains('btn-primary')) {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-secondary');
+                }
+            }
+        });
+    }
+
     addUserAvatar() {
-        // Retirer l'avatar existant
         this.removeUserAvatar();
         
         if (!this.user) return;
@@ -593,7 +508,6 @@ class AuthManager {
         avatar.style.position = 'relative';
         avatar.style.marginLeft = '15px';
         
-        // Récupérer les initiales
         const initials = this.getUserInitials();
         
         avatar.innerHTML = `
@@ -609,7 +523,6 @@ class AuthManager {
         
         nav.appendChild(avatar);
         
-        // Gérer la déconnexion
         const logoutBtn = avatar.querySelector('.logout-btn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
@@ -619,7 +532,6 @@ class AuthManager {
             });
         }
         
-        // Gérer l'affichage du menu
         const avatarImg = avatar.querySelector('.avatar-img');
         const userMenu = avatar.querySelector('.user-menu');
         
@@ -630,20 +542,17 @@ class AuthManager {
                 userMenu.style.display = isVisible ? 'none' : 'block';
             });
             
-            // Fermer le menu en cliquant ailleurs
             document.addEventListener('click', (e) => {
                 if (!avatar.contains(e.target)) {
                     userMenu.style.display = 'none';
                 }
             });
             
-            // Prévenir la fermeture quand on clique dans le menu
             userMenu.addEventListener('click', (e) => {
                 e.stopPropagation();
             });
         }
         
-        // S'assurer que les liens fonctionnent
         setTimeout(() => {
             const dashboardLink = avatar.querySelector('a[href="dashboard.html"]');
             const profileLink = avatar.querySelector('a[href="profile.html"]');
@@ -688,17 +597,14 @@ class AuthManager {
         }
     }
 
-    // Vérifier si connecté
     isAuthenticated() {
         return !!this.user;
     }
 
-    // Obtenir l'utilisateur actuel
     getCurrentUser() {
         return this.user;
     }
 
-    // Réinitialiser le mot de passe
     async resetPassword(email) {
         try {
             if (!this.supabaseReady) {
@@ -720,7 +626,6 @@ class AuthManager {
         }
     }
 
-    // Mettre à jour le mot de passe
     async updatePassword(newPassword) {
         try {
             if (!this.supabaseReady) {
@@ -742,7 +647,6 @@ class AuthManager {
         }
     }
 
-    // Rafraîchir la session
     async refreshSession() {
         try {
             if (!this.supabaseReady) {
@@ -769,7 +673,6 @@ class AuthManager {
         }
     }
 
-    // Traduire les erreurs pour l'utilisateur
     getUserFriendlyError(errorMessage) {
         const errorMap = {
             'Invalid login credentials': 'Email ou mot de passe incorrect',
@@ -789,21 +692,16 @@ class AuthManager {
     }
 }
 
-// Initialiser l'authentification lorsque le DOM est chargé
 document.addEventListener('DOMContentLoaded', function() {
-    // Vérifier si nous sommes sur une page d'authentification
     const isAuthPage = window.location.pathname.includes('login.html') || 
                       window.location.pathname.includes('signup.html');
     
-    // Vérifier si nous sommes sur le dashboard
     const isDashboardPage = window.location.pathname.includes('dashboard.html') ||
                            window.location.pathname.includes('profile.html');
     
-    // Attendre un peu pour laisser le temps à supabase.js de s'initialiser
     setTimeout(() => {
         window.authManager = new AuthManager();
         
-        // Vérifier l'authentification pour les pages protégées
         if (isDashboardPage) {
             setTimeout(() => {
                 if (!window.authManager.isAuthenticated()) {
@@ -812,31 +710,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }, 500);
         }
-        
-        // Ajouter le paramètre redirect aux liens de connexion
-        if (!isAuthPage) {
-            setTimeout(() => {
-                document.querySelectorAll('a[href*="login.html"]').forEach(link => {
-                    if (!link.href.includes('redirect=')) {
-                        const currentUrl = encodeURIComponent(window.location.href);
-                        const separator = link.href.includes('?') ? '&' : '?';
-                        link.href = `${link.href}${separator}redirect=${currentUrl}`;
-                    }
-                });
-                
-                document.querySelectorAll('a[href*="signup.html"]').forEach(link => {
-                    if (!link.href.includes('redirect=')) {
-                        const currentUrl = encodeURIComponent(window.location.href);
-                        const separator = link.href.includes('?') ? '&' : '?';
-                        link.href = `${link.href}${separator}redirect=${currentUrl}`;
-                    }
-                });
-            }, 1000);
-        }
     }, 100);
 });
 
-// Exporter pour utilisation dans d'autres fichiers
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { AuthManager };
 }
