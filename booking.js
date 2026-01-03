@@ -1,5 +1,4 @@
 // Gestion des réservations avec Cal.com (API v2)
-// Documentation: https://cal.com/docs/api-reference/v2/introduction
 class BookingManager {
     constructor() {
         const config = window.YOTEACHER_CONFIG || {};
@@ -12,13 +11,6 @@ class BookingManager {
             'curriculum': config.CALCOM_EVENT_TYPE_CURRICULUM || ''
         };
         this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        
-        // Rate limits: API Key = 120 req/min
-        this.rateLimitInfo = {
-            limit: 120,
-            remaining: 120,
-            reset: null
-        };
     }
 
     // Vérifier la configuration Cal.com
@@ -37,18 +29,18 @@ class BookingManager {
 
     // Créer les headers pour l'authentification
     getAuthHeaders(endpoint = 'slots') {
-        // Différentes versions d'API selon l'endpoint (documentation officielle)
+        // Différentes versions d'API selon l'endpoint
         let apiVersion;
         switch(endpoint) {
             case 'bookings':
-                apiVersion = '2024-08-13'; // Pour créer/gérer les réservations
+                apiVersion = '2024-08-13';
                 break;
             case 'event-types':
-                apiVersion = '2024-06-14'; // Pour récupérer les event types
+                apiVersion = '2024-06-14';
                 break;
             case 'slots':
             default:
-                apiVersion = '2024-09-04'; // Pour récupérer les créneaux disponibles
+                apiVersion = '2024-09-04';
                 break;
         }
         
@@ -58,24 +50,6 @@ class BookingManager {
             'Accept': 'application/json',
             'cal-api-version': apiVersion
         };
-    }
-
-    // Mettre à jour les informations de rate limit depuis les headers de réponse
-    updateRateLimitInfo(response) {
-        if (response.headers) {
-            const limit = response.headers.get('X-RateLimit-Limit');
-            const remaining = response.headers.get('X-RateLimit-Remaining');
-            const reset = response.headers.get('X-RateLimit-Reset');
-            
-            if (limit) this.rateLimitInfo.limit = parseInt(limit);
-            if (remaining) this.rateLimitInfo.remaining = parseInt(remaining);
-            if (reset) this.rateLimitInfo.reset = new Date(parseInt(reset) * 1000);
-            
-            // Avertissement si proche de la limite
-            if (this.rateLimitInfo.remaining < 10) {
-                console.warn(`⚠️ Rate limit proche: ${this.rateLimitInfo.remaining}/${this.rateLimitInfo.limit} requêtes restantes`);
-            }
-        }
     }
 
     // Récupérer les créneaux disponibles (API v2)
@@ -92,7 +66,7 @@ class BookingManager {
 
             console.log(`🔍 Recherche créneaux pour eventTypeId: ${eventTypeId}, date: ${targetDate}, timeZone: ${this.timeZone}`);
 
-            // API v2 - Paramètres requis (format YYYY-MM-DD)
+            // API v2 - Paramètres requis
             const queryParams = new URLSearchParams({
                 eventTypeId: eventTypeId,
                 start: targetDate,
@@ -110,9 +84,6 @@ class BookingManager {
                 }
             );
             
-            // Mettre à jour les infos de rate limit
-            this.updateRateLimitInfo(response);
-            
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Réponse API Cal.com v2:', { 
@@ -120,11 +91,6 @@ class BookingManager {
                     statusText: response.statusText,
                     text: errorText 
                 });
-                
-                // Gestion spécifique des erreurs
-                if (response.status === 429) {
-                    throw new Error('Rate limit atteint. Veuillez patienter avant de réessayer.');
-                }
                 
                 try {
                     const errorData = JSON.parse(errorText);
@@ -165,7 +131,7 @@ class BookingManager {
             }
             
             // data.data est un objet avec des dates comme clés
-            // Exemple: { "2026-01-03": [{ start: "..." }], "2026-01-04": [...] }
+            // Exemple: { "2026-01-03": [{ start: "...", ... }], "2026-01-04": [...] }
             const slotsData = data.data;
             
             // Vérifier s'il y a des créneaux
@@ -312,8 +278,6 @@ class BookingManager {
                 }
             );
             
-            this.updateRateLimitInfo(response);
-            
             if (response.ok) {
                 const result = await response.json();
                 const data = result.data || result;
@@ -362,15 +326,14 @@ class BookingManager {
             }
 
             // Préparer les données pour l'API v2
-            // Documentation: https://cal.com/docs/api-reference/v2/bookings/create-a-booking
             const bookingPayload = {
-                start: bookingData.startTime, // Doit être en UTC (ISO 8601)
+                start: bookingData.startTime,
                 eventTypeId: parseInt(eventTypeId),
                 attendee: {
                     name: bookingData.name,
                     email: bookingData.email,
-                    timeZone: bookingData.timeZone || this.timeZone,
-                    language: bookingData.language || 'fr'
+                    timeZone: this.timeZone,
+                    language: 'fr'
                 },
                 metadata: {
                     userId: user?.id || null,
@@ -379,11 +342,6 @@ class BookingManager {
                     notes: bookingData.notes || ''
                 }
             };
-            
-            // Ajouter le numéro de téléphone si présent
-            if (bookingData.phoneNumber) {
-                bookingPayload.attendee.phoneNumber = bookingData.phoneNumber;
-            }
 
             console.log('📤 Envoi de la réservation à Cal.com:', bookingPayload);
 
@@ -396,8 +354,6 @@ class BookingManager {
                 }
             );
 
-            this.updateRateLimitInfo(response);
-
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Erreur création réservation:', { 
@@ -405,18 +361,8 @@ class BookingManager {
                     text: errorText 
                 });
                 
-                if (response.status === 429) {
-                    throw new Error('Rate limit atteint. Veuillez patienter avant de réessayer.');
-                }
-                
                 try {
                     const errorData = JSON.parse(errorText);
-                    
-                    // Erreur spécifique: champ 'title' manquant (bug connu Cal.com)
-                    if (errorData.message && errorData.message.includes('title')) {
-                        console.warn('Erreur "title" détectée - bug connu Cal.com');
-                    }
-                    
                     throw new Error(errorData.message || 'Erreur lors de la création de la réservation');
                 } catch (e) {
                     throw new Error(`API Cal.com: ${response.status} - ${errorText}`);
@@ -494,8 +440,8 @@ class BookingManager {
                 event_type: calcomBooking.eventType || 'essai',
                 start_time: calcomBooking.start || calcomBooking.startTime,
                 end_time: calcomBooking.end || calcomBooking.endTime,
-                status: calcomBooking.status || 'accepted',
-                meet_link: calcomBooking.location || calcomBooking.meetingUrl,
+                status: calcomBooking.status || 'confirmed',
+                meet_link: calcomBooking.meetingUrl,
                 booking_data: calcomBooking,
                 created_at: new Date().toISOString()
             };
@@ -557,12 +503,6 @@ class BookingManager {
             return dateString;
         }
     }
-
-    // Convertir une date locale en UTC (pour les bookings)
-    convertToUTC(localDateTime) {
-        const date = new Date(localDateTime);
-        return date.toISOString(); // Retourne automatiquement en UTC
-    }
 }
 
 // Initialiser le gestionnaire de réservations
@@ -579,7 +519,6 @@ window.debugCalcomConfig = async function() {
     console.log('Event Type IDs:', manager.eventTypeMap);
     console.log('Fuseau horaire:', manager.timeZone);
     console.log('URL API:', manager.apiBaseUrl);
-    console.log('Rate Limit Info:', manager.rateLimitInfo);
     
     // Tester la connexion API avec l'endpoint /event-types
     if (config.CALCOM_API_KEY) {
@@ -594,8 +533,6 @@ window.debugCalcomConfig = async function() {
                     headers: manager.getAuthHeaders('event-types')
                 }
             );
-            
-            manager.updateRateLimitInfo(response);
             
             if (response.ok) {
                 const result = await response.json();
@@ -640,7 +577,6 @@ window.debugCalcomConfig = async function() {
         console.error('❌ Erreur récupération créneaux:', error.message);
     }
     
-    console.log('\n📊 Rate Limit Status:', manager.rateLimitInfo);
     console.groupEnd();
 };
 
@@ -730,7 +666,43 @@ window.testMultipleDates = async function(eventType = 'essai', daysAhead = 7) {
             results.push({ date: dateStr, count: 0, error: error.message });
         }
         
-        // Petit délai pour ne pas surcharger l'API (rate limit = 120/min)
+        // Petit délai pour ne pas surcharger l'API
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    console.log('\n📊 Résumé:');
+    const totalSlots = results.reduce((sum, r) => sum + r.count, 0);
+    console.log(`Total de ${totalSlots} créneaux trouvés sur ${daysAhead} jours`);
+    results.forEach(r => {
+        if (r.count > 0) {
+            console.log(`  • ${r.date}: ${r.count} créneaux`);
+        }
+    });
+    
+    return results;
+};
+
+// Fonction pour tester plusieurs dates
+window.testMultipleDates = async function(eventType = 'essai', daysAhead = 7) {
+    console.log(`🧪 Test sur ${daysAhead} jours à venir...`);
+    const results = [];
+    
+    for (let i = 0; i < daysAhead; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        console.log(`\n📅 Test pour ${dateStr}:`);
+        try {
+            const slots = await window.bookingManager.getAvailableSlots(eventType, dateStr);
+            console.log(`   ${slots.length} créneaux trouvés`);
+            results.push({ date: dateStr, count: slots.length, slots });
+        } catch (error) {
+            console.error(`   Erreur: ${error.message}`);
+            results.push({ date: dateStr, count: 0, error: error.message });
+        }
+        
+        // Petit délai pour ne pas surcharger l'API
         await new Promise(resolve => setTimeout(resolve, 500));
     }
     
@@ -748,4 +720,39 @@ window.testMultipleDates = async function(eventType = 'essai', daysAhead = 7) {
 
 // Fonction pour vérifier la santé de l'API
 window.checkCalcomHealth = async function() {
-    console.log('🏥
+    console.log('🏥 Vérification santé API Cal.com...');
+    const manager = window.bookingManager;
+    
+    if (!manager.calcomApiKey) {
+        console.error('❌ Pas de clé API configurée');
+        return false;
+    }
+    
+    try {
+        const queryParams = new URLSearchParams({
+            username: manager.calcomUsername
+        });
+        
+        const response = await fetch(
+            `${manager.apiBaseUrl}/event-types?${queryParams}`, 
+            {
+                headers: manager.getAuthHeaders('event-types')
+            }
+        );
+        
+        const data = response.ok ? await response.json() : null;
+        
+        console.log(`Status: ${response.status} ${response.statusText}`);
+        console.log('Health:', response.ok ? '✅ API fonctionnelle' : '❌ API non fonctionnelle');
+        
+        if (data && (data.eventTypes || data.data?.eventTypes)) {
+            const eventTypes = data.eventTypes || data.data.eventTypes;
+            console.log(`Event types disponibles: ${eventTypes.length}`);
+        }
+        
+        return response.ok;
+    } catch (error) {
+        console.error('❌ Erreur santé API:', error.message);
+        return false;
+    }
+};
