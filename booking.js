@@ -29,8 +29,20 @@ class BookingManager {
 
     // Créer les headers pour l'authentification
     getAuthHeaders(endpoint = 'slots') {
-        // /slots utilise 2024-09-04, /bookings utilise 2024-08-13
-        const apiVersion = endpoint === 'bookings' ? '2024-08-13' : '2024-09-04';
+        // Différentes versions d'API selon l'endpoint
+        let apiVersion;
+        switch(endpoint) {
+            case 'bookings':
+                apiVersion = '2024-08-13';
+                break;
+            case 'event-types':
+                apiVersion = '2024-06-14';
+                break;
+            case 'slots':
+            default:
+                apiVersion = '2024-09-04';
+                break;
+        }
         
         return {
             'Authorization': `Bearer ${this.calcomApiKey}`,
@@ -54,14 +66,20 @@ class BookingManager {
 
             console.log(`🔍 Recherche créneaux pour eventTypeId: ${eventTypeId}, date: ${targetDate}, timeZone: ${this.timeZone}`);
 
-            // API v2 - Paramètres requis : start et end (pas startTime/endTime)
-            // Format : YYYY-MM-DD (pas ISO complet)
+            // API v2 - Paramètres requis
             const queryParams = new URLSearchParams({
                 eventTypeId: eventTypeId,
-                start: targetDate,  // Format : 2026-01-03
-                end: targetDate,    // Même jour pour voir les créneaux du jour
+                start: targetDate,
+                end: targetDate,
                 timeZone: this.timeZone
             });
+            
+            // Ajouter des paramètres optionnels qui peuvent aider
+            if (this.calcomUsername) {
+                queryParams.append('usernameList', this.calcomUsername);
+            }
+
+            console.log(`📍 URL complète: ${this.apiBaseUrl}/slots?${queryParams.toString()}`);
 
             const response = await fetch(
                 `${this.apiBaseUrl}/slots?${queryParams}`,
@@ -223,9 +241,17 @@ class BookingManager {
         try {
             console.log(`🔍 Vérification de l'event type ID: ${eventTypeId}`);
             
-            const response = await fetch(`${this.apiBaseUrl}/event-types`, {
-                headers: this.getAuthHeaders('slots')
+            // Récupérer les event types avec le username
+            const queryParams = new URLSearchParams({
+                username: this.calcomUsername
             });
+            
+            const response = await fetch(
+                `${this.apiBaseUrl}/event-types?${queryParams}`, 
+                {
+                    headers: this.getAuthHeaders('event-types')
+                }
+            );
             
             if (response.ok) {
                 const result = await response.json();
@@ -243,16 +269,19 @@ class BookingManager {
                             id: e.id, 
                             slug: e.slug, 
                             title: e.title,
-                            length: e.length 
+                            length: e.lengthInMinutes || e.length 
                         })));
                     } else {
-                        console.log(`✅ Event type trouvé: ${foundEvent.title} (${foundEvent.length} min)`);
+                        console.log(`✅ Event type trouvé: ${foundEvent.title} (${foundEvent.lengthInMinutes || foundEvent.length} min)`);
                     }
                 } else {
                     console.warn('Format de réponse inattendu pour /event-types');
                 }
             } else {
-                console.warn('Impossible de vérifier les event types, status:', response.status);
+                const errorText = await response.text();
+                console.warn('Impossible de vérifier les event types');
+                console.warn('Status:', response.status, response.statusText);
+                console.warn('Erreur:', errorText);
             }
         } catch (error) {
             console.warn('Erreur lors de la vérification des event types:', error);
@@ -469,9 +498,16 @@ window.debugCalcomConfig = async function() {
     // Tester la connexion API avec l'endpoint /event-types
     if (config.CALCOM_API_KEY) {
         try {
-            const response = await fetch(`${manager.apiBaseUrl}/event-types`, {
-                headers: manager.getAuthHeaders('slots')
+            const queryParams = new URLSearchParams({
+                username: config.CALCOM_USERNAME || manager.calcomUsername
             });
+            
+            const response = await fetch(
+                `${manager.apiBaseUrl}/event-types?${queryParams}`, 
+                {
+                    headers: manager.getAuthHeaders('event-types')
+                }
+            );
             
             if (response.ok) {
                 const result = await response.json();
@@ -582,6 +618,42 @@ window.testCalcomSlots = async function(date = null, eventType = 'essai') {
     }
 };
 
+// Fonction pour tester plusieurs dates
+window.testMultipleDates = async function(eventType = 'essai', daysAhead = 7) {
+    console.log(`🧪 Test sur ${daysAhead} jours à venir...`);
+    const results = [];
+    
+    for (let i = 0; i < daysAhead; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        console.log(`\n📅 Test pour ${dateStr}:`);
+        try {
+            const slots = await window.bookingManager.getAvailableSlots(eventType, dateStr);
+            console.log(`   ${slots.length} créneaux trouvés`);
+            results.push({ date: dateStr, count: slots.length, slots });
+        } catch (error) {
+            console.error(`   Erreur: ${error.message}`);
+            results.push({ date: dateStr, count: 0, error: error.message });
+        }
+        
+        // Petit délai pour ne pas surcharger l'API
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    console.log('\n📊 Résumé:');
+    const totalSlots = results.reduce((sum, r) => sum + r.count, 0);
+    console.log(`Total de ${totalSlots} créneaux trouvés sur ${daysAhead} jours`);
+    results.forEach(r => {
+        if (r.count > 0) {
+            console.log(`  • ${r.date}: ${r.count} créneaux`);
+        }
+    });
+    
+    return results;
+};
+
 // Fonction pour vérifier la santé de l'API
 window.checkCalcomHealth = async function() {
     console.log('🏥 Vérification santé API Cal.com...');
@@ -593,9 +665,16 @@ window.checkCalcomHealth = async function() {
     }
     
     try {
-        const response = await fetch(`${manager.apiBaseUrl}/event-types`, {
-            headers: manager.getAuthHeaders('slots')
+        const queryParams = new URLSearchParams({
+            username: manager.calcomUsername
         });
+        
+        const response = await fetch(
+            `${manager.apiBaseUrl}/event-types?${queryParams}`, 
+            {
+                headers: manager.getAuthHeaders('event-types')
+            }
+        );
         
         const data = response.ok ? await response.json() : null;
         
