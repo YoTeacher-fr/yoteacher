@@ -73,11 +73,6 @@ class BookingManager {
                 end: targetDate,
                 timeZone: this.timeZone
             });
-            
-            // Ajouter des paramètres optionnels qui peuvent aider
-            if (this.calcomUsername) {
-                queryParams.append('usernameList', this.calcomUsername);
-            }
 
             console.log(`📍 URL complète: ${this.apiBaseUrl}/slots?${queryParams.toString()}`);
 
