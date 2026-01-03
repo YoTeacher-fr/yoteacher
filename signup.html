@@ -317,15 +317,16 @@
                     const result = await window.authManager.signUp(email, password, fullName);
                     
                     if (result.success) {
-                        showSuccess('Compte créé avec succès ! Vérifiez votre email pour confirmer votre inscription.');
+                        const successMsg = result.message || 'Compte créé avec succès ! Vérifiez votre email pour confirmer votre inscription.';
+                        showSuccess(successMsg);
                         
                         // Réinitialiser le formulaire
                         form.reset();
                         
-                        // Redirection automatique après 3 secondes
+                        // Redirection automatique vers login après 5 secondes
                         setTimeout(() => {
-                            window.location.href = 'login.html';
-                        }, 3000);
+                            window.location.href = 'login.html?message=check_email';
+                        }, 5000);
                     } else {
                         showError(result.error || 'Erreur lors de l\'inscription');
                         button.innerHTML = originalText;
@@ -354,6 +355,18 @@
             function hideMessages() {
                 errorDiv.style.display = 'none';
                 successDiv.style.display = 'none';
+            }
+            
+            // Ajouter le paramètre redirect au lien de connexion
+            const loginLink = document.querySelector('.auth-footer a[href="login.html"]');
+            if (loginLink) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirectParam = urlParams.get('redirect');
+                if (redirectParam) {
+                    const currentHref = loginLink.getAttribute('href');
+                    const separator = currentHref.includes('?') ? '&' : '?';
+                    loginLink.href = `${currentHref}${separator}redirect=${redirectParam}`;
+                }
             }
         });
     </script>

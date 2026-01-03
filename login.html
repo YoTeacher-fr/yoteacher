@@ -287,8 +287,12 @@
                     
                     if (result.success) {
                         showSuccess('Connexion réussie ! Redirection...');
+                        
+                        // Utiliser le redirectUrl de la réponse
+                        const redirectUrl = result.redirectUrl || 'dashboard.html';
+                        
                         setTimeout(() => {
-                            window.location.href = 'dashboard.html';
+                            window.location.href = redirectUrl;
                         }, 1500);
                     } else {
                         showError(result.error || 'Erreur de connexion');
@@ -344,6 +348,18 @@
             function hideMessages() {
                 errorDiv.style.display = 'none';
                 successDiv.style.display = 'none';
+            }
+            
+            // Ajouter le paramètre redirect au lien d'inscription
+            const signupLink = document.querySelector('.auth-footer a[href="signup.html"]');
+            if (signupLink) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirectParam = urlParams.get('redirect');
+                if (redirectParam) {
+                    const currentHref = signupLink.getAttribute('href');
+                    const separator = currentHref.includes('?') ? '&' : '?';
+                    signupLink.href = `${currentHref}${separator}redirect=${redirectParam}`;
+                }
             }
         });
     </script>

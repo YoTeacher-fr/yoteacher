@@ -3,6 +3,38 @@ const APP_CONFIG = {
     autoScrollOffset: 80,
     coursesScrollOffset: 200
 };
+// ===== GESTION DES LIENS AVEC REDIRECTION =====
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajouter le paramètre redirect aux liens de connexion et inscription
+    function addRedirectToAuthLinks() {
+        // Ne pas ajouter sur les pages d'authentification elles-mêmes
+        if (window.location.pathname.includes('login.html') || 
+            window.location.pathname.includes('signup.html')) {
+            return;
+        }
+        
+        const currentUrl = encodeURIComponent(window.location.href);
+        
+        // Liens de connexion
+        document.querySelectorAll('a[href*="login.html"]').forEach(link => {
+            if (!link.href.includes('redirect=')) {
+                const separator = link.href.includes('?') ? '&' : '?';
+                link.href = `${link.href}${separator}redirect=${currentUrl}`;
+            }
+        });
+        
+        // Liens d'inscription
+        document.querySelectorAll('a[href*="signup.html"]').forEach(link => {
+            if (!link.href.includes('redirect=')) {
+                const separator = link.href.includes('?') ? '&' : '?';
+                link.href = `${link.href}${separator}redirect=${currentUrl}`;
+            }
+        });
+    }
+    
+    // Exécuter après un délai pour laisser le DOM se charger complètement
+    setTimeout(addRedirectToAuthLinks, 1000);
+});
 
 // ===== DONNÉES DES COURS MODIFIÉES =====
 const coursesData = [

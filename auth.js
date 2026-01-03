@@ -211,11 +211,19 @@ class AuthManager {
                     data: {
                         full_name: fullName,
                         created_at: new Date().toISOString()
-                    }
+                    },
+                    emailRedirectTo: `${window.location.origin}/login.html?message=confirmed`
                 }
             });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase signUp error details:', {
+                    message: error.message,
+                    status: error.status,
+                    name: error.name
+                });
+                throw error;
+            }
 
             // Créer le profil utilisateur
             if (data.user) {
@@ -235,19 +243,23 @@ class AuthManager {
 
                     if (profileError) {
                         console.warn('Erreur création profil:', profileError);
-                        // Continue même si le profil échoue
                     }
                 } catch (profileErr) {
                     console.warn('Exception création profil:', profileErr);
                 }
             }
 
-            return { success: true, data };
+            return { 
+                success: true, 
+                data,
+                message: 'Compte créé ! Veuillez vérifier votre email pour confirmer votre compte.'
+            };
         } catch (error) {
             console.error('Erreur inscription:', error);
             return { 
                 success: false, 
-                error: this.getUserFriendlyError(error.message) 
+                error: this.getUserFriendlyError(error.message),
+                details: error.message
             };
         }
     }
@@ -298,7 +310,14 @@ class AuthManager {
             this.saveUserToStorage();
             this.updateUI();
             
-            return { success: true, data };
+            // Récupérer l'URL de redirection
+            const returnUrl = this.getReturnUrl();
+            
+            return { 
+                success: true, 
+                data,
+                redirectUrl: returnUrl
+            };
         } catch (error) {
             console.error('Erreur connexion:', error);
             return { 
@@ -306,6 +325,35 @@ class AuthManager {
                 error: this.getUserFriendlyError(error.message) 
             };
         }
+    }
+
+    // Récupérer l'URL de redirection
+    getReturnUrl() {
+        // 1. Vérifier le paramètre d'URL 'redirect'
+        const urlParams = new URLSearchParams(window.location.search);
+        let returnUrl = urlParams.get('redirect');
+        
+        if (returnUrl) {
+            return decodeURIComponent(returnUrl);
+        }
+        
+        // 2. Vérifier le paramètre 'return' (alternative)
+        returnUrl = urlParams.get('return');
+        if (returnUrl) {
+            return decodeURIComponent(returnUrl);
+        }
+        
+        // 3. Vérifier le référent (d'où vient l'utilisateur)
+        const referrer = document.referrer;
+        if (referrer && 
+            !referrer.includes('login.html') && 
+            !referrer.includes('signup.html') &&
+            !referrer.includes('reset-password.html')) {
+            return referrer;
+        }
+        
+        // 4. Par défaut : dashboard
+        return 'dashboard.html';
     }
 
     // Connexion simulée pour le mode dégradé
@@ -323,7 +371,7 @@ class AuthManager {
                             resolve({ 
                                 success: true, 
                                 data: { user: user },
-                                message: 'Connexion réussie en mode local'
+                                redirectUrl: this.getReturnUrl()
                             });
                             return;
                         }
@@ -352,6 +400,17 @@ class AuthManager {
             this.removeUserFromStorage();
             this.updateUI();
             
+            // Redirection vers index.html avec scroll en haut
+            window.location.href = 'index.html#top';
+            
+            // Forcer le scroll en haut après chargement
+            window.addEventListener('load', function() {
+                window.scrollTo(0, 0);
+                if (!window.location.hash) {
+                    window.location.hash = 'top';
+                }
+            });
+            
             return { success: true };
         } catch (error) {
             console.error('Erreur déconnexion:', error);
@@ -360,6 +419,7 @@ class AuthManager {
             this.removeUserFromStorage();
             this.updateUI();
             
+            window.location.href = 'index.html#top';
             return { success: true };
         }
     }
@@ -401,6 +461,12 @@ class AuthManager {
                     btn.textContent = 'Dashboard';
                     btn.href = 'dashboard.html';
                     btn.classList.add('connected');
+                    
+                    // S'assurer que le clic fonctionne
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        window.location.href = 'dashboard.html';
+                    };
                 }
             });
             
@@ -422,6 +488,12 @@ class AuthManager {
                         btn.classList.remove('btn-secondary');
                         btn.classList.add('btn-primary');
                     }
+                    
+                    // S'assurer que le clic fonctionne
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        window.location.href = 'dashboard.html';
+                    };
                 }
             });
             
@@ -437,7 +509,9 @@ class AuthManager {
             });
             
             // 4. Ajouter avatar
-            this.addUserAvatar();
+            setTimeout(() => {
+                this.addUserAvatar();
+            }, 100);
             
         } else {
             // ========== UTILISATEUR NON CONNECTÉ ==========
@@ -446,8 +520,23 @@ class AuthManager {
             loginButtons.forEach(btn => {
                 if (btn && btn.textContent) {
                     btn.textContent = 'Connexion';
-                    btn.href = 'login.html';
+                    
+                    // Ajouter le paramètre redirect si nécessaire
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    let href = 'login.html';
+                    
+                    // Ne pas ajouter redirect si on est déjà sur une page d'auth
+                    if (!window.location.pathname.includes('login.html') && 
+                        !window.location.pathname.includes('signup.html')) {
+                        const separator = href.includes('?') ? '&' : '?';
+                        href = `${href}${separator}redirect=${currentUrl}`;
+                    }
+                    
+                    btn.href = href;
                     btn.classList.remove('connected');
+                    
+                    // Réinitialiser l'événement onclick
+                    btn.onclick = null;
                 }
             });
             
@@ -469,6 +558,9 @@ class AuthManager {
                         btn.classList.remove('btn-primary');
                         btn.classList.add('btn-secondary');
                     }
+                    
+                    // Réinitialiser l'événement onclick
+                    btn.onclick = null;
                 }
             });
             
@@ -498,12 +590,14 @@ class AuthManager {
         
         const avatar = document.createElement('div');
         avatar.className = 'user-avatar';
+        avatar.style.position = 'relative';
+        avatar.style.marginLeft = '15px';
         
         // Récupérer les initiales
         const initials = this.getUserInitials();
         
         avatar.innerHTML = `
-            <div class="avatar-img" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #3c84f6, #1e88e5); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer;">
+            <div class="avatar-img" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #3c84f6, #1e88e5); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer; border: 2px solid #3c84f6;">
                 ${initials}
             </div>
             <div class="user-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); min-width: 180px; padding: 10px 0; z-index: 1000;">
@@ -520,9 +614,8 @@ class AuthManager {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.signOut().then(() => {
-                    window.location.href = 'index.html';
-                });
+                e.stopPropagation();
+                this.signOut();
             });
         }
         
@@ -530,21 +623,45 @@ class AuthManager {
         const avatarImg = avatar.querySelector('.avatar-img');
         const userMenu = avatar.querySelector('.user-menu');
         
-        avatarImg.addEventListener('click', (e) => {
-            e.stopPropagation();
-            userMenu.style.display = userMenu.style.display === 'block' ? 'none' : 'block';
-        });
+        if (avatarImg && userMenu) {
+            avatarImg.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = userMenu.style.display === 'block';
+                userMenu.style.display = isVisible ? 'none' : 'block';
+            });
+            
+            // Fermer le menu en cliquant ailleurs
+            document.addEventListener('click', (e) => {
+                if (!avatar.contains(e.target)) {
+                    userMenu.style.display = 'none';
+                }
+            });
+            
+            // Prévenir la fermeture quand on clique dans le menu
+            userMenu.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
         
-        // Fermer le menu en cliquant ailleurs
-        document.addEventListener('click', (e) => {
-            if (!avatar.contains(e.target)) {
-                userMenu.style.display = 'none';
+        // S'assurer que les liens fonctionnent
+        setTimeout(() => {
+            const dashboardLink = avatar.querySelector('a[href="dashboard.html"]');
+            const profileLink = avatar.querySelector('a[href="profile.html"]');
+            
+            if (dashboardLink) {
+                dashboardLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.location.href = 'dashboard.html';
+                });
             }
-        });
-        
-        userMenu.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
+            
+            if (profileLink) {
+                profileLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.location.href = 'profile.html';
+                });
+            }
+        }, 50);
     }
 
     getUserInitials() {
@@ -661,7 +778,11 @@ class AuthManager {
             'Password should be at least 6 characters': 'Le mot de passe doit contenir au moins 6 caractères',
             'Unable to validate email address: invalid format': 'Format d\'email invalide',
             'Auth session missing': 'Session expirée, veuillez vous reconnecter',
-            'Invalid Refresh Token': 'Session expirée, veuillez vous reconnecter'
+            'Invalid Refresh Token': 'Session expirée, veuillez vous reconnecter',
+            'Email address is invalid': 'Adresse email invalide',
+            'Signup requires a valid password': 'Mot de passe requis',
+            'signup not allowed for otp': 'Inscription non autorisée',
+            'Signups not allowed for this instance': 'Les inscriptions sont désactivées'
         };
         
         return errorMap[errorMessage] || errorMessage || 'Une erreur est survenue';
@@ -684,12 +805,33 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Vérifier l'authentification pour les pages protégées
         if (isDashboardPage) {
-            // Vérifier après un court délai pour laisser l'initialisation se faire
             setTimeout(() => {
                 if (!window.authManager.isAuthenticated()) {
-                    window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname);
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    window.location.href = `login.html?redirect=${currentUrl}`;
                 }
             }, 500);
+        }
+        
+        // Ajouter le paramètre redirect aux liens de connexion
+        if (!isAuthPage) {
+            setTimeout(() => {
+                document.querySelectorAll('a[href*="login.html"]').forEach(link => {
+                    if (!link.href.includes('redirect=')) {
+                        const currentUrl = encodeURIComponent(window.location.href);
+                        const separator = link.href.includes('?') ? '&' : '?';
+                        link.href = `${link.href}${separator}redirect=${currentUrl}`;
+                    }
+                });
+                
+                document.querySelectorAll('a[href*="signup.html"]').forEach(link => {
+                    if (!link.href.includes('redirect=')) {
+                        const currentUrl = encodeURIComponent(window.location.href);
+                        const separator = link.href.includes('?') ? '&' : '?';
+                        link.href = `${link.href}${separator}redirect=${currentUrl}`;
+                    }
+                });
+            }, 1000);
         }
     }, 100);
 });
