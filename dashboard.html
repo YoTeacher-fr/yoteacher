@@ -354,12 +354,37 @@
 <script src="mobile-menu.js"></script>
 <script src="common.js"></script>
     <script>
+        // Fonction pour attendre que authManager soit prêt
+        function waitForAuthManager() {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 50; // 5 secondes max
+                
+                const check = () => {
+                    attempts++;
+                    if (window.authManager && window.authManager.getCurrentUser !== undefined) {
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        resolve(); // Continuer même si pas trouvé
+                    } else {
+                        setTimeout(check, 100);
+                    }
+                };
+                check();
+            });
+        }
+        
         // Gestion du dashboard
         async function loadDashboard() {
+            // Attendre que authManager soit initialisé
+            await waitForAuthManager();
+            
             const user = window.authManager?.getCurrentUser();
             
             if (!user) {
-                window.location.href = 'login.html';
+                // Rediriger vers la page de connexion avec le paramètre redirect
+                const currentUrl = encodeURIComponent(window.location.href);
+                window.location.href = 'login.html?redirect=' + currentUrl;
                 return;
             }
             
@@ -404,26 +429,30 @@
             document.getElementById('joinDate').textContent = new Date(user.created_at).toLocaleDateString('fr-FR');
             
             // Charger les données supplémentaires depuis Supabase
-            const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single();
-                
-            if (profile && !error) {
-                if (profile.is_vip) {
-                    document.getElementById('userStatus').textContent = 'VIP';
-                    document.getElementById('userStatus').className = 'status-badge vip';
+            if (window.supabase) {
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                    
+                if (profile && !error) {
+                    if (profile.is_vip) {
+                        document.getElementById('userStatus').textContent = 'VIP';
+                        document.getElementById('userStatus').className = 'status-badge vip';
+                    }
+                    
+                    document.getElementById('creditsCount').textContent = profile.credits || 0;
                 }
                 
-                document.getElementById('creditsCount').textContent = profile.credits || 0;
+                // Charger les réservations
+                await loadBookings(user.id);
             }
-            
-            // Charger les réservations
-            await loadBookings(user.id);
         }
         
         async function loadBookings(userId) {
+            if (!window.supabase) return;
+            
             const { data: bookings, error } = await supabase
                 .from('bookings')
                 .select('*')
@@ -477,6 +506,13 @@
                         </div>
                     `).join('');
                 }
+            }
+        }
+        
+        function cancelBooking(bookingId) {
+            if (confirm('Êtes-vous sûr de vouloir annuler ce cours ?')) {
+                // Ici vous ajouterez la logique d'annulation
+                alert('Fonction d\'annulation à implémenter');
             }
         }
         
