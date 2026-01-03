@@ -10,6 +10,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
+        /* Correction header */
+        .main-header {
+            background: white !important;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .main-header .nav-link {
+            display: none !important;
+        }
+        
+        .main-header .nav-spacer {
+            display: none !important;
+        }
+        
+        .main-header .logo {
+            color: #333 !important;
+            font-weight: 700;
+            font-size: 1.8rem;
+        }
+        
         .booking-section {
             padding: 120px 20px 60px;
             background: #f8f9fa;
@@ -329,6 +349,35 @@
         .retry-btn:hover {
             background: #2c74e6;
         }
+        
+        /* Nouveau style pour le sélecteur de durée */
+        .duration-group {
+            display: none;
+        }
+        
+        .duration-group.visible {
+            display: block;
+        }
+        
+        .login-required {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .login-required a {
+            color: #3c84f6;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .login-required a:hover {
+            text-decoration: underline;
+        }
 
         @media (max-width: 768px) {
             .booking-section {
@@ -356,7 +405,7 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
+    <!-- Header simplifié -->
     <header class="main-header">
         <div class="container">
             <div class="header-content">
@@ -374,11 +423,7 @@
                 <a href="login.html" class="mobile-login-btn-header">Connexion</a>
                 
                 <nav class="nav-menu desktop-menu">
-                    <div class="nav-spacer"></div>
-                    <a href="index.html#about" class="nav-link">À propos</a>
-                    <a href="index.html#courses" class="nav-link">Cours</a>
-                    <a href="index.html#testimonials" class="nav-link">Témoignages</a>
-                    <a href="index.html#contact" class="nav-link">Contact</a>
+                    <!-- Supprimé les liens de navigation -->
                     
                     <div class="language-switcher">
                         <span class="flag">🌐</span>
@@ -435,14 +480,31 @@
                 <div class="booking-card">
                     <h2 class="card-title">Détails de la réservation</h2>
                     
+                    <!-- Message de connexion requise -->
+                    <div class="login-required" id="loginRequired" style="display: none;">
+                        <i class="fas fa-info-circle"></i> Pour réserver un cours <span id="courseTypeName"></span>, 
+                        <a href="login.html?redirect=booking.html?type=curriculum">connectez-vous</a> ou 
+                        <a href="signup.html?redirect=booking.html?type=curriculum">créez un compte</a>.
+                    </div>
+                    
                     <form id="bookingForm">
                         <div class="form-group">
                             <label class="form-label" for="courseType">Type de cours</label>
                             <select id="courseType" class="form-select" required>
                                 <option value="">Sélectionnez un type de cours</option>
                                 <option value="essai">Cours d'essai (5€ - 15 min)</option>
-                                <option value="conversation">Conversation (20€/h)</option>
-                                <option value="curriculum">Curriculum complet (35€/h)</option>
+                                <option value="conversation">Conversation</option>
+                                <option value="curriculum">Curriculum complet</option>
+                            </select>
+                        </div>
+
+                        <!-- Sélecteur de durée (seulement pour conversation/curriculum quand connecté) -->
+                        <div class="form-group duration-group" id="durationGroup">
+                            <label class="form-label" for="duration">Durée du cours</label>
+                            <select id="duration" class="form-select">
+                                <option value="30">30 minutes</option>
+                                <option value="45">45 minutes</option>
+                                <option value="60">60 minutes</option>
                             </select>
                         </div>
 
@@ -521,24 +583,22 @@
             const currentMonthElement = document.getElementById('currentMonth');
             const bookingForm = document.getElementById('bookingForm');
             const submitButton = document.getElementById('submitBooking');
+            const durationGroup = document.getElementById('durationGroup');
+            const durationSelect = document.getElementById('duration');
+            const loginRequired = document.getElementById('loginRequired');
+            const courseTypeName = document.getElementById('courseTypeName');
 
             // Récupérer le type de cours depuis l'URL
             const urlParams = new URLSearchParams(window.location.search);
             const courseTypeParam = urlParams.get('type');
             if (courseTypeParam) {
                 document.getElementById('courseType').value = courseTypeParam;
-                updateSummary();
-            }
-
-            // Si l'utilisateur est connecté, pré-remplir les infos
-            const user = window.authManager?.getCurrentUser();
-            if (user) {
-                document.getElementById('name').value = user.user_metadata?.full_name || '';
-                document.getElementById('email').value = user.email || '';
+                updateUIForCourseType(courseTypeParam);
             }
 
             // Initialiser le calendrier
             initCalendar();
+            
             // Charger les créneaux pour aujourd'hui par défaut
             const today = new Date().toISOString().split('T')[0];
             selectToday(today);
@@ -564,6 +624,16 @@
 
             // Changement de type de cours
             document.getElementById('courseType').addEventListener('change', function() {
+                const courseType = this.value;
+                updateUIForCourseType(courseType);
+                if (selectedDate) {
+                    loadAvailableSlots(selectedDate);
+                }
+                updateSummary();
+            });
+
+            // Changement de durée
+            durationSelect.addEventListener('change', function() {
                 if (selectedDate) {
                     loadAvailableSlots(selectedDate);
                 }
@@ -590,6 +660,12 @@
                     return;
                 }
 
+                // Vérifier si l'utilisateur doit être connecté
+                if ((courseType === 'conversation' || courseType === 'curriculum') && !window.authManager?.getCurrentUser()) {
+                    showError('Veuillez vous connecter pour réserver ce type de cours');
+                    return;
+                }
+
                 hideMessages();
                 submitButton.disabled = true;
                 submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation en cours...';
@@ -600,10 +676,20 @@
                         throw new Error('Aucun créneau sélectionné');
                     }
 
-                    // Calculer le prix
-                    let price = 20; // Par défaut conversation
-                    if (courseType === 'essai') price = 5;
-                    else if (courseType === 'curriculum') price = 35;
+                    // Déterminer la durée et le prix
+                    let duration = 15; // Par défaut pour essai
+                    let price = 5;
+                    
+                    if (courseType === 'conversation' || courseType === 'curriculum') {
+                        duration = parseInt(durationSelect.value) || 60;
+                        if (courseType === 'conversation') {
+                            // Tarifs conversation: 30=10€, 45=15€, 60=20€
+                            price = duration === 30 ? 10 : duration === 45 ? 15 : 20;
+                        } else if (courseType === 'curriculum') {
+                            // Tarifs curriculum: 30=17.5€, 45=26.25€, 60=35€
+                            price = duration === 30 ? 17.5 : duration === 45 ? 26.25 : 35;
+                        }
+                    }
 
                     const bookingData = {
                         eventType: courseType,
@@ -613,7 +699,8 @@
                         email: email,
                         notes: notes,
                         courseType: courseType,
-                        price: price
+                        price: price,
+                        duration: duration
                     };
 
                     const result = await window.bookingManager.createBooking(bookingData);
@@ -713,6 +800,38 @@
                 }
             }
 
+            function updateUIForCourseType(courseType) {
+                const user = window.authManager?.getCurrentUser();
+                const isLoggedIn = !!user;
+                
+                // Gérer l'affichage du sélecteur de durée
+                if (courseType === 'essai') {
+                    // Pour essai: pas de sélecteur de durée, toujours 15min
+                    durationGroup.classList.remove('visible');
+                    loginRequired.style.display = 'none';
+                } else if (courseType === 'conversation' || courseType === 'curriculum') {
+                    if (isLoggedIn) {
+                        // Connecté: afficher le sélecteur de durée
+                        durationGroup.classList.add('visible');
+                        loginRequired.style.display = 'none';
+                    } else {
+                        // Non connecté: afficher message de connexion requise
+                        durationGroup.classList.remove('visible');
+                        loginRequired.style.display = 'block';
+                        courseTypeName.textContent = courseType === 'conversation' ? 'Conversation' : 'Curriculum complet';
+                    }
+                } else {
+                    durationGroup.classList.remove('visible');
+                    loginRequired.style.display = 'none';
+                }
+                
+                // Pré-remplir les infos si l'utilisateur est connecté
+                if (isLoggedIn && user) {
+                    document.getElementById('name').value = user.user_metadata?.full_name || user.email?.split('@')[0] || '';
+                    document.getElementById('email').value = user.email || '';
+                }
+            }
+
             async function loadAvailableSlots(date = null) {
                 try {
                     // Afficher un message de chargement
@@ -721,8 +840,15 @@
                     // Récupérer le type de cours sélectionné
                     const courseType = document.getElementById('courseType').value || 'essai';
                     
+                    // Pour essai: pas besoin de durée
+                    // Pour conversation/curriculum: utiliser la durée sélectionnée si connecté
+                    let duration = null;
+                    if (courseType !== 'essai' && durationGroup.classList.contains('visible')) {
+                        duration = parseInt(durationSelect.value) || 60;
+                    }
+                    
                     // Appeler l'API avec la date et le type de cours
-                    const slots = await window.bookingManager.getAvailableSlots(courseType, date);
+                    const slots = await window.bookingManager.getAvailableSlots(courseType, date, duration);
                     
                     timeSlots.innerHTML = '';
                     
@@ -811,26 +937,42 @@
 
             function updateSummary() {
                 const courseType = document.getElementById('courseType').value;
+                const user = window.authManager?.getCurrentUser();
                 let courseName = '-';
                 let price = '-';
                 let duration = '-';
 
-                switch(courseType) {
-                    case 'essai':
-                        courseName = 'Cours d\'essai';
-                        price = '5€';
-                        duration = '15 min';
-                        break;
-                    case 'conversation':
-                        courseName = 'Conversation';
+                // Calculer en fonction du type de cours
+                if (courseType === 'essai') {
+                    courseName = 'Cours d\'essai';
+                    price = '5€';
+                    duration = '15 min';
+                } else if (courseType === 'conversation') {
+                    courseName = 'Conversation';
+                    if (user && durationGroup.classList.contains('visible')) {
+                        const selectedDuration = parseInt(durationSelect.value) || 60;
+                        duration = selectedDuration + ' min';
+                        // Tarifs conversation
+                        if (selectedDuration === 30) price = '10€';
+                        else if (selectedDuration === 45) price = '15€';
+                        else price = '20€';
+                    } else {
+                        duration = '60 min';
                         price = '20€';
+                    }
+                } else if (courseType === 'curriculum') {
+                    courseName = 'Curriculum complet';
+                    if (user && durationGroup.classList.contains('visible')) {
+                        const selectedDuration = parseInt(durationSelect.value) || 60;
+                        duration = selectedDuration + ' min';
+                        // Tarifs curriculum
+                        if (selectedDuration === 30) price = '17.5€';
+                        else if (selectedDuration === 45) price = '26.25€';
+                        else price = '35€';
+                    } else {
                         duration = '60 min';
-                        break;
-                    case 'curriculum':
-                        courseName = 'Curriculum complet';
                         price = '35€';
-                        duration = '60 min';
-                        break;
+                    }
                 }
 
                 document.getElementById('summaryType').textContent = courseName;
@@ -841,11 +983,10 @@
                 document.getElementById('summaryPrice').textContent = price;
 
                 // Activer/désactiver le bouton de soumission
-                if (selectedDate && selectedTime && courseType) {
-                    submitButton.disabled = false;
-                } else {
-                    submitButton.disabled = true;
-                }
+                const canSubmit = selectedDate && selectedTime && courseType && 
+                    (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
+                
+                submitButton.disabled = !canSubmit;
             }
 
             function showError(message) {
@@ -864,6 +1005,9 @@
                 errorDiv.style.display = 'none';
                 successDiv.style.display = 'none';
             }
+            
+            // Initialiser l'UI en fonction du type de cours
+            updateUIForCourseType(document.getElementById('courseType').value);
         });
     </script>
 </body>
