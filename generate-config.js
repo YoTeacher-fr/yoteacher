@@ -12,7 +12,7 @@ const config = {
   CALCOM_USERNAME: process.env.CALCOM_USERNAME || 'yoann',
   CONTACT_EMAIL: process.env.CONTACT_EMAIL || 'contact@yoteacher.com',
   SITE_URL: process.env.SITE_URL || '',
-  ENV: process.env.ENV || 'production'
+  ENV: process.env.NODE_ENV || 'production'
 };
 
 // Validation
