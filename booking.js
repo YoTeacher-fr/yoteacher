@@ -13,17 +13,18 @@ class BookingManager {
     }
 
     // Vérifier la configuration Cal.com
-    checkCalcomConfig() {
-        if (!this.calcomApiKey) {
-            throw new Error('CALCOM_API_KEY non configurée. Configurez-la dans config.js');
-        }
-        
-        if (this.calcomApiKey.startsWith('cal_live_')) {
-            throw new Error('Clé API Cal.com invalide. Vérifiez votre configuration.');
-        }
-        
-        return true;
+   checkCalcomConfig() {
+    if (!this.calcomApiKey) {
+        throw new Error('CALCOM_API_KEY non configurée. Configurez-la dans config.js');
     }
+    
+    // Clés API Cal.com valides commencent par cal_live_ ou cal_test_
+    if (!this.calcomApiKey.startsWith('cal_live_') && !this.calcomApiKey.startsWith('cal_test_')) {
+        console.warn('Format de clé API Cal.com inhabituel. Vérifiez qu\'elle est correcte.');
+    }
+    
+    return true;
+}
 
     // Récupérer les créneaux disponibles
     async getAvailableSlots(eventType = 'essai', date = null) {
