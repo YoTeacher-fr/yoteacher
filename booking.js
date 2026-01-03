@@ -153,17 +153,35 @@ class BookingManager {
                     return [];
                 }
                 
-                return slots.map(slot => ({
-                    id: slot.time,
-                    start: slot.time,
-                    end: this.calculateEndTime(slot.time, eventType),
-                    time: new Date(slot.time).toLocaleTimeString('fr-FR', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                    }),
-                    duration: this.getDuration(eventType),
-                    eventTypeId: eventTypeId
-                }));
+                console.log(`📋 Exemple de slot reçu pour ${date}:`, slots[0]);
+                
+                return slots.map(slot => {
+                    // Cal.com peut retourner soit 'time' soit directement la string ISO
+                    const slotTime = slot.time || slot;
+                    
+                    try {
+                        const startDate = new Date(slotTime);
+                        if (isNaN(startDate.getTime())) {
+                            console.warn('Date invalide:', slotTime);
+                            return null;
+                        }
+                        
+                        return {
+                            id: slotTime,
+                            start: slotTime,
+                            end: this.calculateEndTime(slotTime, eventType),
+                            time: startDate.toLocaleTimeString('fr-FR', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            }),
+                            duration: this.getDuration(eventType),
+                            eventTypeId: eventTypeId
+                        };
+                    } catch (error) {
+                        console.warn('Erreur traitement slot:', slot, error);
+                        return null;
+                    }
+                }).filter(slot => slot !== null);
             });
             
             console.log(`✅ ${formattedSlots.length} créneau(x) disponible(s)`);
@@ -184,23 +202,35 @@ class BookingManager {
 
     // Calculer l'heure de fin en fonction du type de cours
     calculateEndTime(startTime, eventType) {
-        const start = new Date(startTime);
-        let duration = 60; // minutes par défaut
-        
-        switch(eventType) {
-            case 'essai':
-                duration = 15;
-                break;
-            case 'conversation':
-                duration = 60;
-                break;
-            case 'curriculum':
-                duration = 60;
-                break;
+        try {
+            const start = new Date(startTime);
+            
+            // Vérifier que la date est valide
+            if (isNaN(start.getTime())) {
+                console.error('Date invalide pour calculateEndTime:', startTime);
+                return null;
+            }
+            
+            let duration = 60; // minutes par défaut
+            
+            switch(eventType) {
+                case 'essai':
+                    duration = 15;
+                    break;
+                case 'conversation':
+                    duration = 60;
+                    break;
+                case 'curriculum':
+                    duration = 60;
+                    break;
+            }
+            
+            const end = new Date(start.getTime() + duration * 60000);
+            return end.toISOString();
+        } catch (error) {
+            console.error('Erreur dans calculateEndTime:', error, startTime);
+            return null;
         }
-        
-        const end = new Date(start.getTime() + duration * 60000);
-        return end.toISOString();
     }
 
     // Obtenir la durée en texte
@@ -608,14 +638,53 @@ window.testCalcomSlots = async function(date = null, eventType = 'essai') {
     try {
         const slots = await window.bookingManager.getAvailableSlots(eventType, date);
         console.log(`✅ ${slots.length} créneau(x) trouvé(s):`);
-        slots.forEach(slot => {
-            console.log(`  • ${window.bookingManager.formatTime(slot.start)} (${slot.duration})`);
-        });
+        if (slots.length > 0) {
+            slots.slice(0, 5).forEach(slot => {
+                console.log(`  • ${window.bookingManager.formatTime(slot.start)} (${slot.duration})`);
+            });
+            if (slots.length > 5) console.log(`  ... et ${slots.length - 5} autres`);
+        }
         return slots;
     } catch (error) {
         console.error(`❌ Erreur: ${error.message}`);
         return [];
     }
+};
+
+// Fonction pour tester plusieurs dates
+window.testMultipleDates = async function(eventType = 'essai', daysAhead = 7) {
+    console.log(`🧪 Test sur ${daysAhead} jours à venir...`);
+    const results = [];
+    
+    for (let i = 0; i < daysAhead; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        console.log(`\n📅 Test pour ${dateStr}:`);
+        try {
+            const slots = await window.bookingManager.getAvailableSlots(eventType, dateStr);
+            console.log(`   ${slots.length} créneaux trouvés`);
+            results.push({ date: dateStr, count: slots.length, slots });
+        } catch (error) {
+            console.error(`   Erreur: ${error.message}`);
+            results.push({ date: dateStr, count: 0, error: error.message });
+        }
+        
+        // Petit délai pour ne pas surcharger l'API
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    console.log('\n📊 Résumé:');
+    const totalSlots = results.reduce((sum, r) => sum + r.count, 0);
+    console.log(`Total de ${totalSlots} créneaux trouvés sur ${daysAhead} jours`);
+    results.forEach(r => {
+        if (r.count > 0) {
+            console.log(`  • ${r.date}: ${r.count} créneaux`);
+        }
+    });
+    
+    return results;
 };
 
 // Fonction pour tester plusieurs dates
