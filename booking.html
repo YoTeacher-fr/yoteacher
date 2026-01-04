@@ -639,44 +639,82 @@
             });
 
             // Soumission du formulaire
-          bookingForm.onsubmit = async (e) => {
-    e.preventDefault();
-    hideMessages();
-    submitButton.disabled = true;
-    submitButton.textContent = 'Réservation en cours...';
+            bookingForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                if (!selectedDate || !selectedTime) {
+                    showError('Veuillez sélectionner une date et une heure');
+                    return;
+                }
 
-    // RÉCUPÉRATION DE LA DURÉE SÉLECTIONNÉE
-    const activeDurationBtn = document.querySelector('.duration-btn.active');
-    const type = document.getElementById('courseType').value;
-    
-    // On définit la durée numérique pour l'envoyer au manager
-    let durationMinutes = 60; 
-    if (type === 'essai') durationMinutes = 15;
-    else if (activeDurationBtn) durationMinutes = parseInt(activeDurationBtn.dataset.duration);
+                const courseType = document.getElementById('courseType').value;
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const notes = document.getElementById('notes').value;
 
-    const bookingData = {
-        courseType: type,
-        startTime: selectedSlot,
-        duration: durationMinutes, // ENVOI DE LA DURÉE
-        price: document.getElementById('summaryPrice').textContent,
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
-        notes: document.getElementById('notes').value
-    };
+                // Validation
+                if (!courseType || !name || !email) {
+                    showError('Veuillez remplir tous les champs obligatoires');
+                    return;
+                }
 
-    try {
-        const result = await window.bookingManager.createBooking(bookingData);
-        showSuccess('Votre cours a été réservé avec succès !');
-        bookingForm.reset();
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 2000);
-    } catch (error) {
-        showError(error.message);
-        submitButton.disabled = false;
-        submitButton.textContent = 'Confirmer la réservation';
-    }
-};
+                // Vérifier si l'utilisateur doit être connecté
+                if ((courseType === 'conversation' || courseType === 'curriculum') && !window.authManager?.getCurrentUser()) {
+                    showError('Veuillez vous connecter pour réserver ce type de cours');
+                    return;
+                }
+
+                hideMessages();
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation en cours...';
+
+                try {
+                    // Utiliser les données du créneau sélectionné
+                    if (!selectedSlot) {
+                        throw new Error('Aucun créneau sélectionné');
+                    }
+
+                    // Déterminer la durée et le prix BASÉ SUR LE CRÉNEAU SÉLECTIONNÉ
+                    let duration = selectedSlot.durationInMinutes || 15; // Utiliser la durée du créneau
+                    let price = 5;
+                    
+                    // CORRECTION IMPORTANTE: Utiliser la durée du créneau pour calculer le prix
+                    if (courseType === 'conversation') {
+                        // Tarifs conversation: 30=10€, 45=15€, 60=20€
+                        price = duration === 30 ? 10 : duration === 45 ? 15 : 20;
+                    } else if (courseType === 'curriculum') {
+                        // Tarifs curriculum: 30=17.5€, 45=26.25€, 60=35€
+                        price = duration === 30 ? 17.5 : duration === 45 ? 26.25 : 35;
+                    }
+
+                    const bookingData = {
+                        eventType: courseType,
+                        startTime: selectedSlot.start,
+                        endTime: selectedSlot.end,
+                        name: name,
+                        email: email,
+                        notes: notes,
+                        courseType: courseType,
+                        price: price,
+                        duration: duration,
+                        lengthInMinutes: duration // NOUVEAU: Ajouter ce champ pour Cal.com
+                    };
+
+                    const result = await window.bookingManager.createBooking(bookingData);
+                    
+                    showSuccess('Réservation confirmée ! Un email de confirmation a été envoyé.');
+                    
+                    // Redirection vers le dashboard après 3 secondes
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 3000);
+
+                } catch (error) {
+                    showError('Erreur lors de la réservation : ' + error.message);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-calendar-check"></i> Confirmer la réservation';
+                }
+            });
 
             // Fonctions
             function initCalendar() {
@@ -834,7 +872,7 @@
                                     ${slotDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                                 <div class="time-slot-duration">
-                                    ${window.bookingManager.formatTime(slot.start)}
+                                    ${window.bookingManager.formatTime(slot.start)} - ${slot.duration}
                                 </div>
                             `;
                             
@@ -891,6 +929,12 @@
                 selectedSlot = slot;
                 selectedTime = new Date(slot.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                 
+                // Mettre à jour la durée sélectionnée si le créneau a une durée différente
+                if (slot.durationInMinutes && durationGroup.classList.contains('visible')) {
+                    const durationSelect = document.getElementById('duration');
+                    durationSelect.value = slot.durationInMinutes;
+                }
+                
                 updateSummary();
             }
 
@@ -909,7 +953,7 @@
                 } else if (courseType === 'conversation') {
                     courseName = 'Conversation';
                     if (user && durationGroup.classList.contains('visible')) {
-                        const selectedDuration = parseInt(durationSelect.value) || 60;
+                        const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationSelect.value) || 60);
                         duration = selectedDuration + ' min';
                         // Tarifs conversation
                         if (selectedDuration === 30) price = '10€';
@@ -922,7 +966,7 @@
                 } else if (courseType === 'curriculum') {
                     courseName = 'Curriculum complet';
                     if (user && durationGroup.classList.contains('visible')) {
-                        const selectedDuration = parseInt(durationSelect.value) || 60;
+                        const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationSelect.value) || 60);
                         duration = selectedDuration + ' min';
                         // Tarifs curriculum
                         if (selectedDuration === 30) price = '17.5€';
