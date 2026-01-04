@@ -351,20 +351,23 @@ class BookingManager {
 
 const bookingPayload = {
     start: bookingData.startTime,
-    eventTypeId: parseInt(eventTypeId),
-    // CETTE LIGNE EST INDISPENSABLE :
-    lengthInMinutes: bookingData.duration, 
+    eventTypeId: parseInt(eventTypeId), // Doit être un Nombre
     attendee: {
         name: bookingData.name,
         email: bookingData.email,
-        timeZone: this.timeZone,
-        language: 'fr'
+        timeZone: bookingData.timeZone || this.timeZone,
+        language: bookingData.language || 'fr'
     },
     metadata: {
-        // Cal.com v2 exige que les metadata soient des Strings
-        userId: user?.id ? String(user.id) : "",
-        courseType: String(bookingData.courseType),
-        price: String(bookingData.price).replace('€', '').trim(),
+        // CORRECTION 1 : On s'assure que userId est une String, pas null
+        userId: user?.id ? String(user.id) : "", 
+        
+        // Sécurité : On force tout en String pour éviter les erreurs
+        courseType: String(bookingData.courseType || ''),
+        
+        // CORRECTION 2 (La vôtre) : Le prix doit être une String
+        price: String(bookingData.price || '0'),
+        
         notes: String(bookingData.notes || '')
     }
 };
