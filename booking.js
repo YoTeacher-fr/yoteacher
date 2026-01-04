@@ -91,7 +91,7 @@ class BookingManager {
                 throw new Error(`Type de cours "${eventType}" non configuré dans Cal.com`);
             }
 
-            console.log(`🔍 Recherche créneaux pour eventTypeId: ${eventTypeId}, date: ${targetDate}, timeZone: ${this.timeZone}, duration: ${duration || 'défaut'} min`);
+            console.log(`🔍 Recherche créneaux pour eventTypeId: ${eventTypeId}, date: ${targetDate}, timeZone: ${this.timeZone}, durée: ${duration || 'défaut'} min`);
 
             const queryParams = new URLSearchParams({
                 eventTypeId: eventTypeId,
@@ -191,16 +191,19 @@ class BookingManager {
                             return null;
                         }
                         
+                        // CORRECTION: Utiliser la durée passée en paramètre ou la durée par défaut
+                        const slotDuration = duration || this.getDefaultDuration(eventType);
+                        
                         return {
                             id: slotTime,
                             start: slotTime,
-                            end: this.calculateEndTime(slotTime, eventType, duration),
+                            end: this.calculateEndTime(slotTime, eventType, slotDuration),
                             time: startDate.toLocaleTimeString('fr-FR', { 
                                 hour: '2-digit', 
                                 minute: '2-digit' 
                             }),
-                            duration: duration ? `${duration} min` : this.getDuration(eventType),
-                            durationInMinutes: duration || this.getDefaultDuration(eventType),
+                            duration: `${slotDuration} min`,
+                            durationInMinutes: slotDuration, // IMPORTANT: Stocker la durée
                             eventTypeId: eventTypeId
                         };
                     } catch (error) {
@@ -210,7 +213,7 @@ class BookingManager {
                 }).filter(slot => slot !== null);
             });
             
-            console.log(`✅ ${formattedSlots.length} créneau(x) disponible(s)`);
+            console.log(`✅ ${formattedSlots.length} créneau(x) disponible(s) de ${duration || this.getDefaultDuration(eventType)} min`);
             return formattedSlots;
             
         } catch (error) {
@@ -321,6 +324,11 @@ class BookingManager {
                         })));
                     } else {
                         console.log(`✅ Event type trouvé: ${foundEvent.title} (${foundEvent.lengthInMinutes || foundEvent.length} min)`);
+                        
+                        // Vérifier si l'event type supporte des durées multiples
+                        if (foundEvent.availableLengths) {
+                            console.log(`📏 Durées disponibles: ${foundEvent.availableLengths.join(', ')} min`);
+                        }
                     }
                 } else {
                     console.warn('Format de réponse inattendu pour /event-types');
@@ -347,38 +355,45 @@ class BookingManager {
                 throw new Error(`Type de cours "${bookingData.eventType}" non configuré`);
             }
 
-            // Dans booking.js, méthode createBooking
+            // CORRECTION IMPORTANTE: Préparer le payload avec la durée
+            const bookingPayload = {
+                start: bookingData.startTime,
+                eventTypeId: parseInt(eventTypeId),
+                attendee: {
+                    name: bookingData.name,
+                    email: bookingData.email,
+                    timeZone: bookingData.timeZone || this.timeZone,
+                    language: bookingData.language || 'fr'
+                },
+                metadata: {
+                    userId: user?.id ? String(user.id) : "", 
+                    courseType: String(bookingData.courseType || ''),
+                    price: String(bookingData.price || '0'),
+                    notes: String(bookingData.notes || ''),
+                    duration: String(bookingData.duration || '')
+                }
+            };
 
-const bookingPayload = {
-    start: bookingData.startTime,
-    eventTypeId: parseInt(eventTypeId),
-    // CETTE LIGNE EST INDISPENSABLE :
-    lengthInMinutes: bookingData.duration, 
-    attendee: {
-        name: bookingData.name,
-        email: bookingData.email,
-        timeZone: this.timeZone,
-        language: 'fr'
-    },
-    metadata: {
-        // Cal.com v2 exige que les metadata soient des Strings
-        userId: user?.id ? String(user.id) : "",
-        courseType: String(bookingData.courseType),
-        price: String(bookingData.price).replace('€', '').trim(),
-        notes: String(bookingData.notes || '')
-    }
-};
+            // CORRECTION CRITIQUE: Ajouter lengthInMinutes pour spécifier la durée
+            // L'API Cal.com v2 utilise lengthInMinutes pour les réservations
+            if (bookingData.duration || bookingData.lengthInMinutes) {
+                const requestedDuration = parseInt(bookingData.lengthInMinutes || bookingData.duration);
+                console.log(`📏 Durée demandée pour la réservation: ${requestedDuration} minutes`);
+                bookingPayload.lengthInMinutes = requestedDuration;
+                
+                // Vérifier que la durée est compatible avec l'event type
+                const defaultDuration = this.getDefaultDuration(bookingData.eventType);
+                if (requestedDuration !== defaultDuration) {
+                    console.log(`⚠️ Durée spécifique demandée (${requestedDuration}min) différente de la durée par défaut (${defaultDuration}min)`);
+                    
+                    // Pour l'API v2, on peut aussi essayer avec le paramètre "duration"
+                    if (this.apiBaseUrl.includes('/v2/')) {
+                        bookingPayload.duration = requestedDuration;
+                    }
+                }
+            }
 
-if (bookingData.lengthInMinutes) {
-    // CORRECTION 3 : On force lengthInMinutes en Nombre (parseInt)
-    bookingPayload.lengthInMinutes = parseInt(bookingData.lengthInMinutes);
-}
-
-if (bookingData.phoneNumber) {
-    bookingPayload.attendee.phoneNumber = String(bookingData.phoneNumber);
-}
-
-            console.log('📤 Envoi de la réservation à Cal.com:', bookingPayload);
+            console.log('📤 Envoi de la réservation à Cal.com:', JSON.stringify(bookingPayload, null, 2));
 
             const response = await fetch(
                 `${this.apiBaseUrl}/bookings`,
@@ -404,6 +419,45 @@ if (bookingData.phoneNumber) {
                 
                 try {
                     const errorData = JSON.parse(errorText);
+                    
+                    // Vérifier si l'erreur est liée à la durée
+                    if (errorData.message && errorData.message.includes('duration') || errorData.message.includes('length')) {
+                        console.warn('⚠️ Erreur liée à la durée. Vérifiez que l\'event type supporte cette durée.');
+                        
+                        // Réessayer avec la durée par défaut
+                        console.log('🔄 Tentative avec la durée par défaut...');
+                        delete bookingPayload.lengthInMinutes;
+                        delete bookingPayload.duration;
+                        
+                        const retryResponse = await fetch(
+                            `${this.apiBaseUrl}/bookings`,
+                            {
+                                method: 'POST',
+                                headers: this.getAuthHeaders('bookings'),
+                                body: JSON.stringify(bookingPayload)
+                            }
+                        );
+                        
+                        if (!retryResponse.ok) {
+                            const retryError = await retryResponse.text();
+                            throw new Error(`Échec même avec durée par défaut: ${retryError}`);
+                        }
+                        
+                        const retryResult = await retryResponse.json();
+                        const data = retryResult.data || retryResult;
+                        console.log('✅ Réservation créée avec durée par défaut:', data);
+                        
+                        if (data && user) {
+                            await this.saveBookingToSupabase(data, user.id);
+                        }
+
+                        return {
+                            success: true,
+                            data: data,
+                            booking: data,
+                            message: 'Réservation créée avec la durée par défaut (la durée demandée n\'était pas disponible)'
+                        };
+                    }
                     
                     if (errorData.message && errorData.message.includes('title')) {
                         console.warn('Erreur "title" détectée - bug connu Cal.com');
@@ -449,12 +503,13 @@ if (bookingData.phoneNumber) {
                     uid: `mock_${Date.now()}`,
                     start: bookingData.startTime,
                     end: bookingData.endTime,
-                    title: `Cours ${bookingData.courseType}`,
+                    title: `Cours ${bookingData.courseType} (${bookingData.duration}min)`,
                     description: bookingData.notes || '',
                     attendees: [{
                         email: bookingData.email,
                         name: bookingData.name
-                    }]
+                    }],
+                    lengthInMinutes: bookingData.duration || 60
                 };
                 
                 console.log('✅ Réservation simulée créée:', mockBooking);
@@ -547,6 +602,55 @@ if (bookingData.phoneNumber) {
         const date = new Date(localDateTime);
         return date.toISOString();
     }
+    
+    // NOUVELLE MÉTHODE: Vérifier les durées disponibles pour un event type
+    async checkEventTypeDurations(eventTypeId) {
+        try {
+            console.log(`🔍 Vérification des durées pour event type ID: ${eventTypeId}`);
+            
+            const queryParams = new URLSearchParams({
+                username: this.calcomUsername
+            });
+            
+            const response = await fetch(
+                `${this.apiBaseUrl}/event-types?${queryParams}`, 
+                {
+                    headers: this.getAuthHeaders('event-types')
+                }
+            );
+            
+            if (response.ok) {
+                const result = await response.json();
+                const data = result.data || result;
+                const eventTypes = data.eventTypes || [];
+                
+                const eventType = eventTypes.find(e => e.id == eventTypeId || e.id === parseInt(eventTypeId));
+                if (eventType) {
+                    console.log(`📋 Event type trouvé: "${eventType.title}"`);
+                    console.log(`📏 Durée par défaut: ${eventType.lengthInMinutes || eventType.length} min`);
+                    
+                    if (eventType.availableLengths && Array.isArray(eventType.availableLengths)) {
+                        console.log(`✅ Durées multiples supportées: ${eventType.availableLengths.join(', ')} min`);
+                        return {
+                            defaultDuration: eventType.lengthInMinutes || eventType.length,
+                            availableLengths: eventType.availableLengths.map(l => parseInt(l))
+                        };
+                    } else {
+                        console.log(`ℹ️ Durées multiples non configurées. Durée fixe: ${eventType.lengthInMinutes || eventType.length} min`);
+                        return {
+                            defaultDuration: eventType.lengthInMinutes || eventType.length,
+                            availableLengths: [eventType.lengthInMinutes || eventType.length]
+                        };
+                    }
+                }
+            }
+            
+            return null;
+        } catch (error) {
+            console.warn('Erreur vérification durées:', error);
+            return null;
+        }
+    }
 }
 
 window.bookingManager = new BookingManager();
@@ -582,17 +686,42 @@ window.debugCalcomConfig = async function() {
                 const result = await response.json();
                 const data = result.data || result;
                 console.log('✅ Connexion API réussie');
-                console.log('Event types disponibles:', data.eventTypes || data);
                 
-                Object.entries(manager.eventTypeMap).forEach(([key, value]) => {
-                    if (value) {
-                        const eventTypes = data.eventTypes || [];
-                        const found = eventTypes.find(e => e.id == value || e.id === parseInt(value));
-                        console.log(`${key} (ID: ${value}):`, found ? `✅ Trouvé: "${found.title}"` : '❌ Non trouvé');
-                    } else {
-                        console.log(`${key}: ❌ Non configuré`);
-                    }
-                });
+                if (data.eventTypes) {
+                    console.log('Event types disponibles:', data.eventTypes.length);
+                    
+                    // Vérifier chaque event type configuré
+                    Object.entries(manager.eventTypeMap).forEach(([key, value]) => {
+                        if (value) {
+                            const found = data.eventTypes.find(e => e.id == value || e.id === parseInt(value));
+                            if (found) {
+                                console.log(`\n${key} (ID: ${value}):`);
+                                console.log(`  Titre: "${found.title}"`);
+                                console.log(`  Slug: ${found.slug}`);
+                                console.log(`  Durée: ${found.lengthInMinutes || found.length} min`);
+                                
+                                if (found.availableLengths) {
+                                    console.log(`  Durées multiples: ${found.availableLengths.join(', ')} min`);
+                                } else {
+                                    console.log(`  ℹ️ Durées multiples non configurées`);
+                                }
+                                
+                                // Vérifier les durées demandées
+                                const requestedDurations = manager.durationOptions[key] || [60];
+                                if (found.availableLengths) {
+                                    requestedDurations.forEach(duration => {
+                                        const isAvailable = found.availableLengths.some(d => parseInt(d) === duration);
+                                        console.log(`  ${duration} min: ${isAvailable ? '✅ Disponible' : '❌ Non disponible'}`);
+                                    });
+                                }
+                            } else {
+                                console.log(`${key} (ID: ${value}): ❌ Non trouvé`);
+                            }
+                        } else {
+                            console.log(`${key}: ❌ Non configuré`);
+                        }
+                    });
+                }
             } else {
                 const errorText = await response.text();
                 console.error('❌ Erreur connexion API:', response.status, response.statusText);
@@ -607,13 +736,20 @@ window.debugCalcomConfig = async function() {
     
     console.log('\n🧪 Test récupération créneaux:');
     try {
-        const slots = await manager.getAvailableSlots('essai');
-        console.log(`📅 Créneaux disponibles: ${slots.length}`);
-        if (slots.length > 0) {
-            slots.slice(0, 3).forEach(slot => {
-                console.log(`  • ${manager.formatTime(slot.start)} (${slot.duration})`);
-            });
-            if (slots.length > 3) console.log(`  ... et ${slots.length - 3} autres`);
+        // Tester différentes durées
+        const testDurations = [30, 45, 60];
+        for (const duration of testDurations) {
+            console.log(`\n📅 Test conversation ${duration}min:`);
+            try {
+                const slots = await manager.getAvailableSlots('conversation', null, duration);
+                console.log(`  Créneaux disponibles: ${slots.length}`);
+                if (slots.length > 0) {
+                    console.log(`  Exemple: ${manager.formatTime(slots[0].start)} (${slots[0].duration})`);
+                }
+            } catch (error) {
+                console.error(`  ❌ Erreur: ${error.message}`);
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
     } catch (error) {
         console.error('❌ Erreur récupération créneaux:', error.message);
@@ -632,6 +768,21 @@ document.addEventListener('DOMContentLoaded', function() {
             apiVersion: 'v2',
             baseUrl: window.bookingManager?.apiBaseUrl
         });
+        
+        // Vérifier la configuration des durées
+        if (window.YOTEACHER_CONFIG?.CALCOM_API_KEY) {
+            console.log('🔍 Vérification des durées disponibles...');
+            
+            // Vérifier chaque event type
+            Object.entries(window.bookingManager.eventTypeMap).forEach(async ([type, id]) => {
+                if (id) {
+                    const durations = await window.bookingManager.checkEventTypeDurations(id);
+                    if (durations) {
+                        console.log(`${type}: Durée par défaut ${durations.defaultDuration}min, disponibles: ${durations.availableLengths.join(', ')}min`);
+                    }
+                }
+            });
+        }
         
         if ((window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) && 
             !window.YOTEACHER_CONFIG?.CALCOM_API_KEY) {
@@ -698,7 +849,7 @@ window.testMultipleDates = async function(eventType = 'essai', daysAhead = 7, du
         console.log(`\n📅 Test pour ${dateStr}:`);
         try {
             const slots = await window.bookingManager.getAvailableSlots(eventType, dateStr, duration);
-            console.log(`   ${slots.length} créneaux trouvés`);
+            console.log(`   ${slots.length} créneaux trouvés (${duration || 'défaut'} min)`);
             results.push({ date: dateStr, count: slots.length, slots });
         } catch (error) {
             console.error(`   Erreur: ${error.message}`);
@@ -710,7 +861,7 @@ window.testMultipleDates = async function(eventType = 'essai', daysAhead = 7, du
     
     console.log('\n📊 Résumé:');
     const totalSlots = results.reduce((sum, r) => sum + r.count, 0);
-    console.log(`Total de ${totalSlots} créneaux trouvés sur ${daysAhead} jours`);
+    console.log(`Total de ${totalSlots} créneaux trouvés sur ${daysAhead} jours (${duration || 'défaut'} min)`);
     results.forEach(r => {
         if (r.count > 0) {
             console.log(`  • ${r.date}: ${r.count} créneaux`);
@@ -781,11 +932,66 @@ window.checkCalcomHealth = async function() {
         if (data && (data.eventTypes || data.data?.eventTypes)) {
             const eventTypes = data.eventTypes || data.data.eventTypes;
             console.log(`Event types disponibles: ${eventTypes.length}`);
+            
+            // Vérifier les durées pour chaque event type
+            eventTypes.slice(0, 3).forEach(event => {
+                console.log(`  • ${event.title}: ${event.lengthInMinutes || event.length} min`);
+                if (event.availableLengths) {
+                    console.log(`    Durées multiples: ${event.availableLengths.join(', ')} min`);
+                }
+            });
         }
         
         return response.ok;
     } catch (error) {
         console.error('❌ Erreur santé API:', error.message);
         return false;
+    }
+};
+
+// NOUVELLE FONCTION: Vérifier la configuration des durées
+window.checkDurationConfiguration = async function() {
+    console.log('🔧 Vérification de la configuration des durées...');
+    
+    const manager = window.bookingManager;
+    const config = window.YOTEACHER_CONFIG || {};
+    
+    if (!config.CALCOM_API_KEY) {
+        console.error('❌ Aucune clé API configurée');
+        return;
+    }
+    
+    try {
+        // Vérifier chaque event type configuré
+        for (const [eventType, eventTypeId] of Object.entries(manager.eventTypeMap)) {
+            if (!eventTypeId) continue;
+            
+            console.log(`\n📋 ${eventType} (ID: ${eventTypeId}):`);
+            
+            // Obtenir les informations de l'event type
+            const durationsInfo = await manager.checkEventTypeDurations(eventTypeId);
+            if (durationsInfo) {
+                console.log(`  Durée par défaut: ${durationsInfo.defaultDuration} min`);
+                console.log(`  Durées disponibles: ${durationsInfo.availableLengths.join(', ')} min`);
+                
+                // Vérifier si nos durées configurées sont disponibles
+                const expectedDurations = manager.durationOptions[eventType] || [60];
+                console.log(`  Durées attendues: ${expectedDurations.join(', ')} min`);
+                
+                expectedDurations.forEach(duration => {
+                    const isAvailable = durationsInfo.availableLengths.includes(duration);
+                    console.log(`  ${duration} min: ${isAvailable ? '✅ Disponible' : '❌ NON DISPONIBLE'}`);
+                });
+                
+                // Suggestions si des durées ne sont pas disponibles
+                const missingDurations = expectedDurations.filter(d => !durationsInfo.availableLengths.includes(d));
+                if (missingDurations.length > 0) {
+                    console.warn(`  ⚠️ Durées manquantes: ${missingDurations.join(', ')} min`);
+                    console.warn(`  💡 Solution: Allez sur Cal.com > Event Types > "${eventType}" > Durée > Cocher "Multiple durations"`);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('❌ Erreur vérification configuration:', error);
     }
 };
