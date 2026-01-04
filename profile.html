@@ -11,6 +11,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
+        /* MASQUER LA PAGE PAR DÉFAUT */
+        body {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        
+        body.loaded {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .profile-section {
             padding: 100px 20px 60px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -392,6 +404,54 @@
     </style>
 </head>
 <body>
+    <!-- SCRIPT DE VÉRIFICATION D'AUTHENTIFICATION -->
+    <script>
+        // Masquer la page immédiatement
+        document.body.style.opacity = '0';
+        document.body.style.visibility = 'hidden';
+        
+        // Fonction pour vérifier l'authentification
+        function checkAuthentication() {
+            let attempts = 0;
+            const maxAttempts = 30; // 3 secondes maximum
+            
+            function check() {
+                attempts++;
+                
+                // Vérifier si authManager est disponible
+                if (window.authManager && window.authManager.isAuthenticated !== undefined) {
+                    if (window.authManager.isAuthenticated()) {
+                        // Authentifié - afficher la page
+                        document.body.classList.add('loaded');
+                        document.body.style.opacity = '1';
+                        document.body.style.visibility = 'visible';
+                        
+                        // Lancer le chargement du profil
+                        setTimeout(() => {
+                            if (window.loadProfile) window.loadProfile();
+                        }, 100);
+                    } else {
+                        // Non authentifié - rediriger
+                        const currentUrl = encodeURIComponent(window.location.href);
+                        window.location.replace(`login.html?redirect=${currentUrl}`);
+                    }
+                } else if (attempts >= maxAttempts) {
+                    // Timeout - rediriger par précaution
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    window.location.replace(`login.html?redirect=${currentUrl}`);
+                } else {
+                    // Réessayer
+                    setTimeout(check, 100);
+                }
+            }
+            
+            check();
+        }
+        
+        // Démarrer la vérification après un court délai
+        setTimeout(checkAuthentication, 200);
+    </script>
+
     <!-- Header -->
     <header class="main-header">
         <div class="container">
@@ -863,13 +923,14 @@
     </section>
 
     <!-- Scripts -->
-<script src="config.js"></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script src="auth.js"></script>
-<script src="booking.js"></script>
-<script src="mobile-menu.js"></script>
-<script src="common.js"></script>
+    <script src="config.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="auth.js"></script>
+    <script src="booking.js"></script>
+    <script src="mobile-menu.js"></script>
+    <script src="common.js"></script>
+    
     <script>
         // Fonction pour attendre que authManager soit prêt
         function waitForAuthManager() {
@@ -891,192 +952,187 @@
             });
         }
         
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Attendre que authManager soit initialisé
-            await waitForAuthManager();
-            
-            const user = window.authManager?.getCurrentUser();
-            
-            if (!user) {
-                // Rediriger vers la page de connexion avec le paramètre redirect
-                const currentUrl = encodeURIComponent(window.location.href);
-                window.location.href = 'login.html?redirect=' + currentUrl;
-                return;
-            }
-            
-            let userProfile = null;
-            
-            // Initialiser l'avatar
-            const initials = user.email.substring(0, 2).toUpperCase();
-            document.getElementById('userAvatar').textContent = initials;
-            
-            // Charger les données du profil
-            async function loadProfile() {
-                try {
-                    if (window.supabase) {
-                        const { data: profile, error } = await supabase
-                            .from('profiles')
-                            .select('*')
-                            .eq('id', user.id)
-                            .single();
+        // Fonction principale de chargement du profil
+        async function loadProfile() {
+            try {
+                // Attendre que authManager soit initialisé
+                await waitForAuthManager();
+                
+                const user = window.authManager?.getCurrentUser();
+                
+                if (!user) {
+                    console.log('Utilisateur non trouvé, vérification en cours...');
+                    return; // La redirection se fera via le script d'authentification
+                }
+                
+                let userProfile = null;
+                
+                // Initialiser l'avatar
+                const initials = user.email.substring(0, 2).toUpperCase();
+                document.getElementById('userAvatar').textContent = initials;
+                
+                // Charger les données du profil
+                await loadUserProfile(user);
+                
+                // Gestion des onglets
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
                         
-                        if (profile && !error) {
-                            userProfile = profile;
-                            populateForms(profile);
+                        // Retirer la classe active de tous les onglets
+                        document.querySelectorAll('.nav-item').forEach(i => {
+                            i.classList.remove('active');
+                        });
+                        document.querySelectorAll('.tab-content').forEach(tab => {
+                            tab.classList.remove('active');
+                        });
+                        
+                        // Ajouter la classe active à l'onglet sélectionné
+                        this.classList.add('active');
+                        const tabId = this.dataset.tab + 'Tab';
+                        document.getElementById(tabId).classList.add('active');
+                    });
+                });
+                
+                // Gestion du changement de mot de passe
+                document.getElementById('changePasswordBtn').addEventListener('click', function() {
+                    const newPassword = prompt('Entrez votre nouveau mot de passe:');
+                    if (newPassword) {
+                        if (newPassword.length < 8) {
+                            alert('Le mot de passe doit contenir au moins 8 caractères');
+                            return;
+                        }
+                        
+                        const confirmPassword = prompt('Confirmez votre nouveau mot de passe:');
+                        if (newPassword === confirmPassword) {
+                            // Ici, vous pouvez ajouter la logique pour changer le mot de passe
+                            alert('La fonctionnalité de changement de mot de passe sera bientôt disponible');
+                        } else {
+                            alert('Les mots de passe ne correspondent pas');
                         }
                     }
-                } catch (error) {
-                    console.error('Erreur lors du chargement du profil:', error);
-                }
-            }
-            
-            // Remplir les formulaires avec les données existantes
-            function populateForms(profile) {
-                // Informations personnelles
-                const fullName = profile.full_name || '';
-                const nameParts = fullName.split(' ');
-                document.getElementById('firstName').value = nameParts[0] || '';
-                document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
-                document.getElementById('email').value = user.email;
-                
-                // Préférences de langue (à partir des métadonnées)
-                const metadata = user.user_metadata || {};
-                if (metadata.currentLevel) {
-                    document.getElementById('currentLevel').value = metadata.currentLevel;
-                }
-                if (metadata.targetLevel) {
-                    document.getElementById('targetLevel').value = metadata.targetLevel;
-                }
-                if (metadata.learningGoals) {
-                    document.getElementById('learningGoals').value = metadata.learningGoals;
-                }
-            }
-            
-            // Gestion des onglets
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Retirer la classe active de tous les onglets
-                    document.querySelectorAll('.nav-item').forEach(i => {
-                        i.classList.remove('active');
-                    });
-                    document.querySelectorAll('.tab-content').forEach(tab => {
-                        tab.classList.remove('active');
-                    });
-                    
-                    // Ajouter la classe active à l'onglet sélectionné
-                    this.classList.add('active');
-                    const tabId = this.dataset.tab + 'Tab';
-                    document.getElementById(tabId).classList.add('active');
                 });
-            });
-            
-            // Gestion du changement de mot de passe
-            document.getElementById('changePasswordBtn').addEventListener('click', function() {
-                const newPassword = prompt('Entrez votre nouveau mot de passe:');
-                if (newPassword) {
-                    if (newPassword.length < 8) {
-                        alert('Le mot de passe doit contenir au moins 8 caractères');
-                        return;
-                    }
-                    
-                    const confirmPassword = prompt('Confirmez votre nouveau mot de passe:');
-                    if (newPassword === confirmPassword) {
-                        // Ici, vous pouvez ajouter la logique pour changer le mot de passe
-                        alert('La fonctionnalité de changement de mot de passe sera bientôt disponible');
-                    } else {
-                        alert('Les mots de passe ne correspondent pas');
-                    }
-                }
-            });
-            
-            // Gestion de l'upload d'avatar
-            document.getElementById('avatarInput').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                        alert('La taille de l\'image ne doit pas dépasser 5MB');
-                        return;
-                    }
-                    
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const avatar = document.getElementById('userAvatar');
-                        avatar.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-            
-            // Gestion de la soumission du formulaire personnel
-            document.getElementById('personalForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
                 
-                const firstName = document.getElementById('firstName').value;
-                const lastName = document.getElementById('lastName').value;
-                const fullName = `${firstName} ${lastName}`;
-                
-                try {
-                    // Mettre à jour les métadonnées de l'utilisateur
-                    const { error } = await supabase.auth.updateUser({
-                        data: { full_name: fullName }
-                    });
-                    
-                    if (error) throw error;
-                    
-                    // Mettre à jour le profil dans la table profiles
-                    if (window.supabase) {
-                        const { error: profileError } = await supabase
-                            .from('profiles')
-                            .upsert({
-                                id: user.id,
-                                full_name: fullName,
-                                updated_at: new Date().toISOString()
-                            });
+                // Gestion de l'upload d'avatar
+                document.getElementById('avatarInput').addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                            alert('La taille de l\'image ne doit pas dépasser 5MB');
+                            return;
+                        }
                         
-                        if (profileError) throw profileError;
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            const avatar = document.getElementById('userAvatar');
+                            avatar.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                        };
+                        reader.readAsDataURL(file);
                     }
-                    
-                    showSuccess('Profil mis à jour avec succès !');
-                    
-                } catch (error) {
-                    showError('Erreur lors de la mise à jour du profil: ' + error.message);
-                    console.error(error);
-                }
-            });
-            
-            // Gestion des autres formulaires
-            ['languageForm', 'preferencesForm', 'notificationsForm'].forEach(formId => {
-                document.getElementById(formId)?.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    showSuccess('Préférences enregistrées avec succès !');
                 });
-            });
-            
-            function showError(message) {
-                document.getElementById('errorText').textContent = message;
-                document.getElementById('errorMessage').style.display = 'flex';
-                document.getElementById('successMessage').style.display = 'none';
                 
-                setTimeout(() => {
-                    document.getElementById('errorMessage').style.display = 'none';
-                }, 5000);
-            }
-            
-            function showSuccess(message) {
-                document.getElementById('successText').textContent = message;
-                document.getElementById('successMessage').style.display = 'flex';
-                document.getElementById('errorMessage').style.display = 'none';
+                // Gestion de la soumission du formulaire personnel
+                document.getElementById('personalForm').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const firstName = document.getElementById('firstName').value;
+                    const lastName = document.getElementById('lastName').value;
+                    const fullName = `${firstName} ${lastName}`;
+                    
+                    try {
+                        // Mettre à jour les métadonnées de l'utilisateur
+                        const { error } = await supabase.auth.updateUser({
+                            data: { full_name: fullName }
+                        });
+                        
+                        if (error) throw error;
+                        
+                        // Mettre à jour le profil dans la table profiles
+                        if (window.supabase) {
+                            const { error: profileError } = await supabase
+                                .from('profiles')
+                                .upsert({
+                                    id: user.id,
+                                    full_name: fullName,
+                                    updated_at: new Date().toISOString()
+                                });
+                            
+                            if (profileError) throw profileError;
+                        }
+                        
+                        showSuccess('Profil mis à jour avec succès !');
+                        
+                    } catch (error) {
+                        showError('Erreur lors de la mise à jour du profil: ' + error.message);
+                        console.error(error);
+                    }
+                });
                 
-                setTimeout(() => {
-                    document.getElementById('successMessage').style.display = 'none';
-                }, 3000);
+                // Gestion des autres formulaires
+                ['languageForm', 'preferencesForm', 'notificationsForm'].forEach(formId => {
+                    document.getElementById(formId)?.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        showSuccess('Préférences enregistrées avec succès !');
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Erreur chargement profil:', error);
+                showError('Erreur lors du chargement du profil: ' + error.message);
             }
+        }
+        
+        async function loadUserProfile(user) {
+            // Remplir les formulaires avec les données existantes
+            const fullName = user.user_metadata?.full_name || '';
+            const nameParts = fullName.split(' ');
+            document.getElementById('firstName').value = nameParts[0] || '';
+            document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
+            document.getElementById('email').value = user.email;
             
-            // Charger le profil
-            await loadProfile();
-        });
+            // Préférences de langue (à partir des métadonnées)
+            const metadata = user.user_metadata || {};
+            if (metadata.currentLevel) {
+                document.getElementById('currentLevel').value = metadata.currentLevel;
+            }
+            if (metadata.targetLevel) {
+                document.getElementById('targetLevel').value = metadata.targetLevel;
+            }
+            if (metadata.learningGoals) {
+                document.getElementById('learningGoals').value = metadata.learningGoals;
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            const successDiv = document.getElementById('successMessage');
+            
+            errorText.textContent = message;
+            errorDiv.style.display = 'flex';
+            successDiv.style.display = 'none';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            const successText = document.getElementById('successText');
+            const errorDiv = document.getElementById('errorMessage');
+            
+            successText.textContent = message;
+            successDiv.style.display = 'flex';
+            errorDiv.style.display = 'none';
+            
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Exposer la fonction globalement
+        window.loadProfile = loadProfile;
     </script>
 </body>
 </html>
