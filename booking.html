@@ -8,10 +8,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Correction header */
+        /* RÉDUCTION DE LA HAUTEUR DU HEADER */
         .main-header {
-            background: white !important;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1) !important;
+            background-color: rgba(255, 255, 255, 0.98) !important;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
+            backdrop-filter: blur(10px) !important;
+            min-height: 60px !important; /* Réduit la hauteur */
+        }
+        
+        .header-content {
+            padding: 10px 0 !important; /* Réduit le padding vertical */
         }
         
         .main-header .nav-link {
@@ -25,13 +31,26 @@
         .main-header .logo {
             color: #333 !important;
             font-weight: 700;
-            font-size: 1.8rem;
+            font-size: 1.5rem !important; /* Logo plus petit */
         }
         
+        .main-header .login-btn {
+            background-color: #4f9ad1 !important;
+            color: white !important;
+            padding: 8px 20px !important; /* Bouton plus petit */
+            font-size: 0.9rem !important;
+        }
+        
+        /* CORRECTION DU PADDING DU BODY */
+        body {
+            padding-top: 60px !important; /* Ajusté à la nouvelle hauteur du header */
+        }
+        
+        /* FOND INITIAL DE BOOKING */
         .booking-section {
-            padding: 120px 20px 60px;
-            background: #f8f9fa;
-            min-height: 100vh;
+            padding: 40px 20px; /* Espacement symétrique */
+            background: #f8f9fa; /* Fond gris clair initial */
+            min-height: calc(100vh - 60px); /* Prend en compte le header réduit */
         }
 
         .booking-container {
@@ -283,6 +302,7 @@
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
+            border-left: 4px solid #d32f2f;
         }
 
         .success-message {
@@ -292,6 +312,7 @@
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
+            border-left: 4px solid #2e7d32;
         }
 
         .loading-slots {
@@ -348,13 +369,50 @@
             background: #2c74e6;
         }
         
-        /* Nouveau style pour le sélecteur de durée */
+        /* NOUVEAUX STYLES POUR LES BULLES DE DURÉE */
         .duration-group {
             display: none;
         }
         
         .duration-group.visible {
             display: block;
+        }
+        
+        .duration-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .duration-option {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .duration-option:hover {
+            border-color: #3c84f6;
+            background: #f0f7ff;
+            color: #3c84f6;
+        }
+        
+        .duration-option.selected {
+            background: #3c84f6;
+            border-color: #3c84f6;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
         }
         
         .login-required {
@@ -379,7 +437,8 @@
 
         @media (max-width: 768px) {
             .booking-section {
-                padding: 100px 15px 40px;
+                padding: 30px 15px;
+                min-height: calc(100vh - 60px);
             }
             
             .booking-grid {
@@ -400,29 +459,101 @@
                 font-size: 0.9rem;
             }
             
-            /* Correction pour mobile: avatar bien positionné */
+            .booking-card {
+                padding: 25px 20px;
+            }
+            
+            .duration-options {
+                gap: 8px;
+            }
+            
+            .duration-option {
+                min-width: 70px;
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            
+            /* Header mobile ajusté */
+            .main-header {
+                min-height: 55px !important;
+            }
+            
             .header-content {
-                gap: 10px !important;
+                padding: 8px 0 !important;
+            }
+            
+            .logo {
+                font-size: 1.3rem !important;
             }
             
             .mobile-login-btn-header {
+                padding: 6px 12px !important;
+                font-size: 0.85rem !important;
                 order: 3;
                 z-index: 1001;
             }
             
-            .logo-section {
-                order: 2;
+            body {
+                padding-top: 55px !important;
             }
             
-            .hamburger-menu {
-                order: 1;
+            .booking-section {
+                min-height: calc(100vh - 55px);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .booking-card {
+                padding: 20px 15px;
+            }
+            
+            .booking-title {
+                font-size: 1.8rem;
+            }
+            
+            .card-title {
+                font-size: 1.3rem;
+            }
+            
+            .btn-booking {
+                padding: 14px;
+            }
+            
+            .form-input, .form-select, .form-textarea {
+                padding: 10px 12px;
+            }
+            
+            .duration-options {
+                gap: 6px;
+            }
+            
+            .duration-option {
+                min-width: 60px;
+                padding: 8px 10px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* Animation subtile pour les cartes */
+        .booking-card {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header simplifié -->
-    <header class="main-header">
+    <!-- Header réduit -->
+    <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
                 <button class="hamburger-menu" id="hamburgerBtn">
@@ -514,14 +645,15 @@
                             </select>
                         </div>
 
-                        <!-- Sélecteur de durée (seulement pour conversation/curriculum quand connecté) -->
+                        <!-- Sélecteur de durée en bulles cliquables -->
                         <div class="form-group duration-group" id="durationGroup">
-                            <label class="form-label" for="duration">Durée du cours</label>
-                            <select id="duration" class="form-select">
-                                <option value="30">30 minutes</option>
-                                <option value="45">45 minutes</option>
-                                <option value="60">60 minutes</option>
-                            </select>
+                            <label class="form-label">Durée du cours</label>
+                            <div class="duration-options">
+                                <button type="button" class="duration-option" data-duration="30">30 min</button>
+                                <button type="button" class="duration-option" data-duration="45">45 min</button>
+                                <button type="button" class="duration-option" data-duration="60" data-selected="true">60 min</button>
+                            </div>
+                            <input type="hidden" id="duration" value="60">
                         </div>
 
                         <div class="form-group">
@@ -604,7 +736,7 @@
             const bookingForm = document.getElementById('bookingForm');
             const submitButton = document.getElementById('submitBooking');
             const durationGroup = document.getElementById('durationGroup');
-            const durationSelect = document.getElementById('duration');
+            const durationInput = document.getElementById('duration');
             const loginRequired = document.getElementById('loginRequired');
             const courseTypeName = document.getElementById('courseTypeName');
             const loginLink = document.getElementById('loginLink');
@@ -646,15 +778,31 @@
                 updateSummary();
             });
 
-            // Changement de durée
-            durationSelect.addEventListener('change', function() {
-                if (selectedDate) {
-                    loadAvailableSlots(selectedDate);
-                }
-                updateSummary();
+            // Gestion des boutons de durée
+            document.querySelectorAll('.duration-option').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Retirer la sélection précédente
+                    document.querySelectorAll('.duration-option').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    
+                    // Ajouter la nouvelle sélection
+                    this.classList.add('selected');
+                    
+                    // Mettre à jour la valeur
+                    const duration = this.getAttribute('data-duration');
+                    durationInput.value = duration;
+                    
+                    // Recharger les créneaux si une date est sélectionnée
+                    if (selectedDate) {
+                        loadAvailableSlots(selectedDate);
+                    }
+                    
+                    updateSummary();
+                });
             });
 
-            // Soumission du formulaire - MODIFIÉ POUR REDIRECTION VERS PAIEMENT
+            // Soumission du formulaire
             bookingForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
@@ -690,7 +838,7 @@
                         throw new Error('Aucun créneau sélectionné');
                     }
 
-                    // Déterminer la durée et le prix BASÉ SUR LE CRÉNEAU SÉLECTIONNÉ
+                    // Déterminer la durée et le prix
                     let duration = selectedSlot.durationInMinutes || 15;
                     let price = 5;
                     
@@ -949,7 +1097,7 @@
                     // Pour conversation/curriculum: utiliser la durée sélectionnée si connecté
                     let duration = null;
                     if (courseType !== 'essai' && durationGroup.classList.contains('visible')) {
-                        duration = parseInt(durationSelect.value) || 60;
+                        duration = parseInt(durationInput.value) || 60;
                     }
                     
                     // Appeler l'API avec la date et le type de cours
@@ -1039,8 +1187,15 @@
                 
                 // Mettre à jour la durée sélectionnée si le créneau a une durée différente
                 if (slot.durationInMinutes && durationGroup.classList.contains('visible')) {
-                    const durationSelect = document.getElementById('duration');
-                    durationSelect.value = slot.durationInMinutes;
+                    // Trouver et sélectionner le bouton correspondant
+                    const durationButton = document.querySelector(`.duration-option[data-duration="${slot.durationInMinutes}"]`);
+                    if (durationButton) {
+                        document.querySelectorAll('.duration-option').forEach(btn => {
+                            btn.classList.remove('selected');
+                        });
+                        durationButton.classList.add('selected');
+                        durationInput.value = slot.durationInMinutes;
+                    }
                 }
                 
                 updateSummary();
@@ -1061,7 +1216,7 @@
                 } else if (courseType === 'conversation') {
                     courseName = 'Conversation';
                     if (user && durationGroup.classList.contains('visible')) {
-                        const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationSelect.value) || 60);
+                        const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
                         duration = selectedDuration + ' min';
                         // Tarifs conversation
                         if (selectedDuration === 30) price = '10€';
@@ -1074,7 +1229,7 @@
                 } else if (courseType === 'curriculum') {
                     courseName = 'Curriculum complet';
                     if (user && durationGroup.classList.contains('visible')) {
-                        const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationSelect.value) || 60);
+                        const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
                         duration = selectedDuration + ' min';
                         // Tarifs curriculum
                         if (selectedDuration === 30) price = '17.5€';
