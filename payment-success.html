@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement Réussi - YoTeacher</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .success-section {
+            padding: 120px 20px 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .success-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            font-size: 3rem;
+            color: #4CAF50;
+            animation: bounce 1s infinite alternate;
+        }
+        
+        @keyframes bounce {
+            from { transform: translateY(0px); }
+            to { transform: translateY(-10px); }
+        }
+        
+        .success-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .success-message {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        .success-details {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        .success-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-success {
+            background: white;
+            color: #667eea;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-outline-white {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .btn-outline-white:hover {
+            background: white;
+            color: #667eea;
+        }
+        
+        .email-confirmation {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .success-section {
+                padding: 100px 15px 40px;
+            }
+            
+            .success-title {
+                font-size: 2rem;
+            }
+            
+            .success-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn-success, .btn-outline-white {
+                width: 100%;
+                max-width: 280px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="success-section">
+        <div class="success-container">
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            
+            <h1 class="success-title">Paiement Réussi !</h1>
+            
+            <div class="success-message">
+                Votre réservation a été confirmée et votre paiement a été accepté.
+                Un email de confirmation vous a été envoyé avec tous les détails.
+            </div>
+            
+            <div class="success-details" id="bookingDetails">
+                <!-- Détails de la réservation -->
+            </div>
+            
+            <div class="success-actions">
+                <a href="dashboard.html" class="btn-success">
+                    <i class="fas fa-tachometer-alt"></i> Voir mon dashboard
+                </a>
+                <a href="index.html" class="btn-outline-white">
+                    <i class="fas fa-home"></i> Retour à l'accueil
+                </a>
+                <a href="booking.html" class="btn-outline-white">
+                    <i class="fas fa-calendar-plus"></i> Réserver un autre cours
+                </a>
+            </div>
+            
+            <div class="email-confirmation">
+                <i class="fas fa-envelope"></i> Vérifiez votre boîte email pour le lien de la visioconférence
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Récupérer les détails de la réservation
+            const urlParams = new URLSearchParams(window.location.search);
+            const bookingParam = urlParams.get('booking');
+            
+            if (bookingParam) {
+                try {
+                    const bookingData = JSON.parse(decodeURIComponent(bookingParam));
+                    displayBookingDetails(bookingData);
+                } catch (error) {
+                    console.error('Erreur parsing booking:', error);
+                }
+            }
+            
+            // Vider le localStorage
+            localStorage.removeItem('pendingBooking');
+        });
+        
+        function displayBookingDetails(booking) {
+            const detailsDiv = document.getElementById('bookingDetails');
+            if (!detailsDiv) return;
+            
+            const bookingDate = new Date(booking.startTime);
+            const formattedDate = bookingDate.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const formattedTime = bookingDate.toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            detailsDiv.innerHTML = `
+                <h3 style="margin-bottom: 20px; color: white;">Récapitulatif de votre réservation</h3>
+                <div class="detail-item">
+                    <span>Cours:</span>
+                    <span>${booking.courseType === 'essai' ? 'Cours d\'essai' : 
+                            booking.courseType === 'conversation' ? 'Conversation' : 'Curriculum complet'}</span>
+                </div>
+                <div class="detail-item">
+                    <span>Date:</span>
+                    <span>${formattedDate}</span>
+                </div>
+                <div class="detail-item">
+                    <span>Heure:</span>
+                    <span>${formattedTime}</span>
+                </div>
+                <div class="detail-item">
+                    <span>Durée:</span>
+                    <span>${booking.duration} minutes</span>
+                </div>
+                <div class="detail-item">
+                    <span>Montant payé:</span>
+                    <span>${booking.price}€</span>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
