@@ -1,5 +1,4 @@
-// Gestion des réservations avec Cal.com (API v2)
-// Documentation: https://cal.com/docs/api-reference/v2/introduction
+// Gestion des réservations avec Cal.com (API v2) et redirection vers paiement
 class BookingManager {
     constructor() {
         const config = window.YOTEACHER_CONFIG || {};
@@ -203,7 +202,7 @@ class BookingManager {
                                 minute: '2-digit' 
                             }),
                             duration: `${slotDuration} min`,
-                            durationInMinutes: slotDuration, // IMPORTANT: Stocker la durée
+                            durationInMinutes: slotDuration,
                             eventTypeId: eventTypeId
                         };
                     } catch (error) {
@@ -357,7 +356,7 @@ class BookingManager {
                 throw new Error(`Type de cours "${bookingData.eventType}" non configuré`);
             }
 
-            // CORRECTION IMPORTANTE: Préparer le payload avec la durée
+            // Préparer le payload
             const bookingPayload = {
                 start: bookingData.startTime,
                 eventTypeId: parseInt(eventTypeId),
@@ -376,19 +375,15 @@ class BookingManager {
                 }
             };
 
-            // CORRECTION CRITIQUE: Ajouter lengthInMinutes seulement pour conversation et curriculum
-            // Ne pas l'ajouter pour essai car l'event type n'a pas de durées multiples
+            // Ajouter lengthInMinutes seulement pour conversation et curriculum
             if (bookingData.eventType !== 'essai' && (bookingData.duration || bookingData.lengthInMinutes)) {
                 const requestedDuration = parseInt(bookingData.lengthInMinutes || bookingData.duration);
                 console.log(`📏 Durée demandée pour la réservation: ${requestedDuration} minutes`);
                 bookingPayload.lengthInMinutes = requestedDuration;
                 
-                // Vérifier que la durée est compatible avec l'event type
                 const defaultDuration = this.getDefaultDuration(bookingData.eventType);
                 if (requestedDuration !== defaultDuration) {
                     console.log(`⚠️ Durée spécifique demandée (${requestedDuration}min) différente de la durée par défaut (${defaultDuration}min)`);
-                    
-                    // Pour l'API v2, on peut aussi essayer avec le paramètre "duration"
                     if (this.apiBaseUrl.includes('/v2/')) {
                         bookingPayload.duration = requestedDuration;
                     }
@@ -424,7 +419,7 @@ class BookingManager {
                 try {
                     const errorData = JSON.parse(errorText);
                     
-                    // Vérifier si l'erreur est liée à la durée pour essai
+                    // Gestion des erreurs spécifiques
                     if (errorData.error?.message && errorData.error.message.includes("Can't specify 'lengthInMinutes' because event type does not have multiple possible lengths")) {
                         console.warn('⚠️ Erreur spécifique: lengthInMinutes envoyé pour un event type sans durées multiples');
                         
@@ -451,19 +446,10 @@ class BookingManager {
                         const data = retryResult.data || retryResult;
                         console.log('✅ Réservation créée sans lengthInMinutes:', data);
                         
-                        if (data && user) {
-                            await this.saveBookingToSupabase(data, user.id);
-                        }
-
-                        return {
-                            success: true,
-                            data: data,
-                            booking: data,
-                            message: 'Réservation créée avec succès'
-                        };
+                        // Préparer les données pour le paiement
+                        return await this.preparePaymentData(data, bookingData, user);
                     }
                     
-                    // Vérifier si l'erreur est liée à la durée pour conversation/curriculum
                     if (errorData.message && (errorData.message.includes('duration') || errorData.message.includes('length'))) {
                         console.warn('⚠️ Erreur liée à la durée. Vérifiez que l\'event type supporte cette durée.');
                         
@@ -490,16 +476,8 @@ class BookingManager {
                         const data = retryResult.data || retryResult;
                         console.log('✅ Réservation créée avec durée par défaut:', data);
                         
-                        if (data && user) {
-                            await this.saveBookingToSupabase(data, user.id);
-                        }
-
-                        return {
-                            success: true,
-                            data: data,
-                            booking: data,
-                            message: 'Réservation créée avec la durée par défaut (la durée demandée n\'était pas disponible)'
-                        };
+                        // Préparer les données pour le paiement
+                        return await this.preparePaymentData(data, bookingData, user);
                     }
                     
                     if (errorData.message && errorData.message.includes('title')) {
@@ -514,17 +492,10 @@ class BookingManager {
 
             const result = await response.json();
             const data = result.data || result;
-            console.log('✅ Réservation créée:', data);
+            console.log('✅ Réservation créée dans Cal.com:', data);
             
-            if (data && user) {
-                await this.saveBookingToSupabase(data, user.id);
-            }
-
-            return {
-                success: true,
-                data: data,
-                booking: data
-            };
+            // Préparer les données pour le paiement
+            return await this.preparePaymentData(data, bookingData, user);
             
         } catch (error) {
             console.error('❌ Erreur création réservation:', error);
@@ -536,6 +507,57 @@ class BookingManager {
             
             throw new Error(`Échec de la réservation : ${error.message}`);
         }
+    }
+
+    async preparePaymentData(calcomData, bookingData, user) {
+        // Créer un objet de réservation complet pour la page de paiement
+        const completeBookingData = {
+            // Informations Cal.com
+            calcomId: calcomData.id || calcomData.uid,
+            calcomData: calcomData,
+            
+            // Informations de réservation
+            startTime: bookingData.startTime,
+            endTime: bookingData.endTime,
+            eventType: bookingData.eventType,
+            courseType: bookingData.courseType,
+            price: bookingData.price,
+            duration: bookingData.duration,
+            
+            // Informations utilisateur
+            name: bookingData.name,
+            email: bookingData.email,
+            notes: bookingData.notes,
+            userId: user?.id || null,
+            
+            // Métadonnées supplémentaires
+            createdAt: new Date().toISOString(),
+            status: 'pending_payment'
+        };
+        
+        // Sauvegarder dans Supabase si connecté
+        if (user) {
+            const bookingId = await this.saveBookingToSupabase(calcomData, user.id, 'pending_payment');
+            if (bookingId) {
+                completeBookingData.supabaseId = bookingId;
+            }
+        }
+        
+        // Sauvegarder dans localStorage pour persistance
+        localStorage.setItem('pendingBooking', JSON.stringify(completeBookingData));
+        
+        // Créer l'URL de redirection vers le paiement
+        const encodedBookingData = encodeURIComponent(JSON.stringify(completeBookingData));
+        const redirectUrl = `payment.html?booking=${encodedBookingData}`;
+        
+        return {
+            success: true,
+            data: calcomData,
+            booking: calcomData,
+            bookingData: completeBookingData,
+            redirectTo: redirectUrl,
+            message: 'Réservation créée avec succès. Redirection vers le paiement...'
+        };
     }
 
     async mockBooking(bookingData) {
@@ -557,21 +579,44 @@ class BookingManager {
                 
                 console.log('✅ Réservation simulée créée:', mockBooking);
                 
+                // Créer l'objet complet pour la redirection
+                const completeBookingData = {
+                    calcomId: mockBooking.id,
+                    calcomData: mockBooking,
+                    startTime: bookingData.startTime,
+                    endTime: bookingData.endTime,
+                    eventType: bookingData.eventType,
+                    courseType: bookingData.courseType,
+                    price: bookingData.price,
+                    duration: bookingData.duration,
+                    name: bookingData.name,
+                    email: bookingData.email,
+                    notes: bookingData.notes,
+                    userId: null,
+                    createdAt: new Date().toISOString(),
+                    status: 'pending_payment'
+                };
+                
+                // Sauvegarder dans localStorage
+                localStorage.setItem('pendingBooking', JSON.stringify(completeBookingData));
+                
                 resolve({
                     success: true,
                     data: mockBooking,
                     booking: mockBooking,
+                    bookingData: completeBookingData,
+                    redirectTo: `payment.html?booking=${encodeURIComponent(JSON.stringify(completeBookingData))}`,
                     message: 'Réservation simulée réussie (mode développement)'
                 });
             }, 1000);
         });
     }
 
-    async saveBookingToSupabase(calcomBooking, userId) {
+    async saveBookingToSupabase(calcomBooking, userId, status = 'pending_payment') {
         try {
             if (!window.supabase) {
                 console.warn('Supabase non disponible pour sauvegarde');
-                return false;
+                return null;
             }
 
             const bookingData = {
@@ -580,7 +625,7 @@ class BookingManager {
                 event_type: calcomBooking.eventType || 'essai',
                 start_time: calcomBooking.start || calcomBooking.startTime,
                 end_time: calcomBooking.end || calcomBooking.endTime,
-                status: calcomBooking.status || 'accepted',
+                status: status,
                 meet_link: calcomBooking.location || calcomBooking.meetingUrl,
                 booking_data: calcomBooking,
                 created_at: new Date().toISOString()
@@ -588,21 +633,22 @@ class BookingManager {
 
             console.log('💾 Sauvegarde dans Supabase:', bookingData);
 
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('bookings')
-                .insert([bookingData]);
+                .insert([bookingData])
+                .select();
 
             if (error) {
                 console.warn('Erreur sauvegarde Supabase:', error);
-                return false;
+                return null;
             }
             
-            console.log('✅ Réservation sauvegardée dans Supabase');
-            return true;
+            console.log('✅ Réservation sauvegardée dans Supabase avec ID:', data[0].id);
+            return data[0].id;
             
         } catch (error) {
             console.error('Exception sauvegarde Supabase:', error);
-            return false;
+            return null;
         }
     }
 
@@ -698,6 +744,7 @@ class BookingManager {
 
 window.bookingManager = new BookingManager();
 
+// Fonctions de debug
 window.debugCalcomConfig = async function() {
     const config = window.YOTEACHER_CONFIG || {};
     const manager = window.bookingManager;
@@ -804,7 +851,7 @@ window.debugCalcomConfig = async function() {
 
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
-        console.log('🔧 BookingManager configuré avec API v2');
+        console.log('🔧 BookingManager configuré avec API v2 et redirection vers paiement');
         console.log('Configuration:', {
             hasApiKey: !!window.YOTEACHER_CONFIG?.CALCOM_API_KEY,
             eventTypes: window.bookingManager?.eventTypeMap,
@@ -845,7 +892,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 max-width: 250px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             `;
-            devWarning.textContent = 'Mode développement : Créneaux simulés';
+            devWarning.textContent = 'Mode développement : Créneaux et paiements simulés';
             document.body.appendChild(devWarning);
             
             setTimeout(() => {
@@ -860,6 +907,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000);
 });
 
+// Fonctions de test
 window.testCalcomSlots = async function(date = null, eventType = 'essai', duration = null) {
     const durationText = duration ? ` (${duration} min)` : '';
     console.log(`🧪 Test Cal.com slots pour ${eventType}${durationText} le ${date || 'aujourd\'hui'}`);
@@ -877,73 +925,6 @@ window.testCalcomSlots = async function(date = null, eventType = 'essai', durati
         console.error(`❌ Erreur: ${error.message}`);
         return [];
     }
-};
-
-window.testMultipleDates = async function(eventType = 'essai', daysAhead = 7, duration = null) {
-    const durationText = duration ? ` (${duration} min)` : '';
-    console.log(`🧪 Test sur ${daysAhead} jours à venir pour ${eventType}${durationText}...`);
-    const results = [];
-    
-    for (let i = 0; i < daysAhead; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() + i);
-        const dateStr = date.toISOString().split('T')[0];
-        
-        console.log(`\n📅 Test pour ${dateStr}:`);
-        try {
-            const slots = await window.bookingManager.getAvailableSlots(eventType, dateStr, duration);
-            console.log(`   ${slots.length} créneaux trouvés (${duration || 'défaut'} min)`);
-            results.push({ date: dateStr, count: slots.length, slots });
-        } catch (error) {
-            console.error(`   Erreur: ${error.message}`);
-            results.push({ date: dateStr, count: 0, error: error.message });
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    
-    console.log('\n📊 Résumé:');
-    const totalSlots = results.reduce((sum, r) => sum + r.count, 0);
-    console.log(`Total de ${totalSlots} créneaux trouvés sur ${daysAhead} jours (${duration || 'défaut'} min)`);
-    results.forEach(r => {
-        if (r.count > 0) {
-            console.log(`  • ${r.date}: ${r.count} créneaux`);
-        }
-    });
-    
-    return results;
-};
-
-window.testAllDurations = async function(eventType, date = null) {
-    const manager = window.bookingManager;
-    const durations = manager.getDurationOptions(eventType);
-    const targetDate = date || manager.getToday();
-    
-    console.log(`🧪 Test de toutes les durées pour ${eventType} le ${targetDate}`);
-    console.log(`Durées disponibles: ${durations.join(', ')} minutes\n`);
-    
-    const results = {};
-    
-    for (const duration of durations) {
-        console.log(`\n📅 Test durée ${duration} min:`);
-        try {
-            const slots = await manager.getAvailableSlots(eventType, targetDate, duration);
-            console.log(`✅ ${slots.length} créneau(x) disponible(s)`);
-            results[duration] = { count: slots.length, slots };
-        } catch (error) {
-            console.error(`❌ Erreur: ${error.message}`);
-            results[duration] = { count: 0, error: error.message };
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    
-    console.log('\n📊 Résumé par durée:');
-    Object.entries(results).forEach(([duration, data]) => {
-        console.log(`  ${duration} min: ${data.count} créneaux`);
-    });
-    
-    return results;
 };
 
 window.checkCalcomHealth = async function() {
