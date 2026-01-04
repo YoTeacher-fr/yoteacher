@@ -8,47 +8,55 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* RÉDUCTION DE LA HAUTEUR DU HEADER */
+        /* MÊME HEADER QUE BOOKING */
         .main-header {
             background-color: rgba(255, 255, 255, 0.98) !important;
             box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
             backdrop-filter: blur(10px) !important;
-            min-height: 60px !important; /* Réduit la hauteur */
+            min-height: 60px !important;
         }
         
         .header-content {
-            padding: 10px 0 !important; /* Réduit le padding vertical */
+            padding: 10px 0 !important;
         }
         
-        .main-header .logo,
-        .main-header .nav-link,
-        .main-header .language-switcher {
-            color: var(--neutral-dark) !important;
+        .main-header .nav-link {
+            display: none !important;
+        }
+        
+        .main-header .nav-spacer {
+            display: none !important;
+        }
+        
+        .main-header .logo {
+            color: #333 !important;
+            font-weight: 700;
+            font-size: 1.5rem !important;
         }
         
         .main-header .login-btn {
             background-color: #4f9ad1 !important;
             color: white !important;
-            padding: 8px 20px !important; /* Bouton plus petit */
+            padding: 8px 20px !important;
             font-size: 0.9rem !important;
         }
         
-        .logo {
-            font-size: 1.5rem !important; /* Logo plus petit */
+        .main-header .language-switcher {
+            display: none !important; /* Cacher le sélecteur de langue comme dans booking */
         }
         
         /* CORRECTION DU PADDING DU BODY */
         body {
-            padding-top: 60px !important; /* Ajusté à la nouvelle hauteur du header */
+            padding-top: 60px !important;
         }
         
         /* CENTRAGE PARFAIT DU FORMULAIRE */
         .auth-section {
-            min-height: calc(100vh - 60px); /* Prend en compte le header réduit */
+            min-height: calc(100vh - 60px);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px 20px; /* Espacement symétrique */
+            padding: 40px 20px;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
 
@@ -64,7 +72,7 @@
             padding: 40px 35px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            margin: 20px 0; /* Espacement intérieur */
+            margin: 20px 0;
         }
 
         .auth-header {
@@ -248,6 +256,8 @@
             .mobile-login-btn-header {
                 padding: 6px 12px !important;
                 font-size: 0.85rem !important;
+                order: 3;
+                z-index: 1001;
             }
             
             body {
@@ -281,7 +291,7 @@
     </style>
 </head>
 <body>
-    <!-- Header réduit -->
+    <!-- Header identique à booking -->
     <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
@@ -299,12 +309,6 @@
                 <a href="login.html" class="mobile-login-btn-header">Connexion</a>
                 
                 <nav class="nav-menu desktop-menu">
-                    <div class="nav-spacer"></div>
-                    <a href="index.html#about" class="nav-link">À propos</a>
-                    <a href="index.html#courses" class="nav-link">Cours</a>
-                    <a href="index.html#testimonials" class="nav-link">Témoignages</a>
-                    <a href="index.html#contact" class="nav-link">Contact</a>
-                    
                     <div class="language-switcher">
                         <span class="flag">🌐</span>
                         <span>FR</span>
