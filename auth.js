@@ -1,8 +1,9 @@
-// Gestion de l'authentification
+// Gestion de l'authentification avec gestion des paiements
 class AuthManager {
     constructor() {
         this.user = null;
         this.supabaseReady = false;
+        this.pendingPayment = null;
         this.init();
     }
 
@@ -751,6 +752,103 @@ class AuthManager {
         };
         
         return errorMap[errorMessage] || errorMessage || 'Une erreur est survenue';
+    }
+
+    // NOUVELLE MÉTHODE : Gestion des paiements
+    async savePayment(paymentData) {
+        try {
+            if (!this.supabaseReady || !window.supabase) {
+                // Sauvegarder localement en mode dégradé
+                const payments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
+                const paymentRecord = {
+                    ...paymentData,
+                    id: 'local_' + Date.now(),
+                    created_at: new Date().toISOString()
+                };
+                payments.push(paymentRecord);
+                localStorage.setItem('yoteacher_payments', JSON.stringify(payments));
+                return { success: true, id: paymentRecord.id, data: paymentRecord };
+            }
+
+            const { data, error } = await supabase
+                .from('payments')
+                .insert([{
+                    user_id: paymentData.userId || this.user?.id,
+                    booking_id: paymentData.bookingId,
+                    amount: paymentData.amount,
+                    currency: paymentData.currency || 'EUR',
+                    method: paymentData.method,
+                    transaction_id: paymentData.transactionId,
+                    status: paymentData.status || 'completed',
+                    payment_data: paymentData.paymentData || paymentData,
+                    created_at: new Date().toISOString()
+                }])
+                .select();
+
+            if (error) {
+                console.error('Erreur sauvegarde paiement:', error);
+                return { success: false, error: error.message };
+            }
+
+            return { success: true, id: data[0].id, data: data[0] };
+        } catch (error) {
+            console.error('Exception sauvegarde paiement:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // NOUVELLE MÉTHODE : Mettre à jour le statut d'une réservation après paiement
+    async updateBookingStatus(bookingId, status) {
+        try {
+            if (!this.supabaseReady || !window.supabase) {
+                return { success: true, message: 'Mode local - statut mis à jour localement' };
+            }
+
+            const { error } = await supabase
+                .from('bookings')
+                .update({ 
+                    status: status,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', bookingId);
+
+            if (error) {
+                console.error('Erreur mise à jour réservation:', error);
+                return { success: false, error: error.message };
+            }
+
+            return { success: true };
+        } catch (error) {
+            console.error('Exception mise à jour réservation:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // NOUVELLE MÉTHODE : Obtenir l'historique des paiements
+    async getPaymentHistory() {
+        try {
+            if (!this.supabaseReady || !window.supabase || !this.user) {
+                // Retourner les paiements locaux
+                const localPayments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
+                return { success: true, data: localPayments };
+            }
+
+            const { data, error } = await supabase
+                .from('payments')
+                .select('*')
+                .eq('user_id', this.user.id)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Erreur récupération historique paiements:', error);
+                return { success: false, error: error.message };
+            }
+
+            return { success: true, data };
+        } catch (error) {
+            console.error('Exception récupération historique paiements:', error);
+            return { success: false, error: error.message };
+        }
     }
 }
 
