@@ -349,11 +349,11 @@ class BookingManager {
 
             // Dans booking.js, méthode createBooking
 
-// Dans booking.js (vers la ligne 110)
 const bookingPayload = {
     start: bookingData.startTime,
     eventTypeId: parseInt(eventTypeId),
-    lengthInMinutes: bookingData.duration, // <--- C'EST CETTE LIGNE QUI COMMANDE CAL.COM
+    // CETTE LIGNE EST INDISPENSABLE :
+    lengthInMinutes: bookingData.duration, 
     attendee: {
         name: bookingData.name,
         email: bookingData.email,
@@ -361,7 +361,7 @@ const bookingPayload = {
         language: 'fr'
     },
     metadata: {
-        // Conversion en String pour éviter l'erreur 400
+        // Cal.com v2 exige que les metadata soient des Strings
         userId: user?.id ? String(user.id) : "",
         courseType: String(bookingData.courseType),
         price: String(bookingData.price).replace('€', '').trim(),
