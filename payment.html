@@ -1320,4 +1320,46 @@
                 if (hasWarning) {
                     window.location.href = redirectUrl + '&warning=true';
                 } else {
-                    window.location.href = redirectUrl
+                    window.location.href = redirectUrl;
+                }
+            }, 1000);
+        }
+        
+        function showPaymentError(message) {
+            const errorDiv = document.getElementById('paymentError');
+            const errorText = document.getElementById('errorText');
+            
+            if (errorDiv && errorText) {
+                errorText.textContent = message;
+                errorDiv.style.display = 'block';
+                
+                // Scroller vers l'erreur
+                errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                alert('Erreur: ' + message);
+            }
+        }
+        
+        function hidePaymentError() {
+            const errorDiv = document.getElementById('paymentError');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }
+        
+        // Fermer les menus en cliquant en dehors
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.payment-method-btn') && !event.target.closest('.payment-method-details')) {
+                document.querySelectorAll('.payment-method-details').forEach(details => {
+                    details.style.display = 'none';
+                });
+                
+                document.querySelectorAll('.payment-method-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            }
+        });
+    });
+    </script>
+</body>
+</html>
