@@ -211,6 +211,14 @@
             background: white;
             border-radius: 8px;
             border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .info-item.clickable:hover {
+            background: #f0f7ff;
+            border-color: #3c84f6;
+            transform: translateY(-2px);
         }
 
         .info-label {
@@ -246,6 +254,25 @@
         .btn-confirm-payment:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Style pour le message important */
+        .payment-notice {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 8px;
+            border: 1px solid #ffeaa7;
+            grid-column: span 2;
+        }
+
+        .payment-notice p {
+            color: #856404;
+            margin: 0;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
         }
 
         /* RÉCAPITULATIF À DROITE */
@@ -357,39 +384,49 @@
             color: #333;
         }
 
-        .interac-actions {
+        /* Style pour le formulaire de carte */
+        .card-form {
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
         }
 
-        .btn {
-            padding: 12px 20px;
-            border-radius: 8px;
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
             font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            flex: 1;
-        }
-
-        .btn-primary {
-            background: #E41E26;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #d31119;
-        }
-
-        .btn-secondary {
-            background: #f8f9fa;
             color: #333;
-            border: 1px solid #ddd;
         }
 
-        .btn-secondary:hover {
-            background: #e9ecef;
+        .form-input {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3c84f6;
+            box-shadow: 0 0 0 3px rgba(60, 132, 246, 0.1);
+        }
+
+        .form-input.card-number {
+            letter-spacing: 1px;
+            font-family: monospace;
         }
 
         /* Style pour les QR codes */
@@ -400,6 +437,19 @@
             display: block;
             border-radius: 8px;
             border: 1px solid #ddd;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .qr-code-img:hover {
+            transform: scale(1.05);
+        }
+
+        .qr-code-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+            display: block;
         }
 
         @media (max-width: 992px) {
@@ -423,6 +473,10 @@
             
             .payment-action {
                 grid-column: span 1;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -569,21 +623,18 @@
                         <div class="payment-method-details" id="revolutDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
-                                    <img src="" alt="QR Code Revolut" id="revolutQrCode" class="qr-code-img">
-                                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Scannez pour payer avec Revolut</p>
-                                    <a href="#" id="revolutLink" target="_blank" style="display: inline-block; padding: 10px 20px; background: #FF5F00; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                                        <i class="fas fa-external-link-alt"></i> Ouvrir Revolut
-                                    </a>
+                                    <span class="qr-code-label">Cliquez sur le QR code pour ouvrir Revolut</span>
+                                    <img src="" alt="QR Code Revolut" id="revolutQrCode" class="qr-code-img" title="Cliquez pour ouvrir Revolut">
                                 </div>
                                 
                                 <div class="payment-info">
+                                    <div class="info-item clickable" id="revolutLinkItem">
+                                        <div class="info-label">Lien Revolut</div>
+                                        <div class="info-value" id="revolutLinkDisplay">revolut.me/yoann</div>
+                                    </div>
                                     <div class="info-item">
                                         <div class="info-label">Nom du bénéficiaire</div>
                                         <div class="info-value" id="revolutName">Yoann Bourbia</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Lien Revolut</div>
-                                        <div class="info-value" id="revolutLinkDisplay">revolut.me/yoann</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label">Référence</div>
@@ -593,6 +644,13 @@
                                         <div class="info-label">Montant</div>
                                         <div class="info-value" id="revolutAmount">-</div>
                                     </div>
+                                </div>
+                                
+                                <div class="payment-notice">
+                                    <p>
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Important :</strong> Une fois le paiement effectué sur Revolut, cliquez sur "J'ai payé avec Revolut" pour confirmer votre réservation.
+                                    </p>
                                 </div>
                                 
                                 <div class="payment-action">
@@ -617,21 +675,18 @@
                         <div class="payment-method-details" id="wiseDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
-                                    <img src="" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img">
-                                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Scannez pour payer avec Wise</p>
-                                    <a href="#" id="wiseLink" target="_blank" style="display: inline-block; padding: 10px 20px; background: #9C5BDE; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                                        <i class="fas fa-external-link-alt"></i> Ouvrir Wise
-                                    </a>
+                                    <span class="qr-code-label">Cliquez sur le QR code pour ouvrir Wise</span>
+                                    <img src="" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img" title="Cliquez pour ouvrir Wise">
                                 </div>
                                 
                                 <div class="payment-info">
+                                    <div class="info-item clickable" id="wiseLinkItem">
+                                        <div class="info-label">Lien Wise</div>
+                                        <div class="info-value" id="wiseLinkDisplay">wise.com/pay/yoann</div>
+                                    </div>
                                     <div class="info-item">
                                         <div class="info-label">Nom du bénéficiaire</div>
                                         <div class="info-value" id="wiseName">Yoann Bourbia</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Lien Wise</div>
-                                        <div class="info-value" id="wiseLinkDisplay">wise.com/pay/yoann</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label">Email Wise</div>
@@ -641,6 +696,13 @@
                                         <div class="info-label">Montant</div>
                                         <div class="info-value" id="wiseAmount">-</div>
                                     </div>
+                                </div>
+                                
+                                <div class="payment-notice">
+                                    <p>
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Important :</strong> Une fois le paiement effectué sur Wise, cliquez sur "J'ai payé avec Wise" pour confirmer votre réservation.
+                                    </p>
                                 </div>
                                 
                                 <div class="payment-action">
@@ -698,19 +760,16 @@
                                     </div>
                                 </div>
                                 
-                                <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
-                                    <p style="color: #856404; margin: 0; font-size: 0.95rem;">
-                                        <i class="fas fa-info-circle"></i> <strong>Important :</strong> 
-                                        Une fois le virement effectué, cliquez sur "J'ai effectué le virement" pour confirmer votre réservation.
+                                <div class="payment-notice">
+                                    <p>
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Important :</strong> Une fois le virement effectué, cliquez sur "J'ai payé avec Interac" pour confirmer votre réservation.
                                     </p>
                                 </div>
                                 
-                                <div class="interac-actions">
-                                    <button id="confirmInterac" class="btn btn-primary">
-                                        <i class="fas fa-check"></i> J'ai effectué le virement
-                                    </button>
-                                    <button onclick="closePaymentMethod('interac')" class="btn btn-secondary">
-                                        <i class="fas fa-times"></i> Annuler
+                                <div class="payment-action">
+                                    <button class="btn-confirm-payment" data-method="interac">
+                                        <i class="fas fa-check"></i> J'ai payé avec Interac
                                     </button>
                                 </div>
                             </div>
@@ -730,14 +789,15 @@
                         <div class="payment-method-details" id="paypalDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
-                                    <img src="" alt="QR Code PayPal" id="paypalQrCode" class="qr-code-img">
-                                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Scannez pour payer avec PayPal</p>
-                                    <a href="#" id="paypalLink" target="_blank" style="display: inline-block; padding: 10px 20px; background: #003087; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                                        <i class="fas fa-external-link-alt"></i> Ouvrir PayPal
-                                    </a>
+                                    <span class="qr-code-label">Cliquez sur le QR code pour ouvrir PayPal</span>
+                                    <img src="" alt="QR Code PayPal" id="paypalQrCode" class="qr-code-img" title="Cliquez pour ouvrir PayPal">
                                 </div>
                                 
                                 <div class="payment-info">
+                                    <div class="info-item clickable" id="paypalLinkItem">
+                                        <div class="info-label">Lien PayPal</div>
+                                        <div class="info-value" id="paypalLinkDisplay">paypal.me/yoann</div>
+                                    </div>
                                     <div class="info-item">
                                         <div class="info-label">Nom du bénéficiaire</div>
                                         <div class="info-value" id="paypalName">Yoann Bourbia</div>
@@ -747,13 +807,16 @@
                                         <div class="info-value" id="paypalEmail">yoann@yoteacher.com</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Lien PayPal</div>
-                                        <div class="info-value" id="paypalLinkDisplay">paypal.me/yoann</div>
-                                    </div>
-                                    <div class="info-item">
                                         <div class="info-label">Montant</div>
                                         <div class="info-value" id="paypalAmount">-</div>
                                     </div>
+                                </div>
+                                
+                                <div class="payment-notice">
+                                    <p>
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Important :</strong> Une fois le paiement effectué sur PayPal, cliquez sur "J'ai payé avec PayPal" pour confirmer votre réservation.
+                                    </p>
                                 </div>
                                 
                                 <div class="payment-action">
@@ -764,51 +827,54 @@
                             </div>
                         </div>
 
-                        <!-- Carte bancaire (Square) -->
+                        <!-- Carte bancaire -->
                         <button class="payment-method-btn" data-method="card">
                             <div class="payment-method-icon" style="color: #3D5B96;">
                                 <i class="fas fa-credit-card"></i>
                             </div>
-                            <div class="payment-method-name">Carte bancaire (Square)</div>
+                            <div class="payment-method-name">Visa/Mastercard/Amex</div>
                             <div class="payment-method-arrow">
                                 <i class="fas fa-chevron-down"></i>
                             </div>
                         </button>
                         
                         <div class="payment-method-details" id="cardDetails">
-                            <div class="payment-details-grid">
-                                <div class="qr-code-container">
-                                    <div class="qr-code-placeholder">
-                                        <i class="fas fa-credit-card"></i>
+                            <div class="card-form">
+                                <div class="form-group">
+                                    <label class="form-label" for="cardNumber">Numéro de carte</label>
+                                    <input type="text" id="cardNumber" class="form-input card-number" 
+                                           placeholder="1234 5678 9012 3456" maxlength="19"
+                                           oninput="formatCardNumber(this)">
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="cardExpiry">Date d'expiration</label>
+                                        <input type="text" id="cardExpiry" class="form-input" 
+                                               placeholder="MM/AA" maxlength="5"
+                                               oninput="formatExpiry(this)">
                                     </div>
-                                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Paiement sécurisé par Square</p>
-                                    <div style="color: #4CAF50; font-weight: 600;">
-                                        <i class="fas fa-lock"></i> 100% Sécurisé
+                                    <div class="form-group">
+                                        <label class="form-label" for="cardCvc">CVC</label>
+                                        <input type="text" id="cardCvc" class="form-input" 
+                                               placeholder="123" maxlength="4">
                                     </div>
                                 </div>
                                 
-                                <div class="payment-info">
-                                    <div class="info-item">
-                                        <div class="info-label">Système de paiement</div>
-                                        <div class="info-value">Square (Stripe)</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Sécurité</div>
-                                        <div class="info-value">Chiffrement SSL 256-bit</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Cartes acceptées</div>
-                                        <div class="info-value">Visa, Mastercard, American Express</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Montant</div>
-                                        <div class="info-value" id="cardAmount">-</div>
-                                    </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="cardName">Nom sur la carte</label>
+                                    <input type="text" id="cardName" class="form-input" 
+                                           placeholder="John Doe">
+                                </div>
+                                
+                                <div class="payment-notice">
+                                    <p>
+                                        <i class="fas fa-lock"></i>
+                                        <strong>Sécurisé :</strong> Votre paiement est chiffré et sécurisé. Aucune information bancaire n'est stockée sur nos serveurs.
+                                    </p>
                                 </div>
                                 
                                 <div class="payment-action">
-                                    <!-- Formulaire de carte sera inséré ici par JavaScript -->
-                                    <div id="squarePaymentForm"></div>
                                     <button class="btn-confirm-payment" id="processCardPayment" data-method="card">
                                         <i class="fas fa-lock"></i> Payer par carte
                                     </button>
@@ -897,7 +963,7 @@
             window.paymentManager.processBookingPayment(currentBooking);
         }
         
-        // Mettre à jour les QR codes et informations
+        // Mettre à jour les détails de paiement
         updatePaymentDetails(currentBooking);
         
         // Gestion des boutons de méthode de paiement
@@ -908,10 +974,20 @@
             });
         });
         
+        // Gestion des clics sur les QR codes et liens cliquables
+        setupClickableElements();
+        
         // Gestion des boutons de confirmation de paiement
         document.querySelectorAll('.btn-confirm-payment').forEach(button => {
             button.addEventListener('click', async function() {
                 const method = this.getAttribute('data-method');
+                
+                // Validation spécifique pour les cartes
+                if (method === 'card') {
+                    if (!validateCardForm()) {
+                        return;
+                    }
+                }
                 
                 // Afficher un indicateur de chargement
                 const originalText = this.innerHTML;
@@ -940,34 +1016,33 @@
             });
         });
         
-        // Gestion spécifique du bouton Interac
-        const confirmInteracBtn = document.getElementById('confirmInterac');
-        if (confirmInteracBtn) {
-            confirmInteracBtn.addEventListener('click', async function() {
-                const method = 'interac';
-                
-                // Afficher un indicateur de chargement
-                const originalText = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement en cours...';
-                this.disabled = true;
-                
-                hidePaymentError();
-                
-                try {
-                    if (window.paymentManager && typeof window.paymentManager.handlePaymentMethod === 'function') {
-                        await window.paymentManager.handlePaymentMethod(method);
-                    } else {
-                        await processPaymentFallback(method);
-                    }
-                } catch (error) {
-                    console.error('Erreur paiement Interac:', error);
-                    showPaymentError('Erreur lors du traitement Interac : ' + error.message);
-                    
-                    this.innerHTML = originalText;
-                    this.disabled = false;
-                }
-            });
-        }
+        // Fonctions de formatage des cartes
+        window.formatCardNumber = function(input) {
+            let value = input.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            let matches = value.match(/\d{4,16}/g);
+            let match = matches && matches[0] || '';
+            let parts = [];
+            
+            for (let i = 0, len = match.length; i < len; i += 4) {
+                parts.push(match.substring(i, i + 4));
+            }
+            
+            if (parts.length) {
+                input.value = parts.join(' ');
+            } else {
+                input.value = value;
+            }
+        };
+        
+        window.formatExpiry = function(input) {
+            let value = input.value.replace(/\D/g, '');
+            
+            if (value.length >= 2) {
+                input.value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            } else {
+                input.value = value;
+            }
+        };
         
         // Fonctions
         function updatePaymentDetails(booking) {
@@ -990,7 +1065,7 @@
             document.getElementById('interacRefNum').textContent = refNumber;
             
             // Mettre à jour les montants
-            document.querySelectorAll('#revolutAmount, #wiseAmount, #paypalAmount, #cardAmount, #interacAmount').forEach(el => {
+            document.querySelectorAll('#revolutAmount, #wiseAmount, #paypalAmount, #interacAmount').forEach(el => {
                 el.textContent = amount + '€';
             });
             
@@ -1005,37 +1080,68 @@
             document.getElementById('interacEmail').textContent = interacEmail;
             
             // Mettre à jour les liens d'affichage
-            document.getElementById('revolutLinkDisplay').textContent = revolutLink.replace('https://', '');
-            document.getElementById('wiseLinkDisplay').textContent = wiseLink.replace('https://', '');
-            document.getElementById('paypalLinkDisplay').textContent = `paypal.me/${paypalEmail.split('@')[0]}`;
+            const revolutDisplay = revolutLink.replace('https://', '');
+            const wiseDisplay = wiseLink.replace('https://', '');
+            const paypalUsername = paypalEmail.split('@')[0];
+            const paypalDisplay = `paypal.me/${paypalUsername}`;
             
-            // Mettre à jour les liens cliquables
-            document.getElementById('revolutLink').href = `${revolutLink}?amount=${amount}&currency=EUR&reference=COURS-${refNumber}`;
-            document.getElementById('wiseLink').href = `${wiseLink}?amount=${amount}&currency=EUR`;
-            document.getElementById('paypalLink').href = `https://www.paypal.com/paypalme/${paypalEmail.split('@')[0]}/${amount}EUR`;
+            document.getElementById('revolutLinkDisplay').textContent = revolutDisplay;
+            document.getElementById('wiseLinkDisplay').textContent = wiseDisplay;
+            document.getElementById('paypalLinkDisplay').textContent = paypalDisplay;
+            
+            // Stocker les liens pour les clics
+            const revolutFullLink = `${revolutLink}?amount=${amount}&currency=EUR&reference=COURS-${refNumber}`;
+            const wiseFullLink = `${wiseLink}?amount=${amount}&currency=EUR`;
+            const paypalFullLink = `https://www.paypal.com/paypalme/${paypalUsername}/${amount}EUR`;
+            
+            document.getElementById('revolutLinkItem').dataset.link = revolutFullLink;
+            document.getElementById('wiseLinkItem').dataset.link = wiseFullLink;
+            document.getElementById('paypalLinkItem').dataset.link = paypalFullLink;
             
             // Générer les QR codes dynamiques
-            generateQrCodes(booking, refNumber, revolutLink, wiseLink, paypalEmail);
+            generateQrCodes(booking, revolutFullLink, wiseFullLink, paypalFullLink);
         }
         
-        function generateQrCodes(booking, refNumber, revolutLink, wiseLink, paypalEmail) {
-            const amount = booking.price;
-            
+        function generateQrCodes(booking, revolutLink, wiseLink, paypalLink) {
             // QR Code Revolut
-            const revolutQrData = `${revolutLink}?amount=${amount}&currency=EUR&reference=COURS-${refNumber}`;
-            const revolutQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(revolutQrData)}`;
-            document.getElementById('revolutQrCode').src = revolutQrUrl;
+            const revolutQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(revolutLink)}`;
+            const revolutQrImg = document.getElementById('revolutQrCode');
+            revolutQrImg.src = revolutQrUrl;
+            revolutQrImg.dataset.link = revolutLink;
             
             // QR Code Wise
-            const wiseQrData = `${wiseLink}?amount=${amount}&currency=EUR`;
-            const wiseQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(wiseQrData)}`;
-            document.getElementById('wiseQrCode').src = wiseQrUrl;
+            const wiseQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(wiseLink)}`;
+            const wiseQrImg = document.getElementById('wiseQrCode');
+            wiseQrImg.src = wiseQrUrl;
+            wiseQrImg.dataset.link = wiseLink;
             
             // QR Code PayPal
-            const paypalUsername = paypalEmail.split('@')[0];
-            const paypalQrData = `https://www.paypal.com/paypalme/${paypalUsername}/${amount}EUR`;
-            const paypalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(paypalQrData)}`;
-            document.getElementById('paypalQrCode').src = paypalQrUrl;
+            const paypalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(paypalLink)}`;
+            const paypalQrImg = document.getElementById('paypalQrCode');
+            paypalQrImg.src = paypalQrUrl;
+            paypalQrImg.dataset.link = paypalLink;
+        }
+        
+        function setupClickableElements() {
+            // QR codes cliquables
+            document.querySelectorAll('.qr-code-img').forEach(img => {
+                img.addEventListener('click', function() {
+                    const link = this.dataset.link;
+                    if (link) {
+                        window.open(link, '_blank');
+                    }
+                });
+            });
+            
+            // Liens textuels cliquables
+            document.querySelectorAll('.info-item.clickable').forEach(item => {
+                item.addEventListener('click', function() {
+                    const link = this.dataset.link;
+                    if (link) {
+                        window.open(link, '_blank');
+                    }
+                });
+            });
         }
         
         function togglePaymentMethod(method) {
@@ -1075,18 +1181,77 @@
             }
         }
         
-        function closePaymentMethod(method) {
-            const detailsId = method + 'Details';
-            const detailsElement = document.getElementById(detailsId);
-            const buttonElement = document.querySelector(`[data-method="${method}"]`);
+        function validateCardForm() {
+            const cardNumber = document.getElementById('cardNumber').value.replace(/\s+/g, '');
+            const cardExpiry = document.getElementById('cardExpiry').value;
+            const cardCvc = document.getElementById('cardCvc').value;
+            const cardName = document.getElementById('cardName').value;
             
-            if (detailsElement) {
-                detailsElement.style.display = 'none';
+            // Validation du numéro de carte (simple validation Luhn)
+            if (!validateCardNumber(cardNumber)) {
+                showPaymentError('Numéro de carte invalide');
+                return false;
             }
             
-            if (buttonElement) {
-                buttonElement.classList.remove('active');
+            // Validation de la date d'expiration
+            if (!validateExpiry(cardExpiry)) {
+                showPaymentError('Date d\'expiration invalide (format MM/AA)');
+                return false;
             }
+            
+            // Validation du CVC
+            if (!cardCvc || cardCvc.length < 3) {
+                showPaymentError('CVC invalide (3 ou 4 chiffres requis)');
+                return false;
+            }
+            
+            // Validation du nom
+            if (!cardName || cardName.trim().length < 2) {
+                showPaymentError('Veuillez entrer le nom sur la carte');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function validateCardNumber(number) {
+            // Algorithme de Luhn
+            let sum = 0;
+            let isEven = false;
+            
+            for (let i = number.length - 1; i >= 0; i--) {
+                let digit = parseInt(number.charAt(i), 10);
+                
+                if (isEven) {
+                    digit *= 2;
+                    if (digit > 9) {
+                        digit -= 9;
+                    }
+                }
+                
+                sum += digit;
+                isEven = !isEven;
+            }
+            
+            return (sum % 10) === 0 && number.length >= 13 && number.length <= 19;
+        }
+        
+        function validateExpiry(expiry) {
+            if (!expiry || expiry.length !== 5) return false;
+            
+            const [month, year] = expiry.split('/');
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear() % 100;
+            const currentMonth = currentDate.getMonth() + 1;
+            
+            const expMonth = parseInt(month, 10);
+            const expYear = parseInt(year, 10);
+            
+            if (expMonth < 1 || expMonth > 12) return false;
+            if (expYear < currentYear) return false;
+            if (expYear === currentYear && expMonth < currentMonth) return false;
+            
+            return true;
         }
         
         async function processPaymentFallback(method) {
@@ -1155,46 +1320,4 @@
                 if (hasWarning) {
                     window.location.href = redirectUrl + '&warning=true';
                 } else {
-                    window.location.href = redirectUrl;
-                }
-            }, 1000);
-        }
-        
-        function showPaymentError(message) {
-            const errorDiv = document.getElementById('paymentError');
-            const errorText = document.getElementById('errorText');
-            
-            if (errorDiv && errorText) {
-                errorText.textContent = message;
-                errorDiv.style.display = 'block';
-                
-                // Scroller vers l'erreur
-                errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                alert('Erreur: ' + message);
-            }
-        }
-        
-        function hidePaymentError() {
-            const errorDiv = document.getElementById('paymentError');
-            if (errorDiv) {
-                errorDiv.style.display = 'none';
-            }
-        }
-        
-        // Fermer les menus en cliquant en dehors
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('.payment-method-btn') && !event.target.closest('.payment-method-details')) {
-                document.querySelectorAll('.payment-method-details').forEach(details => {
-                    details.style.display = 'none';
-                });
-                
-                document.querySelectorAll('.payment-method-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-            }
-        });
-    });
-    </script>
-</body>
-</html>
+                    window.location.href = redirectUrl
