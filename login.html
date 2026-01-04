@@ -8,12 +8,31 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
+        /* Forcer le header à être visible sur la page de login */
+        .main-header {
+            background-color: rgba(255, 255, 255, 0.98) !important;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1) !important;
+            backdrop-filter: blur(10px) !important;
+        }
+        
+        .main-header .logo,
+        .main-header .nav-link,
+        .main-header .language-switcher {
+            color: var(--neutral-dark) !important;
+        }
+        
+        .main-header .login-btn {
+            background-color: #4f9ad1 !important;
+            color: white !important;
+        }
+        
+        /* Centrer le formulaire sans scroll */
         .auth-section {
-            min-height: 100vh;
+            min-height: calc(100vh - 80px); /* Soustraction de la hauteur du header */
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 120px 20px 60px;
+            padding: 20px;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
 
@@ -146,11 +165,12 @@
 
         @media (max-width: 768px) {
             .auth-section {
-                padding: 100px 15px 40px;
+                min-height: calc(100vh - 80px);
+                padding: 15px;
             }
             
             .auth-card {
-                padding: 30px 25px;
+                padding: 30px 20px;
             }
             
             .auth-logo {
@@ -161,7 +181,7 @@
 </head>
 <body>
     <!-- Header -->
-    <header class="main-header">
+    <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
                 <button class="hamburger-menu" id="hamburgerBtn">
