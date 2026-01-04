@@ -8,16 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* RÉDUCTION DE LA HAUTEUR DU HEADER */
+        /* Correction header */
         .main-header {
-            background-color: rgba(255, 255, 255, 0.98) !important;
-            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
-            backdrop-filter: blur(10px) !important;
-            min-height: 60px !important; /* Réduit la hauteur */
-        }
-        
-        .header-content {
-            padding: 10px 0 !important; /* Réduit le padding vertical */
+            background: white !important;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1) !important;
         }
         
         .main-header .nav-link {
@@ -31,26 +25,13 @@
         .main-header .logo {
             color: #333 !important;
             font-weight: 700;
-            font-size: 1.5rem !important; /* Logo plus petit */
+            font-size: 1.8rem;
         }
         
-        .main-header .login-btn {
-            background-color: #4f9ad1 !important;
-            color: white !important;
-            padding: 8px 20px !important; /* Bouton plus petit */
-            font-size: 0.9rem !important;
-        }
-        
-        /* CORRECTION DU PADDING DU BODY */
-        body {
-            padding-top: 60px !important; /* Ajusté à la nouvelle hauteur du header */
-        }
-        
-        /* MÊME FOND DÉGRADÉ QUE LOGIN/SIGNUP */
         .booking-section {
-            padding: 40px 20px; /* Espacement symétrique */
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: calc(100vh - 60px); /* Prend en compte le header réduit */
+            padding: 120px 20px 60px;
+            background: #f8f9fa;
+            min-height: 100vh;
         }
 
         .booking-container {
@@ -302,7 +283,6 @@
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
-            border-left: 4px solid #d32f2f;
         }
 
         .success-message {
@@ -312,7 +292,6 @@
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
-            border-left: 4px solid #2e7d32;
         }
 
         .loading-slots {
@@ -400,8 +379,7 @@
 
         @media (max-width: 768px) {
             .booking-section {
-                padding: 30px 15px;
-                min-height: calc(100vh - 60px);
+                padding: 100px 15px 40px;
             }
             
             .booking-grid {
@@ -422,81 +400,29 @@
                 font-size: 0.9rem;
             }
             
-            .booking-card {
-                padding: 25px 20px;
-            }
-            
-            /* Header mobile ajusté */
-            .main-header {
-                min-height: 55px !important;
-            }
-            
+            /* Correction pour mobile: avatar bien positionné */
             .header-content {
-                padding: 8px 0 !important;
-            }
-            
-            .logo {
-                font-size: 1.3rem !important;
+                gap: 10px !important;
             }
             
             .mobile-login-btn-header {
-                padding: 6px 12px !important;
-                font-size: 0.85rem !important;
                 order: 3;
                 z-index: 1001;
             }
             
-            body {
-                padding-top: 55px !important;
+            .logo-section {
+                order: 2;
             }
             
-            .booking-section {
-                min-height: calc(100vh - 55px);
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .booking-card {
-                padding: 20px 15px;
-            }
-            
-            .booking-title {
-                font-size: 1.8rem;
-            }
-            
-            .card-title {
-                font-size: 1.3rem;
-            }
-            
-            .btn-booking {
-                padding: 14px;
-            }
-            
-            .form-input, .form-select, .form-textarea {
-                padding: 10px 12px;
-            }
-        }
-        
-        /* Animation subtile pour les cartes */
-        .booking-card {
-            animation: fadeInUp 0.5s ease-out;
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            .hamburger-menu {
+                order: 1;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header réduit -->
-    <header class="main-header scrolled">
+    <!-- Header simplifié -->
+    <header class="main-header">
         <div class="container">
             <div class="header-content">
                 <button class="hamburger-menu" id="hamburgerBtn">
