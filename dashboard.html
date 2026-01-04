@@ -8,6 +8,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
+        /* MASQUER LA PAGE PAR DÉFAUT */
+        body {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        
+        body.loaded {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .dashboard {
             padding: 100px 20px 60px;
             background: #f8f9fa;
@@ -201,7 +213,55 @@
     </style>
 </head>
 <body>
-    <!-- Header existant (sera mis à jour par auth.js) -->
+    <!-- SCRIPT DE VÉRIFICATION D'AUTHENTIFICATION -->
+    <script>
+        // Masquer la page immédiatement
+        document.body.style.opacity = '0';
+        document.body.style.visibility = 'hidden';
+        
+        // Fonction pour vérifier l'authentification
+        function checkAuthentication() {
+            let attempts = 0;
+            const maxAttempts = 30; // 3 secondes maximum
+            
+            function check() {
+                attempts++;
+                
+                // Vérifier si authManager est disponible
+                if (window.authManager && window.authManager.isAuthenticated !== undefined) {
+                    if (window.authManager.isAuthenticated()) {
+                        // Authentifié - afficher la page
+                        document.body.classList.add('loaded');
+                        document.body.style.opacity = '1';
+                        document.body.style.visibility = 'visible';
+                        
+                        // Lancer le chargement du dashboard
+                        setTimeout(() => {
+                            if (window.loadDashboard) window.loadDashboard();
+                        }, 100);
+                    } else {
+                        // Non authentifié - rediriger
+                        const currentUrl = encodeURIComponent(window.location.href);
+                        window.location.replace(`login.html?redirect=${currentUrl}`);
+                    }
+                } else if (attempts >= maxAttempts) {
+                    // Timeout - rediriger par précaution
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    window.location.replace(`login.html?redirect=${currentUrl}`);
+                } else {
+                    // Réessayer
+                    setTimeout(check, 100);
+                }
+            }
+            
+            check();
+        }
+        
+        // Démarrer la vérification après un court délai
+        setTimeout(checkAuthentication, 200);
+    </script>
+
+    <!-- Header existant -->
     <header class="main-header">
         <div class="container">
             <div class="header-content">
@@ -346,13 +406,14 @@
     </section>
 
     <!-- Scripts -->
-<script src="config.js"></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script src="auth.js"></script>
-<script src="booking.js"></script>
-<script src="mobile-menu.js"></script>
-<script src="common.js"></script>
+    <script src="config.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="auth.js"></script>
+    <script src="booking.js"></script>
+    <script src="mobile-menu.js"></script>
+    <script src="common.js"></script>
+    
     <script>
         // Fonction pour attendre que authManager soit prêt
         function waitForAuthManager() {
@@ -376,19 +437,17 @@
         
         // Gestion du dashboard
         async function loadDashboard() {
-            // Attendre que authManager soit initialisé
-            await waitForAuthManager();
-            
-            const user = window.authManager?.getCurrentUser();
-            
-            if (!user) {
-                // Rediriger vers la page de connexion avec le paramètre redirect
-                const currentUrl = encodeURIComponent(window.location.href);
-                window.location.href = 'login.html?redirect=' + currentUrl;
-                return;
-            }
-            
             try {
+                // Attendre que authManager soit initialisé
+                await waitForAuthManager();
+                
+                const user = window.authManager?.getCurrentUser();
+                
+                if (!user) {
+                    console.log('Utilisateur non trouvé, vérification en cours...');
+                    return; // La redirection se fera via le script d'authentification
+                }
+                
                 // Charger les données utilisateur
                 await loadUserData(user);
                 
@@ -398,11 +457,14 @@
                 
                 // Gestion de la déconnexion
                 document.getElementById('logoutBtn').addEventListener('click', async () => {
-                    await window.authManager.signOut();
-                    window.location.href = 'index.html';
+                    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                        await window.authManager.signOut();
+                        window.location.href = 'index.html';
+                    }
                 });
                 
             } catch (error) {
+                console.error('Erreur chargement dashboard:', error);
                 showError('Impossible de charger les données: ' + error.message);
             }
         }
@@ -430,82 +492,90 @@
             
             // Charger les données supplémentaires depuis Supabase
             if (window.supabase) {
-                const { data: profile, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
-                    
-                if (profile && !error) {
-                    if (profile.is_vip) {
-                        document.getElementById('userStatus').textContent = 'VIP';
-                        document.getElementById('userStatus').className = 'status-badge vip';
+                try {
+                    const { data: profile, error } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', user.id)
+                        .single();
+                        
+                    if (profile && !error) {
+                        if (profile.is_vip) {
+                            document.getElementById('userStatus').textContent = 'VIP';
+                            document.getElementById('userStatus').className = 'status-badge vip';
+                        }
+                        
+                        document.getElementById('creditsCount').textContent = profile.credits || 0;
                     }
                     
-                    document.getElementById('creditsCount').textContent = profile.credits || 0;
+                    // Charger les réservations
+                    await loadBookings(user.id);
+                } catch (error) {
+                    console.error('Erreur chargement données:', error);
                 }
-                
-                // Charger les réservations
-                await loadBookings(user.id);
             }
         }
         
         async function loadBookings(userId) {
             if (!window.supabase) return;
             
-            const { data: bookings, error } = await supabase
-                .from('bookings')
-                .select('*')
-                .eq('user_id', userId)
-                .order('start_time', { ascending: true });
-                
-            if (bookings && !error) {
-                const completed = bookings.filter(b => b.status === 'completed');
-                const upcoming = bookings.filter(b => b.status === 'confirmed' && new Date(b.start_time) > new Date());
-                
-                document.getElementById('completedCount').textContent = completed.length;
-                
-                // Afficher le prochain cours
-                if (upcoming.length > 0) {
-                    const nextLesson = upcoming[0];
-                    const nextLessonDiv = document.getElementById('nextLessonContainer');
+            try {
+                const { data: bookings, error } = await supabase
+                    .from('bookings')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('start_time', { ascending: true });
                     
-                    nextLessonDiv.innerHTML = `
-                        <div class="next-lesson">
-                            <div class="lesson-time">
-                                <i class="far fa-calendar-check"></i>
-                                ${new Date(nextLesson.start_time).toLocaleDateString('fr-FR', { 
-                                    weekday: 'long', 
-                                    day: 'numeric', 
-                                    month: 'long',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
+                if (bookings && !error) {
+                    const completed = bookings.filter(b => b.status === 'completed');
+                    const upcoming = bookings.filter(b => b.status === 'confirmed' && new Date(b.start_time) > new Date());
+                    
+                    document.getElementById('completedCount').textContent = completed.length;
+                    
+                    // Afficher le prochain cours
+                    if (upcoming.length > 0) {
+                        const nextLesson = upcoming[0];
+                        const nextLessonDiv = document.getElementById('nextLessonContainer');
+                        
+                        nextLessonDiv.innerHTML = `
+                            <div class="next-lesson">
+                                <div class="lesson-time">
+                                    <i class="far fa-calendar-check"></i>
+                                    ${new Date(nextLesson.start_time).toLocaleDateString('fr-FR', { 
+                                        weekday: 'long', 
+                                        day: 'numeric', 
+                                        month: 'long',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </div>
+                                <p><strong>Type:</strong> ${nextLesson.event_type || 'Cours'}</p>
+                                <div class="lesson-details">
+                                    <a href="${nextLesson.meet_link || '#'}" target="_blank" class="btn-outline">
+                                        <i class="fas fa-video"></i> Rejoindre
+                                    </a>
+                                    <button class="btn-outline" onclick="cancelBooking('${nextLesson.id}')" style="color: #e74c3c; border-color: #e74c3c;">
+                                        <i class="fas fa-times"></i> Annuler
+                                    </button>
+                                </div>
                             </div>
-                            <p><strong>Type:</strong> ${nextLesson.event_type || 'Cours'}</p>
-                            <div class="lesson-details">
-                                <a href="${nextLesson.meet_link || '#'}" target="_blank" class="btn-outline">
-                                    <i class="fas fa-video"></i> Rejoindre
-                                </a>
-                                <button class="btn-outline" onclick="cancelBooking('${nextLesson.id}')" style="color: #e74c3c; border-color: #e74c3c;">
-                                    <i class="fas fa-times"></i> Annuler
-                                </button>
+                        `;
+                    }
+                    
+                    // Afficher l'historique récent
+                    const historyDiv = document.getElementById('lessonHistory');
+                    if (completed.length > 0) {
+                        const recent = completed.slice(0, 3);
+                        historyDiv.innerHTML = recent.map(lesson => `
+                            <div style="padding: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px;">
+                                <strong>${new Date(lesson.start_time).toLocaleDateString('fr-FR')}</strong><br>
+                                ${lesson.event_type || 'Cours'}
                             </div>
-                        </div>
-                    `;
+                        `).join('');
+                    }
                 }
-                
-                // Afficher l'historique récent
-                const historyDiv = document.getElementById('lessonHistory');
-                if (completed.length > 0) {
-                    const recent = completed.slice(0, 3);
-                    historyDiv.innerHTML = recent.map(lesson => `
-                        <div style="padding: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px;">
-                            <strong>${new Date(lesson.start_time).toLocaleDateString('fr-FR')}</strong><br>
-                            ${lesson.event_type || 'Cours'}
-                        </div>
-                    `).join('');
-                }
+            } catch (error) {
+                console.error('Erreur chargement réservations:', error);
             }
         }
         
@@ -521,9 +591,6 @@
             document.getElementById('errorSection').style.display = 'block';
             document.getElementById('errorText').textContent = message;
         }
-        
-        // Démarrer le chargement
-        document.addEventListener('DOMContentLoaded', loadDashboard);
     </script>
 </body>
 </html>
