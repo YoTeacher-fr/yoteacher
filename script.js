@@ -247,11 +247,8 @@ const coursesManager = {
                     if (course.id === 2) courseType = 'grammaire';
                     if (course.id === 3) courseType = 'essai';
                     
-                    utils.showNotification(`Réservation du cours "${course.type}" - Redirection en cours...`, 'success');
-                    
-                    setTimeout(() => {
-                        window.location.href = `booking.html?type=${courseType}`;
-                    }, 1000);
+                    // Correction pour mobile: navigation directe sans notification
+                    window.location.href = `booking.html?type=${courseType}`;
                 }
             });
         });
@@ -552,7 +549,7 @@ const uiManager = {
         const languageSwitcher = document.querySelector('.language-switcher');
         if (languageSwitcher) {
             languageSwitcher.addEventListener('click', () => {
-                utils.showNotification('Fonctionnalité de changement de langue à venir', 'info');
+                alert('Fonctionnalité de changement de langue à venir');
             });
         }
         
@@ -563,7 +560,7 @@ const uiManager = {
         uiManager.handleScroll();
     },
     
-    handleScroll: utils.debounce(() => {
+    handleScroll: () => {
         const header = document.querySelector('.main-header');
         const aboutSection = document.querySelector('#about');
         
@@ -578,7 +575,7 @@ const uiManager = {
         } else {
             header.classList.remove('scrolled');
         }
-    }, 10)
+    }
 };
 
 // ===== GESTION DE L'IMAGE =====
@@ -595,6 +592,60 @@ const imageManager = {
             yoannImage.addEventListener('load', () => {
                 yoannImage.style.opacity = '1';
                 yoannImage.style.transform = 'scale(1)';
+            });
+        }
+    }
+};
+
+// ===== GESTION MOBILE =====
+const mobileManager = {
+    init: () => {
+        // Mettre à jour les liens de connexion mobile
+        mobileManager.updateMobileLoginLinks();
+        
+        // Redimensionnement
+        window.addEventListener('resize', mobileManager.updateMobileLoginLinks);
+        
+        // Vérifier la taille d'écran au chargement
+        mobileManager.checkMobileLayout();
+    },
+    
+    updateMobileLoginLinks: () => {
+        if (window.innerWidth <= 768) {
+            const mobileLoginBtn = document.querySelector('.mobile-login-btn');
+            const mobileLoginHeaderBtn = document.querySelector('.mobile-login-btn-header');
+            
+            // Mettre à jour le bouton dans le header
+            if (mobileLoginHeaderBtn && !window.location.pathname.includes('login.html')) {
+                const currentUrl = encodeURIComponent(window.location.href);
+                mobileLoginHeaderBtn.href = `login.html?redirect=${currentUrl}`;
+            }
+            
+            // Mettre à jour le bouton dans le menu mobile
+            if (mobileLoginBtn && !window.location.pathname.includes('login.html')) {
+                const currentUrl = encodeURIComponent(window.location.href);
+                mobileLoginBtn.href = `login.html?redirect=${currentUrl}`;
+            }
+        }
+    },
+    
+    checkMobileLayout: () => {
+        // Adapter le layout pour mobile
+        if (window.innerWidth <= 768) {
+            // Cacher les statistiques desktop, montrer mobile
+            document.querySelectorAll('.desktop-stat').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('.mobile-stat').forEach(el => {
+                el.style.display = 'inline';
+            });
+        } else {
+            // Cacher les statistiques mobile, montrer desktop
+            document.querySelectorAll('.desktop-stat').forEach(el => {
+                el.style.display = 'inline';
+            });
+            document.querySelectorAll('.mobile-stat').forEach(el => {
+                el.style.display = 'none';
             });
         }
     }
@@ -640,12 +691,14 @@ const app = {
         navigationManager.init();
         uiManager.init();
         imageManager.init();
+        mobileManager.init();
         
         // Gestion du redimensionnement
-        window.addEventListener('resize', utils.debounce(() => {
+        window.addEventListener('resize', () => {
             testimonialsManager.calculateSlidesPerView();
             testimonialsManager.updateSlider();
-        }, 250));
+            mobileManager.checkMobileLayout();
+        });
         
         // Debug
         console.log('Application prête !');
