@@ -871,11 +871,36 @@
 <script src="mobile-menu.js"></script>
 <script src="common.js"></script>
     <script>
+        // Fonction pour attendre que authManager soit prêt
+        function waitForAuthManager() {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 50; // 5 secondes max
+                
+                const check = () => {
+                    attempts++;
+                    if (window.authManager && window.authManager.getCurrentUser !== undefined) {
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        resolve(); // Continuer même si pas trouvé
+                    } else {
+                        setTimeout(check, 100);
+                    }
+                };
+                check();
+            });
+        }
+        
         document.addEventListener('DOMContentLoaded', async function() {
+            // Attendre que authManager soit initialisé
+            await waitForAuthManager();
+            
             const user = window.authManager?.getCurrentUser();
             
             if (!user) {
-                window.location.href = 'login.html';
+                // Rediriger vers la page de connexion avec le paramètre redirect
+                const currentUrl = encodeURIComponent(window.location.href);
+                window.location.href = 'login.html?redirect=' + currentUrl;
                 return;
             }
             
@@ -888,15 +913,17 @@
             // Charger les données du profil
             async function loadProfile() {
                 try {
-                    const { data: profile, error } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', user.id)
-                        .single();
-                    
-                    if (profile && !error) {
-                        userProfile = profile;
-                        populateForms(profile);
+                    if (window.supabase) {
+                        const { data: profile, error } = await supabase
+                            .from('profiles')
+                            .select('*')
+                            .eq('id', user.id)
+                            .single();
+                        
+                        if (profile && !error) {
+                            userProfile = profile;
+                            populateForms(profile);
+                        }
                     }
                 } catch (error) {
                     console.error('Erreur lors du chargement du profil:', error);
@@ -999,15 +1026,17 @@
                     if (error) throw error;
                     
                     // Mettre à jour le profil dans la table profiles
-                    const { error: profileError } = await supabase
-                        .from('profiles')
-                        .upsert({
-                            id: user.id,
-                            full_name: fullName,
-                            updated_at: new Date().toISOString()
-                        });
-                    
-                    if (profileError) throw profileError;
+                    if (window.supabase) {
+                        const { error: profileError } = await supabase
+                            .from('profiles')
+                            .upsert({
+                                id: user.id,
+                                full_name: fullName,
+                                updated_at: new Date().toISOString()
+                            });
+                        
+                        if (profileError) throw profileError;
+                    }
                     
                     showSuccess('Profil mis à jour avec succès !');
                     
