@@ -328,6 +328,8 @@ class BookingManager {
                         // Vérifier si l'event type supporte des durées multiples
                         if (foundEvent.availableLengths) {
                             console.log(`📏 Durées disponibles: ${foundEvent.availableLengths.join(', ')} min`);
+                        } else {
+                            console.log(`ℹ️ Pas de durées multiples configurées pour cet event type`);
                         }
                     }
                 } else {
@@ -374,9 +376,9 @@ class BookingManager {
                 }
             };
 
-            // CORRECTION CRITIQUE: Ajouter lengthInMinutes pour spécifier la durée
-            // L'API Cal.com v2 utilise lengthInMinutes pour les réservations
-            if (bookingData.duration || bookingData.lengthInMinutes) {
+            // CORRECTION CRITIQUE: Ajouter lengthInMinutes seulement pour conversation et curriculum
+            // Ne pas l'ajouter pour essai car l'event type n'a pas de durées multiples
+            if (bookingData.eventType !== 'essai' && (bookingData.duration || bookingData.lengthInMinutes)) {
                 const requestedDuration = parseInt(bookingData.lengthInMinutes || bookingData.duration);
                 console.log(`📏 Durée demandée pour la réservation: ${requestedDuration} minutes`);
                 bookingPayload.lengthInMinutes = requestedDuration;
@@ -391,6 +393,8 @@ class BookingManager {
                         bookingPayload.duration = requestedDuration;
                     }
                 }
+            } else if (bookingData.eventType === 'essai') {
+                console.log('✅ Cours d\'essai: lengthInMinutes non envoyé (durée fixe 15min)');
             }
 
             console.log('📤 Envoi de la réservation à Cal.com:', JSON.stringify(bookingPayload, null, 2));
@@ -420,8 +424,47 @@ class BookingManager {
                 try {
                     const errorData = JSON.parse(errorText);
                     
-                    // Vérifier si l'erreur est liée à la durée
-                    if (errorData.message && errorData.message.includes('duration') || errorData.message.includes('length')) {
+                    // Vérifier si l'erreur est liée à la durée pour essai
+                    if (errorData.error?.message && errorData.error.message.includes("Can't specify 'lengthInMinutes' because event type does not have multiple possible lengths")) {
+                        console.warn('⚠️ Erreur spécifique: lengthInMinutes envoyé pour un event type sans durées multiples');
+                        
+                        // Réessayer sans lengthInMinutes
+                        console.log('🔄 Tentative sans lengthInMinutes...');
+                        delete bookingPayload.lengthInMinutes;
+                        delete bookingPayload.duration;
+                        
+                        const retryResponse = await fetch(
+                            `${this.apiBaseUrl}/bookings`,
+                            {
+                                method: 'POST',
+                                headers: this.getAuthHeaders('bookings'),
+                                body: JSON.stringify(bookingPayload)
+                            }
+                        );
+                        
+                        if (!retryResponse.ok) {
+                            const retryError = await retryResponse.text();
+                            throw new Error(`Échec même sans lengthInMinutes: ${retryError}`);
+                        }
+                        
+                        const retryResult = await retryResponse.json();
+                        const data = retryResult.data || retryResult;
+                        console.log('✅ Réservation créée sans lengthInMinutes:', data);
+                        
+                        if (data && user) {
+                            await this.saveBookingToSupabase(data, user.id);
+                        }
+
+                        return {
+                            success: true,
+                            data: data,
+                            booking: data,
+                            message: 'Réservation créée avec succès'
+                        };
+                    }
+                    
+                    // Vérifier si l'erreur est liée à la durée pour conversation/curriculum
+                    if (errorData.message && (errorData.message.includes('duration') || errorData.message.includes('length'))) {
                         console.warn('⚠️ Erreur liée à la durée. Vérifiez que l\'event type supporte cette durée.');
                         
                         // Réessayer avec la durée par défaut
