@@ -564,8 +564,12 @@
                         </div>
 
                         <button type="submit" class="btn-booking" id="submitBooking" disabled>
-                            <i class="fas fa-calendar-check"></i> Confirmer la réservation
+                            <i class="fas fa-calendar-check"></i> Réserver et payer
                         </button>
+                        
+                        <div style="margin-top: 15px; text-align: center; font-size: 0.9rem; color: #666;">
+                            <i class="fas fa-lock"></i> Vous serez redirigé vers la page de paiement après confirmation
+                        </div>
                     </form>
                 </div>
             </div>
@@ -650,7 +654,7 @@
                 updateSummary();
             });
 
-            // Soumission du formulaire
+            // Soumission du formulaire - MODIFIÉ POUR REDIRECTION VERS PAIEMENT
             bookingForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
@@ -678,7 +682,7 @@
 
                 hideMessages();
                 submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation en cours...';
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création de la réservation...';
 
                 try {
                     // Utiliser les données du créneau sélectionné
@@ -687,7 +691,7 @@
                     }
 
                     // Déterminer la durée et le prix BASÉ SUR LE CRÉNEAU SÉLECTIONNÉ
-                    let duration = selectedSlot.durationInMinutes || 15; // Utiliser la durée du créneau
+                    let duration = selectedSlot.durationInMinutes || 15;
                     let price = 5;
                     
                     // CORRECTION IMPORTANTE: Utiliser la durée du créneau pour calculer le prix
@@ -709,22 +713,33 @@
                         courseType: courseType,
                         price: price,
                         duration: duration,
-                        lengthInMinutes: courseType !== 'essai' ? duration : undefined // Ne pas envoyer pour essai
+                        lengthInMinutes: courseType !== 'essai' ? duration : undefined
                     };
 
                     const result = await window.bookingManager.createBooking(bookingData);
                     
-                    showSuccess('Réservation confirmée ! Un email de confirmation a été envoyé.');
-                    
-                    // Redirection vers le dashboard après 3 secondes
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 3000);
+                    if (result.success) {
+                        showSuccess('Réservation créée ! Redirection vers le paiement...');
+                        
+                        // Redirection vers la page de paiement après 2 secondes
+                        setTimeout(() => {
+                            // Si l'API retourne une URL de redirection, l'utiliser
+                            if (result.redirectTo) {
+                                window.location.href = result.redirectTo;
+                            } else {
+                                // Sinon, construire l'URL avec les données
+                                const encodedBookingData = encodeURIComponent(JSON.stringify(result.bookingData));
+                                window.location.href = `payment.html?booking=${encodedBookingData}`;
+                            }
+                        }, 2000);
+                    } else {
+                        throw new Error(result.error || 'Erreur inconnue');
+                    }
 
                 } catch (error) {
                     showError('Erreur lors de la réservation : ' + error.message);
                     submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="fas fa-calendar-check"></i> Confirmer la réservation';
+                    submitButton.innerHTML = '<i class="fas fa-calendar-check"></i> Réserver et payer';
                 }
             });
 
