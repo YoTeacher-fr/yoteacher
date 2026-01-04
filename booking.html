@@ -399,6 +399,24 @@
                 padding: 8px 3px;
                 font-size: 0.9rem;
             }
+            
+            /* Correction pour mobile: avatar bien positionné */
+            .header-content {
+                gap: 10px !important;
+            }
+            
+            .mobile-login-btn-header {
+                order: 3;
+                z-index: 1001;
+            }
+            
+            .logo-section {
+                order: 2;
+            }
+            
+            .hamburger-menu {
+                order: 1;
+            }
         }
     </style>
 </head>
@@ -727,43 +745,34 @@
 
             // Fonctions
             function initializePage() {
-            // Récupérer le type de cours depuis l'URL
-const urlParams = new URLSearchParams(window.location.search);
-let courseTypeParam = urlParams.get('type');
-
-// DEBUG : Afficher tous les paramètres d'URL
-console.log('Tous les paramètres URL:', Object.fromEntries(urlParams.entries()));
-console.log('Paramètre "type":', courseTypeParam);
-
-// Si pas de paramètre "type", vérifier dans localStorage
-if (!courseTypeParam || !['essai', 'conversation', 'curriculum'].includes(courseTypeParam)) {
-    const storedCourseType = localStorage.getItem('preLoginCourseType');
-    console.log('Valeur dans localStorage (preLoginCourseType):', storedCourseType);
-    
-    if (storedCourseType && ['essai', 'conversation', 'curriculum'].includes(storedCourseType)) {
-        courseTypeParam = storedCourseType;
-        console.log('Utilisation du type depuis localStorage:', courseTypeParam);
-        localStorage.removeItem('preLoginCourseType');
-    } else {
-        // Par défaut
-        courseTypeParam = 'essai';
-        console.log('Type par défaut (essai)');
-    }
-}
-
-// Forcer la sélection dans le dropdown
-console.log('Type de cours final:', courseTypeParam);
-document.getElementById('courseType').value = courseTypeParam;
-preLoginCourseType = courseTypeParam;
-
-// Stocker aussi dans l'URL si ce n'est pas déjà fait
-if (!urlParams.has('type')) {
-    const newUrl = new URL(window.location);
-    newUrl.searchParams.set('type', courseTypeParam);
-    window.history.replaceState({}, '', newUrl);
-    console.log('Paramètre type ajouté à l\'URL');
-}
-
+                // Récupérer le type de cours depuis l'URL
+                const urlParams = new URLSearchParams(window.location.search);
+                let courseTypeParam = urlParams.get('type');
+                
+                // Si pas de paramètre "type", vérifier dans localStorage
+                if (!courseTypeParam || !['essai', 'conversation', 'curriculum'].includes(courseTypeParam)) {
+                    const storedCourseType = localStorage.getItem('preLoginCourseType');
+                    
+                    if (storedCourseType && ['essai', 'conversation', 'curriculum'].includes(storedCourseType)) {
+                        courseTypeParam = storedCourseType;
+                        localStorage.removeItem('preLoginCourseType');
+                    } else {
+                        // Par défaut
+                        courseTypeParam = 'essai';
+                    }
+                }
+                
+                // Forcer la sélection dans le dropdown
+                document.getElementById('courseType').value = courseTypeParam;
+                preLoginCourseType = courseTypeParam;
+                
+                // Stocker aussi dans l'URL si ce n'est pas déjà fait
+                if (!urlParams.has('type')) {
+                    const newUrl = new URL(window.location);
+                    newUrl.searchParams.set('type', courseTypeParam);
+                    window.history.replaceState({}, '', newUrl);
+                }
+                
                 // Initialiser le calendrier
                 initCalendar();
                 

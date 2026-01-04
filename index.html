@@ -54,6 +54,7 @@
         <div class="mobile-menu-overlay" id="mobileMenu">
             <nav class="mobile-nav">
                 <button class="close-menu" id="closeMenuBtn">×</button>
+                <!-- La section utilisateur sera ajoutée dynamiquement ici -->
                 <a href="#about" class="mobile-nav-link">À propos</a>
                 <a href="#courses" class="mobile-nav-link">Cours</a>
                 <a href="#testimonials" class="mobile-nav-link">Témoignages</a>
@@ -309,13 +310,45 @@
             </div>
         </div>
     </section>
-<script src="config.js"></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script src="auth.js"></script>
-<script src="booking.js"></script>
-<script src="mobile-menu.js"></script>
-<script src="common.js"></script>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="auth.js"></script>
+    <script src="booking.js"></script>
+    <script src="mobile-menu.js"></script>
+    <script src="common.js"></script>
     <script src="script.js"></script>
+    
+    <script>
+        // Fonction pour mettre à jour les liens de connexion avec redirect
+        function updateMobileLoginLinks() {
+            if (window.innerWidth <= 768) {
+                const mobileLoginBtn = document.querySelector('.mobile-login-btn');
+                const mobileLoginHeaderBtn = document.querySelector('.mobile-login-btn-header');
+                
+                // Mettre à jour le bouton dans le header
+                if (mobileLoginHeaderBtn && !window.location.pathname.includes('login.html')) {
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    mobileLoginHeaderBtn.href = `login.html?redirect=${currentUrl}`;
+                }
+                
+                // Mettre à jour le bouton dans le menu mobile
+                if (mobileLoginBtn && !window.location.pathname.includes('login.html')) {
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    mobileLoginBtn.href = `login.html?redirect=${currentUrl}`;
+                }
+            }
+        }
+        
+        // Appeler cette fonction après le chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updateMobileLoginLinks, 300);
+            
+            // Re-mettre à jour si la taille de l'écran change
+            window.addEventListener('resize', updateMobileLoginLinks);
+        });
+    </script>
 </body>
 </html>

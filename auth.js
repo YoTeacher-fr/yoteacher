@@ -55,7 +55,7 @@ class AuthManager {
         }
     }
 
-    // Méthode pour émettre des événements d'authentification (NOUVELLE)
+    // Méthode pour émettre des événements d'authentification
     emitAuthEvent(eventName, user = null) {
         try {
             console.log(`Événement auth:${eventName} émis`, user ? `pour ${user.email}` : '');
@@ -311,7 +311,7 @@ class AuthManager {
             this.saveUserToStorage();
             this.updateUI();
             
-            // Événement : connexion réussie (NOUVEAU)
+            // Événement : connexion réussie
             this.emitAuthEvent('login', this.user);
             
             const returnUrl = this.getReturnUrl();
@@ -365,7 +365,7 @@ class AuthManager {
                         if (user.email === email) {
                             this.user = user;
                             this.updateUI();
-                            // Événement : connexion mock (NOUVEAU)
+                            // Événement : connexion mock
                             this.emitAuthEvent('login', this.user);
                             resolve({ 
                                 success: true, 
@@ -398,7 +398,7 @@ class AuthManager {
             this.removeUserFromStorage();
             this.updateUI();
             
-            // Événement : déconnexion (NOUVEAU)
+            // Événement : déconnexion
             this.emitAuthEvent('logout');
             
             window.location.href = 'index.html#top';
@@ -417,7 +417,7 @@ class AuthManager {
             this.removeUserFromStorage();
             this.updateUI();
             
-            // Événement : déconnexion même en cas d'erreur (NOUVEAU)
+            // Événement : déconnexion même en cas d'erreur
             this.emitAuthEvent('logout');
             
             window.location.href = 'index.html#top';
@@ -456,7 +456,7 @@ class AuthManager {
     }
 
     removeLoginButtonFromHeader() {
-        const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header');
+        const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header, .mobile-login-btn');
         loginButtons.forEach(btn => {
             if (btn && btn.parentElement) {
                 btn.style.display = 'none';
@@ -465,14 +465,15 @@ class AuthManager {
     }
 
     restoreLoginButtonInHeader() {
-        const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header');
+        const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header, .mobile-login-btn');
         loginButtons.forEach(btn => {
             if (btn) {
                 btn.style.display = 'flex';
                 
                 // Ajouter le paramètre redirect si nécessaire
                 if (!window.location.pathname.includes('login.html') && 
-                    !window.location.pathname.includes('signup.html')) {
+                    !window.location.pathname.includes('signup.html') &&
+                    btn.href && btn.href.includes('login.html')) {
                     const currentUrl = encodeURIComponent(window.location.href);
                     const separator = btn.href.includes('?') ? '&' : '?';
                     btn.href = `${btn.href.split('?')[0]}${separator}redirect=${currentUrl}`;
@@ -530,13 +531,29 @@ class AuthManager {
         
         if (!this.user) return;
         
-        const nav = document.querySelector('.nav-menu');
-        if (!nav) return;
+        // Trouver le bon conteneur selon le device
+        let container;
+        if (window.innerWidth <= 768) {
+            // Sur mobile, ajouter dans header-content
+            container = document.querySelector('.header-content');
+        } else {
+            // Sur desktop, ajouter dans nav-menu
+            container = document.querySelector('.nav-menu');
+        }
+        
+        if (!container) return;
         
         const avatar = document.createElement('div');
         avatar.className = 'user-avatar';
-        avatar.style.position = 'relative';
-        avatar.style.marginLeft = '15px';
+        
+        // Positionnement différent selon le device
+        if (window.innerWidth <= 768) {
+            avatar.style.marginLeft = 'auto';
+            avatar.style.marginRight = '10px';
+            avatar.style.order = '2'; // Entre le logo et le bouton connexion mobile
+        } else {
+            avatar.style.marginLeft = '15px';
+        }
         
         const initials = this.getUserInitials();
         
@@ -544,15 +561,26 @@ class AuthManager {
             <div class="avatar-img" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #3c84f6, #1e88e5); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer; border: 2px solid #3c84f6;">
                 ${initials}
             </div>
-            <div class="user-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); min-width: 180px; padding: 10px 0; z-index: 1000;">
+            <div class="user-menu" style="display: none; position: absolute; ${window.innerWidth <= 768 ? 'left: 0;' : 'right: 0;'} top: 100%; background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); min-width: 180px; padding: 10px 0; z-index: 1000;">
                 <a href="dashboard.html" style="display: block; padding: 10px 20px; color: #333; text-decoration: none;">Mon dashboard</a>
                 <a href="profile.html" style="display: block; padding: 10px 20px; color: #333; text-decoration: none;">Mon profil</a>
                 <a href="#" class="logout-btn" style="display: block; padding: 10px 20px; color: #e74c3c; text-decoration: none; border-top: 1px solid #eee; margin-top: 5px;">Déconnexion</a>
             </div>
         `;
         
-        nav.appendChild(avatar);
+        // Sur mobile, placer avant le bouton connexion mobile
+        if (window.innerWidth <= 768) {
+            const mobileLoginBtn = document.querySelector('.mobile-login-btn-header');
+            if (mobileLoginBtn && mobileLoginBtn.parentElement === container) {
+                container.insertBefore(avatar, mobileLoginBtn);
+            } else {
+                container.appendChild(avatar);
+            }
+        } else {
+            container.appendChild(avatar);
+        }
         
+        // Gestion des événements
         const logoutBtn = avatar.querySelector('.logout-btn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
@@ -572,6 +600,7 @@ class AuthManager {
                 userMenu.style.display = isVisible ? 'none' : 'block';
             });
             
+            // Fermer le menu en cliquant ailleurs
             document.addEventListener('click', (e) => {
                 if (!avatar.contains(e.target)) {
                     userMenu.style.display = 'none';
@@ -583,6 +612,7 @@ class AuthManager {
             });
         }
         
+        // Gestion des liens
         setTimeout(() => {
             const dashboardLink = avatar.querySelector('a[href="dashboard.html"]');
             const profileLink = avatar.querySelector('a[href="profile.html"]');
@@ -691,7 +721,7 @@ class AuthManager {
                 this.user = data.session.user;
                 this.saveUserToStorage();
                 this.updateUI();
-                // Événement : session rafraîchie (NOUVEAU)
+                // Événement : session rafraîchie
                 this.emitAuthEvent('login', this.user);
             }
             
@@ -724,7 +754,7 @@ class AuthManager {
     }
 }
 
-// Ajout d'écouteurs globaux pour le débogage des événements (NOUVEAU)
+// Ajout d'écouteurs globaux pour le débogage des événements
 window.addEventListener('auth:login', function(e) {
     console.log('Événement global auth:login reçu', e.detail?.user?.email || 'sans email');
 });
@@ -740,6 +770,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const isDashboardPage = window.location.pathname.includes('dashboard.html') ||
                            window.location.pathname.includes('profile.html');
     
+    // Délai adaptatif selon le device
+    const delay = window.innerWidth <= 768 ? 500 : 100;
+    
     setTimeout(() => {
         window.authManager = new AuthManager();
         
@@ -749,9 +782,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const currentUrl = encodeURIComponent(window.location.href);
                     window.location.href = `login.html?redirect=${currentUrl}`;
                 }
-            }, 500);
+            }, 1000);
         }
-    }, 100);
+    }, delay);
 });
 
 if (typeof module !== 'undefined' && module.exports) {
