@@ -689,17 +689,26 @@
                         }
                     }
 
-                    const bookingData = {
-                        eventType: courseType,
-                        startTime: selectedSlot.start,
-                        endTime: selectedSlot.end,
-                        name: name,
-                        email: email,
-                        notes: notes,
-                        courseType: courseType,
-                        price: price,
-                        duration: duration
-                    };
+                    const activeDurationBtn = document.querySelector('.duration-btn.active');
+const currentType = document.getElementById('courseType').value;
+
+// Déterminer la durée numérique
+let durationValue = 60; // défaut
+if (currentType === 'essai') {
+    durationValue = 15;
+} else if (activeDurationBtn) {
+    durationValue = parseInt(activeDurationBtn.dataset.duration);
+}
+
+const bookingData = {
+    courseType: currentType,
+    startTime: selectedSlot,
+    duration: durationValue, // <--- AJOUT CRUCIAL
+    price: document.getElementById('summaryPrice').textContent,
+    name: document.getElementById('name').value,
+    email: document.getElementById('email').value,
+    notes: document.getElementById('notes').value
+};
 
                     const result = await window.bookingManager.createBooking(bookingData);
                     
