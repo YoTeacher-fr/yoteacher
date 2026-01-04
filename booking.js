@@ -783,4 +783,3 @@ window.checkCalcomHealth = async function() {
         return false;
     }
 };
-booking.js
