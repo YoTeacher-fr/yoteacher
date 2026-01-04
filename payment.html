@@ -319,9 +319,42 @@
         }
 
         /* Style spécifique pour Interac */
+        .interac-details {
+            width: 100%;
+        }
+
         .interac-details .info-value {
             font-family: 'Courier New', monospace;
             font-size: 0.95rem;
+        }
+
+        .bank-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            margin: 20px 0;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-item .label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        .detail-item .value {
+            font-weight: 600;
+            color: #333;
         }
 
         .interac-actions {
@@ -337,15 +370,16 @@
             cursor: pointer;
             transition: all 0.3s;
             border: none;
+            flex: 1;
         }
 
         .btn-primary {
-            background: #3c84f6;
+            background: #E41E26;
             color: white;
         }
 
         .btn-primary:hover {
-            background: #2c74e6;
+            background: #d31119;
         }
 
         .btn-secondary {
@@ -356,6 +390,16 @@
 
         .btn-secondary:hover {
             background: #e9ecef;
+        }
+
+        /* Style pour les QR codes */
+        .qr-code-img {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 15px;
+            display: block;
+            border-radius: 8px;
+            border: 1px solid #ddd;
         }
 
         @media (max-width: 992px) {
@@ -451,9 +495,12 @@
                 gap: 15px;
             }
             
-            .qr-code-placeholder {
+            .qr-code-img, .qr-code-placeholder {
                 width: 150px;
                 height: 150px;
+            }
+            
+            .qr-code-placeholder {
                 font-size: 2rem;
             }
         }
@@ -522,9 +569,7 @@
                         <div class="payment-method-details" id="revolutDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
-                                    <div class="qr-code-placeholder">
-                                        <i class="fas fa-qrcode"></i>
-                                    </div>
+                                    <img src="" alt="QR Code Revolut" id="revolutQrCode" class="qr-code-img">
                                     <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Scannez pour payer avec Revolut</p>
                                     <a href="#" id="revolutLink" target="_blank" style="display: inline-block; padding: 10px 20px; background: #FF5F00; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">
                                         <i class="fas fa-external-link-alt"></i> Ouvrir Revolut
@@ -534,7 +579,11 @@
                                 <div class="payment-info">
                                     <div class="info-item">
                                         <div class="info-label">Nom du bénéficiaire</div>
-                                        <div class="info-value">Yoann Bourbia</div>
+                                        <div class="info-value" id="revolutName">Yoann Bourbia</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Lien Revolut</div>
+                                        <div class="info-value" id="revolutLinkDisplay">revolut.me/yoann</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label">Référence</div>
@@ -568,9 +617,7 @@
                         <div class="payment-method-details" id="wiseDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
-                                    <div class="qr-code-placeholder">
-                                        <i class="fas fa-qrcode"></i>
-                                    </div>
+                                    <img src="" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img">
                                     <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Scannez pour payer avec Wise</p>
                                     <a href="#" id="wiseLink" target="_blank" style="display: inline-block; padding: 10px 20px; background: #9C5BDE; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">
                                         <i class="fas fa-external-link-alt"></i> Ouvrir Wise
@@ -580,11 +627,15 @@
                                 <div class="payment-info">
                                     <div class="info-item">
                                         <div class="info-label">Nom du bénéficiaire</div>
-                                        <div class="info-value">Yoann Bourbia</div>
+                                        <div class="info-value" id="wiseName">Yoann Bourbia</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Lien Wise</div>
+                                        <div class="info-value" id="wiseLinkDisplay">wise.com/pay/yoann</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label">Email Wise</div>
-                                        <div class="info-value">yoann@yoteacher.com</div>
+                                        <div class="info-value" id="wiseEmail">yoann@yoteacher.com</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label">Montant</div>
@@ -595,6 +646,71 @@
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" data-method="wise">
                                         <i class="fas fa-check"></i> J'ai payé avec Wise
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Interac (après Wise comme demandé) -->
+                        <button class="payment-method-btn" data-method="interac">
+                            <div class="payment-method-icon" style="color: #E41E26;">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <div class="payment-method-name">Interac</div>
+                            <div class="payment-method-arrow">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </button>
+                        
+                        <div class="payment-method-details" id="interacDetails">
+                            <div class="interac-details">
+                                <h3 style="margin-bottom: 20px; color: #333; display: flex; align-items: center; gap: 10px;">
+                                    <i class="fas fa-university" style="color: #E41E26;"></i> Paiement Interac
+                                </h3>
+                                <p style="margin-bottom: 20px; color: #555;">
+                                    Veuillez effectuer un virement Interac aux coordonnées suivantes :
+                                </p>
+                                
+                                <div class="bank-details">
+                                    <div class="detail-item">
+                                        <span class="label">Nom du bénéficiaire:</span>
+                                        <span class="value" id="interacName">Yoann Bourbia</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="label">Email Interac:</span>
+                                        <span class="value" id="interacEmail">yoann@yoteacher.com</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="label">Montant:</span>
+                                        <span class="value" id="interacAmount">-</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="label">Référence:</span>
+                                        <span class="value" id="interacRef">COURS-<span id="interacRefNum"></span></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="label">Question de sécurité:</span>
+                                        <span class="value">YoTeacher</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="label">Réponse:</span>
+                                        <span class="value">francais</span>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
+                                    <p style="color: #856404; margin: 0; font-size: 0.95rem;">
+                                        <i class="fas fa-info-circle"></i> <strong>Important :</strong> 
+                                        Une fois le virement effectué, cliquez sur "J'ai effectué le virement" pour confirmer votre réservation.
+                                    </p>
+                                </div>
+                                
+                                <div class="interac-actions">
+                                    <button id="confirmInterac" class="btn btn-primary">
+                                        <i class="fas fa-check"></i> J'ai effectué le virement
+                                    </button>
+                                    <button onclick="closePaymentMethod('interac')" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Annuler
                                     </button>
                                 </div>
                             </div>
@@ -614,9 +730,7 @@
                         <div class="payment-method-details" id="paypalDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
-                                    <div class="qr-code-placeholder">
-                                        <i class="fab fa-paypal"></i>
-                                    </div>
+                                    <img src="" alt="QR Code PayPal" id="paypalQrCode" class="qr-code-img">
                                     <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Scannez pour payer avec PayPal</p>
                                     <a href="#" id="paypalLink" target="_blank" style="display: inline-block; padding: 10px 20px; background: #003087; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">
                                         <i class="fas fa-external-link-alt"></i> Ouvrir PayPal
@@ -625,12 +739,16 @@
                                 
                                 <div class="payment-info">
                                     <div class="info-item">
-                                        <div class="info-label">Email PayPal</div>
-                                        <div class="info-value">yoann@yoteacher.com</div>
+                                        <div class="info-label">Nom du bénéficiaire</div>
+                                        <div class="info-value" id="paypalName">Yoann Bourbia</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Référence</div>
-                                        <div class="info-value" id="paypalRef">Cours français</div>
+                                        <div class="info-label">Email PayPal</div>
+                                        <div class="info-value" id="paypalEmail">yoann@yoteacher.com</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Lien PayPal</div>
+                                        <div class="info-value" id="paypalLinkDisplay">paypal.me/yoann</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label">Montant</div>
@@ -679,6 +797,10 @@
                                         <div class="info-value">Chiffrement SSL 256-bit</div>
                                     </div>
                                     <div class="info-item">
+                                        <div class="info-label">Cartes acceptées</div>
+                                        <div class="info-value">Visa, Mastercard, American Express</div>
+                                    </div>
+                                    <div class="info-item">
                                         <div class="info-label">Montant</div>
                                         <div class="info-value" id="cardAmount">-</div>
                                     </div>
@@ -689,64 +811,6 @@
                                     <div id="squarePaymentForm"></div>
                                     <button class="btn-confirm-payment" id="processCardPayment" data-method="card">
                                         <i class="fas fa-lock"></i> Payer par carte
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Interac -->
-                        <button class="payment-method-btn" data-method="interac">
-                            <div class="payment-method-icon" style="color: #E41E26;">
-                                <i class="fas fa-exchange-alt"></i>
-                            </div>
-                            <div class="payment-method-name">Interac</div>
-                            <div class="payment-method-arrow">
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                        </button>
-                        
-                        <div class="payment-method-details" id="interacDetails">
-                            <div class="payment-details-grid">
-                                <div class="qr-code-container">
-                                    <div class="qr-code-placeholder">
-                                        <i class="fas fa-university"></i>
-                                    </div>
-                                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Virement Interac</p>
-                                    <div style="color: #E41E26; font-weight: 600;">
-                                        <i class="fas fa-shield-alt"></i> Transfert sécurisé
-                                    </div>
-                                </div>
-                                
-                                <div class="payment-info">
-                                    <div class="info-item">
-                                        <div class="info-label">Nom du bénéficiaire</div>
-                                        <div class="info-value">Yoann Bourbia</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Email Interac</div>
-                                        <div class="info-value">yoann@yoteacher.com</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Référence</div>
-                                        <div class="info-value" id="interacRef">COURS-<span id="interacRefNum"></span></div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Montant</div>
-                                        <div class="info-value" id="interacAmount">-</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Question de sécurité</div>
-                                        <div class="info-value">YoTeacher</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Réponse</div>
-                                        <div class="info-value">francais</div>
-                                    </div>
-                                </div>
-                                
-                                <div class="payment-action">
-                                    <button class="btn-confirm-payment" data-method="interac">
-                                        <i class="fas fa-check"></i> J'ai effectué le virement Interac
                                     </button>
                                 </div>
                             </div>
@@ -833,62 +897,14 @@
             window.paymentManager.processBookingPayment(currentBooking);
         }
         
-        // Générer des références uniques
-        const refNumber = Date.now().toString().slice(-6);
-        document.getElementById('revolutRefNum').textContent = refNumber;
-        document.getElementById('interacRefNum').textContent = refNumber;
-        
-        // Mettre à jour les montants
-        document.querySelectorAll('#revolutAmount, #wiseAmount, #paypalAmount, #cardAmount, #interacAmount').forEach(el => {
-            el.textContent = currentBooking.price + '€';
-        });
-        
-        // Mettre à jour les liens de paiement
-        const config = window.YOTEACHER_CONFIG || {};
-        
-        if (config.REVOLUT_PAYMENT_LINK) {
-            document.getElementById('revolutLink').href = `${config.REVOLUT_PAYMENT_LINK}?amount=${currentBooking.price}`;
-        }
-        
-        if (config.WISE_PAYMENT_LINK) {
-            document.getElementById('wiseLink').href = `${config.WISE_PAYMENT_LINK}?amount=${currentBooking.price}`;
-        }
-        
-        if (config.PAYPAL_BUSINESS_EMAIL) {
-            document.getElementById('paypalLink').href = `https://www.paypal.com/paypalme/${config.PAYPAL_BUSINESS_EMAIL}/${currentBooking.price}EUR`;
-        }
+        // Mettre à jour les QR codes et informations
+        updatePaymentDetails(currentBooking);
         
         // Gestion des boutons de méthode de paiement
         document.querySelectorAll('.payment-method-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const method = this.getAttribute('data-method');
-                
-                // Fermer tous les autres menus
-                document.querySelectorAll('.payment-method-details').forEach(details => {
-                    details.style.display = 'none';
-                });
-                
-                // Retirer la classe active de tous les boutons
-                document.querySelectorAll('.payment-method-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
-                // Ouvrir le menu correspondant
-                const detailsId = method + 'Details';
-                const detailsElement = document.getElementById(detailsId);
-                
-                if (detailsElement) {
-                    // Vérifier si le menu est déjà ouvert
-                    const isAlreadyOpen = detailsElement.style.display === 'block';
-                    
-                    if (!isAlreadyOpen) {
-                        detailsElement.style.display = 'block';
-                        this.classList.add('active');
-                    } else {
-                        detailsElement.style.display = 'none';
-                        this.classList.remove('active');
-                    }
-                }
+                togglePaymentMethod(method);
             });
         });
         
@@ -924,7 +940,155 @@
             });
         });
         
-        // Fonction de secours pour le paiement
+        // Gestion spécifique du bouton Interac
+        const confirmInteracBtn = document.getElementById('confirmInterac');
+        if (confirmInteracBtn) {
+            confirmInteracBtn.addEventListener('click', async function() {
+                const method = 'interac';
+                
+                // Afficher un indicateur de chargement
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement en cours...';
+                this.disabled = true;
+                
+                hidePaymentError();
+                
+                try {
+                    if (window.paymentManager && typeof window.paymentManager.handlePaymentMethod === 'function') {
+                        await window.paymentManager.handlePaymentMethod(method);
+                    } else {
+                        await processPaymentFallback(method);
+                    }
+                } catch (error) {
+                    console.error('Erreur paiement Interac:', error);
+                    showPaymentError('Erreur lors du traitement Interac : ' + error.message);
+                    
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            });
+        }
+        
+        // Fonctions
+        function updatePaymentDetails(booking) {
+            const refNumber = Date.now().toString().slice(-6);
+            const amount = booking.price;
+            
+            // Configuration depuis config.js
+            const config = window.YOTEACHER_CONFIG || {};
+            
+            // Récupérer les valeurs de configuration ou utiliser des valeurs par défaut
+            const contactName = config.CONTACT_NAME || "Yoann Bourbia";
+            const contactEmail = config.CONTACT_EMAIL || "yoann@yoteacher.com";
+            const revolutLink = config.REVOLUT_PAYMENT_LINK || "https://revolut.me/yoann";
+            const wiseLink = config.WISE_PAYMENT_LINK || "https://wise.com/pay/yoann";
+            const paypalEmail = config.PAYPAL_BUSINESS_EMAIL || "yoann@yoteacher.com";
+            const interacEmail = config.INTERAC_EMAIL || contactEmail;
+            
+            // Mettre à jour les références
+            document.getElementById('revolutRefNum').textContent = refNumber;
+            document.getElementById('interacRefNum').textContent = refNumber;
+            
+            // Mettre à jour les montants
+            document.querySelectorAll('#revolutAmount, #wiseAmount, #paypalAmount, #cardAmount, #interacAmount').forEach(el => {
+                el.textContent = amount + '€';
+            });
+            
+            // Mettre à jour les noms
+            document.querySelectorAll('#revolutName, #wiseName, #paypalName, #interacName').forEach(el => {
+                el.textContent = contactName;
+            });
+            
+            // Mettre à jour les emails
+            document.getElementById('wiseEmail').textContent = contactEmail;
+            document.getElementById('paypalEmail').textContent = paypalEmail;
+            document.getElementById('interacEmail').textContent = interacEmail;
+            
+            // Mettre à jour les liens d'affichage
+            document.getElementById('revolutLinkDisplay').textContent = revolutLink.replace('https://', '');
+            document.getElementById('wiseLinkDisplay').textContent = wiseLink.replace('https://', '');
+            document.getElementById('paypalLinkDisplay').textContent = `paypal.me/${paypalEmail.split('@')[0]}`;
+            
+            // Mettre à jour les liens cliquables
+            document.getElementById('revolutLink').href = `${revolutLink}?amount=${amount}&currency=EUR&reference=COURS-${refNumber}`;
+            document.getElementById('wiseLink').href = `${wiseLink}?amount=${amount}&currency=EUR`;
+            document.getElementById('paypalLink').href = `https://www.paypal.com/paypalme/${paypalEmail.split('@')[0]}/${amount}EUR`;
+            
+            // Générer les QR codes dynamiques
+            generateQrCodes(booking, refNumber, revolutLink, wiseLink, paypalEmail);
+        }
+        
+        function generateQrCodes(booking, refNumber, revolutLink, wiseLink, paypalEmail) {
+            const amount = booking.price;
+            
+            // QR Code Revolut
+            const revolutQrData = `${revolutLink}?amount=${amount}&currency=EUR&reference=COURS-${refNumber}`;
+            const revolutQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(revolutQrData)}`;
+            document.getElementById('revolutQrCode').src = revolutQrUrl;
+            
+            // QR Code Wise
+            const wiseQrData = `${wiseLink}?amount=${amount}&currency=EUR`;
+            const wiseQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(wiseQrData)}`;
+            document.getElementById('wiseQrCode').src = wiseQrUrl;
+            
+            // QR Code PayPal
+            const paypalUsername = paypalEmail.split('@')[0];
+            const paypalQrData = `https://www.paypal.com/paypalme/${paypalUsername}/${amount}EUR`;
+            const paypalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(paypalQrData)}`;
+            document.getElementById('paypalQrCode').src = paypalQrUrl;
+        }
+        
+        function togglePaymentMethod(method) {
+            // Fermer tous les autres menus
+            document.querySelectorAll('.payment-method-details').forEach(details => {
+                details.style.display = 'none';
+            });
+            
+            // Retirer la classe active de tous les boutons
+            document.querySelectorAll('.payment-method-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Ouvrir le menu correspondant
+            const detailsId = method + 'Details';
+            const detailsElement = document.getElementById(detailsId);
+            const buttonElement = document.querySelector(`[data-method="${method}"]`);
+            
+            if (detailsElement && buttonElement) {
+                // Vérifier si le menu est déjà ouvert
+                const isAlreadyOpen = detailsElement.style.display === 'block';
+                
+                if (!isAlreadyOpen) {
+                    detailsElement.style.display = 'block';
+                    buttonElement.classList.add('active');
+                    
+                    // Scroller vers le menu si sur mobile
+                    if (window.innerWidth <= 768) {
+                        setTimeout(() => {
+                            detailsElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }, 100);
+                    }
+                } else {
+                    detailsElement.style.display = 'none';
+                    buttonElement.classList.remove('active');
+                }
+            }
+        }
+        
+        function closePaymentMethod(method) {
+            const detailsId = method + 'Details';
+            const detailsElement = document.getElementById(detailsId);
+            const buttonElement = document.querySelector(`[data-method="${method}"]`);
+            
+            if (detailsElement) {
+                detailsElement.style.display = 'none';
+            }
+            
+            if (buttonElement) {
+                buttonElement.classList.remove('active');
+            }
+        }
+        
         async function processPaymentFallback(method) {
             console.log('Paiement avec méthode:', method);
             
@@ -948,6 +1112,8 @@
             console.log('🔄 Tentative de création sur Cal.com...');
             
             let calcomResult = null;
+            let hasWarning = false;
+            
             try {
                 if (window.bookingManager && typeof window.bookingManager.createBookingAfterPayment === 'function') {
                     calcomResult = await window.bookingManager.createBookingAfterPayment(currentBooking);
@@ -965,6 +1131,7 @@
                 }
             } catch (calcomError) {
                 console.error('❌ Erreur Cal.com:', calcomError);
+                hasWarning = true;
                 
                 // Même si Cal.com échoue, on considère le paiement comme accepté
                 currentBooking.calcomError = calcomError.message;
@@ -975,6 +1142,7 @@
                     console.warn('⚠️ Mode développement : simulation réservation Cal.com');
                     currentBooking.calcomId = 'mock_' + Date.now();
                     currentBooking.status = 'confirmed';
+                    hasWarning = false;
                 }
             }
             
@@ -983,11 +1151,13 @@
             
             // Rediriger vers la page de succès
             const redirectUrl = `payment-success.html?booking=${encodeURIComponent(JSON.stringify(currentBooking))}`;
-            if (currentBooking.status === 'payment_ok_reservation_failed') {
-                window.location.href = redirectUrl + '&warning=true';
-            } else {
-                window.location.href = redirectUrl;
-            }
+            setTimeout(() => {
+                if (hasWarning) {
+                    window.location.href = redirectUrl + '&warning=true';
+                } else {
+                    window.location.href = redirectUrl;
+                }
+            }, 1000);
         }
         
         function showPaymentError(message) {
@@ -1011,6 +1181,19 @@
                 errorDiv.style.display = 'none';
             }
         }
+        
+        // Fermer les menus en cliquant en dehors
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.payment-method-btn') && !event.target.closest('.payment-method-details')) {
+                document.querySelectorAll('.payment-method-details').forEach(details => {
+                    details.style.display = 'none';
+                });
+                
+                document.querySelectorAll('.payment-method-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            }
+        });
     });
     </script>
 </body>
