@@ -127,6 +127,45 @@
             opacity: 0.8;
         }
         
+        .warning-notice {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .warning-notice i {
+            color: #FFC107;
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+        
+        .warning-notice h4 {
+            color: #FFC107;
+            margin-bottom: 10px;
+        }
+        
+        .reservation-status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .status-confirmed {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+        
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #FFC107;
+            border: 1px solid #FFC107;
+        }
+        
         @media (max-width: 768px) {
             .success-section {
                 padding: 100px 15px 40px;
@@ -159,8 +198,18 @@
             <h1 class="success-title">Paiement Réussi !</h1>
             
             <div class="success-message">
-                Votre réservation a été confirmée et votre paiement a été accepté.
-                Un email de confirmation vous a été envoyé avec tous les détails.
+                Votre paiement a été accepté et votre réservation est en cours de confirmation.
+            </div>
+            
+            <!-- Affichage du statut de réservation -->
+            <div id="reservationStatus"></div>
+            
+            <!-- Message d'avertissement si problème -->
+            <div id="warningNotice" class="warning-notice" style="display: none;">
+                <h4><i class="fas fa-exclamation-triangle"></i> Réservation en attente</h4>
+                <p>Votre paiement a été accepté mais nous avons rencontré un problème technique avec la réservation automatique.</p>
+                <p><strong>Ne vous inquiétez pas !</strong> Nous allons créer manuellement votre réservation et vous enverrons un email de confirmation dans les 24 heures.</p>
+                <p>Votre créneau horaire est réservé pour vous.</p>
             </div>
             
             <div class="success-details" id="bookingDetails">
@@ -179,7 +228,7 @@
                 </a>
             </div>
             
-            <div class="email-confirmation">
+            <div class="email-confirmation" id="emailConfirmation">
                 <i class="fas fa-envelope"></i> Vérifiez votre boîte email pour le lien de la visioconférence
             </div>
         </div>
@@ -190,14 +239,19 @@
             // Récupérer les détails de la réservation
             const urlParams = new URLSearchParams(window.location.search);
             const bookingParam = urlParams.get('booking');
+            const warning = urlParams.get('warning');
             
             if (bookingParam) {
                 try {
                     const bookingData = JSON.parse(decodeURIComponent(bookingParam));
                     displayBookingDetails(bookingData);
+                    updateReservationStatus(bookingData, warning === 'true');
                 } catch (error) {
                     console.error('Erreur parsing booking:', error);
+                    showErrorMessage();
                 }
+            } else {
+                showErrorMessage();
             }
             
             // Vider le localStorage
@@ -245,6 +299,57 @@
                     <span>${booking.price}€</span>
                 </div>
             `;
+        }
+        
+        function updateReservationStatus(booking, hasWarning) {
+            const statusDiv = document.getElementById('reservationStatus');
+            const warningDiv = document.getElementById('warningNotice');
+            const emailConfirmation = document.getElementById('emailConfirmation');
+            
+            if (hasWarning || booking.status === 'payment_ok_reservation_failed') {
+                // Réservation Cal.com échouée
+                statusDiv.innerHTML = `
+                    <div class="reservation-status status-pending">
+                        <i class="fas fa-clock"></i> Réservation en cours de traitement manuel
+                    </div>
+                `;
+                warningDiv.style.display = 'block';
+                emailConfirmation.innerHTML = `
+                    <i class="fas fa-envelope"></i> Vous recevrez un email de confirmation manuelle dans les 24h
+                `;
+            } else if (booking.calcomId) {
+                // Réservation Cal.com réussie
+                statusDiv.innerHTML = `
+                    <div class="reservation-status status-confirmed">
+                        <i class="fas fa-check-circle"></i> Réservation Cal.com confirmée
+                    </div>
+                `;
+                warningDiv.style.display = 'none';
+                emailConfirmation.innerHTML = `
+                    <i class="fas fa-envelope"></i> Vérifiez votre boîte email pour le lien de la visioconférence
+                `;
+            } else {
+                // Statut inconnu
+                statusDiv.innerHTML = `
+                    <div class="reservation-status status-pending">
+                        <i class="fas fa-spinner fa-spin"></i> Confirmation de réservation en cours...
+                    </div>
+                `;
+                warningDiv.style.display = 'none';
+            }
+        }
+        
+        function showErrorMessage() {
+            const detailsDiv = document.getElementById('bookingDetails');
+            if (detailsDiv) {
+                detailsDiv.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #FFC107; margin-bottom: 15px;"></i>
+                        <p>Impossible de récupérer les détails de la réservation.</p>
+                        <p>Veuillez vérifier votre email pour la confirmation.</p>
+                    </div>
+                `;
+            }
         }
     </script>
 </body>
