@@ -1,4 +1,5 @@
 // Gestion des réservations avec Cal.com (API v2)
+// Documentation: https://cal.com/docs/api-reference/v2/introduction
 class BookingManager {
     constructor() {
         const config = window.YOTEACHER_CONFIG || {};
@@ -10,7 +11,22 @@ class BookingManager {
             'conversation': config.CALCOM_EVENT_TYPE_CONVERSATION || '',
             'curriculum': config.CALCOM_EVENT_TYPE_CURRICULUM || ''
         };
+        
+        // Durées disponibles pour chaque type de cours (en minutes)
+        this.durationOptions = {
+            'essai': [15], // Uniquement 15 min pour essai
+            'conversation': [30, 45, 60], // 30min, 45min et 1h pour conversation
+            'curriculum': [30, 45, 60] // 30min, 45min et 1h pour curriculum
+        };
+        
         this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+        // Rate limits: API Key = 120 req/min
+        this.rateLimitInfo = {
+            limit: 120,
+            remaining: 120,
+            reset: null
+        };
     }
 
     // Vérifier la configuration Cal.com
@@ -29,18 +45,18 @@ class BookingManager {
 
     // Créer les headers pour l'authentification
     getAuthHeaders(endpoint = 'slots') {
-        // Différentes versions d'API selon l'endpoint
+        // Différentes versions d'API selon l'endpoint (documentation officielle)
         let apiVersion;
         switch(endpoint) {
             case 'bookings':
-                apiVersion = '2024-08-13';
+                apiVersion = '2024-08-13'; // Pour créer/gérer les réservations
                 break;
             case 'event-types':
-                apiVersion = '2024-06-14';
+                apiVersion = '2024-06-14'; // Pour récupérer les event types
                 break;
             case 'slots':
             default:
-                apiVersion = '2024-09-04';
+                apiVersion = '2024-09-04'; // Pour récupérer les créneaux disponibles
                 break;
         }
         
@@ -50,6 +66,24 @@ class BookingManager {
             'Accept': 'application/json',
             'cal-api-version': apiVersion
         };
+    }
+
+    // Mettre à jour les informations de rate limit depuis les headers de réponse
+    updateRateLimitInfo(response) {
+        if (response.headers) {
+            const limit = response.headers.get('X-RateLimit-Limit');
+            const remaining = response.headers.get('X-RateLimit-Remaining');
+            const reset = response.headers.get('X-RateLimit-Reset');
+            
+            if (limit) this.rateLimitInfo.limit = parseInt(limit);
+            if (remaining) this.rateLimitInfo.remaining = parseInt(remaining);
+            if (reset) this.rateLimitInfo.reset = new Date(parseInt(reset) * 1000);
+            
+            // Avertissement si proche de la limite
+            if (this.rateLimitInfo.remaining < 10) {
+                console.warn(`⚠️ Rate limit proche: ${this.rateLimitInfo.remaining}/${this.rateLimitInfo.limit} requêtes restantes`);
+            }
+        }
     }
 
     // Récupérer les créneaux disponibles (API v2)
@@ -66,7 +100,7 @@ class BookingManager {
 
             console.log(`🔍 Recherche créneaux pour eventTypeId: ${eventTypeId}, date: ${targetDate}, timeZone: ${this.timeZone}`);
 
-            // API v2 - Paramètres requis
+            // API v2 - Paramètres requis (format YYYY-MM-DD)
             const queryParams = new URLSearchParams({
                 eventTypeId: eventTypeId,
                 start: targetDate,
@@ -84,6 +118,9 @@ class BookingManager {
                 }
             );
             
+            // Mettre à jour les infos de rate limit
+            this.updateRateLimitInfo(response);
+            
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Réponse API Cal.com v2:', { 
@@ -91,6 +128,11 @@ class BookingManager {
                     statusText: response.statusText,
                     text: errorText 
                 });
+                
+                // Gestion spécifique des erreurs
+                if (response.status === 429) {
+                    throw new Error('Rate limit atteint. Veuillez patienter avant de réessayer.');
+                }
                 
                 try {
                     const errorData = JSON.parse(errorText);
@@ -131,7 +173,7 @@ class BookingManager {
             }
             
             // data.data est un objet avec des dates comme clés
-            // Exemple: { "2026-01-03": [{ start: "...", ... }], "2026-01-04": [...] }
+            // Exemple: { "2026-01-03": [{ start: "..." }], "2026-01-04": [...] }
             const slotsData = data.data;
             
             // Vérifier s'il y a des créneaux
@@ -164,12 +206,13 @@ class BookingManager {
                         return {
                             id: slotTime,
                             start: slotTime,
-                            end: this.calculateEndTime(slotTime, eventType),
+                            end: this.calculateEndTime(slotTime, eventType, duration),
                             time: startDate.toLocaleTimeString('fr-FR', { 
                                 hour: '2-digit', 
                                 minute: '2-digit' 
                             }),
-                            duration: this.getDuration(eventType),
+                            duration: duration ? `${duration} min` : this.getDuration(eventType),
+                            durationInMinutes: duration || this.getDefaultDuration(eventType),
                             eventTypeId: eventTypeId
                         };
                     } catch (error) {
@@ -195,8 +238,8 @@ class BookingManager {
         }
     }
 
-    // Calculer l'heure de fin en fonction du type de cours
-    calculateEndTime(startTime, eventType) {
+    // Calculer l'heure de fin en fonction du type de cours et de la durée
+    calculateEndTime(startTime, eventType, customDuration = null) {
         try {
             const start = new Date(startTime);
             
@@ -206,19 +249,8 @@ class BookingManager {
                 return null;
             }
             
-            let duration = 60; // minutes par défaut
-            
-            switch(eventType) {
-                case 'essai':
-                    duration = 15;
-                    break;
-                case 'conversation':
-                    duration = 60;
-                    break;
-                case 'curriculum':
-                    duration = 60;
-                    break;
-            }
+            // Utiliser la durée personnalisée ou la durée par défaut
+            const duration = customDuration || this.getDefaultDuration(eventType);
             
             const end = new Date(start.getTime() + duration * 60000);
             return end.toISOString();
@@ -228,20 +260,32 @@ class BookingManager {
         }
     }
 
-    // Obtenir la durée en texte
-    getDuration(eventType) {
+    // Obtenir la durée par défaut en minutes
+    getDefaultDuration(eventType) {
         switch(eventType) {
-            case 'essai': return '15 min';
-            case 'conversation': return '60 min';
-            case 'curriculum': return '60 min';
-            default: return '60 min';
+            case 'essai': return 15;
+            case 'conversation': return 60; // Durée par défaut
+            case 'curriculum': return 60; // Durée par défaut
+            default: return 60;
         }
     }
 
+    // Obtenir les options de durée disponibles pour un type de cours
+    getDurationOptions(eventType) {
+        return this.durationOptions[eventType] || [60];
+    }
+
+    // Obtenir la durée en texte
+    getDuration(eventType) {
+        const defaultDuration = this.getDefaultDuration(eventType);
+        return `${defaultDuration} min`;
+    }
+
     // Générer des créneaux simulés pour le développement
-    generateMockSlots(date, eventType) {
+    generateMockSlots(date, eventType, duration = null) {
         const baseDate = date || this.getToday();
         const slots = [];
+        const selectedDuration = duration || this.getDefaultDuration(eventType);
         
         // Générer des créneaux toutes les heures de 9h à 18h
         for (let hour = 9; hour <= 18; hour++) {
@@ -249,15 +293,16 @@ class BookingManager {
             slots.push({
                 id: `mock_${hour}`,
                 start: slotTime,
-                end: this.calculateEndTime(slotTime, eventType),
+                end: this.calculateEndTime(slotTime, eventType, selectedDuration),
                 time: `${hour}:00`,
-                duration: this.getDuration(eventType),
+                duration: `${selectedDuration} min`,
+                durationInMinutes: selectedDuration,
                 eventTypeId: this.eventTypeMap[eventType],
                 isMock: true
             });
         }
         
-        console.log(`⚠️ Mode simulation: ${slots.length} créneaux générés`);
+        console.log(`⚠️ Mode simulation: ${slots.length} créneaux générés (${selectedDuration} min)`);
         return slots;
     }
 
@@ -277,6 +322,8 @@ class BookingManager {
                     headers: this.getAuthHeaders('event-types')
                 }
             );
+            
+            this.updateRateLimitInfo(response);
             
             if (response.ok) {
                 const result = await response.json();
@@ -326,14 +373,15 @@ class BookingManager {
             }
 
             // Préparer les données pour l'API v2
+            // Documentation: https://cal.com/docs/api-reference/v2/bookings/create-a-booking
             const bookingPayload = {
-                start: bookingData.startTime,
+                start: bookingData.startTime, // Doit être en UTC (ISO 8601)
                 eventTypeId: parseInt(eventTypeId),
                 attendee: {
                     name: bookingData.name,
                     email: bookingData.email,
-                    timeZone: this.timeZone,
-                    language: 'fr'
+                    timeZone: bookingData.timeZone || this.timeZone,
+                    language: bookingData.language || 'fr'
                 },
                 metadata: {
                     userId: user?.id || null,
@@ -342,6 +390,11 @@ class BookingManager {
                     notes: bookingData.notes || ''
                 }
             };
+            
+            // Ajouter le numéro de téléphone si présent
+            if (bookingData.phoneNumber) {
+                bookingPayload.attendee.phoneNumber = bookingData.phoneNumber;
+            }
 
             console.log('📤 Envoi de la réservation à Cal.com:', bookingPayload);
 
@@ -354,6 +407,8 @@ class BookingManager {
                 }
             );
 
+            this.updateRateLimitInfo(response);
+
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Erreur création réservation:', { 
@@ -361,8 +416,18 @@ class BookingManager {
                     text: errorText 
                 });
                 
+                if (response.status === 429) {
+                    throw new Error('Rate limit atteint. Veuillez patienter avant de réessayer.');
+                }
+                
                 try {
                     const errorData = JSON.parse(errorText);
+                    
+                    // Erreur spécifique: champ 'title' manquant (bug connu Cal.com)
+                    if (errorData.message && errorData.message.includes('title')) {
+                        console.warn('Erreur "title" détectée - bug connu Cal.com');
+                    }
+                    
                     throw new Error(errorData.message || 'Erreur lors de la création de la réservation');
                 } catch (e) {
                     throw new Error(`API Cal.com: ${response.status} - ${errorText}`);
@@ -440,8 +505,8 @@ class BookingManager {
                 event_type: calcomBooking.eventType || 'essai',
                 start_time: calcomBooking.start || calcomBooking.startTime,
                 end_time: calcomBooking.end || calcomBooking.endTime,
-                status: calcomBooking.status || 'confirmed',
-                meet_link: calcomBooking.meetingUrl,
+                status: calcomBooking.status || 'accepted',
+                meet_link: calcomBooking.location || calcomBooking.meetingUrl,
                 booking_data: calcomBooking,
                 created_at: new Date().toISOString()
             };
@@ -503,6 +568,12 @@ class BookingManager {
             return dateString;
         }
     }
+
+    // Convertir une date locale en UTC (pour les bookings)
+    convertToUTC(localDateTime) {
+        const date = new Date(localDateTime);
+        return date.toISOString(); // Retourne automatiquement en UTC
+    }
 }
 
 // Initialiser le gestionnaire de réservations
@@ -519,6 +590,7 @@ window.debugCalcomConfig = async function() {
     console.log('Event Type IDs:', manager.eventTypeMap);
     console.log('Fuseau horaire:', manager.timeZone);
     console.log('URL API:', manager.apiBaseUrl);
+    console.log('Rate Limit Info:', manager.rateLimitInfo);
     
     // Tester la connexion API avec l'endpoint /event-types
     if (config.CALCOM_API_KEY) {
@@ -533,6 +605,8 @@ window.debugCalcomConfig = async function() {
                     headers: manager.getAuthHeaders('event-types')
                 }
             );
+            
+            manager.updateRateLimitInfo(response);
             
             if (response.ok) {
                 const result = await response.json();
@@ -577,6 +651,7 @@ window.debugCalcomConfig = async function() {
         console.error('❌ Erreur récupération créneaux:', error.message);
     }
     
+    console.log('\n📊 Rate Limit Status:', manager.rateLimitInfo);
     console.groupEnd();
 };
 
@@ -628,10 +703,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Fonction utilitaire pour tester rapidement depuis la console
-window.testCalcomSlots = async function(date = null, eventType = 'essai') {
-    console.log(`🧪 Test Cal.com slots pour ${eventType} le ${date || 'aujourd\'hui'}`);
+window.testCalcomSlots = async function(date = null, eventType = 'essai', duration = null) {
+    const durationText = duration ? ` (${duration} min)` : '';
+    console.log(`🧪 Test Cal.com slots pour ${eventType}${durationText} le ${date || 'aujourd\'hui'}`);
     try {
-        const slots = await window.bookingManager.getAvailableSlots(eventType, date);
+        const slots = await window.bookingManager.getAvailableSlots(eventType, date, duration);
         console.log(`✅ ${slots.length} créneau(x) trouvé(s):`);
         if (slots.length > 0) {
             slots.slice(0, 5).forEach(slot => {
@@ -666,43 +742,7 @@ window.testMultipleDates = async function(eventType = 'essai', daysAhead = 7) {
             results.push({ date: dateStr, count: 0, error: error.message });
         }
         
-        // Petit délai pour ne pas surcharger l'API
-        await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    
-    console.log('\n📊 Résumé:');
-    const totalSlots = results.reduce((sum, r) => sum + r.count, 0);
-    console.log(`Total de ${totalSlots} créneaux trouvés sur ${daysAhead} jours`);
-    results.forEach(r => {
-        if (r.count > 0) {
-            console.log(`  • ${r.date}: ${r.count} créneaux`);
-        }
-    });
-    
-    return results;
-};
-
-// Fonction pour tester plusieurs dates
-window.testMultipleDates = async function(eventType = 'essai', daysAhead = 7) {
-    console.log(`🧪 Test sur ${daysAhead} jours à venir...`);
-    const results = [];
-    
-    for (let i = 0; i < daysAhead; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() + i);
-        const dateStr = date.toISOString().split('T')[0];
-        
-        console.log(`\n📅 Test pour ${dateStr}:`);
-        try {
-            const slots = await window.bookingManager.getAvailableSlots(eventType, dateStr);
-            console.log(`   ${slots.length} créneaux trouvés`);
-            results.push({ date: dateStr, count: slots.length, slots });
-        } catch (error) {
-            console.error(`   Erreur: ${error.message}`);
-            results.push({ date: dateStr, count: 0, error: error.message });
-        }
-        
-        // Petit délai pour ne pas surcharger l'API
+        // Petit délai pour ne pas surcharger l'API (rate limit = 120/min)
         await new Promise(resolve => setTimeout(resolve, 500));
     }
     
@@ -720,39 +760,4 @@ window.testMultipleDates = async function(eventType = 'essai', daysAhead = 7) {
 
 // Fonction pour vérifier la santé de l'API
 window.checkCalcomHealth = async function() {
-    console.log('🏥 Vérification santé API Cal.com...');
-    const manager = window.bookingManager;
-    
-    if (!manager.calcomApiKey) {
-        console.error('❌ Pas de clé API configurée');
-        return false;
-    }
-    
-    try {
-        const queryParams = new URLSearchParams({
-            username: manager.calcomUsername
-        });
-        
-        const response = await fetch(
-            `${manager.apiBaseUrl}/event-types?${queryParams}`, 
-            {
-                headers: manager.getAuthHeaders('event-types')
-            }
-        );
-        
-        const data = response.ok ? await response.json() : null;
-        
-        console.log(`Status: ${response.status} ${response.statusText}`);
-        console.log('Health:', response.ok ? '✅ API fonctionnelle' : '❌ API non fonctionnelle');
-        
-        if (data && (data.eventTypes || data.data?.eventTypes)) {
-            const eventTypes = data.eventTypes || data.data.eventTypes;
-            console.log(`Event types disponibles: ${eventTypes.length}`);
-        }
-        
-        return response.ok;
-    } catch (error) {
-        console.error('❌ Erreur santé API:', error.message);
-        return false;
-    }
-};
+    console.log('🏥
