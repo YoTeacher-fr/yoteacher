@@ -172,6 +172,25 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Styles pour Stripe Elements */
+        .stripe-card-element {
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 15px;
+            min-height: 50px;
+        }
+
+        #card-errors {
+            color: #fa755a;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #ffeaea;
+            border-radius: 5px;
+            display: none;
+        }
+
         .payment-details-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -254,6 +273,11 @@
         .btn-confirm-payment:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-confirm-payment:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         /* Style pour le message important */
@@ -384,24 +408,6 @@
             color: #333;
         }
 
-        /* Style pour le formulaire de carte */
-        .card-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        /* Square Card Container */
-        #card-container {
-            min-height: 200px;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            margin-bottom: 15px;
-        }
-
         /* Style pour les QR codes */
         .qr-code-img {
             width: 180px;
@@ -466,6 +472,10 @@
             .payment-method-btn {
                 padding: 18px 15px;
                 font-size: 1rem;
+            }
+            
+            .stripe-card-element {
+                padding: 15px;
             }
             
             /* Header mobile ajusté */
@@ -796,12 +806,12 @@
                             </div>
                         </div>
 
-                        <!-- Carte bancaire -->
+                        <!-- Carte bancaire (Stripe) -->
                         <button class="payment-method-btn" data-method="card">
-                            <div class="payment-method-icon" style="color: #3D5B96;">
+                            <div class="payment-method-icon" style="color: #635BFF;">
                                 <i class="fas fa-credit-card"></i>
                             </div>
-                            <div class="payment-method-name">Visa/Mastercard/Amex</div>
+                            <div class="payment-method-name">Visa/Mastercard/Amex (Stripe)</div>
                             <div class="payment-method-arrow">
                                 <i class="fas fa-chevron-down"></i>
                             </div>
@@ -809,12 +819,13 @@
                         
                         <div class="payment-method-details" id="cardDetails">
                             <div class="card-form">
-                                <div id="card-container"></div>
+                                <div class="stripe-card-element" id="card-element"></div>
+                                <div id="card-errors" role="alert"></div>
                                 
                                 <div class="payment-notice">
                                     <p>
                                         <i class="fas fa-lock"></i>
-                                        <strong>Sécurisé :</strong> Votre paiement est chiffré et sécurisé. Aucune information bancaire n'est stockée sur nos serveurs.
+                                        <strong>Sécurisé :</strong> Votre paiement est chiffré et sécurisé par Stripe. Aucune information bancaire n'est stockée sur nos serveurs.
                                     </p>
                                 </div>
                                 
@@ -856,6 +867,9 @@
         </div>
     </section>
 
+    <!-- Script Stripe -->
+    <script src="https://js.stripe.com/v3/"></script>
+    
     <!-- Scripts -->
     <script src="config.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -1082,9 +1096,9 @@
                     detailsElement.style.display = 'block';
                     buttonElement.classList.add('active');
                     
-                    // Si c'est la carte, initialiser Square
-                    if (method === 'card' && window.paymentManager && typeof window.paymentManager.setupSquareForm === 'function') {
-                        window.paymentManager.setupSquareForm();
+                    // Si c'est la carte, initialiser Stripe
+                    if (method === 'card' && window.paymentManager && typeof window.paymentManager.setupStripeForm === 'function') {
+                        window.paymentManager.setupStripeForm();
                     }
                     
                     // Scroller vers le menu si sur mobile

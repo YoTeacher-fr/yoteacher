@@ -1,106 +1,109 @@
-// Gestionnaire de paiement pour YoTeacher - VERSION COMPLÈTE
+// Gestionnaire de paiement pour YoTeacher - VERSION STRIPE
 class PaymentManager {
     constructor() {
         this.config = window.YOTEACHER_CONFIG || {};
         this.currentBooking = null;
-        this.squarePayments = null;
-        this.card = null;
+        this.stripe = null;
+        this.elements = null;
+        this.cardElement = null;
+        this.paymentIntentClientSecret = null;
         
-        console.log('💳 PaymentManager initialisé');
+        console.log('💳 PaymentManager (Stripe) initialisé');
     }
     
-    async initSquare() {
-        // Vérifier la configuration Square
-        if (!this.config.SQUARE_APPLICATION_ID) {
-            console.warn('⚠️ Square non configuré - paiements par carte désactivés');
+    async initStripe() {
+        // Vérifier la configuration Stripe
+        if (!this.config.STRIPE_PUBLISHABLE_KEY) {
+            console.warn('⚠️ Stripe non configuré - paiements par carte désactivés');
             return false;
         }
 
         try {
-            // Charger le SDK Square Web Payments
-            if (!window.Square) {
-                console.log('📦 Chargement du SDK Square...');
-                await this.loadSquareScript();
+            // Vérifier si Stripe.js est déjà chargé
+            if (!window.Stripe) {
+                console.error('❌ Stripe.js non chargé. Assurez-vous que le script est inclus dans payment.html');
+                return false;
             }
 
-            // Initialiser Square Payments
-            this.squarePayments = window.Square.payments(
-                this.config.SQUARE_APPLICATION_ID,
-                this.config.SQUARE_LOCATION_ID
-            );
-
-            console.log('✅ Square initialisé');
+            // Initialiser Stripe
+            this.stripe = Stripe(this.config.STRIPE_PUBLISHABLE_KEY);
+            this.elements = this.stripe.elements();
+            
+            console.log('✅ Stripe initialisé avec clé:', this.config.STRIPE_PUBLISHABLE_KEY.substring(0, 20) + '...');
             return true;
         } catch (error) {
-            console.error('❌ Erreur initialisation Square:', error);
+            console.error('❌ Erreur initialisation Stripe:', error);
             return false;
         }
     }
 
-    loadSquareScript() {
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = this.config.SQUARE_ENVIRONMENT === 'production'
-                ? 'https://web.squarecdn.com/v1/square.js'
-                : 'https://sandbox.web.squarecdn.com/v1/square.js';
-            
-            script.onload = () => {
-                console.log('✅ SDK Square chargé');
-                resolve();
-            };
-            script.onerror = () => {
-                console.error('❌ Échec chargement SDK Square');
-                reject(new Error('Échec chargement Square SDK'));
-            };
-            
-            document.head.appendChild(script);
-        });
-    }
-
-    async initializeCardPayment() {
-        if (!this.squarePayments) {
-            const initialized = await this.initSquare();
-            if (!initialized) {
-                throw new Error('Square non disponible');
-            }
-        }
-
-        try {
-            // Créer l'élément de carte
-            this.card = await this.squarePayments.card();
-            
-            // Attacher à l'élément DOM
-            await this.card.attach('#card-container');
-            
-            console.log('✅ Formulaire de carte Square prêt');
-            return true;
-        } catch (error) {
-            console.error('❌ Erreur création formulaire carte:', error);
-            throw error;
-        }
-    }
-
-    // NOUVELLE MÉTHODE pour setup du formulaire
-    async setupSquareForm() {
-        const cardContainer = document.getElementById('card-container');
-        if (!cardContainer) {
-            console.error('❌ Container Square non trouvé');
+    async setupStripeForm() {
+        const cardElementDiv = document.getElementById('card-element');
+        if (!cardElementDiv) {
+            console.error('❌ Container Stripe non trouvé');
             return;
         }
 
         try {
-            console.log('🔧 Configuration formulaire Square...');
-            await this.initializeCardPayment();
+            const initialized = await this.initStripe();
+            if (!initialized) {
+                throw new Error('Stripe non disponible');
+            }
+
+            // Style pour Stripe Elements
+            const style = {
+                base: {
+                    fontSize: '16px',
+                    color: '#32325d',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    '::placeholder': {
+                        color: '#aab7c4'
+                    }
+                },
+                invalid: {
+                    color: '#fa755a',
+                    iconColor: '#fa755a'
+                }
+            };
+
+            // Créer l'élément de carte
+            this.cardElement = this.elements.create('card', { 
+                style: style,
+                hidePostalCode: true
+            });
             
-            // Activer le bouton
+            // Monter l'élément
+            this.cardElement.mount('#card-element');
+
+            // Gérer les erreurs de validation
+            this.cardElement.on('change', (event) => {
+                const displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                    displayError.style.display = 'block';
+                } else {
+                    displayError.textContent = '';
+                    displayError.style.display = 'none';
+                }
+                
+                // Activer/désactiver le bouton de paiement
+                const submitBtn = document.getElementById('processCardPayment');
+                if (submitBtn) {
+                    submitBtn.disabled = !event.complete;
+                }
+            });
+
+            console.log('✅ Formulaire Stripe Elements créé');
+            
+            // Activer le bouton de paiement
             const submitBtn = document.getElementById('processCardPayment');
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-lock"></i> Payer par carte';
             }
         } catch (error) {
-            console.error('❌ Erreur setup Square:', error);
-            this.showPaymentError('Impossible de charger le formulaire de paiement');
+            console.error('❌ Erreur setup Stripe:', error);
+            this.showPaymentError('Impossible de charger le formulaire de paiement: ' + error.message);
         }
     }
     
@@ -238,73 +241,109 @@ class PaymentManager {
     }
     
     async processCardPayment() {
-        console.log('💳 Traitement carte bancaire');
+        console.log('💳 Traitement carte bancaire avec Stripe');
         
-        if (!this.card) {
-            throw new Error('Formulaire de carte non initialisé');
+        if (!this.stripe || !this.cardElement) {
+            throw new Error('Formulaire Stripe non initialisé');
         }
 
         try {
-            // Tokeniser la carte
-            const result = await this.card.tokenize();
-            
-            if (result.status === 'OK') {
-                console.log('✅ Token carte reçu:', result.token);
-                
-                // Traiter le paiement
-                await this.processSquarePayment(result.token);
-            } else {
-                throw new Error(result.errors?.[0]?.message || 'Erreur de tokenisation');
+            // Désactiver le bouton pendant le traitement
+            const submitBtn = document.getElementById('processCardPayment');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement en cours...';
             }
+            
+            this.hidePaymentError();
+            
+            // Créer un PaymentMethod
+            const { error: createError, paymentMethod } = await this.stripe.createPaymentMethod({
+                type: 'card',
+                card: this.cardElement,
+                billing_details: {
+                    name: this.currentBooking.name,
+                    email: this.currentBooking.email
+                }
+            });
+
+            if (createError) {
+                throw new Error(createError.message);
+            }
+
+            console.log('✅ PaymentMethod créé:', paymentMethod.id);
+            
+            // Traiter le paiement via votre backend
+            await this.processStripePayment(paymentMethod.id);
         } catch (error) {
             console.error('❌ Erreur paiement carte:', error);
+            
+            // Réactiver le bouton
+            const submitBtn = document.getElementById('processCardPayment');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-lock"></i> Payer par carte';
+            }
+            
             throw error;
         }
     }
     
-    async processSquarePayment(token) {
-        // Vérifier si un backend existe
-        const hasBackend = this.config.SQUARE_BACKEND_URL || false;
-        
-        if (hasBackend && this.config.ENV === 'production') {
-            // En production avec backend
-            try {
-                const backendUrl = this.config.SQUARE_BACKEND_URL || '/api/process-payment';
+    async processStripePayment(paymentMethodId) {
+        try {
+            // Construire l'URL de l'API
+            const apiUrl = this.config.STRIPE_BACKEND_URL || '/api/stripe-payment';
+            
+            // Envoyer les données au backend
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    paymentMethodId: paymentMethodId,
+                    amount: Math.round(this.currentBooking.price * 100), // en centimes
+                    currency: 'eur',
+                    booking: this.currentBooking
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Échec du paiement');
+            }
+            
+            // Si 3D Secure est requis
+            if (result.requiresAction && result.clientSecret) {
+                console.log('🔒 3D Secure requis');
                 
-                const response = await fetch(backendUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        sourceId: token,
-                        amount: Math.round(this.currentBooking.price * 100),
-                        currency: 'EUR',
-                        booking: this.currentBooking
-                    })
-                });
+                const { error: confirmError, paymentIntent } = await this.stripe.confirmCardPayment(
+                    result.clientSecret,
+                    {
+                        payment_method: paymentMethodId
+                    }
+                );
                 
-                if (!response.ok) {
-                    throw new Error('Échec du traitement du paiement');
+                if (confirmError) {
+                    throw new Error(confirmError.message);
                 }
                 
-                const result = await response.json();
-                await this.completePayment('card', result.transactionId);
-            } catch (error) {
-                console.error('❌ Erreur API paiement:', error);
-                throw error;
+                if (paymentIntent.status === 'succeeded') {
+                    console.log('✅ Paiement 3D Secure réussi');
+                    await this.completePayment('card', paymentIntent.id);
+                } else {
+                    throw new Error(`Statut du paiement: ${paymentIntent.status}`);
+                }
+            } else if (result.paymentIntentId) {
+                // Paiement simple réussi
+                await this.completePayment('card', result.paymentIntentId);
+            } else {
+                throw new Error('Réponse inattendue du serveur');
             }
-        } else {
-            // Mode simulation (pas de backend ou développement)
-            console.log('🧪 Mode simulation - Token reçu:', token);
-            console.log('💰 Montant:', this.currentBooking.price + '€');
-            console.log('✅ Paiement simulé avec succès');
-            
-            // Simuler un délai réseau
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Compléter le paiement avec un ID de transaction simulé
-            await this.completePayment('card', 'square_sim_' + Date.now());
+        } catch (error) {
+            console.error('❌ Erreur API Stripe:', error);
+            throw error;
         }
     }
     
@@ -402,4 +441,4 @@ class PaymentManager {
 window.paymentManager = new PaymentManager();
 
 // Debug
-console.log('💳 PaymentManager chargé et prêt');
+console.log('💳 PaymentManager (Stripe) chargé et prêt');
