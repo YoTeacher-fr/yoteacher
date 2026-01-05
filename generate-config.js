@@ -1,9 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔧 Génération de config.js pour Cloudflare Pages...');
+console.log('🔧 Génération de config.js...');
+console.log('Vérification des variables présentes :');
+console.log('- STRIPE_PUBLISHABLE_KEY:', process.env.STRIPE_PUBLISHABLE_KEY ? '✅ Trouvée' : '❌ VIDE');
+console.log('- SUPABASE_URL:', process.env.SUPABASE_URL ? '✅ Trouvée' : '❌ VIDE');
 
-// Configuration depuis les variables d'environnement Cloudflare
 const config = {
   // Supabase
   SUPABASE_URL: process.env.SUPABASE_URL || '',
