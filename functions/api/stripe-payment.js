@@ -1,155 +1,70 @@
-// functions/stripe-payment.js - API Stripe pour Cloudflare Pages Functions
+import Stripe from 'stripe';
+
 export async function onRequest(context) {
   const { request, env } = context;
   
-  // Gérer les requêtes OPTIONS (CORS)
+  // Configuration des headers CORS
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  // 1. Gérer les requêtes OPTIONS (Pré-vérification CORS)
   if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Max-Age': '86400',
-      },
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Méthode non autorisée' }), { 
+      status: 405, 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
   }
-  
-  // Seulement POST autorisé
-  if (request.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Méthode non autorisée' }),
-      { status: 405, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-  
+
   try {
+    // 2. Vérification de la clé secrète
+    if (!env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY est manquante dans les variables Cloudflare');
+    }
+
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY);
     const body = await request.json();
     const { paymentMethodId, amount, currency = 'eur', booking } = body;
-    
-    console.log('💳 Traitement paiement Stripe:', { 
-      amount, 
-      bookingId: booking?.id 
+
+    // 3. Création du PaymentIntent
+    // Note : On multiplie par 100 et on arrondit pour éviter les erreurs de virgule flottante
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100),
+      currency: currency,
+      payment_method: paymentMethodId,
+      confirm: true,
+      description: `Réservation YoTeacher - ${booking?.email || 'Client'}`,
+      // Obligatoire pour les cartes européennes (SCA)
+      automatic_payment_methods: {
+        enabled: true,
+        allow_redirects: 'never' 
+      }
     });
-    
-    // Vérifier la clé Stripe
-    if (!env.STRIPE_SECRET_KEY) {
-      console.error('❌ STRIPE_SECRET_KEY manquante');
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Configuration Stripe manquante' 
-        }),
-        { 
-          status: 500, 
-          headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          } 
-        }
-      );
-    }
-    
-    // Appeler l'API Stripe directement
-    const stripeResponse = await fetch('https://api.stripe.com/v1/payment_intents', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        amount: Math.round(amount).toString(),
-        currency: currency,
-        payment_method: paymentMethodId,
-        confirm: 'true',
-        description: `YoTeacher - ${booking?.courseType || 'Cours'}`,
-        metadata: JSON.stringify({
-          booking_id: booking?.id || '',
-          user_email: booking?.email || '',
-          course_type: booking?.courseType || ''
-        })
-      }).toString()
-    });
-    
-    const result = await stripeResponse.json();
-    
-    if (!stripeResponse.ok) {
-      console.error('❌ Erreur Stripe:', result);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: result.error?.message || 'Erreur de paiement' 
-        }),
-        { 
-          status: 400, 
-          headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          } 
-        }
-      );
-    }
-    
-    // Si 3D Secure est requis
-    if (result.status === 'requires_action') {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          requiresAction: true,
-          clientSecret: result.client_secret,
-          paymentIntentId: result.id
-        }),
-        { 
-          status: 200, 
-          headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          } 
-        }
-      );
-    } 
-    // Si le paiement a réussi
-    else if (result.status === 'succeeded') {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          requiresAction: false,
-          paymentIntentId: result.id,
-          message: 'Paiement réussi'
-        }),
-        { 
-          status: 200, 
-          headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          } 
-        }
-      );
-    } 
-    // Autres statuts
-    else {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `Statut inattendu: ${result.status}`
-        }),
-        { 
-          status: 400, 
-          headers: { 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-    
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        requiresAction: paymentIntent.status === 'requires_action',
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
   } catch (error) {
-    console.error('❌ Erreur serveur:', error);
+    console.error('❌ Erreur Stripe Server:', error.message);
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'Erreur interne du serveur' 
+        error: error.message 
       }),
-      { 
-        status: 500, 
-        headers: { 'Content-Type': 'application/json' } 
-      }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 }
