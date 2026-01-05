@@ -1,10 +1,22 @@
 {
   "name": "yoteacher",
   "version": "1.0.0",
+  "description": "Plateforme de réservation de cours de français",
+  "main": "index.html",
   "scripts": {
-    "build": "node generate-config.js"
+    "build": "node generate-config.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "stripe": "^14.12.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231218.0"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18.0.0"
   }
 }
