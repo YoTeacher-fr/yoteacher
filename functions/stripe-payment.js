@@ -1,80 +1,136 @@
-export async function onRequestPost(context) {
+// functions/stripe-payment.js - API Stripe pour Cloudflare Pages Functions
+export async function onRequest(context) {
   const { request, env } = context;
+  
+  // Gérer les requêtes OPTIONS (CORS)
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Max-Age': '86400',
+      },
+    });
+  }
+  
+  // Seulement POST autorisé
+  if (request.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Méthode non autorisée' }),
+      { status: 405, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
   
   try {
     const body = await request.json();
     const { paymentMethodId, amount, currency = 'eur', booking } = body;
     
-    console.log('💰 Traitement paiement Stripe:', { amount, currency, bookingId: booking?.id });
+    console.log('💳 Traitement paiement Stripe:', { 
+      amount, 
+      bookingId: booking?.id 
+    });
     
-    // Vérifier les variables d'environnement
+    // Vérifier la clé Stripe
     if (!env.STRIPE_SECRET_KEY) {
+      console.error('❌ STRIPE_SECRET_KEY manquante');
       return new Response(
         JSON.stringify({ 
           success: false, 
           error: 'Configuration Stripe manquante' 
         }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        { 
+          status: 500, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          } 
+        }
       );
     }
     
-    // Initialiser Stripe
-    const stripe = require('stripe')(env.STRIPE_SECRET_KEY);
-    
-    try {
-      // Créer un PaymentIntent
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount,
+    // Appeler l'API Stripe directement
+    const stripeResponse = await fetch('https://api.stripe.com/v1/payment_intents', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        amount: Math.round(amount).toString(),
         currency: currency,
         payment_method: paymentMethodId,
-        confirmation_method: 'manual',
-        confirm: true,
-        description: `YoTeacher - ${booking?.courseType || 'Cours'} - ${booking?.name || 'Client'}`,
-        metadata: {
+        confirm: 'true',
+        description: `YoTeacher - ${booking?.courseType || 'Cours'}`,
+        metadata: JSON.stringify({
           booking_id: booking?.id || '',
           user_email: booking?.email || '',
           course_type: booking?.courseType || ''
-        }
-      });
-      
-      // Vérifier si une action supplémentaire est requise (3D Secure)
-      if (paymentIntent.status === 'requires_action' && 
-          paymentIntent.next_action.type === 'use_stripe_sdk') {
-        return new Response(
-          JSON.stringify({
-            success: true,
-            requiresAction: true,
-            clientSecret: paymentIntent.client_secret,
-            paymentIntentId: paymentIntent.id
-          }),
-          { 
-            status: 200, 
-            headers: { 'Content-Type': 'application/json' } 
-          }
-        );
-      } else if (paymentIntent.status === 'succeeded') {
-        return new Response(
-          JSON.stringify({
-            success: true,
-            requiresAction: false,
-            paymentIntentId: paymentIntent.id,
-            message: 'Paiement réussi'
-          }),
-          { 
-            status: 200, 
-            headers: { 'Content-Type': 'application/json' } 
-          }
-        );
-      } else {
-        throw new Error(`Statut du paiement non supporté: ${paymentIntent.status}`);
-      }
-      
-    } catch (error) {
-      console.error('❌ Erreur Stripe:', error);
+        })
+      }).toString()
+    });
+    
+    const result = await stripeResponse.json();
+    
+    if (!stripeResponse.ok) {
+      console.error('❌ Erreur Stripe:', result);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: error.message 
+          error: result.error?.message || 'Erreur de paiement' 
+        }),
+        { 
+          status: 400, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          } 
+        }
+      );
+    }
+    
+    // Si 3D Secure est requis
+    if (result.status === 'requires_action') {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          requiresAction: true,
+          clientSecret: result.client_secret,
+          paymentIntentId: result.id
+        }),
+        { 
+          status: 200, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          } 
+        }
+      );
+    } 
+    // Si le paiement a réussi
+    else if (result.status === 'succeeded') {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          requiresAction: false,
+          paymentIntentId: result.id,
+          message: 'Paiement réussi'
+        }),
+        { 
+          status: 200, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          } 
+        }
+      );
+    } 
+    // Autres statuts
+    else {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Statut inattendu: ${result.status}`
         }),
         { 
           status: 400, 
@@ -88,8 +144,7 @@ export async function onRequestPost(context) {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'Erreur interne du serveur',
-        details: error.message 
+        error: 'Erreur interne du serveur' 
       }),
       { 
         status: 500, 
