@@ -15,7 +15,7 @@ const config = {
   PAYPAL_BUSINESS_EMAIL: process.env.PAYPAL_BUSINESS_EMAIL || 'yoann.bourbia@gmail.com',
   
   // Stripe (pour cartes bancaires)
-STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || '',
+STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || 'CLE_NON_TROUVEE_DANS_ENV',
 STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
 STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
 STRIPE_BACKEND_URL: '/api/stripe-payment',
