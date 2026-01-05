@@ -263,10 +263,15 @@ class PaymentManager {
     }
     
     async processSquarePayment(token) {
-        // En production, envoyer au backend
-        if (this.config.ENV === 'production' && this.config.SQUARE_ACCESS_TOKEN) {
+        // Vérifier si un backend existe
+        const hasBackend = this.config.SQUARE_BACKEND_URL || false;
+        
+        if (hasBackend && this.config.ENV === 'production') {
+            // En production avec backend
             try {
-                const response = await fetch('/api/process-payment', {
+                const backendUrl = this.config.SQUARE_BACKEND_URL || '/api/process-payment';
+                
+                const response = await fetch(backendUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -290,10 +295,16 @@ class PaymentManager {
                 throw error;
             }
         } else {
-            // Mode développement : simuler le succès
-            console.log('🧪 Mode simulation - Token:', token);
+            // Mode simulation (pas de backend ou développement)
+            console.log('🧪 Mode simulation - Token reçu:', token);
+            console.log('💰 Montant:', this.currentBooking.price + '€');
+            console.log('✅ Paiement simulé avec succès');
+            
+            // Simuler un délai réseau
             await new Promise(resolve => setTimeout(resolve, 1500));
-            await this.completePayment('card', 'sim_' + Date.now());
+            
+            // Compléter le paiement avec un ID de transaction simulé
+            await this.completePayment('card', 'square_sim_' + Date.now());
         }
     }
     
