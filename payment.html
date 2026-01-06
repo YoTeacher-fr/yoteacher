@@ -673,7 +673,7 @@
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label">Cliquez sur le QR code pour ouvrir Revolut</span>
-                                    <img src="" alt="QR Code Revolut" id="revolutQrCode" class="qr-code-img" title="Cliquez pour ouvrir Revolut">
+                                    <img src="assets/images/revolut.jpeg" alt="QR Code Revolut" id="revolutQrCode" class="qr-code-img" title="Cliquez pour ouvrir Revolut">
                                 </div>
                                 
                                 <div class="payment-info">
@@ -725,7 +725,7 @@
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label">Cliquez sur le QR code pour ouvrir Wise</span>
-                                    <img src="" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img" title="Cliquez pour ouvrir Wise">
+                                    <img src="assets/images/wise.jpeg" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img" title="Cliquez pour ouvrir Wise">
                                 </div>
                                 
                                 <div class="payment-info">
@@ -839,7 +839,7 @@
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label">Cliquez sur le QR code pour ouvrir PayPal</span>
-                                    <img src="" alt="QR Code PayPal" id="paypalQrCode" class="qr-code-img" title="Cliquez pour ouvrir PayPal">
+                                    <img src="assets/images/paypal.jpeg" alt="QR Code PayPal" id="paypalQrCode" class="qr-code-img" title="Cliquez pour ouvrir PayPal">
                                 </div>
                                 
                                 <div class="payment-info">
@@ -946,11 +946,10 @@
     <script src="supabase.js"></script>
     <script src="auth.js"></script>
     <script src="booking.js"></script>
-    <script src="currency.js"></script> <!-- Nouveau fichier -->
+    <script src="currency.js"></script>
     <script src="payment.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
-
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -991,13 +990,9 @@
             return;
         }
         
-        // Initialiser le gestionnaire de paiement
-        if (window.paymentManager) {
-            window.paymentManager.processBookingPayment(currentBooking);
-        }
-        
-        // Mettre à jour les détails de paiement
+        // Mettre à jour les détails de paiement ET le récapitulatif
         updatePaymentDetails(currentBooking);
+        updatePaymentSummary(currentBooking);
         
         // Gestion des boutons de méthode de paiement
         document.querySelectorAll('.payment-method-btn').forEach(button => {
@@ -1019,6 +1014,7 @@
                         window.currencyManager.forceCADForInterac().then(() => {
                             // Mettre à jour les prix après changement de devise
                             updatePaymentDetails(currentBooking);
+                            updatePaymentSummary(currentBooking);
                         });
                     } else {
                         // Cacher la notification si déjà en CAD
@@ -1062,8 +1058,10 @@
                 hidePaymentError();
                 
                 try {
-                    // Appeler le gestionnaire de paiement
-                    if (window.paymentManager && typeof window.paymentManager.handlePaymentMethod === 'function') {
+                    // Initialiser le gestionnaire de paiement si nécessaire
+                    if (window.paymentManager) {
+                        // Passer la réservation actuelle au gestionnaire
+                        window.paymentManager.currentBooking = currentBooking;
                         await window.paymentManager.handlePaymentMethod(method);
                     } else {
                         throw new Error('PaymentManager non disponible');
@@ -1084,6 +1082,7 @@
             updateCurrencyDisplay();
             if (currentBooking) {
                 updatePaymentDetails(currentBooking);
+                updatePaymentSummary(currentBooking);
             }
         });
         
@@ -1091,6 +1090,7 @@
             updateCurrencyDisplay();
             if (currentBooking) {
                 updatePaymentDetails(currentBooking);
+                updatePaymentSummary(currentBooking);
             }
             
             // Vérifier si Interac est sélectionné
@@ -1170,6 +1170,96 @@
             
             // Générer les QR codes dynamiques avec les montants convertis
             generateQrCodes(booking, revolutLink, wiseLink, paypalUsername, currentAmount, currentCurrency);
+        }
+        
+        function updatePaymentSummary(booking) {
+            const summaryContainer = document.getElementById('paymentSummary');
+            if (!summaryContainer) return;
+            
+            const amountEUR = booking.priceEUR || booking.price;
+            let amount = booking.price;
+            let currency = booking.currency || 'EUR';
+            
+            // Utiliser le CurrencyManager pour convertir et formater
+            if (window.currencyManager) {
+                currency = window.currencyManager.currentCurrency;
+                amount = window.currencyManager.convert(amountEUR, 'EUR', currency);
+            }
+            
+            // Formater le prix
+            const formattedPrice = window.currencyManager ? 
+                window.currencyManager.formatPrice(amountEUR) : 
+                `${amount.toFixed(2)} ${currency}`;
+            
+            // Formater la date
+            const startDate = new Date(booking.startTime);
+            const formattedDate = startDate.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const formattedTime = startDate.toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Déterminer le nom du type de cours
+            let courseName = '';
+            switch(booking.courseType) {
+                case 'essai':
+                    courseName = 'Cours d\'essai';
+                    break;
+                case 'conversation':
+                    courseName = 'Conversation';
+                    break;
+                case 'curriculum':
+                    courseName = 'Curriculum complet';
+                    break;
+                default:
+                    courseName = booking.courseType;
+            }
+            
+            // Déterminer la plateforme
+            let platform = 'Zoom';
+            if (booking.location && booking.location.includes('google')) {
+                platform = 'Google Meet';
+            } else if (booking.location && booking.location.includes('teams')) {
+                platform = 'Microsoft Teams';
+            }
+            
+            summaryContainer.innerHTML = `
+                <div class="booking-summary-card">
+                    <h3 style="margin-bottom: 20px; color: #333;">Détails de votre réservation</h3>
+                    <div class="summary-details">
+                        <div class="summary-item">
+                            <span class="label">Type de cours:</span>
+                            <span class="value">${courseName}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Date:</span>
+                            <span class="value">${formattedDate}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Heure:</span>
+                            <span class="value">${formattedTime}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Durée:</span>
+                            <span class="value">${booking.duration || '15'} min</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Plateforme:</span>
+                            <span class="value">${platform}</span>
+                        </div>
+                        <div class="summary-item total">
+                            <span class="label">Total à payer:</span>
+                            <span class="value">${formattedPrice}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         
         function generateQrCodes(booking, revolutLink, wiseLink, paypalUsername, amount, currency) {

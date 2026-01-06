@@ -115,6 +115,14 @@ class PaymentManager {
         // Obtenir le nom de la plateforme
         const platformName = this.getPlatformName(booking.location);
         
+        // Formater le prix selon la devise actuelle
+        let formattedPrice = `${booking.price}€`; // Par défaut
+        if (window.currencyManager) {
+            // Le prix dans la réservation est en EUR, on le convertit dans la devise actuelle
+            const amountEUR = booking.priceEUR || booking.price;
+            formattedPrice = window.currencyManager.formatPrice(amountEUR);
+        }
+        
         summaryElement.innerHTML = `
             <div class="booking-summary-card">
                 <h3 style="margin-bottom: 20px;"><i class="fas fa-calendar-check"></i> Récapitulatif</h3>
@@ -145,7 +153,7 @@ class PaymentManager {
                     </div>
                     <div class="summary-item total">
                         <span class="label">Total:</span>
-                        <span class="value">${booking.price}€</span>
+                        <span class="value">${formattedPrice}</span>
                     </div>
                 </div>
             </div>
@@ -250,13 +258,25 @@ class PaymentManager {
         try {
             const apiUrl = this.config.STRIPE_BACKEND_URL || '/api/stripe-payment';
             
+            // Convertir le prix en centimes pour Stripe
+            let amountInCents = Math.round(this.currentBooking.price * 100);
+            let currency = this.currentBooking.currency || 'eur';
+            
+            // Si le CurrencyManager est disponible, utiliser la conversion
+            if (window.currencyManager) {
+                const amountEUR = this.currentBooking.priceEUR || this.currentBooking.price;
+                const convertedAmount = window.currencyManager.convert(amountEUR, 'EUR', window.currencyManager.currentCurrency);
+                amountInCents = Math.round(convertedAmount * 100);
+                currency = window.currencyManager.currentCurrency.toLowerCase();
+            }
+            
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     paymentMethodId: paymentMethodId,
-                    amount: Math.round(this.currentBooking.price * 100),
-                    currency: 'eur',
+                    amount: amountInCents,
+                    currency: currency,
                     booking: this.currentBooking
                 })
             });

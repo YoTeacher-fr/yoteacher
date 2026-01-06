@@ -1344,95 +1344,95 @@
         }
 
         function updateSummary() {
-            const courseType = document.getElementById('courseType').value;
-            const user = window.authManager?.getCurrentUser();
-            let courseName = '-';
-            let price = '-';
-            let duration = '-';
-            let platform = 'Zoom'; // Par défaut
+    const courseType = document.getElementById('courseType').value;
+    const user = window.authManager?.getCurrentUser();
+    let courseName = '-';
+    let price = '-';
+    let duration = '-';
+    let platform = 'Zoom'; // Par défaut
 
-            // Déterminer la plateforme
-            const locationValue = selectedLocationInput.value;
-            if (locationValue.includes('zoom')) platform = 'Zoom';
-            else if (locationValue.includes('google')) platform = 'Google Meet';
-            else if (locationValue.includes('teams')) platform = 'Microsoft Teams';
+    // Déterminer la plateforme
+    const locationValue = selectedLocationInput.value;
+    if (locationValue.includes('zoom')) platform = 'Zoom';
+    else if (locationValue.includes('google')) platform = 'Google Meet';
+    else if (locationValue.includes('teams')) platform = 'Microsoft Teams';
 
-            // Calculer en fonction du type de cours
-            if (courseType === 'essai') {
-                courseName = 'Cours d\'essai';
-                // Prix en EUR converti dans la devise actuelle
-                if (window.currencyManager) {
-                    price = window.currencyManager.formatPrice(5);
-                } else {
-                    price = '5€';
-                }
-                duration = '15 min';
-            } else if (courseType === 'conversation') {
-                courseName = 'Conversation';
-                if (user && durationGroup.classList.contains('visible')) {
-                    const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
-                    duration = selectedDuration + ' min';
-                    
-                    // Prix en EUR selon la durée
-                    let priceEUR = 20;
-                    if (selectedDuration === 30) priceEUR = 10;
-                    else if (selectedDuration === 45) priceEUR = 15;
-                    
-                    // Convertir dans la devise actuelle
-                    if (window.currencyManager) {
-                        price = window.currencyManager.formatPrice(priceEUR);
-                    } else {
-                        price = priceEUR + '€';
-                    }
-                } else {
-                    duration = '60 min';
-                    if (window.currencyManager) {
-                        price = window.currencyManager.formatPrice(20);
-                    } else {
-                        price = '20€';
-                    }
-                }
-            } else if (courseType === 'curriculum') {
-                courseName = 'Curriculum complet';
-                if (user && durationGroup.classList.contains('visible')) {
-                    const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
-                    duration = selectedDuration + ' min';
-                    
-                    // Prix en EUR selon la durée
-                    let priceEUR = 35;
-                    if (selectedDuration === 30) priceEUR = 17.5;
-                    else if (selectedDuration === 45) priceEUR = 26.25;
-                    
-                    // Convertir dans la devise actuelle
-                    if (window.currencyManager) {
-                        price = window.currencyManager.formatPrice(priceEUR);
-                    } else {
-                        price = priceEUR + '€';
-                    }
-                } else {
-                    duration = '60 min';
-                    if (window.currencyManager) {
-                        price = window.currencyManager.formatPrice(35);
-                    } else {
-                        price = '35€';
-                    }
-                }
-            }
-
-            document.getElementById('summaryType').textContent = courseName;
-            document.getElementById('summaryDate').textContent = selectedDate ? 
-                new Date(selectedDate).toLocaleDateString('fr-FR') : '-';
-            document.getElementById('summaryTime').textContent = selectedTime || '-';
-            document.getElementById('summaryDuration').textContent = duration;
-            document.getElementById('summaryPlatform').textContent = platform;
-            document.getElementById('summaryPrice').textContent = price;
-
-            // Activer/désactiver le bouton de soumission
-            const canSubmit = selectedDate && selectedTime && courseType && 
-                (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
-            
-            submitButton.disabled = !canSubmit;
+    // Calculer en fonction du type de cours
+    if (courseType === 'essai') {
+        courseName = 'Cours d\'essai';
+        // Prix en EUR converti dans la devise actuelle
+        if (window.currencyManager) {
+            price = window.currencyManager.formatPrice(5);
+        } else {
+            price = '5€';
         }
+        duration = '15 min';
+    } else if (courseType === 'conversation') {
+        courseName = 'Conversation';
+        if (user && durationGroup.classList.contains('visible')) {
+            const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
+            duration = selectedDuration + ' min';
+            
+            // Prix en EUR selon la durée
+            let priceEUR = 20;
+            if (selectedDuration === 30) priceEUR = 10;
+            else if (selectedDuration === 45) priceEUR = 15;
+            
+            // Convertir dans la devise actuelle
+            if (window.currencyManager) {
+                price = window.currencyManager.formatPrice(priceEUR);
+            } else {
+                price = priceEUR + '€';
+            }
+        } else {
+            duration = '60 min';
+            if (window.currencyManager) {
+                price = window.currencyManager.formatPrice(20);
+            } else {
+                price = '20€';
+            }
+        }
+    } else if (courseType === 'curriculum') {
+        courseName = 'Curriculum complet';
+        if (user && durationGroup.classList.contains('visible')) {
+            const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
+            duration = selectedDuration + ' min';
+            
+            // Prix en EUR selon la durée
+            let priceEUR = 35;
+            if (selectedDuration === 30) priceEUR = 17.5;
+            else if (selectedDuration === 45) priceEUR = 26.25;
+            
+            // Convertir dans la devise actuelle
+            if (window.currencyManager) {
+                price = window.currencyManager.formatPrice(priceEUR);
+            } else {
+                price = priceEUR + '€';
+            }
+        } else {
+            duration = '60 min';
+            if (window.currencyManager) {
+                price = window.currencyManager.formatPrice(35);
+            } else {
+                price = '35€';
+            }
+        }
+    }
+
+    document.getElementById('summaryType').textContent = courseName;
+    document.getElementById('summaryDate').textContent = selectedDate ? 
+        new Date(selectedDate).toLocaleDateString('fr-FR') : '-';
+    document.getElementById('summaryTime').textContent = selectedTime || '-';
+    document.getElementById('summaryDuration').textContent = duration;
+    document.getElementById('summaryPlatform').textContent = platform;
+    document.getElementById('summaryPrice').textContent = price;
+
+    // Activer/désactiver le bouton de soumission
+    const canSubmit = selectedDate && selectedTime && courseType && 
+        (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
+    
+    submitButton.disabled = !canSubmit;
+}
 
         function showError(message) {
             errorText.textContent = message;
