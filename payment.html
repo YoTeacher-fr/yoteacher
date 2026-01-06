@@ -239,14 +239,50 @@
         .qr-code-placeholder {
             width: 180px;
             height: 180px;
-            background: #f0f0f0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             margin: 0 auto 15px;
             border-radius: 8px;
-            font-size: 2.5rem;
+            border: 2px dashed #bbb;
             color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .qr-code-placeholder:hover {
+            background: linear-gradient(135deg, #e3e8f0 0%, #a8b5d1 100%);
+            border-color: #3c84f6;
+            color: #3c84f6;
+            transform: scale(1.02);
+        }
+
+        .qr-code-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .qr-code-placeholder.loading {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .qr-code-placeholder.loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
 
         .payment-info {
@@ -585,8 +621,8 @@
                 height: 150px;
             }
             
-            .qr-code-placeholder {
-                font-size: 2rem;
+            .qr-code-placeholder i {
+                font-size: 2.5rem;
             }
         }
     </style>
@@ -673,7 +709,11 @@
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label">Cliquez sur le QR code pour ouvrir Revolut</span>
-                                    <img src="assets/images/revolut.jpeg" alt="QR Code Revolut" id="revolutQrCode" class="qr-code-img" title="Cliquez pour ouvrir Revolut">
+                                    <div class="qr-code-placeholder" id="revolutQrPlaceholder">
+                                        <i class="fas fa-qrcode"></i>
+                                        <p style="font-size: 0.8rem; margin-top: 5px;">QR Code Revolut</p>
+                                    </div>
+                                    <img src="" alt="QR Code Revolut" id="revolutQrCode" class="qr-code-img" style="display: none;" title="Cliquez pour ouvrir Revolut">
                                 </div>
                                 
                                 <div class="payment-info">
@@ -725,7 +765,11 @@
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label">Cliquez sur le QR code pour ouvrir Wise</span>
-                                    <img src="assets/images/wise.jpeg" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img" title="Cliquez pour ouvrir Wise">
+                                    <div class="qr-code-placeholder" id="wiseQrPlaceholder">
+                                        <i class="fas fa-qrcode"></i>
+                                        <p style="font-size: 0.8rem; margin-top: 5px;">QR Code Wise</p>
+                                    </div>
+                                    <img src="" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img" style="display: none;" title="Cliquez pour ouvrir Wise">
                                 </div>
                                 
                                 <div class="payment-info">
@@ -839,7 +883,11 @@
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label">Cliquez sur le QR code pour ouvrir PayPal</span>
-                                    <img src="assets/images/paypal.jpeg" alt="QR Code PayPal" id="paypalQrCode" class="qr-code-img" title="Cliquez pour ouvrir PayPal">
+                                    <div class="qr-code-placeholder" id="paypalQrPlaceholder">
+                                        <i class="fas fa-qrcode"></i>
+                                        <p style="font-size: 0.8rem; margin-top: 5px;">QR Code PayPal</p>
+                                    </div>
+                                    <img src="" alt="QR Code PayPal" id="paypalQrCode" class="qr-code-img" style="display: none;" title="Cliquez pour ouvrir PayPal">
                                 </div>
                                 
                                 <div class="payment-info">
@@ -996,31 +1044,66 @@
         
         // Gestion des boutons de méthode de paiement
         document.querySelectorAll('.payment-method-btn').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', async function() {
                 const method = this.getAttribute('data-method');
+                
+                // Mettre à jour l'interface pour la méthode sélectionnée
                 togglePaymentMethod(method);
                 
                 // Si Interac est sélectionné, forcer la devise CAD
                 if (method === 'interac' && window.currencyManager) {
                     const interacNotice = document.getElementById('interacCurrencyNotice');
+                    const currentCurrency = window.currencyManager.currentCurrency;
                     
-                    if (!window.currencyManager.isInteracCurrency()) {
+                    console.log(`💱 Sélection Interac détectée. Devise actuelle: ${currentCurrency}`);
+                    
+                    if (currentCurrency !== 'CAD') {
                         // Afficher la notification
                         if (interacNotice) {
                             interacNotice.style.display = 'block';
+                            interacNotice.innerHTML = `
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Note importante :</strong> Les paiements Interac doivent être effectués en dollars canadiens (CAD). 
+                                La devise a été automatiquement ajustée de ${currentCurrency} à CAD.
+                            `;
                         }
                         
-                        // Forcer la conversion en CAD
-                        window.currencyManager.forceCADForInterac().then(() => {
-                            // Mettre à jour les prix après changement de devise
-                            updatePaymentDetails(currentBooking);
-                            updatePaymentSummary(currentBooking);
-                        });
+                        try {
+                            console.log('💱 Forçage de la devise CAD pour Interac...');
+                            
+                            // Forcer la conversion en CAD IMMÉDIATEMENT
+                            const success = await window.currencyManager.forceCADForInterac();
+                            
+                            if (success) {
+                                console.log('✅ Devise changée en CAD avec succès');
+                                
+                                // Mettre à jour le sélecteur de devise dans le header
+                                updateCurrencySelectorDisplay();
+                                
+                                // Mettre à jour les prix après changement de devise
+                                if (currentBooking) {
+                                    updatePaymentDetails(currentBooking);
+                                    updatePaymentSummary(currentBooking);
+                                }
+                            } else {
+                                console.error('❌ Échec du changement de devise en CAD');
+                            }
+                        } catch (error) {
+                            console.error('❌ Erreur lors du forçage CAD:', error);
+                            if (interacNotice) {
+                                interacNotice.innerHTML = `
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>Erreur :</strong> Impossible de changer la devise en CAD. 
+                                    Veuillez sélectionner manuellement CAD dans le sélecteur de devise.
+                                `;
+                            }
+                        }
                     } else {
                         // Cacher la notification si déjà en CAD
                         if (interacNotice) {
                             interacNotice.style.display = 'none';
                         }
+                        console.log('✅ Déjà en CAD, pas de changement nécessaire');
                     }
                 } else {
                     // Cacher la notification pour les autres méthodes
@@ -1265,38 +1348,92 @@
         function generateQrCodes(booking, revolutLink, wiseLink, paypalUsername, amount, currency) {
             // QR Code Revolut
             const revolutFullLink = `${revolutLink}?amount=${amount}&currency=${currency}&reference=COURS-${Date.now().toString().slice(-6)}`;
-            const revolutQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(revolutFullLink)}`;
-            const revolutQrImg = document.getElementById('revolutQrCode');
-            revolutQrImg.src = revolutQrUrl;
-            revolutQrImg.dataset.link = revolutFullLink;
+            generateQrCodeImage('revolut', revolutFullLink, amount, currency);
             
             // QR Code Wise
             const wiseFullLink = `${wiseLink}?amount=${amount}&currency=${currency}`;
-            const wiseQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(wiseFullLink)}`;
-            const wiseQrImg = document.getElementById('wiseQrCode');
-            wiseQrImg.src = wiseQrUrl;
-            wiseQrImg.dataset.link = wiseFullLink;
+            generateQrCodeImage('wise', wiseFullLink, amount, currency);
             
             // QR Code PayPal
             const paypalFullLink = `https://www.paypal.com/paypalme/${paypalUsername}/${amount}${currency}`;
-            const paypalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(paypalFullLink)}`;
-            const paypalQrImg = document.getElementById('paypalQrCode');
-            paypalQrImg.src = paypalQrUrl;
-            paypalQrImg.dataset.link = paypalFullLink;
+            generateQrCodeImage('paypal', paypalFullLink, amount, currency);
+        }
+        
+        function generateQrCodeImage(type, link, amount, currency) {
+            const placeholder = document.getElementById(`${type}QrPlaceholder`);
+            const qrImg = document.getElementById(`${type}QrCode`);
             
-            // Stocker les liens pour les clics
-            document.getElementById('revolutLinkItem').dataset.link = revolutFullLink;
-            document.getElementById('wiseLinkItem').dataset.link = wiseFullLink;
-            document.getElementById('paypalLinkItem').dataset.link = paypalFullLink;
+            if (!qrImg || !placeholder) return;
+            
+            // Afficher le placeholder avec animation de chargement
+            placeholder.classList.add('loading');
+            placeholder.style.display = 'flex';
+            qrImg.style.display = 'none';
+            
+            // Créer une nouvelle image pour précharger
+            const tempImg = new Image();
+            tempImg.onload = function() {
+                // Une fois l'image chargée, l'afficher
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(link)}`;
+                qrImg.src = qrUrl;
+                qrImg.style.display = 'block';
+                placeholder.style.display = 'none';
+                placeholder.classList.remove('loading');
+                qrImg.dataset.link = link;
+                
+                // Mettre à jour l'élément cliquable correspondant
+                const linkItem = document.getElementById(`${type}LinkItem`);
+                if (linkItem) {
+                    linkItem.dataset.link = link;
+                }
+                
+                console.log(`✅ QR Code ${type} chargé: ${amount} ${currency}`);
+            };
+            
+            tempImg.onerror = function() {
+                // En cas d'erreur, afficher un QR code généré localement
+                console.warn(`⚠️ Impossible de charger le QR code ${type}, utilisation d'un fallback`);
+                
+                // Utiliser une API alternative
+                const fallbackUrl = `https://chart.googleapis.com/chart?chs=180x180&cht=qr&chl=${encodeURIComponent(link)}&choe=UTF-8`;
+                qrImg.src = fallbackUrl;
+                qrImg.style.display = 'block';
+                placeholder.style.display = 'none';
+                placeholder.classList.remove('loading');
+                qrImg.dataset.link = link;
+                
+                // Afficher un avertissement
+                placeholder.innerHTML = `
+                    <div style="text-align: center;">
+                        <i class="fas fa-exclamation-triangle" style="color: #ff9800; font-size: 2rem;"></i>
+                        <p style="font-size: 0.8rem; margin-top: 5px;">QR Code ${type}<br><small>Cliquez pour ouvrir le lien</small></p>
+                    </div>
+                `;
+                placeholder.style.display = 'flex';
+            };
+            
+            // Générer l'URL du QR code
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(link)}`;
+            tempImg.src = qrUrl;
         }
         
         function setupClickableElements() {
-            // QR codes cliquables
-            document.querySelectorAll('.qr-code-img').forEach(img => {
-                img.addEventListener('click', function() {
-                    const link = this.dataset.link;
+            // QR codes cliquables (images et placeholders)
+            document.querySelectorAll('.qr-code-img, .qr-code-placeholder').forEach(element => {
+                element.addEventListener('click', function() {
+                    const link = this.dataset?.link || 
+                                (this.id.includes('QrCode') ? document.getElementById(this.id)?.dataset?.link : null);
+                    
                     if (link) {
                         window.open(link, '_blank');
+                    } else {
+                        // Si pas de lien, essayer de récupérer depuis l'élément parent ou frère
+                        const imgElement = this.tagName === 'DIV' ? 
+                            document.getElementById(this.id.replace('Placeholder', 'QrCode')) : this;
+                        
+                        if (imgElement && imgElement.dataset.link) {
+                            window.open(imgElement.dataset.link, '_blank');
+                        }
                     }
                 });
             });
@@ -1352,6 +1489,30 @@
                     buttonElement.classList.remove('active');
                 }
             }
+        }
+        
+        function updateCurrencySelectorDisplay() {
+            if (!window.currencyManager) return;
+            
+            const currentCurrency = window.currencyManager.currentCurrency;
+            
+            // Mettre à jour TOUS les sélecteurs de devise sur la page
+            document.querySelectorAll('select[id^="currencySelector"]').forEach(selector => {
+                if (selector.value !== currentCurrency) {
+                    selector.value = currentCurrency;
+                    console.log(`💱 Sélecteur mis à jour: ${selector.value} → ${currentCurrency}`);
+                }
+            });
+            
+            // Mettre à jour également le sélecteur mobile s'il existe
+            const mobileSelector = document.getElementById('currencySelectorMobile');
+            if (mobileSelector && mobileSelector.value !== currentCurrency) {
+                mobileSelector.value = currentCurrency;
+                console.log(`💱 Sélecteur mobile mis à jour: ${mobileSelector.value} → ${currentCurrency}`);
+            }
+            
+            // Mettre à jour l'affichage textuel
+            updateCurrencyDisplay();
         }
         
         function showPaymentError(message) {
