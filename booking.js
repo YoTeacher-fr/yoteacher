@@ -349,6 +349,16 @@ class BookingManager {
         try {
             const user = window.authManager?.getCurrentUser();
             
+            // Récupérer la devise actuelle
+            const currentCurrency = window.currencyManager?.currentCurrency || 'EUR';
+            const priceEUR = bookingData.priceEUR || bookingData.price;
+            
+            // Convertir le prix si nécessaire
+            let finalPrice = bookingData.price;
+            if (window.currencyManager && currentCurrency !== 'EUR') {
+                finalPrice = window.currencyManager.convert(priceEUR, 'EUR', currentCurrency);
+            }
+            
             // Préparer les données pour le paiement, SANS créer sur Cal.com
             const completeBookingData = {
                 // Informations de réservation
@@ -356,9 +366,11 @@ class BookingManager {
                 endTime: bookingData.endTime,
                 eventType: bookingData.eventType,
                 courseType: bookingData.courseType,
-                price: bookingData.price,
+                priceEUR: priceEUR, // Prix en EUR pour référence
+                price: finalPrice, // Prix dans la devise actuelle
                 duration: bookingData.duration,
                 location: bookingData.location, // Ajouter la location
+                currency: currentCurrency, // Devise utilisée
                 
                 // Informations utilisateur
                 name: bookingData.name,
@@ -417,7 +429,8 @@ class BookingManager {
                 metadata: {
                     userId: user?.id ? String(user.id) : "", 
                     courseType: String(bookingData.courseType || ''),
-                    price: String(bookingData.price || '0'),
+                    price: String(bookingData.priceEUR || bookingData.price || '0'),
+                    currency: String(bookingData.currency || 'EUR'),
                     notes: String(bookingData.notes || ''),
                     duration: String(bookingData.duration || '')
                 }

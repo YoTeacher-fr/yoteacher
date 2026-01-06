@@ -41,6 +41,20 @@
             font-size: 0.9rem !important;
         }
         
+        /* Style pour le sélecteur de devise dans le header réduit */
+        .main-header .currency-selector {
+            margin-left: 10px;
+        }
+        
+        .main-header .currency-selector select {
+            border: 1px solid #ddd;
+            color: #333;
+            padding: 5px 10px;
+            font-size: 0.85rem;
+            border-radius: 15px;
+            background: white;
+        }
+        
         /* CORRECTION DU PADDING DU BODY */
         body {
             padding-top: 60px !important; /* Ajusté à la nouvelle hauteur du header */
@@ -446,6 +460,23 @@
         .login-required a:hover {
             text-decoration: underline;
         }
+        
+        /* Style pour la devise dans le récapitulatif */
+        .currency-info {
+            font-size: 0.9rem;
+            color: #666;
+            text-align: center;
+            margin-top: 10px;
+            padding: 8px;
+            background: #f0f7ff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .currency-info i {
+            color: #3c84f6;
+            margin-right: 5px;
+        }
 
         @media (max-width: 768px) {
             .booking-section {
@@ -503,6 +534,11 @@
                 font-size: 0.85rem !important;
                 order: 3;
                 z-index: 1001;
+            }
+            
+            /* Cacher le sélecteur de devise sur mobile */
+            .main-header .currency-selector {
+                display: none;
             }
             
             body {
@@ -584,6 +620,14 @@
                 <nav class="nav-menu desktop-menu">
                     <!-- Supprimé les liens de navigation -->
                     
+                    <!-- Sélecteur de devise -->
+                    <div class="currency-selector">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <select id="currencySelector">
+                            <!-- Rempli dynamiquement par currency.js -->
+                        </select>
+                    </div>
+                    
                     <div class="language-switcher">
                         <span class="flag">🌐</span>
                         <span>FR</span>
@@ -600,6 +644,9 @@
             <div class="booking-header">
                 <h1 class="booking-title">Réserver un cours</h1>
                 <p class="booking-subtitle">Choisissez la date, l'heure et le type de cours qui vous convient</p>
+                <div class="currency-info" id="currencyInfo">
+                    <i class="fas fa-sync-alt"></i> Prix affichés en <span id="currentCurrency">EUR</span> - Conversion automatique
+                </div>
             </div>
 
             <div class="error-message" id="errorMessage">
@@ -651,7 +698,7 @@
                             <label class="form-label" for="courseType">Type de cours</label>
                             <select id="courseType" class="form-select" required>
                                 <option value="">Sélectionnez un type de cours</option>
-                                <option value="essai">Cours d'essai (5€ - 15 min)</option>
+                                <option value="essai">Cours d'essai (<span class="price-eur" data-price="5">5€</span> - 15 min)</option>
                                 <option value="conversation">Conversation</option>
                                 <option value="curriculum">Curriculum complet</option>
                             </select>
@@ -661,11 +708,12 @@
                         <div class="form-group duration-group" id="durationGroup">
                             <label class="form-label">Durée du cours</label>
                             <div class="duration-options">
-                                <button type="button" class="duration-option" data-duration="30">30 min</button>
-                                <button type="button" class="duration-option" data-duration="45">45 min</button>
-                                <button type="button" class="duration-option" data-duration="60" data-selected="true">60 min</button>
+                                <button type="button" class="duration-option" data-duration="30" data-price-eur="10">30 min</button>
+                                <button type="button" class="duration-option" data-duration="45" data-price-eur="15">45 min</button>
+                                <button type="button" class="duration-option" data-duration="60" data-price-eur="20" data-selected="true">60 min</button>
                             </div>
                             <input type="hidden" id="duration" value="60">
+                            <input type="hidden" id="basePriceEUR" value="20">
                         </div>
 
                         <!-- Sélecteur de moyen de communication -->
@@ -733,6 +781,7 @@
                         </button>
                         
                         <div style="margin-top: 15px; text-align: center; font-size: 0.9rem; color: #666;">
+                            <i class="fas fa-sync-alt"></i> Conversion devise automatique • 
                             <i class="fas fa-lock"></i> Vous serez redirigé vers la page de paiement après confirmation
                         </div>
                     </form>
@@ -749,6 +798,7 @@
     <script src="booking.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
+    <script src="currency.js"></script> <!-- Nouveau fichier -->
  
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -770,11 +820,14 @@
         const submitButton = document.getElementById('submitBooking');
         const durationGroup = document.getElementById('durationGroup');
         const durationInput = document.getElementById('duration');
+        const basePriceInput = document.getElementById('basePriceEUR');
         const loginRequired = document.getElementById('loginRequired');
         const courseTypeName = document.getElementById('courseTypeName');
         const loginLink = document.getElementById('loginLink');
         const signupLink = document.getElementById('signupLink');
         const selectedLocationInput = document.getElementById('selectedLocation');
+        const currencyInfo = document.getElementById('currencyInfo');
+        const currentCurrencySpan = document.getElementById('currentCurrency');
 
         // Stocker le type de cours avant redirection
         let preLoginCourseType = null;
@@ -827,6 +880,13 @@
                     // Mettre à jour la valeur
                     const duration = this.getAttribute('data-duration');
                     durationInput.value = duration;
+                    
+                    // Mettre à jour le prix de base
+                    const basePrice = this.getAttribute('data-price-eur') || '20';
+                    basePriceInput.value = basePrice;
+                    
+                    // Mettre à jour le texte du bouton avec la devise actuelle
+                    updateDurationButtonPrices();
                     
                     // Recharger les créneaux si une date est sélectionnée
                     if (selectedDate) {
@@ -894,19 +954,23 @@
                     throw new Error('Aucun créneau sélectionné');
                 }
 
-                // Déterminer la durée et le prix
+                // Déterminer la durée et le prix EN EUR (prix de base)
                 let duration = selectedSlot.durationInMinutes || 15;
-                let price = 5;
+                let priceEUR = 5;
                 
                 // CORRECTION IMPORTANTE: Utiliser la durée du créneau pour calculer le prix
                 if (courseType === 'conversation') {
                     // Tarifs conversation: 30=10€, 45=15€, 60=20€
-                    price = duration === 30 ? 10 : duration === 45 ? 15 : 20;
+                    priceEUR = duration === 30 ? 10 : duration === 45 ? 15 : 20;
                 } else if (courseType === 'curriculum') {
                     // Tarifs curriculum: 30=17.5€, 45=26.25€, 60=35€
-                    price = duration === 30 ? 17.5 : duration === 45 ? 26.25 : 35;
+                    priceEUR = duration === 30 ? 17.5 : duration === 45 ? 26.25 : 35;
                 }
 
+                // Convertir le prix dans la devise actuelle pour l'affichage
+                const currentCurrency = window.currencyManager?.currentCurrency || 'EUR';
+                const convertedPrice = window.currencyManager?.convert(priceEUR, 'EUR', currentCurrency) || priceEUR;
+                
                 const bookingData = {
                     eventType: courseType,
                     startTime: selectedSlot.start,
@@ -915,10 +979,12 @@
                     email: email,
                     notes: notes,
                     courseType: courseType,
-                    price: price,
+                    priceEUR: priceEUR, // Prix en EUR (pour référence)
+                    price: convertedPrice, // Prix converti dans la devise actuelle
                     duration: duration,
                     location: location,
-                    lengthInMinutes: courseType !== 'essai' ? duration : undefined
+                    lengthInMinutes: courseType !== 'essai' ? duration : undefined,
+                    currency: currentCurrency // Ajouter la devise utilisée
                 };
 
                 // Appeler la méthode qui prépare les données SANS créer sur Cal.com
@@ -955,6 +1021,18 @@
             // Recharger l'interface avec le type de cours actuel
             const currentCourseType = document.getElementById('courseType').value;
             updateUIForCourseType(currentCourseType, true);
+        });
+        
+        // Écouter les changements de devise
+        window.addEventListener('currency:ready', function() {
+            updateCurrencyDisplay();
+            updateAllPrices();
+        });
+        
+        window.addEventListener('currency:changed', function() {
+            updateCurrencyDisplay();
+            updateAllPrices();
+            updateSummary();
         });
 
         // Fonctions
@@ -996,6 +1074,12 @@
             
             // Mettre à jour l'interface
             updateUIForCourseType(document.getElementById('courseType').value, false);
+            
+            // Mettre à jour l'affichage de la devise
+            updateCurrencyDisplay();
+            
+            // Mettre à jour tous les prix avec la devise actuelle
+            updateAllPrices();
         }
 
         function initCalendar() {
@@ -1246,6 +1330,13 @@
                     });
                     durationButton.classList.add('selected');
                     durationInput.value = slot.durationInMinutes;
+                    
+                    // Mettre à jour le prix de base
+                    const basePrice = durationButton.getAttribute('data-price-eur') || '20';
+                    basePriceInput.value = basePrice;
+                    
+                    // Mettre à jour le texte du bouton
+                    updateDurationButtonPrices();
                 }
             }
             
@@ -1269,33 +1360,62 @@
             // Calculer en fonction du type de cours
             if (courseType === 'essai') {
                 courseName = 'Cours d\'essai';
-                price = '5€';
+                // Prix en EUR converti dans la devise actuelle
+                if (window.currencyManager) {
+                    price = window.currencyManager.formatPrice(5);
+                } else {
+                    price = '5€';
+                }
                 duration = '15 min';
             } else if (courseType === 'conversation') {
                 courseName = 'Conversation';
                 if (user && durationGroup.classList.contains('visible')) {
                     const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
                     duration = selectedDuration + ' min';
-                    // Tarifs conversation
-                    if (selectedDuration === 30) price = '10€';
-                    else if (selectedDuration === 45) price = '15€';
-                    else price = '20€';
+                    
+                    // Prix en EUR selon la durée
+                    let priceEUR = 20;
+                    if (selectedDuration === 30) priceEUR = 10;
+                    else if (selectedDuration === 45) priceEUR = 15;
+                    
+                    // Convertir dans la devise actuelle
+                    if (window.currencyManager) {
+                        price = window.currencyManager.formatPrice(priceEUR);
+                    } else {
+                        price = priceEUR + '€';
+                    }
                 } else {
                     duration = '60 min';
-                    price = '20€';
+                    if (window.currencyManager) {
+                        price = window.currencyManager.formatPrice(20);
+                    } else {
+                        price = '20€';
+                    }
                 }
             } else if (courseType === 'curriculum') {
                 courseName = 'Curriculum complet';
                 if (user && durationGroup.classList.contains('visible')) {
                     const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
                     duration = selectedDuration + ' min';
-                    // Tarifs curriculum
-                    if (selectedDuration === 30) price = '17.5€';
-                    else if (selectedDuration === 45) price = '26.25€';
-                    else price = '35€';
+                    
+                    // Prix en EUR selon la durée
+                    let priceEUR = 35;
+                    if (selectedDuration === 30) priceEUR = 17.5;
+                    else if (selectedDuration === 45) priceEUR = 26.25;
+                    
+                    // Convertir dans la devise actuelle
+                    if (window.currencyManager) {
+                        price = window.currencyManager.formatPrice(priceEUR);
+                    } else {
+                        price = priceEUR + '€';
+                    }
                 } else {
                     duration = '60 min';
-                    price = '35€';
+                    if (window.currencyManager) {
+                        price = window.currencyManager.formatPrice(35);
+                    } else {
+                        price = '35€';
+                    }
                 }
             }
 
@@ -1329,6 +1449,47 @@
         function hideMessages() {
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
+        }
+        
+        function updateCurrencyDisplay() {
+            if (window.currencyManager && currentCurrencySpan) {
+                currentCurrencySpan.textContent = window.currencyManager.currentCurrency;
+            }
+        }
+        
+        function updateAllPrices() {
+            if (!window.currencyManager) return;
+            
+            // Mettre à jour les prix dans le dropdown des types de cours
+            const essaiOption = document.querySelector('#courseType option[value="essai"]');
+            if (essaiOption) {
+                const priceSpan = essaiOption.querySelector('.price-eur');
+                if (priceSpan) {
+                    const basePrice = parseFloat(priceSpan.getAttribute('data-price') || '5');
+                    const formattedPrice = window.currencyManager.formatPrice(basePrice);
+                    priceSpan.textContent = formattedPrice;
+                }
+            }
+            
+            // Mettre à jour les boutons de durée
+            updateDurationButtonPrices();
+            
+            // Mettre à jour le récapitulatif
+            updateSummary();
+        }
+        
+        function updateDurationButtonPrices() {
+            if (!window.currencyManager) return;
+            
+            document.querySelectorAll('.duration-option[data-price-eur]').forEach(button => {
+                const basePriceEUR = parseFloat(button.getAttribute('data-price-eur') || '0');
+                const duration = button.getAttribute('data-duration');
+                
+                if (basePriceEUR > 0) {
+                    const formattedPrice = window.currencyManager.formatPrice(basePriceEUR);
+                    button.textContent = `${duration} min (${formattedPrice})`;
+                }
+            });
         }
     });
 </script>

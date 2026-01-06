@@ -10,6 +10,48 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Style pour le sélecteur de devise dans le header */
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 15px;
+            position: relative;
+        }
+        
+        .currency-selector select {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 6px 12px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            outline: none;
+            min-width: 80px;
+        }
+        
+        .main-header:not(.scrolled) .currency-selector select {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .main-header.scrolled .currency-selector select {
+            border-color: #ddd;
+            color: #333;
+        }
+        
+        .currency-selector i {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .currency-selector {
+                display: none; /* Caché sur mobile pour économiser l'espace */
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -40,6 +82,14 @@
                     <a href="#testimonials" class="nav-link">Témoignages</a>
                     <a href="#contact" class="nav-link">Contact</a>
                     
+                    <!-- Sélecteur de devise -->
+                    <div class="currency-selector">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <select id="currencySelector">
+                            <!-- Rempli dynamiquement par currency.js -->
+                        </select>
+                    </div>
+                    
                     <div class="language-switcher">
                         <span class="flag">🌐</span>
                         <span>FR</span>
@@ -59,6 +109,16 @@
                 <a href="#courses" class="mobile-nav-link">Cours</a>
                 <a href="#testimonials" class="mobile-nav-link">Témoignages</a>
                 <a href="#contact" class="mobile-nav-link">Contact</a>
+                
+                <!-- Sélecteur de devise mobile -->
+                <div class="currency-selector-mobile" style="padding: 15px 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                        <i class="fas fa-money-bill-wave"></i> Devise
+                    </label>
+                    <select id="currencySelectorMobile" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                        <!-- Rempli dynamiquement -->
+                    </select>
+                </div>
                 
                 <div class="mobile-language">
                     <span class="flag">🌐</span>
@@ -192,6 +252,9 @@
                 <p class="section-subtitle">
                     Choisissez la formule qui vous convient et commencez votre voyage linguistique
                 </p>
+                <div class="currency-notice" style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                    <i class="fas fa-sync-alt"></i> Les prix sont convertis automatiquement dans votre devise locale
+                </div>
             </div>
             
             <div class="courses-container" id="coursesContainer">
@@ -247,8 +310,8 @@
                 </p>
 
                 <div class="final-cta-buttons">
-                    <a href="booking.html?type=essai" class="btn btn-accent btn-xl">
-                        Essayer maintenant - 5€
+                    <a href="booking.html?type=essai" class="btn btn-accent btn-xl" id="essaiPriceBtn">
+                        Essayer maintenant - <span class="price-essai">5€</span>
                     </a>
                     <a href="signup.html" class="btn btn-outline-white btn-xl">
                         Créer un compte gratuit
@@ -256,7 +319,9 @@
                 </div>
 
                 <p class="final-cta-note">
-                    🔒 Paiement sécurisé • Annulation gratuite 24h avant
+                    <i class="fas fa-sync-alt"></i> Conversion automatique selon votre localisation • 
+                    <i class="fas fa-lock"></i> Paiement sécurisé • 
+                    <i class="fas fa-clock"></i> Annulation gratuite 24h avant
                 </p>
             </div>
         </div>
@@ -307,6 +372,9 @@
             
             <div class="footer-bottom">
                 <p>© 2021 YoTeacher. Fait avec <span class="heart">❤️</span> à Marseille</p>
+                <div class="currency-footer" style="font-size: 0.8rem; color: #888;">
+                    <i class="fas fa-globe"></i> Prix affichés en <span id="currentCurrencyDisplay">EUR</span> - Conversion automatique
+                </div>
             </div>
         </div>
     </section>
@@ -319,6 +387,7 @@
     <script src="booking.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
+    <script src="currency.js"></script> <!-- Nouveau fichier -->
     <script src="script.js"></script>
 
 
@@ -343,12 +412,99 @@
             }
         }
         
+        // Initialiser le sélecteur de devise mobile
+        function initMobileCurrencySelector() {
+            const mobileSelector = document.getElementById('currencySelectorMobile');
+            if (!mobileSelector || !window.currencyManager) return;
+            
+            // Remplir les options
+            window.currencyManager.supportedCurrencies.forEach(currency => {
+                const option = document.createElement('option');
+                option.value = currency;
+                option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
+                
+                if (currency === window.currencyManager.currentCurrency) {
+                    option.selected = true;
+                }
+                
+                mobileSelector.appendChild(option);
+            });
+            
+            // Écouter les changements
+            mobileSelector.addEventListener('change', (e) => {
+                const newCurrency = e.target.value;
+                if (window.currencyManager.setCurrency(newCurrency)) {
+                    // Fermer le menu mobile après changement
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                }
+            });
+        }
+        
+        // Mettre à jour les prix sur la page d'accueil
+        function updateHomePagePrices() {
+            if (!window.currencyManager) return;
+            
+            const currency = window.currencyManager.currentCurrency;
+            const symbol = window.currencyManager.getSymbol();
+            
+            // Mettre à jour l'affichage de la devise dans le footer
+            const currencyDisplay = document.getElementById('currentCurrencyDisplay');
+            if (currencyDisplay) {
+                currencyDisplay.textContent = currency;
+            }
+            
+            // Mettre à jour le prix du cours d'essai dans le CTA
+            const essaiPriceBtn = document.getElementById('essaiPriceBtn');
+            if (essaiPriceBtn) {
+                const priceElement = essaiPriceBtn.querySelector('.price-essai');
+                if (priceElement) {
+                    const formattedPrice = window.currencyManager.formatPrice(5);
+                    priceElement.textContent = formattedPrice;
+                }
+            }
+            
+            // Mettre à jour les prix des cartes de cours
+            document.querySelectorAll('.course-card').forEach(card => {
+                const priceElement = card.querySelector('.price-main');
+                if (priceElement) {
+                    // Récupérer le prix de base en EUR depuis un attribut data
+                    const basePrice = parseFloat(card.dataset.basePrice || '0');
+                    if (basePrice > 0) {
+                        const formattedPrice = window.currencyManager.formatPrice(basePrice);
+                        priceElement.innerHTML = formattedPrice;
+                    }
+                }
+                
+                // Mettre à jour les prix détaillés
+                const priceDetails = card.querySelector('.price-details');
+                if (priceDetails) {
+                    // Logique spécifique pour chaque type de cours
+                    // (sera gérée par script.js)
+                }
+            });
+        }
+        
         // Appeler cette fonction après le chargement
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(updateMobileLoginLinks, 300);
             
             // Re-mettre à jour si la taille de l'écran change
             window.addEventListener('resize', updateMobileLoginLinks);
+            
+            // Initialiser le sélecteur de devise mobile
+            initMobileCurrencySelector();
+            
+            // Écouter les changements de devise
+            window.addEventListener('currency:ready', updateHomePagePrices);
+            window.addEventListener('currency:changed', updateHomePagePrices);
+            
+            // Mettre à jour les prix une fois que currencyManager est prêt
+            if (window.currencyManager && !window.currencyManager.isLoading) {
+                setTimeout(updateHomePagePrices, 500);
+            }
         });
     </script>
 </body>
