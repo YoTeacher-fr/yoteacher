@@ -62,44 +62,7 @@ const coursesData = [
         featured: false
     }
 ];
-// Dans script.js, après la définition des coursesData
 
-// Fonction pour mettre à jour les prix avec la devise
-function updateCoursePricesWithCurrency() {
-    if (!window.currencyManager) return;
-    
-    const courseCards = document.querySelectorAll('.course-card');
-    courseCards.forEach(card => {
-        const courseId = parseInt(card.getAttribute('data-course-id'));
-        const course = coursesData.find(c => c.id === courseId);
-        
-        if (!course) return;
-        
-        // Mettre à jour le prix principal
-        const priceElement = card.querySelector('.price-main');
-        if (priceElement) {
-            const formattedPrice = window.currencyManager.format(course.price);
-            priceElement.innerHTML = `${formattedPrice}<span class="price-per-hour">/h</span>`;
-        }
-        
-        // Mettre à jour les détails de prix
-        if (course.id === 1) {
-            const detailsElement = card.querySelector('.price-details');
-            if (detailsElement) {
-                const price30 = window.currencyManager.format(10);
-                const price45 = window.currencyManager.format(15);
-                detailsElement.innerHTML = `
-                    <div style="margin-top: 10px; color: #666; font-weight: 500;">
-                        30min : ${price30} │ 45min : ${price45}
-                    </div>
-                `;
-            }
-        }
-        
-        // Mettre à jour les forfaits
-        course.details.forEach(detail => {
-            if (detail.discount) {
-                const discountElement = card.querySelector(`.price-details div:nth-child(${course.details.indexOf(detail) + 2})`);
 // ===== DONNÉES DES TÉMOIGNAGES =====
 const testimonialsData = [
     {

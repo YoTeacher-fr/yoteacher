@@ -125,119 +125,26 @@
             color: #666;
         }
 
-        /* NOUVEAU: Affichage des crédits */
-        .credits-display {
-            text-align: center;
+        .next-lesson {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border: 2px solid #4caf50;
             padding: 20px;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
             border-radius: 12px;
-            color: white;
             margin-bottom: 20px;
         }
 
-        .credits-count {
-            font-size: 3rem;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 5px;
-        }
-
-        .credits-label {
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-
-        /* Prochains cours amélioré */
-        .upcoming-lessons {
-            margin-top: 20px;
-        }
-
-        .lesson-card {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border-left: 4px solid #3c84f6;
-        }
-
-        .lesson-card.next {
-            background: #e8f5e9;
-            border-left-color: #4CAF50;
-        }
-
         .lesson-time {
+            font-size: 1.3rem;
             font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
+            color: #2e7d32;
+            margin-bottom: 10px;
         }
 
         .lesson-details {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 10px;
-        }
-
-        .lesson-type {
-            background: rgba(60, 132, 246, 0.1);
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            color: #3c84f6;
-        }
-
-        /* Packages */
-        .package-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .package-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .package-name {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .package-credits {
-            background: #3c84f6;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-        }
-
-        .package-progress {
-            margin-top: 10px;
-        }
-
-        .progress-bar {
-            height: 6px;
-            background: #e0e0e0;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4CAF50, #8BC34A);
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-
-        .progress-text {
-            font-size: 0.85rem;
-            color: #666;
-            margin-top: 5px;
-            text-align: center;
+            margin-top: 15px;
         }
 
         .btn-group {
@@ -286,23 +193,6 @@
             margin: 20px 0;
         }
 
-        /* Historique */
-        .history-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 10px;
-        }
-
-        .history-date {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .history-type {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
         @media (max-width: 768px) {
             .dashboard {
                 padding: 80px 15px 40px;
@@ -319,43 +209,47 @@
             .welcome-message h1 {
                 font-size: 1.8rem;
             }
-            
-            .credits-count {
-                font-size: 2.5rem;
-            }
         }
     </style>
 </head>
 <body>
     <!-- SCRIPT DE VÉRIFICATION D'AUTHENTIFICATION -->
     <script>
+        // Masquer la page immédiatement
         document.body.style.opacity = '0';
         document.body.style.visibility = 'hidden';
         
+        // Fonction pour vérifier l'authentification
         function checkAuthentication() {
             let attempts = 0;
-            const maxAttempts = 30;
+            const maxAttempts = 30; // 3 secondes maximum
             
             function check() {
                 attempts++;
                 
+                // Vérifier si authManager est disponible
                 if (window.authManager && window.authManager.isAuthenticated !== undefined) {
                     if (window.authManager.isAuthenticated()) {
+                        // Authentifié - afficher la page
                         document.body.classList.add('loaded');
                         document.body.style.opacity = '1';
                         document.body.style.visibility = 'visible';
                         
+                        // Lancer le chargement du dashboard
                         setTimeout(() => {
                             if (window.loadDashboard) window.loadDashboard();
                         }, 100);
                     } else {
+                        // Non authentifié - rediriger
                         const currentUrl = encodeURIComponent(window.location.href);
                         window.location.replace(`login.html?redirect=${currentUrl}`);
                     }
                 } else if (attempts >= maxAttempts) {
+                    // Timeout - rediriger par précaution
                     const currentUrl = encodeURIComponent(window.location.href);
                     window.location.replace(`login.html?redirect=${currentUrl}`);
                 } else {
+                    // Réessayer
                     setTimeout(check, 100);
                 }
             }
@@ -363,6 +257,7 @@
             check();
         }
         
+        // Démarrer la vérification après un court délai
         setTimeout(checkAuthentication, 200);
     </script>
 
@@ -436,31 +331,8 @@
                             <span class="stat-label">Cours terminés</span>
                         </div>
                     </div>
-                    <div id="nextLessonsContainer">
-                        <!-- Prochains cours seront insérés ici -->
-                    </div>
-                </div>
-
-                <!-- Mes crédits -->
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <i class="fas fa-gift"></i>
-                        <h2>Mes crédits</h2>
-                    </div>
-                    <div class="credits-display">
-                        <div class="credits-count" id="availableCredits">0</div>
-                        <div class="credits-label">crédits disponibles</div>
-                    </div>
-                    <div id="activePackages">
-                        <!-- Forfaits actifs seront injectés ici -->
-                    </div>
-                    <div class="btn-group">
-                        <a href="packages.html" class="btn-outline">
-                            <i class="fas fa-shopping-cart"></i> Acheter des crédits
-                        </a>
-                        <a href="booking.html?useCredits=true" class="btn-outline" style="background: #e8f5e9; border-color: #4CAF50;">
-                            <i class="fas fa-calendar-plus"></i> Réserver avec crédits
-                        </a>
+                    <div id="nextLessonContainer">
+                        <!-- Prochain cours sera inséré ici -->
                     </div>
                 </div>
 
@@ -473,15 +345,26 @@
                     <p>Choisissez le type de cours et sélectionnez un créneau disponible.</p>
                     <div class="btn-group">
                         <a href="booking.html?type=essai" class="btn-outline">
-                            <i class="fas fa-play-circle"></i> Cours d'essai
+                            <i class="fas fa-play-circle"></i> Cours d'essai (5€)
                         </a>
                         <a href="booking.html?type=conversation" class="btn-outline">
                             <i class="fas fa-comments"></i> Conversation
                         </a>
-                        <a href="booking.html?type=curriculum" class="btn-outline">
-                            <i class="fas fa-book"></i> Curriculum
-                        </a>
                     </div>
+                </div>
+
+                <!-- Mes forfaits -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-gift"></i>
+                        <h2>Mes forfaits</h2>
+                    </div>
+                    <div id="packagesList">
+                        <p>Aucun forfait actif.</p>
+                    </div>
+                    <a href="packages.html" class="btn-outline" style="margin-top: 15px;">
+                        <i class="fas fa-shopping-cart"></i> Acheter un forfait
+                    </a>
                 </div>
 
                 <!-- Historique des cours -->
@@ -508,7 +391,6 @@
                         <p><strong>Email:</strong> <span id="userEmail"></span></p>
                         <p><strong>Statut:</strong> <span id="userStatus" class="status-badge">Standard</span></p>
                         <p><strong>Inscrit depuis:</strong> <span id="joinDate"></span></p>
-                        <p><strong>Devise préférée:</strong> <span id="userCurrency">EUR</span></p>
                     </div>
                     <div class="btn-group">
                         <a href="profile.html" class="btn-outline">
@@ -531,25 +413,51 @@
     <script src="booking.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
-    <script src="currency.js"></script>
-    <script src="packages.js"></script>
+<script src="currency.js"></script>
+<script src="packages.js"></script>
     
     <script>
+        // Fonction pour attendre que authManager soit prêt
+        function waitForAuthManager() {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 50; // 5 secondes max
+                
+                const check = () => {
+                    attempts++;
+                    if (window.authManager && window.authManager.getCurrentUser !== undefined) {
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        resolve(); // Continuer même si pas trouvé
+                    } else {
+                        setTimeout(check, 100);
+                    }
+                };
+                check();
+            });
+        }
+        
+        // Gestion du dashboard
         async function loadDashboard() {
             try {
+                // Attendre que authManager soit initialisé
                 await waitForAuthManager();
                 
                 const user = window.authManager?.getCurrentUser();
                 
                 if (!user) {
-                    return;
+                    console.log('Utilisateur non trouvé, vérification en cours...');
+                    return; // La redirection se fera via le script d'authentification
                 }
                 
+                // Charger les données utilisateur
                 await loadUserData(user);
                 
+                // Masquer le chargement, afficher le contenu
                 document.getElementById('loadingSection').style.display = 'none';
                 document.getElementById('dashboardContent').style.display = 'grid';
                 
+                // Gestion de la déconnexion
                 document.getElementById('logoutBtn').addEventListener('click', async () => {
                     if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
                         await window.authManager.signOut();
@@ -563,26 +471,8 @@
             }
         }
         
-        function waitForAuthManager() {
-            return new Promise((resolve) => {
-                let attempts = 0;
-                const maxAttempts = 50;
-                
-                const check = () => {
-                    attempts++;
-                    if (window.authManager && window.authManager.getCurrentUser !== undefined) {
-                        resolve();
-                    } else if (attempts >= maxAttempts) {
-                        resolve();
-                    } else {
-                        setTimeout(check, 100);
-                    }
-                };
-                check();
-            });
-        }
-        
         async function loadUserData(user) {
+            // Mettre à jour le message de bienvenue
             const welcomeDiv = document.getElementById('welcomeMessage');
             const userName = user.user_metadata?.full_name || user.email.split('@')[0];
             const now = new Date();
@@ -598,13 +488,14 @@
                 <p>Bienvenue sur votre dashboard YoTeacher</p>
             `;
             
+            // Mettre à jour les infos profil
             document.getElementById('userEmail').textContent = user.email;
             document.getElementById('joinDate').textContent = new Date(user.created_at).toLocaleDateString('fr-FR');
             
+            // Charger les données supplémentaires depuis Supabase
             if (window.supabase) {
                 try {
-                    // Charger le profil
-                    const { data: profile, error } = await window.supabase
+                    const { data: profile, error } = await supabase
                         .from('profiles')
                         .select('*')
                         .eq('id', user.id)
@@ -617,42 +508,13 @@
                         }
                         
                         document.getElementById('creditsCount').textContent = profile.credits || 0;
-                        document.getElementById('availableCredits').textContent = profile.credits || 0;
                     }
-                    
-                    // Charger les préférences
-                    await loadUserPreferences(user.id);
                     
                     // Charger les réservations
                     await loadBookings(user.id);
-                    
-                    // Charger les forfaits
-                    await loadPackages(user.id);
-                    
-                    // Charger l'historique
-                    await loadLessonHistory(user.id);
-                    
                 } catch (error) {
                     console.error('Erreur chargement données:', error);
                 }
-            }
-        }
-        
-        async function loadUserPreferences(userId) {
-            try {
-                const { data, error } = await window.supabase
-                    .from('user_preferences')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .single();
-                
-                if (!error && data) {
-                    if (data.preferred_currency) {
-                        document.getElementById('userCurrency').textContent = data.preferred_currency;
-                    }
-                }
-            } catch (error) {
-                console.error('Erreur préférences:', error);
             }
         }
         
@@ -660,172 +522,69 @@
             if (!window.supabase) return;
             
             try {
-                const bookings = await window.bookingManager.getUpcomingBookings(userId, 3);
-                const nextLessonsContainer = document.getElementById('nextLessonsContainer');
-                
-                if (bookings.length === 0) {
-                    nextLessonsContainer.innerHTML = '<p>Aucun cours à venir.</p>';
-                    return;
-                }
-                
-                let html = '<h3 style="margin-bottom: 15px;">Prochains cours</h3>';
-                
-                bookings.forEach((booking, index) => {
-                    const isNext = index === 0;
-                    const date = new Date(booking.start_time);
-                    const formattedDate = date.toLocaleDateString('fr-FR', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long'
-                    });
-                    const formattedTime = date.toLocaleTimeString('fr-FR', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                    
-                    html += `
-                        <div class="lesson-card ${isNext ? 'next' : ''}">
-                            <div class="lesson-time">
-                                <i class="far fa-calendar-alt"></i>
-                                ${formattedDate} à ${formattedTime}
-                            </div>
-                            <div style="color: #666; margin-bottom: 5px;">
-                                ${booking.event_type === 'essai' ? 'Cours d\'essai' : 
-                                  booking.event_type === 'conversation' ? 'Conversation' : 
-                                  'Curriculum complet'} • ${booking.duration || '60'} min
-                            </div>
-                            <div class="lesson-details">
-                                <span class="lesson-type">
-                                    ${booking.meeting_tool === 'zoom' ? 'Zoom' :
-                                      booking.meeting_tool === 'google_meet' ? 'Google Meet' :
-                                      booking.meeting_tool === 'microsoft_teams' ? 'Teams' :
-                                      'Cal.com Video'}
-                                </span>
-                                ${booking.meet_link ? `
-                                    <a href="${booking.meet_link}" target="_blank" class="btn-outline" style="padding: 6px 12px; font-size: 0.85rem;">
-                                        <i class="fas fa-video"></i> Rejoindre
-                                    </a>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                if (bookings.length > 3) {
-                    html += `
-                        <div style="text-align: center; margin-top: 15px;">
-                            <a href="bookings.html" class="btn-outline" style="padding: 8px 16px; font-size: 0.9rem;">
-                                Voir tous les cours (${bookings.length})
-                            </a>
-                        </div>
-                    `;
-                }
-                
-                nextLessonsContainer.innerHTML = html;
-                
-            } catch (error) {
-                console.error('Erreur chargement réservations:', error);
-                document.getElementById('nextLessonsContainer').innerHTML = 
-                    '<p>Erreur lors du chargement des cours.</p>';
-            }
-        }
-        
-        async function loadPackages(userId) {
-            if (!window.supabase) return;
-            
-            try {
-                const { data: packages, error } = await window.supabase
-                    .from('packages')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .eq('status', 'active')
-                    .order('purchased_at', { ascending: false });
-                
-                const activePackagesDiv = document.getElementById('activePackages');
-                
-                if (!packages || packages.length === 0 || error) {
-                    activePackagesDiv.innerHTML = '<p>Aucun forfait actif.</p>';
-                    return;
-                }
-                
-                let html = '<h3 style="margin-bottom: 15px;">Mes forfaits</h3>';
-                
-                packages.forEach(pkg => {
-                    const used = pkg.used_credits || 0;
-                    const total = pkg.credits;
-                    const percentage = total > 0 ? (used / total) * 100 : 0;
-                    const remaining = total - used;
-                    
-                    html += `
-                        <div class="package-item">
-                            <div class="package-header">
-                                <span class="package-name">Forfait ${pkg.package_type}</span>
-                                <span class="package-credits">${remaining}/${total} crédits</span>
-                            </div>
-                            <div class="package-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: ${percentage}%"></div>
-                                </div>
-                                <div class="progress-text">
-                                    ${used} sur ${total} crédits utilisés
-                                </div>
-                            </div>
-                            <div style="font-size: 0.85rem; color: #666; margin-top: 8px;">
-                                <i class="far fa-calendar"></i>
-                                Expire le ${pkg.expires_at ? new Date(pkg.expires_at).toLocaleDateString('fr-FR') : 'Jamais'}
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                activePackagesDiv.innerHTML = html;
-                
-            } catch (error) {
-                console.error('Erreur chargement forfaits:', error);
-            }
-        }
-        
-        async function loadLessonHistory(userId) {
-            if (!window.supabase) return;
-            
-            try {
-                const { data: history, error } = await window.supabase
+                const { data: bookings, error } = await supabase
                     .from('bookings')
                     .select('*')
                     .eq('user_id', userId)
-                    .eq('status', 'completed')
-                    .order('start_time', { ascending: false })
-                    .limit(3);
-                
-                const historyDiv = document.getElementById('lessonHistory');
-                
-                if (!history || history.length === 0 || error) {
-                    historyDiv.innerHTML = '<p>Aucun cours terminé.</p>';
-                    return;
-                }
-                
-                let html = '';
-                
-                history.forEach(lesson => {
-                    const date = new Date(lesson.start_time);
-                    const formattedDate = date.toLocaleDateString('fr-FR');
+                    .order('start_time', { ascending: true });
                     
-                    html += `
-                        <div class="history-item">
-                            <div class="history-date">${formattedDate}</div>
-                            <div class="history-type">
-                                ${lesson.event_type === 'essai' ? 'Cours d\'essai' : 
-                                  lesson.event_type === 'conversation' ? 'Conversation' : 
-                                  'Curriculum complet'} • ${lesson.duration || '60'} min
+                if (bookings && !error) {
+                    const completed = bookings.filter(b => b.status === 'completed');
+                    const upcoming = bookings.filter(b => b.status === 'confirmed' && new Date(b.start_time) > new Date());
+                    
+                    document.getElementById('completedCount').textContent = completed.length;
+                    
+                    // Afficher le prochain cours
+                    if (upcoming.length > 0) {
+                        const nextLesson = upcoming[0];
+                        const nextLessonDiv = document.getElementById('nextLessonContainer');
+                        
+                        nextLessonDiv.innerHTML = `
+                            <div class="next-lesson">
+                                <div class="lesson-time">
+                                    <i class="far fa-calendar-check"></i>
+                                    ${new Date(nextLesson.start_time).toLocaleDateString('fr-FR', { 
+                                        weekday: 'long', 
+                                        day: 'numeric', 
+                                        month: 'long',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </div>
+                                <p><strong>Type:</strong> ${nextLesson.event_type || 'Cours'}</p>
+                                <div class="lesson-details">
+                                    <a href="${nextLesson.meet_link || '#'}" target="_blank" class="btn-outline">
+                                        <i class="fas fa-video"></i> Rejoindre
+                                    </a>
+                                    <button class="btn-outline" onclick="cancelBooking('${nextLesson.id}')" style="color: #e74c3c; border-color: #e74c3c;">
+                                        <i class="fas fa-times"></i> Annuler
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                });
-                
-                historyDiv.innerHTML = html;
-                
+                        `;
+                    }
+                    
+                    // Afficher l'historique récent
+                    const historyDiv = document.getElementById('lessonHistory');
+                    if (completed.length > 0) {
+                        const recent = completed.slice(0, 3);
+                        historyDiv.innerHTML = recent.map(lesson => `
+                            <div style="padding: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px;">
+                                <strong>${new Date(lesson.start_time).toLocaleDateString('fr-FR')}</strong><br>
+                                ${lesson.event_type || 'Cours'}
+                            </div>
+                        `).join('');
+                    }
+                }
             } catch (error) {
-                console.error('Erreur chargement historique:', error);
+                console.error('Erreur chargement réservations:', error);
+            }
+        }
+        
+        function cancelBooking(bookingId) {
+            if (confirm('Êtes-vous sûr de vouloir annuler ce cours ?')) {
+                // Ici vous ajouterez la logique d'annulation
+                alert('Fonction d\'annulation à implémenter');
             }
         }
         
