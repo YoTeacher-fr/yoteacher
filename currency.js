@@ -10,62 +10,18 @@ class CurrencyManager {
         
         // Devises supportées par Stripe (majeures)
         this.supportedCurrencies = [
-            'USD', // Dollar américain
-            'EUR', // Euro
-            'GBP', // Livre sterling
-            'CAD', // Dollar canadien
-            'AUD', // Dollar australien
-            'CHF', // Franc suisse
-            'JPY', // Yen japonais
-            'CNY', // Yuan chinois
-            'SGD', // Dollar singapourien
-            'HKD', // Dollar de Hong Kong
-            'NZD', // Dollar néo-zélandais
-            'SEK', // Couronne suédoise
-            'NOK', // Couronne norvégienne
-            'DKK', // Couronne danoise
-            'PLN', // Zloty polonais
-            'MXN', // Peso mexicain
-            'BRL', // Real brésilien
-            'INR', // Roupie indienne
-            'RUB', // Rouble russe
-            'TRY', // Livre turque
-            'ZAR', // Rand sud-africain
-            'AED', // Dirham des Émirats
-            'SAR', // Riyal saoudien
-            'THB', // Baht thaïlandais
-            'KRW', // Won sud-coréen
-            'MYR'  // Ringgit malaisien
+            'USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'CNY', 'SGD',
+            'HKD', 'NZD', 'SEK', 'NOK', 'DKK', 'PLN', 'MXN', 'BRL', 'INR',
+            'RUB', 'TRY', 'ZAR', 'AED', 'SAR', 'THB', 'KRW', 'MYR'
         ];
         
         // Symboles des devises
         this.currencySymbols = {
-            'USD': '$',
-            'EUR': '€',
-            'GBP': '£',
-            'CAD': 'CA$',
-            'AUD': 'A$',
-            'CHF': 'CHF',
-            'JPY': '¥',
-            'CNY': '¥',
-            'SGD': 'S$',
-            'HKD': 'HK$',
-            'NZD': 'NZ$',
-            'SEK': 'kr',
-            'NOK': 'kr',
-            'DKK': 'kr',
-            'PLN': 'zł',
-            'MXN': '$',
-            'BRL': 'R$',
-            'INR': '₹',
-            'RUB': '₽',
-            'TRY': '₺',
-            'ZAR': 'R',
-            'AED': 'د.إ',
-            'SAR': '﷼',
-            'THB': '฿',
-            'KRW': '₩',
-            'MYR': 'RM'
+            'USD': '$', 'EUR': '€', 'GBP': '£', 'CAD': 'CA$', 'AUD': 'A$',
+            'CHF': 'CHF', 'JPY': '¥', 'CNY': '¥', 'SGD': 'S$', 'HKD': 'HK$',
+            'NZD': 'NZ$', 'SEK': 'kr', 'NOK': 'kr', 'DKK': 'kr', 'PLN': 'zł',
+            'MXN': '$', 'BRL': 'R$', 'INR': '₹', 'RUB': '₽', 'TRY': '₺',
+            'ZAR': 'R', 'AED': 'د.إ', 'SAR': '﷼', 'THB': '฿', 'KRW': '₩', 'MYR': 'RM'
         };
         
         console.log('💱 CurrencyManager initialisé');
@@ -73,22 +29,22 @@ class CurrencyManager {
     
     async init() {
         try {
-            // Récupérer la devise depuis localStorage ou détecter automatiquement
+            // Récupérer la devise depuis localStorage
             const storedCurrency = localStorage.getItem('preferredCurrency');
             
             if (storedCurrency && this.supportedCurrencies.includes(storedCurrency)) {
                 this.currentCurrency = storedCurrency;
                 console.log(`💱 Devise restaurée: ${this.currentCurrency}`);
             } else {
-                // Détection automatique de la devise basée sur la localisation
+                // Détection automatique de la devise
                 await this.detectUserCurrency();
             }
             
             // Charger les taux de change
             await this.loadExchangeRates();
             
-            // Initialiser le sélecteur de devise si présent
-            this.initCurrencySelector();
+            // Initialiser les sélecteurs de devise
+            this.initCurrencySelectors();
             
             // Émettre un événement pour informer que la devise est prête
             window.dispatchEvent(new CustomEvent('currency:ready', {
@@ -104,23 +60,20 @@ class CurrencyManager {
     
     async detectUserCurrency() {
         try {
-            // D'abord essayer de détecter via l'API de localisation du navigateur
+            // Essayer de détecter via l'API de localisation du navigateur
             const userLocale = navigator.language || navigator.userLanguage;
             const countryCode = userLocale.split('-')[1] || userLocale.split('_')[1];
             
             if (countryCode) {
                 // Mapper les codes pays aux devises
                 const countryToCurrency = {
-                    'US': 'USD', 'GB': 'GBP', 'CA': 'CAD', 'AU': 'AUD',
-                    'JP': 'JPY', 'CN': 'CNY', 'SG': 'SGD', 'HK': 'HKD',
-                    'NZ': 'NZD', 'SE': 'SEK', 'NO': 'NOK', 'DK': 'DKK',
-                    'PL': 'PLN', 'MX': 'MXN', 'BR': 'BRL', 'IN': 'INR',
-                    'RU': 'RUB', 'TR': 'TRY', 'ZA': 'ZAR', 'AE': 'AED',
-                    'SA': 'SAR', 'TH': 'THB', 'KR': 'KRW', 'MY': 'MYR',
-                    'CH': 'CHF', 'EU': 'EUR', 'FR': 'EUR', 'DE': 'EUR',
-                    'ES': 'EUR', 'IT': 'EUR', 'NL': 'EUR', 'BE': 'EUR',
-                    'PT': 'EUR', 'IE': 'EUR', 'AT': 'EUR', 'FI': 'EUR',
-                    'GR': 'EUR', 'LU': 'EUR'
+                    'US': 'USD', 'GB': 'GBP', 'CA': 'CAD', 'AU': 'AUD', 'JP': 'JPY',
+                    'CN': 'CNY', 'SG': 'SGD', 'HK': 'HKD', 'NZ': 'NZD', 'SE': 'SEK',
+                    'NO': 'NOK', 'DK': 'DKK', 'PL': 'PLN', 'MX': 'MXN', 'BR': 'BRL',
+                    'IN': 'INR', 'RU': 'RUB', 'TR': 'TRY', 'ZA': 'ZAR', 'AE': 'AED',
+                    'SA': 'SAR', 'TH': 'THB', 'KR': 'KRW', 'MY': 'MYR', 'CH': 'CHF',
+                    'FR': 'EUR', 'DE': 'EUR', 'ES': 'EUR', 'IT': 'EUR', 'NL': 'EUR',
+                    'BE': 'EUR', 'PT': 'EUR', 'IE': 'EUR', 'AT': 'EUR', 'FI': 'EUR'
                 };
                 
                 const detectedCurrency = countryToCurrency[countryCode.toUpperCase()];
@@ -134,7 +87,6 @@ class CurrencyManager {
             
             // Fallback: utiliser le fuseau horaire
             const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            console.log(`💱 Fuseau horaire: ${timezone}`);
             
             if (timezone.includes('America/New_York') || timezone.includes('America/Los_Angeles')) {
                 this.currentCurrency = 'USD';
@@ -217,34 +169,13 @@ class CurrencyManager {
     }
     
     getStaticRates() {
-        // Taux approximatifs (à jour approximativement)
+        // Taux approximatifs
         return {
-            'USD': 1.08,
-            'EUR': 1,
-            'GBP': 0.86,
-            'CAD': 1.46,
-            'AUD': 1.65,
-            'CHF': 0.95,
-            'JPY': 163.5,
-            'CNY': 7.8,
-            'SGD': 1.45,
-            'HKD': 8.45,
-            'NZD': 1.78,
-            'SEK': 11.35,
-            'NOK': 11.65,
-            'DKK': 7.46,
-            'PLN': 4.32,
-            'MXN': 18.5,
-            'BRL': 5.4,
-            'INR': 90.2,
-            'RUB': 99.8,
-            'TRY': 34.9,
-            'ZAR': 20.4,
-            'AED': 3.97,
-            'SAR': 4.05,
-            'THB': 38.9,
-            'KRW': 1445,
-            'MYR': 5.1
+            'USD': 1.08, 'EUR': 1, 'GBP': 0.86, 'CAD': 1.46, 'AUD': 1.65,
+            'CHF': 0.95, 'JPY': 163.5, 'CNY': 7.8, 'SGD': 1.45, 'HKD': 8.45,
+            'NZD': 1.78, 'SEK': 11.35, 'NOK': 11.65, 'DKK': 7.46, 'PLN': 4.32,
+            'MXN': 18.5, 'BRL': 5.4, 'INR': 90.2, 'RUB': 99.8, 'TRY': 34.9,
+            'ZAR': 20.4, 'AED': 3.97, 'SAR': 4.05, 'THB': 38.9, 'KRW': 1445, 'MYR': 5.1
         };
     }
     
@@ -329,11 +260,9 @@ class CurrencyManager {
         return true;
     }
     
-    initCurrencySelector() {
-        // Initialiser le sélecteur de devise dans le header si présent
-        const currencySelector = document.getElementById('currencySelector');
-        
-        if (currencySelector) {
+    initCurrencySelectors() {
+        // Initialiser tous les sélecteurs de devise sur la page
+        document.querySelectorAll('select[id^="currencySelector"]').forEach(selector => {
             // Remplir les options
             this.supportedCurrencies.forEach(currency => {
                 const option = document.createElement('option');
@@ -344,17 +273,17 @@ class CurrencyManager {
                     option.selected = true;
                 }
                 
-                currencySelector.appendChild(option);
+                selector.appendChild(option);
             });
             
             // Écouter les changements
-            currencySelector.addEventListener('change', (e) => {
+            selector.addEventListener('change', (e) => {
                 const newCurrency = e.target.value;
                 this.setCurrency(newCurrency);
             });
-            
-            console.log('✅ Sélecteur de devise initialisé');
-        }
+        });
+        
+        console.log('✅ Sélecteurs de devise initialisés');
     }
     
     getSymbol(currency = null) {
@@ -374,16 +303,6 @@ class CurrencyManager {
             return this.setCurrency('CAD');
         }
         return true;
-    }
-    
-    // Méthode pour mettre à jour tous les prix sur une page
-    updatePagePrices() {
-        // Cette méthode doit être implémentée spécifiquement pour chaque page
-        // car la structure HTML diffère
-        console.log('💱 Mise à jour des prix de la page');
-        
-        // Émettre un événement pour que chaque page gère sa propre mise à jour
-        window.dispatchEvent(new CustomEvent('currency:updatePrices'));
     }
 }
 
