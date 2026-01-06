@@ -11,13 +11,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Style pour le sélecteur de devise dans le header */
+        /* Style pour le sélecteur de devise - PLUS SIMPLE */
         .currency-selector {
             display: flex;
             align-items: center;
             gap: 8px;
             margin-left: 15px;
-            position: relative;
         }
         
         .currency-selector select {
@@ -30,10 +29,6 @@
             cursor: pointer;
             outline: none;
             min-width: 80px;
-        }
-        
-        .main-header:not(.scrolled) .currency-selector select {
-            background: rgba(255, 255, 255, 0.1);
         }
         
         .main-header.scrolled .currency-selector select {
