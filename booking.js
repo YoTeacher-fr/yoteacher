@@ -358,6 +358,7 @@ class BookingManager {
                 courseType: bookingData.courseType,
                 price: bookingData.price,
                 duration: bookingData.duration,
+                location: bookingData.location, // Ajouter la location
                 
                 // Informations utilisateur
                 name: bookingData.name,
@@ -421,6 +422,12 @@ class BookingManager {
                     duration: String(bookingData.duration || '')
                 }
             };
+
+            // Ajouter la location (moyen de communication)
+            if (bookingData.location) {
+                bookingPayload.location = bookingData.location;
+                console.log('📍 Location ajoutée:', bookingData.location);
+            }
 
             // Ajouter la durée si nécessaire
             if (bookingData.eventType !== 'essai' && bookingData.duration) {
@@ -525,7 +532,8 @@ class BookingManager {
                     attendees: [{
                         email: bookingData.email,
                         name: bookingData.name
-                    }]
+                    }],
+                    location: bookingData.location || 'integrations:zoom'
                 };
                 
                 console.log('✅ Réservation Cal.com simulée:', mockBooking);

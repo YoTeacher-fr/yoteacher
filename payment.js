@@ -112,6 +112,9 @@ class PaymentManager {
             minute: '2-digit'
         });
         
+        // Obtenir le nom de la plateforme
+        const platformName = this.getPlatformName(booking.location);
+        
         summaryElement.innerHTML = `
             <div class="booking-summary-card">
                 <h3 style="margin-bottom: 20px;"><i class="fas fa-calendar-check"></i> Récapitulatif</h3>
@@ -136,6 +139,10 @@ class PaymentManager {
                         <span class="label">Élève:</span>
                         <span class="value">${booking.name}</span>
                     </div>
+                    <div class="summary-item">
+                        <span class="label">Plateforme:</span>
+                        <span class="value">${platformName}</span>
+                    </div>
                     <div class="summary-item total">
                         <span class="label">Total:</span>
                         <span class="value">${booking.price}€</span>
@@ -143,6 +150,14 @@ class PaymentManager {
                 </div>
             </div>
         `;
+    }
+    
+    getPlatformName(location) {
+        if (!location) return 'À définir';
+        if (location.includes('zoom')) return 'Zoom';
+        if (location.includes('google')) return 'Google Meet';
+        if (location.includes('teams')) return 'Microsoft Teams';
+        return 'À définir';
     }
 
     getCourseName(courseType) {
@@ -311,6 +326,11 @@ class PaymentManager {
                     console.log('✅ Réservation Cal.com créée');
                     this.currentBooking.calcomId = bookingResult.data.id;
                     this.currentBooking.status = 'confirmed';
+                    
+                    // Sauvegarder la réservation dans Supabase
+                    if (window.authManager?.saveBookingData) {
+                        await window.authManager.saveBookingData(this.currentBooking);
+                    }
                 } else {
                     throw new Error(bookingResult?.error || 'Échec Cal.com');
                 }

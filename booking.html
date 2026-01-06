@@ -415,6 +415,18 @@
             box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
         }
         
+        /* Styles pour les boutons de moyen de communication */
+        .location-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .location-btn i {
+            font-size: 1.1rem;
+        }
+        
         .login-required {
             background: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -656,6 +668,23 @@
                             <input type="hidden" id="duration" value="60">
                         </div>
 
+                        <!-- Sélecteur de moyen de communication -->
+                        <div class="form-group" id="locationGroup">
+                            <label class="form-label">Moyen de communication</label>
+                            <div class="duration-options">
+                                <button type="button" class="duration-option location-btn selected" data-location="integrations:zoom">
+                                    <i class="fab fa-zoom"></i> Zoom
+                                </button>
+                                <button type="button" class="duration-option location-btn" data-location="integrations:google:meet">
+                                    <i class="fab fa-google"></i> Meet
+                                </button>
+                                <button type="button" class="duration-option location-btn" data-location="https://teams.live.com/l/invite/FEAJFWoKc8mbrQCGwM?v=g1">
+                                    <i class="fab fa-microsoft"></i> Teams
+                                </button>
+                            </div>
+                            <input type="hidden" id="selectedLocation" value="integrations:zoom">
+                        </div>
+
                         <div class="form-group">
                             <label class="form-label" for="name">Nom complet</label>
                             <input type="text" id="name" class="form-input" required>
@@ -688,6 +717,10 @@
                             <div class="summary-item">
                                 <span>Durée:</span>
                                 <span id="summaryDuration">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Plateforme:</span>
+                                <span id="summaryPlatform">Zoom</span>
                             </div>
                             <div class="summary-item total">
                                 <span>Total:</span>
@@ -741,6 +774,7 @@
         const courseTypeName = document.getElementById('courseTypeName');
         const loginLink = document.getElementById('loginLink');
         const signupLink = document.getElementById('signupLink');
+        const selectedLocationInput = document.getElementById('selectedLocation');
 
         // Stocker le type de cours avant redirection
         let preLoginCourseType = null;
@@ -780,9 +814,35 @@
 
         // Gestion des boutons de durée
         document.querySelectorAll('.duration-option').forEach(button => {
+            if (button.hasAttribute('data-duration')) {
+                button.addEventListener('click', function() {
+                    // Retirer la sélection précédente
+                    document.querySelectorAll('.duration-option[data-duration]').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    
+                    // Ajouter la nouvelle sélection
+                    this.classList.add('selected');
+                    
+                    // Mettre à jour la valeur
+                    const duration = this.getAttribute('data-duration');
+                    durationInput.value = duration;
+                    
+                    // Recharger les créneaux si une date est sélectionnée
+                    if (selectedDate) {
+                        loadAvailableSlots(selectedDate);
+                    }
+                    
+                    updateSummary();
+                });
+            }
+        });
+
+        // Gestion des boutons de moyen de communication
+        document.querySelectorAll('.location-btn').forEach(button => {
             button.addEventListener('click', function() {
                 // Retirer la sélection précédente
-                document.querySelectorAll('.duration-option').forEach(btn => {
+                document.querySelectorAll('.location-btn').forEach(btn => {
                     btn.classList.remove('selected');
                 });
                 
@@ -790,13 +850,8 @@
                 this.classList.add('selected');
                 
                 // Mettre à jour la valeur
-                const duration = this.getAttribute('data-duration');
-                durationInput.value = duration;
-                
-                // Recharger les créneaux si une date est sélectionnée
-                if (selectedDate) {
-                    loadAvailableSlots(selectedDate);
-                }
+                const location = this.getAttribute('data-location');
+                selectedLocationInput.value = location;
                 
                 updateSummary();
             });
@@ -815,6 +870,7 @@
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const notes = document.getElementById('notes').value;
+            const location = selectedLocationInput.value;
 
             // Validation
             if (!courseType || !name || !email) {
@@ -861,6 +917,7 @@
                     courseType: courseType,
                     price: price,
                     duration: duration,
+                    location: location,
                     lengthInMinutes: courseType !== 'essai' ? duration : undefined
                 };
 
@@ -1201,6 +1258,13 @@
             let courseName = '-';
             let price = '-';
             let duration = '-';
+            let platform = 'Zoom'; // Par défaut
+
+            // Déterminer la plateforme
+            const locationValue = selectedLocationInput.value;
+            if (locationValue.includes('zoom')) platform = 'Zoom';
+            else if (locationValue.includes('google')) platform = 'Google Meet';
+            else if (locationValue.includes('teams')) platform = 'Microsoft Teams';
 
             // Calculer en fonction du type de cours
             if (courseType === 'essai') {
@@ -1240,6 +1304,7 @@
                 new Date(selectedDate).toLocaleDateString('fr-FR') : '-';
             document.getElementById('summaryTime').textContent = selectedTime || '-';
             document.getElementById('summaryDuration').textContent = duration;
+            document.getElementById('summaryPlatform').textContent = platform;
             document.getElementById('summaryPrice').textContent = price;
 
             // Activer/désactiver le bouton de soumission
