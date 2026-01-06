@@ -248,6 +248,9 @@ class CurrencyManager {
         
         console.log(`💱 Devise changée: ${previousCurrency} → ${currencyCode}`);
         
+        // Mettre à jour les sélecteurs immédiatement
+        this.updateCurrencySelectors();
+        
         // Émettre un événement de changement
         window.dispatchEvent(new CustomEvent('currency:changed', {
             detail: {
@@ -263,6 +266,9 @@ class CurrencyManager {
     initCurrencySelectors() {
         // Initialiser tous les sélecteurs de devise sur la page
         document.querySelectorAll('select[id^="currencySelector"]').forEach(selector => {
+            // Vider le sélecteur d'abord
+            selector.innerHTML = '';
+            
             // Remplir les options
             this.supportedCurrencies.forEach(currency => {
                 const option = document.createElement('option');
@@ -283,7 +289,40 @@ class CurrencyManager {
             });
         });
         
+        // Initialiser également le sélecteur mobile s'il existe
+        const mobileSelector = document.getElementById('currencySelectorMobile');
+        if (mobileSelector) {
+            mobileSelector.innerHTML = '';
+            
+            this.supportedCurrencies.forEach(currency => {
+                const option = document.createElement('option');
+                option.value = currency;
+                option.textContent = `${this.currencySymbols[currency] || currency} ${currency}`;
+                
+                if (currency === this.currentCurrency) {
+                    option.selected = true;
+                }
+                
+                mobileSelector.appendChild(option);
+            });
+            
+            mobileSelector.addEventListener('change', (e) => {
+                const newCurrency = e.target.value;
+                this.setCurrency(newCurrency);
+            });
+        }
+        
         console.log('✅ Sélecteurs de devise initialisés');
+    }
+    
+    updateCurrencySelectors() {
+        // Mettre à jour tous les sélecteurs de devise
+        document.querySelectorAll('select[id*="currencySelector"]').forEach(selector => {
+            if (selector.value !== this.currentCurrency) {
+                selector.value = this.currentCurrency;
+                console.log(`💱 Sélecteur ${selector.id} mis à jour: ${selector.value} → ${this.currentCurrency}`);
+            }
+        });
     }
     
     getSymbol(currency = null) {
@@ -300,7 +339,15 @@ class CurrencyManager {
     async forceCADForInterac() {
         if (this.currentCurrency !== 'CAD') {
             console.log(`💱 Interac détecté, passage de ${this.currentCurrency} à CAD`);
-            return this.setCurrency('CAD');
+            
+            // Sauvegarder l'ancienne devise pour pouvoir revenir si nécessaire
+            const previousCurrency = this.currentCurrency;
+            localStorage.setItem('previousCurrency', previousCurrency);
+            
+            // Changer la devise
+            const success = this.setCurrency('CAD');
+            
+            return success;
         }
         return true;
     }
