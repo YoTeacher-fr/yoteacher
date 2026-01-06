@@ -264,27 +264,6 @@
             margin-bottom: 10px;
         }
 
-        .qr-code-placeholder.loading {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .qr-code-placeholder.loading::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
         .payment-info {
             display: flex;
             flex-direction: column;
@@ -709,11 +688,7 @@
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label">Cliquez sur le QR code pour ouvrir Revolut</span>
-                                    <div class="qr-code-placeholder" id="revolutQrPlaceholder">
-                                        <i class="fas fa-qrcode"></i>
-                                        <p style="font-size: 0.8rem; margin-top: 5px;">QR Code Revolut</p>
-                                    </div>
-                                    <img src="" alt="QR Code Revolut" id="revolutQrCode" class="qr-code-img" style="display: none;" title="Cliquez pour ouvrir Revolut">
+                                    <img src="assets/images/revolut.jpeg" alt="QR Code Revolut" id="revolutQrCode" class="qr-code-img" title="Cliquez pour ouvrir Revolut">
                                 </div>
                                 
                                 <div class="payment-info">
@@ -765,11 +740,7 @@
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label">Cliquez sur le QR code pour ouvrir Wise</span>
-                                    <div class="qr-code-placeholder" id="wiseQrPlaceholder">
-                                        <i class="fas fa-qrcode"></i>
-                                        <p style="font-size: 0.8rem; margin-top: 5px;">QR Code Wise</p>
-                                    </div>
-                                    <img src="" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img" style="display: none;" title="Cliquez pour ouvrir Wise">
+                                    <img src="assets/images/wise.jpeg" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img" title="Cliquez pour ouvrir Wise">
                                 </div>
                                 
                                 <div class="payment-info">
@@ -883,11 +854,7 @@
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label">Cliquez sur le QR code pour ouvrir PayPal</span>
-                                    <div class="qr-code-placeholder" id="paypalQrPlaceholder">
-                                        <i class="fas fa-qrcode"></i>
-                                        <p style="font-size: 0.8rem; margin-top: 5px;">QR Code PayPal</p>
-                                    </div>
-                                    <img src="" alt="QR Code PayPal" id="paypalQrCode" class="qr-code-img" style="display: none;" title="Cliquez pour ouvrir PayPal">
+                                    <img src="assets/images/paypal.jpeg" alt="QR Code PayPal" id="paypalQrCode" class="qr-code-img" title="Cliquez pour ouvrir PayPal">
                                 </div>
                                 
                                 <div class="payment-info">
@@ -1251,8 +1218,8 @@
             document.getElementById('wiseLinkDisplay').textContent = wiseDisplay;
             document.getElementById('paypalLinkDisplay').textContent = paypalDisplay;
             
-            // Générer les QR codes dynamiques avec les montants convertis
-            generateQrCodes(booking, revolutLink, wiseLink, paypalUsername, currentAmount, currentCurrency);
+            // Générer les liens de paiement avec les montants convertis
+            generatePaymentLinks(booking, revolutLink, wiseLink, paypalUsername, currentAmount, currentCurrency);
         }
         
         function updatePaymentSummary(booking) {
@@ -1345,96 +1312,64 @@
             `;
         }
         
-        function generateQrCodes(booking, revolutLink, wiseLink, paypalUsername, amount, currency) {
-            // QR Code Revolut
+        function generatePaymentLinks(booking, revolutLink, wiseLink, paypalUsername, amount, currency) {
+            // Lien Revolut
             const revolutFullLink = `${revolutLink}?amount=${amount}&currency=${currency}&reference=COURS-${Date.now().toString().slice(-6)}`;
-            generateQrCodeImage('revolut', revolutFullLink, amount, currency);
             
-            // QR Code Wise
+            // Lien Wise
             const wiseFullLink = `${wiseLink}?amount=${amount}&currency=${currency}`;
-            generateQrCodeImage('wise', wiseFullLink, amount, currency);
             
-            // QR Code PayPal
+            // Lien PayPal
             const paypalFullLink = `https://www.paypal.com/paypalme/${paypalUsername}/${amount}${currency}`;
-            generateQrCodeImage('paypal', paypalFullLink, amount, currency);
-        }
-        
-        function generateQrCodeImage(type, link, amount, currency) {
-            const placeholder = document.getElementById(`${type}QrPlaceholder`);
-            const qrImg = document.getElementById(`${type}QrCode`);
             
-            if (!qrImg || !placeholder) return;
+            // Stocker les liens pour les clics
+            document.getElementById('revolutQrCode').dataset.link = revolutFullLink;
+            document.getElementById('revolutLinkItem').dataset.link = revolutFullLink;
             
-            // Afficher le placeholder avec animation de chargement
-            placeholder.classList.add('loading');
-            placeholder.style.display = 'flex';
-            qrImg.style.display = 'none';
+            document.getElementById('wiseQrCode').dataset.link = wiseFullLink;
+            document.getElementById('wiseLinkItem').dataset.link = wiseFullLink;
             
-            // Créer une nouvelle image pour précharger
-            const tempImg = new Image();
-            tempImg.onload = function() {
-                // Une fois l'image chargée, l'afficher
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(link)}`;
-                qrImg.src = qrUrl;
-                qrImg.style.display = 'block';
-                placeholder.style.display = 'none';
-                placeholder.classList.remove('loading');
-                qrImg.dataset.link = link;
-                
-                // Mettre à jour l'élément cliquable correspondant
-                const linkItem = document.getElementById(`${type}LinkItem`);
-                if (linkItem) {
-                    linkItem.dataset.link = link;
-                }
-                
-                console.log(`✅ QR Code ${type} chargé: ${amount} ${currency}`);
-            };
-            
-            tempImg.onerror = function() {
-                // En cas d'erreur, afficher un QR code généré localement
-                console.warn(`⚠️ Impossible de charger le QR code ${type}, utilisation d'un fallback`);
-                
-                // Utiliser une API alternative
-                const fallbackUrl = `https://chart.googleapis.com/chart?chs=180x180&cht=qr&chl=${encodeURIComponent(link)}&choe=UTF-8`;
-                qrImg.src = fallbackUrl;
-                qrImg.style.display = 'block';
-                placeholder.style.display = 'none';
-                placeholder.classList.remove('loading');
-                qrImg.dataset.link = link;
-                
-                // Afficher un avertissement
-                placeholder.innerHTML = `
-                    <div style="text-align: center;">
-                        <i class="fas fa-exclamation-triangle" style="color: #ff9800; font-size: 2rem;"></i>
-                        <p style="font-size: 0.8rem; margin-top: 5px;">QR Code ${type}<br><small>Cliquez pour ouvrir le lien</small></p>
-                    </div>
-                `;
-                placeholder.style.display = 'flex';
-            };
-            
-            // Générer l'URL du QR code
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(link)}`;
-            tempImg.src = qrUrl;
+            document.getElementById('paypalQrCode').dataset.link = paypalFullLink;
+            document.getElementById('paypalLinkItem').dataset.link = paypalFullLink;
         }
         
         function setupClickableElements() {
-            // QR codes cliquables (images et placeholders)
-            document.querySelectorAll('.qr-code-img, .qr-code-placeholder').forEach(element => {
-                element.addEventListener('click', function() {
-                    const link = this.dataset?.link || 
-                                (this.id.includes('QrCode') ? document.getElementById(this.id)?.dataset?.link : null);
-                    
+            // QR codes cliquables
+            document.querySelectorAll('.qr-code-img').forEach(img => {
+                img.addEventListener('click', function() {
+                    const link = this.dataset.link;
                     if (link) {
                         window.open(link, '_blank');
                     } else {
-                        // Si pas de lien, essayer de récupérer depuis l'élément parent ou frère
-                        const imgElement = this.tagName === 'DIV' ? 
-                            document.getElementById(this.id.replace('Placeholder', 'QrCode')) : this;
-                        
-                        if (imgElement && imgElement.dataset.link) {
-                            window.open(imgElement.dataset.link, '_blank');
+                        // Si pas de lien dans dataset, utiliser le lien de base
+                        const method = this.id.replace('QrCode', '').toLowerCase();
+                        if (method === 'revolut') {
+                            window.open('https://revolut.me/yoann', '_blank');
+                        } else if (method === 'wise') {
+                            window.open('https://wise.com/pay/yoann', '_blank');
+                        } else if (method === 'paypal') {
+                            window.open('https://paypal.me/yoann', '_blank');
                         }
                     }
+                });
+                
+                // Gestion des erreurs de chargement d'images
+                img.addEventListener('error', function() {
+                    console.warn(`⚠️ Image non trouvée: ${this.src}`);
+                    // Remplacer par une icône
+                    this.style.display = 'none';
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'qr-code-placeholder';
+                    placeholder.innerHTML = `
+                        <i class="fas fa-qrcode"></i>
+                        <p style="font-size: 0.8rem; margin-top: 5px;">QR Code</p>
+                    `;
+                    placeholder.dataset.link = this.dataset.link;
+                    placeholder.addEventListener('click', function() {
+                        const link = this.dataset.link;
+                        if (link) window.open(link, '_blank');
+                    });
+                    this.parentNode.appendChild(placeholder);
                 });
             });
             
