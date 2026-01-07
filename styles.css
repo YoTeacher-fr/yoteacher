@@ -140,6 +140,8 @@ button {
     display: flex;
     align-items: center;
     gap: 10px;
+    position: relative;
+    z-index: 2;
 }
 
 .logo {
@@ -204,6 +206,8 @@ button {
     gap: 8px;
     margin-left: 15px;
     flex-shrink: 0;
+    position: relative;
+    z-index: 2;
 }
 
 .language-switcher {
@@ -1905,56 +1909,53 @@ button {
 
 /* ===== CENTRAGE DES NAVLINKS DANS LE HEADER (DESKTOP) ===== */
 @media (min-width: 993px) {
-    /* Grille pour centrer les navlinks */
-    .header-content {
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
+    /* Position absolue pour centrer le menu de navigation */
+    .nav-menu.desktop-menu {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 30px !important;
         align-items: center;
+        z-index: 1;
+        background: transparent;
+        padding: 8px 0;
+    }
+    
+    /* Ajuster le header-content pour laisser de l'espace */
+    .header-content {
         position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         padding: 8px 0 !important;
     }
     
     /* Logo à gauche */
     .logo-section {
-        grid-column: 1;
-        justify-self: start;
-        z-index: 2;
-    }
-    
-    /* Menu de navigation centré */
-    .nav-menu.desktop-menu {
-        grid-column: 2;
-        display: flex;
-        justify-content: center;
-        gap: 30px !important;
-        align-items: center;
         position: relative;
-        z-index: 1;
+        z-index: 2;
+        flex: 0 0 auto;
     }
     
-    /* Cacher le spacer car nous n'en avons plus besoin */
+    /* Groupe de droite reste à droite */
+    .header-right-group {
+        position: relative;
+        z-index: 2;
+        flex: 0 0 auto;
+        margin-left: 0;
+    }
+    
+    /* Cacher le spacer */
     .nav-spacer {
         display: none !important;
     }
     
-    /* Groupe de droite (devise, langue, connexion) */
-    .header-right-group {
-        grid-column: 3;
-        justify-self: end;
-        margin-left: 0;
-        z-index: 2;
-    }
-    
-    /* Ajuster les liens de navigation */
+    /* Ajuster la taille des liens de navigation */
     .nav-link {
         font-size: 1.2rem !important;
         font-weight: 400;
         padding: 8px 12px;
-    }
-    
-    /* Ajuster l'espacement dans le groupe de droite */
-    .header-right-group {
-        gap: 6px !important;
     }
 }
 
