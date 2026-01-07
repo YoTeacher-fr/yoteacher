@@ -2253,7 +2253,9 @@ button {
     flex: 1;
     justify-content: center;
 }
-
+.nav-spacer {
+    display: none;
+}
 .nav-spacer {
     display: none;
 }
