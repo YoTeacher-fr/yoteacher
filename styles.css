@@ -77,7 +77,7 @@ button {
     padding: 0 20px;
 }
 
-/* ===== HEADER AVEC NOUVELLE ORGANISATION ===== */
+/* ===== HEADER AVEC LOGO CENTRÉ ET NOUVELLE ORGANISATION ===== */
 .main-header {
     background-color: transparent;
     box-shadow: none;
@@ -227,7 +227,7 @@ button {
 
 /* ===== BOUTONS RÉDUITS ===== */
 
-/* Sélecteur de devise réduit */
+/* Style pour le sélecteur de devise - CORRIGÉ ET RÉDUIT */
 .currency-selector {
     display: flex;
     align-items: center;
@@ -244,13 +244,14 @@ button {
     font-weight: 500;
     cursor: pointer;
     outline: none;
-    width: 70px;
-    height: 28px;
+    width: 70px; /* Largeur encore plus réduite */
     appearance: none;
-    background-image: none !important;
+    background-image: none !important; /* Supprime la flèche */
     transition: all 0.3s ease;
+    height: 28px;
 }
 
+/* Cacher la flèche native */
 .currency-selector select::-ms-expand {
     display: none;
 }
@@ -327,7 +328,7 @@ button {
     box-shadow: 0 8px 20px rgba(79, 154, 209, 0.3);
 }
 
-/* Avatar Utilisateur réduit et positionné à droite */
+/* Avatar Utilisateur positionné à droite */
 .user-avatar {
     position: relative;
     margin-left: 5px;
@@ -516,7 +517,7 @@ button {
     font-weight: 500;
 }
 
-/* MODIFICATION: Bouton connexion menu sandwich */
+/* MODIFICATION: Bouton connexion menu sandwich en #4f9ad1 */
 .mobile-login-btn {
     width: 100%;
     max-width: 250px;
@@ -680,7 +681,7 @@ button {
     box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
 }
 
-/* ===== SECTION À PROPOS - CORRIGÉE ET CENTRÉE ===== */
+/* ===== SECTION À PROPOS - CORRIGÉE ET PARFAITEMENT CENTRÉE ===== */
 .about-section-new {
     padding: 80px 0;
     background-color: #f5edeb;
@@ -880,7 +881,7 @@ button {
     color: #3c84f6 !important;
 }
 
-/* ===== COURSES SECTION - CORRIGÉE ET CENTRÉE ===== */
+/* ===== COURSES SECTION - CORRIGÉE ET PARFAITEMENT CENTRÉE ===== */
 .courses-section {
     padding: 40px 0 80px 0;
     background-color: #f5f2eb;
@@ -1647,7 +1648,7 @@ button {
         margin-left: 5px;
     }
     
-    /* Bouton connexion à droite - 3ème colonne */
+    /* Bouton connexion mobile à droite */
     .mobile-login-btn-header {
         display: block !important;
         background-color: #4f9ad1;
@@ -1912,7 +1913,7 @@ button {
         display: none;
     }
     
-    /* 16. Cacher le sélecteur de devise sur mobile */
+    /* 16. Cacher le currency selector sur mobile */
     .currency-selector {
         display: none;
     }
@@ -1928,8 +1929,8 @@ button {
 /* TRÈS PETITS ÉCRANS */
 @media (max-width: 480px) {
     .mobile-login-btn-header {
-        padding: 5px 10px;
-        font-size: 0.75rem;
+        padding: 6px 10px;
+        font-size: 0.8rem;
     }
     
     .hamburger-menu {
@@ -2000,4 +2001,168 @@ button {
     }
     
     .testimonials-slider-container {
-        padding: 
+        padding: 0 40px;
+    }
+    
+    .slider-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+}
+
+/* ORIENTATION PAYSAGE MOBILE */
+@media (max-height: 600px) and (orientation: landscape) {
+    .hero {
+        min-height: auto;
+        padding: 100px 0;
+    }
+    
+    .mobile-nav {
+        padding: 80px 30px 30px;
+    }
+}
+
+/* PERFORMANCES TOUCH */
+@media (hover: none) and (pointer: coarse) {
+    .course-card:hover,
+    .testimonial-card:hover,
+    .stat-item:hover {
+        transform: none !important;
+    }
+    
+    .nav-link,
+    .btn,
+    .slider-btn {
+        padding: 15px 20px !important;
+    }
+}
+
+/* PREVENT ZOOM SUR INPUT */
+@media (max-width: 768px) {
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* Cacher menu hamburger sur desktop */
+@media (min-width: 993px) {
+    .hamburger-menu {
+        display: none !important;
+    }
+    
+    .mobile-menu-overlay {
+        display: none !important;
+    }
+}
+
+/* Toucher optimisé pour mobile */
+@media (max-width: 768px) {
+    .nav-link,
+    .btn,
+    .course-card,
+    .testimonial-card,
+    .slider-btn {
+        min-height: 44px !important;
+    }
+}
+
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
+
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* Style pour les boutons connectés */
+.login-btn.connected {
+    background-color: #4CAF50 !important;
+}
+
+.login-btn.connected:hover {
+    background-color: #45a049 !important;
+}
+
+/* Styles pour l'avatar et menu mobile */
+@media (max-width: 768px) {
+    .user-avatar {
+        margin-left: auto !important;
+        margin-right: 10px !important;
+        order: 2; /* Position dans le header mobile */
+    }
+    
+    .user-menu {
+        right: auto !important;
+        left: 0 !important;
+    }
+    
+    /* Ajustement header avec avatar */
+    .header-content {
+        gap: 10px !important;
+    }
+    
+    .mobile-login-btn-header {
+        order: 3;
+        z-index: 1001;
+    }
+    
+    .logo-section {
+        order: 2;
+    }
+    
+    .hamburger-menu {
+        order: 1;
+    }
+    
+    /* Menu mobile - section utilisateur */
+    .mobile-user-section {
+        background: white;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding: 20px;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .mobile-user-section a, 
+    .mobile-user-section button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .mobile-logout-btn {
+        background: #ffeaea !important;
+        color: #e74c3c !important;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .mobile-logout-btn:hover {
+        background: #ffd6d6 !important;
+    }
+}
+
+/* Correction pour le menu utilisateur sur desktop */
+@media (min-width: 769px) {
+    .user-menu {
+        right: 0;
+        left: auto;
+    }
+}
