@@ -532,106 +532,48 @@ class AuthManager {
         
         if (!this.user) return;
         
-        // Trouver le bon conteneur selon le device
-        let container;
-        if (window.innerWidth <= 768) {
-            // Sur mobile, ajouter dans header-content
-            container = document.querySelector('.header-content');
-        } else {
-            // Sur desktop, ajouter dans nav-menu
-            container = document.querySelector('.nav-menu');
-        }
+        // Trouver le conteneur header-right-group
+        const container = document.querySelector('.header-right-group');
         
         if (!container) return;
         
         const avatar = document.createElement('div');
         avatar.className = 'user-avatar';
         
-        // Positionnement différent selon le device
-        if (window.innerWidth <= 768) {
-            avatar.style.marginLeft = 'auto';
-            avatar.style.marginRight = '10px';
-            avatar.style.order = '2'; // Entre le logo et le bouton connexion mobile
-        } else {
-            avatar.style.marginLeft = '15px';
-        }
-        
         const initials = this.getUserInitials();
         
+        // Nouveau design : Bouton Dashboard + Bouton Déconnexion
         avatar.innerHTML = `
-            <div class="avatar-img" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #3c84f6, #1e88e5); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer; border: 2px solid #3c84f6;">
-                ${initials}
-            </div>
-            <div class="user-menu" style="display: none; position: absolute; ${window.innerWidth <= 768 ? 'left: 0;' : 'right: 0;'} top: 100%; background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); min-width: 180px; padding: 10px 0; z-index: 1000;">
-                <a href="dashboard.html" style="display: block; padding: 10px 20px; color: #333; text-decoration: none;">Mon dashboard</a>
-                <a href="profile.html" style="display: block; padding: 10px 20px; color: #333; text-decoration: none;">Mon profil</a>
-                <a href="#" class="logout-btn" style="display: block; padding: 10px 20px; color: #e74c3c; text-decoration: none; border-top: 1px solid #eee; margin-top: 5px;">Déconnexion</a>
-            </div>
+            <a href="dashboard.html" class="dashboard-btn">
+                <div class="avatar-img">${initials}</div>
+                <span>Dashboard</span>
+            </a>
+            <button class="logout-btn-icon" id="logoutBtnIcon" title="Déconnexion">×</button>
         `;
         
-        // Sur mobile, placer avant le bouton connexion mobile
-        if (window.innerWidth <= 768) {
-            const mobileLoginBtn = document.querySelector('.mobile-login-btn-header');
-            if (mobileLoginBtn && mobileLoginBtn.parentElement === container) {
-                container.insertBefore(avatar, mobileLoginBtn);
-            } else {
-                container.appendChild(avatar);
-            }
-        } else {
-            container.appendChild(avatar);
-        }
+        // Ajouter l'avatar à la fin du container
+        container.appendChild(avatar);
         
-        // Gestion des événements
-        const logoutBtn = avatar.querySelector('.logout-btn');
+        // Gestion du clic sur le bouton de déconnexion
+        const logoutBtn = document.getElementById('logoutBtnIcon');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.signOut();
-            });
-        }
-        
-        const avatarImg = avatar.querySelector('.avatar-img');
-        const userMenu = avatar.querySelector('.user-menu');
-        
-        if (avatarImg && userMenu) {
-            avatarImg.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isVisible = userMenu.style.display === 'block';
-                userMenu.style.display = isVisible ? 'none' : 'block';
-            });
-            
-            // Fermer le menu en cliquant ailleurs
-            document.addEventListener('click', (e) => {
-                if (!avatar.contains(e.target)) {
-                    userMenu.style.display = 'none';
+                if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+                    this.signOut();
                 }
             });
-            
-            userMenu.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
         }
         
-        // Gestion des liens
-        setTimeout(() => {
-            const dashboardLink = avatar.querySelector('a[href="dashboard.html"]');
-            const profileLink = avatar.querySelector('a[href="profile.html"]');
-            
-            if (dashboardLink) {
-                dashboardLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    window.location.href = 'dashboard.html';
-                });
-            }
-            
-            if (profileLink) {
-                profileLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    window.location.href = 'profile.html';
-                });
-            }
-        }, 50);
+        // Gestion du clic sur le bouton Dashboard
+        const dashboardBtn = avatar.querySelector('.dashboard-btn');
+        if (dashboardBtn) {
+            dashboardBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'dashboard.html';
+            });
+        }
     }
 
     getUserInitials() {
