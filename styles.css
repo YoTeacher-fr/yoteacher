@@ -160,10 +160,12 @@ button {
 }
 
 .nav-menu.desktop-menu {
+   position: absolute;
+    left: 50%;
+    transform: translateX(-50%); /* Décalage de 50% de sa propre largeur pour le centre réel */
     display: flex;
-    gap: 15px !important;
-    align-items: center;
-    flex-wrap: wrap;
+    gap: 25px; /* L'espace entre vos liens agrandis */
+    margin: 0;
 }
 
 .nav-spacer {
