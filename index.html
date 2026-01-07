@@ -10,6 +10,67 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Miniaturisation et centrage du sélecteur de devise */
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 3px; /* Espace réduit entre l'icône et la bulle */
+        }
+        
+        .currency-selector select {
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+            padding: 2px 4px;   /* Espace interne réduit au maximum */
+            color: #333;
+            font-size: 0.8rem;  /* Taille de police réduite */
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            width: auto;
+            text-align: center;      /* Centrage horizontal du texte */
+            text-align-last: center; /* Force le centrage sur tous les navigateurs */
+            appearance: none;        /* Retire la flèche pour libérer l'espace et centrer */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            transition: all 0.3s ease;
+        }
+        
+        /* État transparent (haut de page) */
+        .main-header:not(.scrolled) .currency-selector select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .currency-selector i {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        /* Rapprochement des blocs de droite (Currency, Language, Connexion) */
+        .header-right-group {
+            display: flex;
+            align-items: center;
+            gap: 8px !important; /* Réduction de l'espace entre les éléments */
+        }
+
+        .language-switcher {
+            font-size: 0.8rem;
+            gap: 3px;
+        }
+
+        /* Ajustement bouton connexion pour harmoniser avec la petite taille */
+        .login-btn {
+            padding: 6px 14px !important;
+            font-size: 0.85rem !important;
+        }
+
+        @media (max-width: 768px) {
+            .currency-selector { display: none; }
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -23,57 +84,41 @@
                     <span></span>
                 </button>
                 
-                <!-- Logo et drapeau à gauche -->
+                <!-- Logo au CENTRE -->
                 <div class="logo-section">
-                    <div class="flag">🇫🇷</div>
                     <a href="index.html" class="logo">Yoann</a>
-                </div>
-                
-                <!-- Navigation au centre -->
-                <nav class="nav-menu desktop-menu">
-                    <a href="#about" class="nav-link">À propos</a>
-                    <a href="#courses" class="nav-link">Cours</a>
-                    <a href="#testimonials" class="nav-link">Témoignages</a>
-                    <a href="#contact" class="nav-link">Contact</a>
-                </nav>
-                
-                <!-- Groupe des boutons de droite -->
-                <div class="header-right-group">
-                    <!-- Sélecteur de devise -->
-                    <div class="currency-selector">
-                        <i class="fas fa-money-bill-wave"></i>
-                        <select id="currencySelector">
-                            <option value="EUR">EUR</option>
-                            <option value="USD">USD</option>
-                            <option value="GBP">GBP</option>
-                            <option value="CAD">CAD</option>
-                            <option value="AUD">AUD</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Bouton Langue -->
-                    <div class="language-switcher">
-                        <span class="flag">🌐</span>
-                        <span>FR</span>
-                    </div>
-                    
-                    <!-- Bouton Connexion -->
-                    <a href="login.html" class="login-btn">Connexion</a>
-                    
-                    <!-- Avatar Utilisateur (visible seulement si connecté) -->
-                    <div class="user-avatar" style="display: none;">
-                        <div class="avatar-img">Y</div>
-                        <div class="user-menu">
-                            <a href="dashboard.html">Mon compte</a>
-                            <a href="booking.html">Mes réservations</a>
-                            <a href="profile.html">Mon profil</a>
-                            <a href="#" class="logout-btn">Déconnexion</a>
-                        </div>
-                    </div>
+                    <div class="flag">🇫🇷</div>
                 </div>
                 
                 <!-- Bouton Connexion Mobile (visible uniquement sur mobile) -->
                 <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                
+                <!-- Menu Desktop -->
+                <nav class="nav-menu desktop-menu">
+                    <div class="nav-spacer"></div>
+                    <a href="#about" class="nav-link">À propos</a>
+                    <a href="#courses" class="nav-link">Cours</a>
+                    <a href="#testimonials" class="nav-link">Témoignages</a>
+                    <a href="#contact" class="nav-link">Contact</a>
+                    
+                    <!-- Groupe des boutons de droite -->
+                    <div class="header-right-group">
+                        <!-- Sélecteur de devise -->
+                        <div class="currency-selector">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <select id="currencySelector">
+                                <!-- Rempli dynamiquement par currency.js -->
+                            </select>
+                        </div>
+                        
+                        <div class="language-switcher">
+                            <span class="flag">🌐</span>
+                            <span>FR</span>
+                        </div>
+                        
+                        <a href="login.html" class="login-btn">Connexion</a>
+                    </div>
+                </nav>
             </div>
         </div>
         
@@ -93,11 +138,7 @@
                         <i class="fas fa-money-bill-wave"></i> Devise
                     </label>
                     <select id="currencySelectorMobile" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                        <option value="EUR">EUR</option>
-                        <option value="USD">USD</option>
-                        <option value="GBP">GBP</option>
-                        <option value="CAD">CAD</option>
-                        <option value="AUD">AUD</option>
+                        <!-- Rempli dynamiquement -->
                     </select>
                 </div>
                 
@@ -144,7 +185,7 @@
         </div>
     </section>
 
-    <!-- Section À propos - CORRIGÉE ET CENTRÉE -->
+    <!-- Section À propos - CENTRÉE -->
     <section id="about" class="about-section-new">
         <div class="container">
             <div class="section-header">
@@ -224,7 +265,7 @@
         </div>
     </section>
 
-    <!-- Section Cours - CORRIGÉE ET CENTRÉE -->
+    <!-- Section Cours - CENTRÉE -->
     <section id="courses" class="courses-section">
         <div class="container">
             <div class="section-header">
@@ -241,115 +282,7 @@
             </div>
             
             <div class="courses-container" id="coursesContainer">
-                <!-- Cours 1 : Essai -->
-                <div class="course-card" data-base-price="5">
-                    <div class="course-header">
-                        <h3 class="course-type">Cours d'essai</h3>
-                        <p class="course-focus">Découvrez ma méthode d'enseignement</p>
-                    </div>
-                    <div class="course-body">
-                        <div class="course-price">
-                            <span class="price-main">5€</span>
-                            <div class="price-details">
-                                <div>1 cours de 30 minutes</div>
-                                <div>Évaluation de votre niveau</div>
-                            </div>
-                        </div>
-                        <div class="course-features">
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Découverte de la méthode</span>
-                            </div>
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Évaluation de votre niveau</span>
-                            </div>
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Plan personnalisé</span>
-                            </div>
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Conseils pour progresser</span>
-                            </div>
-                        </div>
-                        <a href="booking.html?type=essai" class="btn btn-primary">Réserver maintenant</a>
-                    </div>
-                </div>
-                
-                <!-- Cours 2 : Régulier -->
-                <div class="course-card featured" data-base-price="18">
-                    <div class="course-header">
-                        <h3 class="course-type">Cours régulier</h3>
-                        <p class="course-focus">Progression constante et régulière</p>
-                    </div>
-                    <div class="course-body">
-                        <div class="course-price">
-                            <span class="price-main">18€<span class="price-per-hour">/heure</span></span>
-                            <div class="price-details">
-                                <div>1 cours = 18€ (60 min)</div>
-                                <div>5 cours = 85€ (économisez 5€)</div>
-                                <div>10 cours = 160€ (économisez 20€)</div>
-                            </div>
-                        </div>
-                        <div class="course-features">
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Cours personnalisés</span>
-                            </div>
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Support pédagogique inclus</span>
-                            </div>
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Accès à la plateforme</span>
-                            </div>
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Flexibilité horaire</span>
-                            </div>
-                        </div>
-                        <a href="booking.html?type=regulier" class="btn btn-primary">Choisir ce forfait</a>
-                    </div>
-                </div>
-                
-                <!-- Cours 3 : Intensif -->
-                <div class="course-card" data-base-price="16">
-                    <div class="course-header">
-                        <h3 class="course-type">Cours intensif</h3>
-                        <p class="course-focus">Accélérez votre apprentissage</p>
-                    </div>
-                    <div class="course-body">
-                        <div class="course-price">
-                            <span class="price-main">16€<span class="price-per-hour">/heure</span></span>
-                            <div class="price-details">
-                                <div>Minimum 2h/semaine</div>
-                                <div>Programme sur mesure</div>
-                                <div>Progression rapide garantie</div>
-                            </div>
-                        </div>
-                        <div class="course-features">
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Programme intensif</span>
-                            </div>
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Suivi personnalisé</span>
-                            </div>
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Exercices quotidiens</span>
-                            </div>
-                            <div class="course-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Objectifs précis</span>
-                            </div>
-                        </div>
-                        <a href="booking.html?type=intensif" class="btn btn-primary">Choisir ce forfait</a>
-                    </div>
-                </div>
+                <!-- Les cartes seront générées par JavaScript -->
             </div>
         </div>
     </section>
@@ -373,71 +306,7 @@
                 </button>
                 
                 <div class="testimonials-slider" id="testimonialsSlider">
-                    <!-- Témoignage 1 -->
-                    <div class="testimonial-card">
-                        <div class="quote-icon">❝</div>
-                        <div class="rating-stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <p class="testimonial-content">
-                            Yoann est un professeur exceptionnel ! Ses cours sont toujours bien préparés et adaptés à mes besoins. Grâce à lui, j'ai enfin surmonté ma peur de parler français.
-                        </p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">S</div>
-                            <div class="author-info">
-                                <h4>Sarah M.</h4>
-                                <p><i class="fas fa-map-marker-alt"></i> New York, États-Unis</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Témoignage 2 -->
-                    <div class="testimonial-card">
-                        <div class="quote-icon">❝</div>
-                        <div class="rating-stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <p class="testimonial-content">
-                            Les cours avec Yoann sont un véritable plaisir. Sa passion pour la langue française et sa culture est contagieuse. Je recommande vivement !
-                        </p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">T</div>
-                            <div class="author-info">
-                                <h4>Thomas L.</h4>
-                                <p><i class="fas fa-map-marker-alt"></i> Londres, Royaume-Uni</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Témoignage 3 -->
-                    <div class="testimonial-card">
-                        <div class="quote-icon">❝</div>
-                        <div class="rating-stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <p class="testimonial-content">
-                            Après avoir essayé plusieurs professeurs, j'ai enfin trouvé celui qui correspond à mes attentes. Yoann est patient, compétent et sait rendre l'apprentissage amusant.
-                        </p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">M</div>
-                            <div class="author-info">
-                                <h4>Maria R.</h4>
-                                <p><i class="fas fa-map-marker-alt"></i> Madrid, Espagne</p>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Les témoignages seront générés ici -->
                 </div>
                 
                 <button class="slider-btn next-btn" id="nextTestimonial">
@@ -542,8 +411,9 @@
     <script src="booking.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
-    <script src="currency.js"></script>
+    <script src="currency.js"></script> <!-- Nouveau fichier -->
     <script src="script.js"></script>
+
 
     <script>
         // Fonction pour mettre à jour les liens de connexion avec redirect
@@ -641,22 +511,6 @@
             });
         }
         
-        // Gestion de l'état connecté
-        function updateHeaderForLoggedInUser() {
-            // Simuler un état connecté (à remplacer par la logique réelle)
-            const isLoggedIn = false; // À changer par la vraie vérification
-            
-            if (isLoggedIn) {
-                const loginBtn = document.querySelector('.login-btn');
-                const userAvatar = document.querySelector('.user-avatar');
-                
-                if (loginBtn && userAvatar) {
-                    loginBtn.style.display = 'none';
-                    userAvatar.style.display = 'block';
-                }
-            }
-        }
-        
         // Appeler cette fonction après le chargement
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(updateMobileLoginLinks, 300);
@@ -675,9 +529,6 @@
             if (window.currencyManager && !window.currencyManager.isLoading) {
                 setTimeout(updateHomePagePrices, 500);
             }
-            
-            // Mettre à jour le header selon l'état de connexion
-            updateHeaderForLoggedInUser();
         });
     </script>
 </body>
