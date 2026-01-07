@@ -201,11 +201,10 @@ button {
 
 /* ===== GROUPEMENT DES BOUTONS DROITE ===== */
 .header-right-group {
+    margin-left: auto; 
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-left: 15px;
-    flex-shrink: 0;
+    gap: 8px;;
 }
 
 .language-switcher {
