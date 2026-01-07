@@ -19,18 +19,18 @@
     
 /* Navigation centrée - FIX COMPLET */
     .header-content {
-        display: grid;
-        grid-template-columns: auto 1fr auto;
+        display: flex;
+        justify-content: space-between;
         align-items: center;
         gap: 20px;
     }
     
     .logo-section {
-        grid-column: 1;
+        flex-shrink: 0;
     }
     
     .nav-menu.desktop-menu {
-        grid-column: 2;
+        flex: 1;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -38,11 +38,10 @@
     }
     
     .header-right-group {
-        grid-column: 3;
         display: flex;
         align-items: center;
         gap: 6px !important;
-        margin-left: 0;
+        margin-left: auto;
         flex-shrink: 0;
     }
     

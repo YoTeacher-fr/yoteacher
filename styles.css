@@ -128,8 +128,8 @@ button {
 }
 
 .header-content {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
     padding: 8px 0 !important;
     gap: 20px;
@@ -139,7 +139,7 @@ button {
     display: flex;
     align-items: center;
     gap: 10px;
-    grid-column: 1;
+    flex-shrink: 0;
 }
 
 .logo {
@@ -160,7 +160,7 @@ button {
 }
 
 .nav-menu.desktop-menu {
-    grid-column: 2;
+    flex: 1;
     display: flex;
     gap: 15px !important;
     align-items: center;
@@ -200,13 +200,11 @@ button {
 }
 
 /* ===== GROUPEMENT DES BOUTONS DROITE ===== */
-/* ===== GROUPEMENT DES BOUTONS DROITE ===== */
 .header-right-group {
-    grid-column: 3;
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-left: 0;
+    margin-left: auto;
     flex-shrink: 0;
 }
 
@@ -2253,9 +2251,7 @@ button {
     flex: 1;
     justify-content: center;
 }
-.nav-spacer {
-    display: none;
-}
+
 .nav-spacer {
     display: none;
 }
