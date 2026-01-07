@@ -11,24 +11,47 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Style pour le sélecteur de devise - PLUS SIMPLE */
+        /* Style pour le sélecteur de devise - COMPACT */
         .currency-selector {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-left: 15px;
         }
         
         .currency-selector select {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.2);
             border-radius: 20px;
-            padding: 6px 12px;
-            color: white;
-            font-size: 0.9rem;
+            padding: 6px 30px 6px 12px;
+            color: #333;
+            font-size: 0.85rem;
+            font-weight: 500;
             cursor: pointer;
             outline: none;
-            min-width: 80px;
+            min-width: auto;
+            width: auto;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .currency-selector select:hover {
+            border-color: #1e88e5;
+            box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
+        }
+        
+        .main-header:not(.scrolled) .currency-selector select {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        }
+        
+        .main-header:not(.scrolled) .currency-selector select:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.6);
         }
         
         .main-header.scrolled .currency-selector select {
@@ -37,13 +60,26 @@
         }
         
         .currency-selector i {
-            font-size: 0.9rem;
-            opacity: 0.8;
+            display: none; /* Caché pour économiser de l'espace */
         }
         
         @media (max-width: 768px) {
             .currency-selector {
                 display: none; /* Caché sur mobile pour économiser l'espace */
+            }
+            
+            .currency-selector-mobile select {
+                width: 100%;
+                padding: 12px 15px;
+                border-radius: 10px;
+                border: 1px solid #ddd;
+                font-size: 1rem;
+                background-color: white;
+                appearance: none;
+                background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+                background-repeat: no-repeat;
+                background-position: right 15px center;
+                background-size: 14px;
             }
         }
     </style>
@@ -77,20 +113,22 @@
                     <a href="#testimonials" class="nav-link">Témoignages</a>
                     <a href="#contact" class="nav-link">Contact</a>
                     
-                    <!-- Sélecteur de devise -->
-                    <div class="currency-selector">
-                        <i class="fas fa-money-bill-wave"></i>
-                        <select id="currencySelector">
-                            <!-- Rempli dynamiquement par currency.js -->
-                        </select>
+                    <!-- Groupe des boutons de droite -->
+                    <div class="header-right-group">
+                        <!-- Sélecteur de devise -->
+                        <div class="currency-selector">
+                            <select id="currencySelector">
+                                <!-- Rempli dynamiquement par currency.js -->
+                            </select>
+                        </div>
+                        
+                        <div class="language-switcher compact">
+                            <span class="flag">🌐</span>
+                            <span>FR</span>
+                        </div>
+                        
+                        <a href="login.html" class="login-btn compact">Connexion</a>
                     </div>
-                    
-                    <div class="language-switcher">
-                        <span class="flag">🌐</span>
-                        <span>FR</span>
-                    </div>
-                    
-                    <a href="login.html" class="login-btn">Connexion</a>
                 </nav>
             </div>
         </div>
@@ -141,7 +179,7 @@
                         <span class="stat-number">500+</span>
                         <span class="stat-label">
                             <span class="desktop-stat">Étudiants</span>
-                            <span class="mobile-stat">Étudiants accompagnés</span>
+                            <span class="mobile-stat">Étudiants</span>
                         </span>
                     </div>
                     <div class="stat-item">
