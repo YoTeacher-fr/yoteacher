@@ -77,7 +77,7 @@ button {
     padding: 0 20px;
 }
 
-/* ===== HEADER AVEC LOGO CENTRÉ ET NAVIGATION ÉQUILIBRÉE ===== */
+/* ===== HEADER ===== */
 .main-header {
     background-color: transparent;
     box-shadow: none;
@@ -96,7 +96,6 @@ button {
     backdrop-filter: blur(10px);
 }
 
-/* Couleur du logo et des liens dans le header transparent */
 .main-header:not(.scrolled) .logo {
     color: white;
 }
@@ -127,7 +126,6 @@ button {
     background-color: #3f8ac1 !important;
 }
 
-/* Structure du header avec distances égales */
 .header-content {
     display: flex;
     justify-content: space-between;
@@ -135,18 +133,12 @@ button {
     padding: 15px 0;
     flex-wrap: wrap;
     gap: 15px;
-    position: relative;
 }
 
-/* Logo positionné au centre */
 .logo-section {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
     display: flex;
     align-items: center;
     gap: 10px;
-    z-index: 1;
 }
 
 .logo {
@@ -166,13 +158,17 @@ button {
     font-size: 1.5rem;
 }
 
-/* Navigation positionnée à gauche du logo */
 .nav-menu {
     display: flex;
     gap: 30px;
     align-items: center;
     flex-wrap: wrap;
-    margin-right: auto; /* Pousse la navigation vers la gauche */
+    width: 100%;
+}
+
+.nav-spacer {
+    flex-grow: 1;
+    min-width: 0;
 }
 
 .nav-link {
@@ -181,7 +177,6 @@ button {
     font-size: 1rem;
     position: relative;
     padding: 8px 0;
-    white-space: nowrap;
 }
 
 .nav-link:hover {
@@ -203,12 +198,12 @@ button {
     width: 100%;
 }
 
-/* Groupe des boutons de droite - aligné à droite */
+/* ===== GROUPEMENT DES BOUTONS DROITE ===== */
 .header-right-group {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-left: auto; /* Pousse le groupe à droite */
+    gap: 8px;
+    margin-left: 15px;
 }
 
 .language-switcher {
@@ -358,7 +353,6 @@ button {
     font-weight: 500;
 }
 
-/* MODIFICATION: Bouton connexion menu sandwich en #4f9ad1 */
 .mobile-login-btn {
     width: 100%;
     max-width: 250px;
@@ -410,7 +404,6 @@ button {
     font-weight: 300;
 }
 
-/* CORRECTION DES STATISTIQUES HERO */
 .stats-left {
     display: flex;
     flex-direction: row;
@@ -464,7 +457,6 @@ button {
     text-overflow: ellipsis;
 }
 
-/* MODIFICATION: Texte différent pour desktop/mobile */
 .desktop-stat {
     display: block;
 }
@@ -522,7 +514,7 @@ button {
     box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
 }
 
-/* ===== SECTION À PROPOS - CORRIGÉE ET PARFAITEMENT CENTRÉE ===== */
+/* ===== SECTION À PROPOS ===== */
 .about-section-new {
     padding: 80px 0;
     background-color: #f5edeb;
@@ -530,64 +522,6 @@ button {
     margin-top: -50px;
     z-index: 1;
     text-align: center;
-}
-
-.section-header {
-    text-align: center;
-    margin-bottom: 50px;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.section-label {
-    display: inline-block;
-    color: var(--primary-blue);
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    margin-bottom: 15px;
-    padding: 5px 15px;
-    background-color: rgba(30, 136, 229, 0.1);
-    border-radius: 20px;
-}
-
-.section-title {
-    font-size: 2.5rem;
-    color: var(--neutral-dark);
-    margin-bottom: 20px;
-    position: relative;
-    text-align: center;
-}
-
-.section-title::after {
-    content: '';
-    position: absolute;
-    width: 80px;
-    height: 3px;
-    background: linear-gradient(to right, var(--primary-blue), var(--primary-blue-light));
-    bottom: -15px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 2px;
-}
-
-.decorative-line {
-    width: 80px;
-    height: 3px;
-    background: linear-gradient(to right, var(--primary-blue), var(--primary-blue-light));
-    margin: 20px auto 25px;
-    border-radius: 2px;
-}
-
-.section-subtitle {
-    text-align: center;
-    font-size: 1.1rem;
-    color: #666;
-    max-width: 700px;
-    margin: 0 auto;
-    line-height: 1.6;
 }
 
 .about-grid {
@@ -631,6 +565,78 @@ button {
     position: relative;
     z-index: 3;
     text-align: left;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.section-label {
+    display: inline-block;
+    color: var(--primary-blue);
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    padding: 5px 15px;
+    background-color: rgba(30, 136, 229, 0.1);
+    border-radius: 20px;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    color: var(--neutral-dark);
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary-blue), var(--primary-blue-light));
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+
+.about-title {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.about-title::after {
+    display: none;
+}
+
+.decorative-line {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary-blue), var(--primary-blue-light));
+    margin: 20px auto 25px;
+    border-radius: 2px;
+}
+
+.decorative-line-left {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary-blue), var(--primary-blue-light));
+    margin: 20px 0 25px 0;
+    border-radius: 2px;
+}
+
+.section-subtitle {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #666;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.6;
 }
 
 .about-text {
@@ -713,7 +719,6 @@ button {
     transform: translateY(-2px);
 }
 
-/* COULEUR BLEUE POUR MOTS SPÉCIFIQUES */
 .text-primary {
     color: #3c84f6 !important;
 }
@@ -722,7 +727,7 @@ button {
     color: #3c84f6 !important;
 }
 
-/* ===== COURSES SECTION - CORRIGÉE ET PARFAITEMENT CENTRÉE ===== */
+/* ===== COURSES SECTION ===== */
 .courses-section {
     padding: 40px 0 80px 0;
     background-color: #f5f2eb;
@@ -1004,7 +1009,6 @@ button {
     gap: 5px;
 }
 
-/* CORRECTION DES FLÈCHES */
 .slider-btn {
     position: absolute;
     top: 50%;
@@ -1293,6 +1297,98 @@ button {
     20% { transform: scale(1); }
 }
 
+/* ===== AVATAR & USER MENU ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
+
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+.user-avatar {
+    position: relative;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+    right: 0;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+
+.login-btn.connected {
+    background-color: #4CAF50 !important;
+}
+
+.login-btn.connected:hover {
+    background-color: #45a049 !important;
+}
+
 /* ===== ANIMATIONS ===== */
 @keyframes fadeInUp {
     from {
@@ -1404,22 +1500,8 @@ button {
         font-size: 1.2rem;
     }
     
-    /* MENU HAMBURGER SUR TABLETTE */
     .desktop-menu {
         display: none !important;
-    }
-    
-    .header-right-group {
-        display: none !important;
-    }
-    
-    .logo-section {
-        position: static !important;
-        transform: none !important;
-        left: auto !important;
-        margin: 0 auto !important;
-        justify-content: center !important;
-        flex: 1 !important;
     }
     
     .hamburger-menu {
@@ -1429,11 +1511,15 @@ button {
         width: 30px !important;
         height: 22px !important;
     }
+    
+    .logo-section {
+        justify-content: center;
+        text-align: center;
+    }
 }
 
-/* MOBILE - MODIFICATIONS UNIQUEMENT POUR MOBILE */
+/* MOBILE */
 @media (max-width: 768px) {
-    /* 1. HEADER MOBILE AVEC LOGO À ÉGALE DISTANCE */
     .header-content {
         display: flex;
         justify-content: space-between;
@@ -1443,7 +1529,6 @@ button {
         width: 100%;
     }
     
-    /* CORRECTION HAMBURGER MENU - CONSERVER LES 3 TRAITS */
     .hamburger-menu {
         order: 1;
         flex: 0 0 auto;
@@ -1469,7 +1554,6 @@ button {
         background-color: white !important;
     }
     
-    /* Logo PARFAITEMENT centré avec distances égales */
     .logo-section {
         order: 2;
         flex: 1;
@@ -1493,7 +1577,6 @@ button {
         margin-left: 5px;
     }
     
-    /* Bouton connexion à droite - 3ème colonne */
     .mobile-login-btn-header {
         display: block !important;
         background-color: #4f9ad1;
@@ -1522,7 +1605,6 @@ button {
         transform: translateY(-2px);
     }
     
-    /* MODIFICATION: Changer le texte pour mobile */
     .desktop-stat {
         display: none;
     }
@@ -1531,17 +1613,14 @@ button {
         display: block;
     }
     
-    /* Cacher le bouton connexion desktop sur mobile */
     .login-btn {
         display: none;
     }
     
-    /* Cacher le groupe de droite sur mobile */
     .header-right-group {
         display: none;
     }
     
-    /* 2. HERO SECTION */
     .hero {
         padding: 100px 0 150px 0;
         text-align: center;
@@ -1560,7 +1639,6 @@ button {
         font-size: 1.1rem;
     }
     
-    /* Statistiques centrées */
     .stats-left {
         align-items: center;
         flex-direction: row;
@@ -1586,7 +1664,6 @@ button {
         white-space: normal;
     }
     
-    /* Boutons CTA */
     .cta-buttons-left {
         justify-content: center;
         flex-direction: column;
@@ -1599,12 +1676,10 @@ button {
         margin: 0 auto;
     }
     
-    /* 3. ENLEVER L'ICÔNE BULLE DU BOUTON HERO SUR MOBILE */
     .mobile-course-btn .emoji {
         display: none;
     }
     
-    /* 4. COURS ET TÉMOIGNAGES */
     .courses-container,
     .testimonials-slider {
         grid-template-columns: 1fr;
@@ -1612,7 +1687,6 @@ button {
         margin: 0 auto;
     }
     
-    /* 5. CONTACT ET FOOTER - TOUT CENTRÉ */
     .contact-grid {
         grid-template-columns: 1fr;
         gap: 35px;
@@ -1624,7 +1698,6 @@ button {
         transform: translateX(-50%);
     }
     
-    /* Centrer les statistiques du brand */
     .brand-info {
         text-align: center;
         align-items: center;
@@ -1648,7 +1721,6 @@ button {
         width: 100%;
     }
     
-    /* Centrer l'adresse email */
     .legal-links {
         align-items: center;
     }
@@ -1662,16 +1734,15 @@ button {
         width: 100%;
     }
     
-    /* 6. TITRES ET SOUS-TITRES */
     .section-title {
         font-size: 1.8rem;
     }
     
+    .about-content,
     .section-subtitle {
         font-size: 1rem;
     }
     
-    /* 7. CARTES DE COURS */
     .course-type {
         font-size: 1.4rem;
     }
@@ -1680,12 +1751,10 @@ button {
         font-size: 2.2rem;
     }
     
-    /* 8. HIGHLIGHTS GRID */
     .highlights-grid {
         grid-template-columns: 1fr;
     }
     
-    /* 9. BOUTONS FINAL CTA */
     .final-cta-buttons {
         flex-direction: column;
         align-items: center;
@@ -1696,7 +1765,6 @@ button {
         max-width: 280px;
     }
     
-    /* 10. SLIDER TÉMOIGNAGES */
     .testimonials-slider-container {
         padding: 0 45px;
         gap: 5px;
@@ -1708,13 +1776,11 @@ button {
         font-size: 1.1rem;
     }
     
-    /* 11. FOOTER BOTTOM */
     .footer-bottom {
         text-align: center;
         justify-content: center;
     }
     
-    /* 12. CORRECTION IMAGE SUR MOBILE */
     .about-image-col {
         margin-top: 0 !important;
     }
@@ -1723,7 +1789,6 @@ button {
         height: 400px !important;
     }
     
-    /* 13. TAGS DE PERSONNALITÉ */
     .personality-tags {
         justify-content: center;
     }
@@ -1733,9 +1798,12 @@ button {
         padding: 5px 10px;
     }
     
-    /* 14. CENTRER LE CONTENU À PROPOS SUR MOBILE */
     .about-content-col {
         text-align: center;
+    }
+    
+    .decorative-line-left {
+        margin: 20px auto 25px auto;
     }
     
     .highlights-grid {
@@ -1746,16 +1814,75 @@ button {
         justify-content: center;
     }
     
-    /* 15. Ajustement de la navigation pour mobile */
-    .nav-menu {
-        display: none;
+    .user-avatar {
+        margin-left: auto !important;
+        margin-right: 10px !important;
+        order: 2;
+    }
+    
+    .user-menu {
+        right: auto !important;
+        left: 0 !important;
+    }
+    
+    .header-content {
+        gap: 10px !important;
+    }
+    
+    .mobile-login-btn-header {
+        order: 3;
+        z-index: 1001;
+    }
+    
+    .logo-section {
+        order: 2;
+    }
+    
+    .hamburger-menu {
+        order: 1;
+    }
+    
+    .mobile-user-section {
+        background: white;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding: 20px;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .mobile-user-section a, 
+    .mobile-user-section button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .mobile-logout-btn {
+        background: #ffeaea !important;
+        color: #e74c3c !important;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .mobile-logout-btn:hover {
+        background: #ffd6d6 !important;
     }
 }
 
-/* Cacher le bouton mobile sur desktop */
 @media (min-width: 769px) {
     .mobile-login-btn-header {
         display: none !important;
+    }
+    
+    .user-menu {
+        right: 0;
+        left: auto;
     }
 }
 
@@ -1844,7 +1971,6 @@ button {
     }
 }
 
-/* ORIENTATION PAYSAGE MOBILE */
 @media (max-height: 600px) and (orientation: landscape) {
     .hero {
         min-height: auto;
@@ -1856,7 +1982,6 @@ button {
     }
 }
 
-/* PERFORMANCES TOUCH */
 @media (hover: none) and (pointer: coarse) {
     .course-card:hover,
     .testimonial-card:hover,
@@ -1871,7 +1996,6 @@ button {
     }
 }
 
-/* PREVENT ZOOM SUR INPUT */
 @media (max-width: 768px) {
     input,
     select,
@@ -1880,7 +2004,6 @@ button {
     }
 }
 
-/* Cacher menu hamburger sur desktop */
 @media (min-width: 993px) {
     .hamburger-menu {
         display: none !important;
@@ -1891,7 +2014,6 @@ button {
     }
 }
 
-/* Toucher optimisé pour mobile */
 @media (max-width: 768px) {
     .nav-link,
     .btn,
@@ -1899,343 +2021,5 @@ button {
     .testimonial-card,
     .slider-btn {
         min-height: 44px !important;
-    }
-}
-/* ===== STYLES POUR LE DASHBOARD ===== */
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    background: #e0e0e0;
-    color: #333;
-}
-
-.status-badge.vip {
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    color: #000;
-}
-
-/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
-.user-avatar {
-    position: relative;
-    margin-left: 15px;
-}
-
-.avatar-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #3c84f6;
-    transition: transform 0.3s;
-}
-
-.avatar-img:hover {
-    transform: scale(1.1);
-}
-
-.user-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    min-width: 180px;
-    padding: 10px 0;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.3s;
-    z-index: 1000;
-}
-
-.user-avatar:hover .user-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.user-menu a {
-    display: block;
-    padding: 10px 20px;
-    color: #333;
-    text-decoration: none;
-    transition: background 0.2s;
-}
-
-.user-menu a:hover {
-    background: #f8f9fa;
-    color: #3c84f6;
-}
-
-.user-menu .logout-btn {
-    color: #e74c3c;
-    border-top: 1px solid #eee;
-    margin-top: 5px;
-}
-
-.user-menu .logout-btn:hover {
-    background: #ffeaea;
-}
-/* ===== STYLES POUR LE DASHBOARD ===== */
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    background: #e0e0e0;
-    color: #333;
-}
-
-.status-badge.vip {
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    color: #000;
-}
-
-/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
-.user-avatar {
-    position: relative;
-    margin-left: 15px;
-}
-
-.avatar-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #3c84f6;
-    transition: transform 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    background: linear-gradient(135deg, #3c84f6, #1e88e5);
-}
-
-.avatar-img:hover {
-    transform: scale(1.1);
-}
-
-.user-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    min-width: 180px;
-    padding: 10px 0;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.3s;
-    z-index: 1000;
-}
-
-.user-avatar:hover .user-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.user-menu a {
-    display: block;
-    padding: 10px 20px;
-    color: #333;
-    text-decoration: none;
-    transition: background 0.2s;
-}
-
-.user-menu a:hover {
-    background: #f8f9fa;
-    color: #3c84f6;
-}
-
-.user-menu .logout-btn {
-    color: #e74c3c;
-    border-top: 1px solid #eee;
-    margin-top: 5px;
-}
-
-.user-menu .logout-btn:hover {
-    background: #ffeaea;
-}
-
-/* Style pour les boutons connectés */
-.login-btn.connected {
-    background-color: #4CAF50 !important;
-}
-
-.login-btn.connected:hover {
-    background-color: #45a049 !important;
-}
-/* ===== STYLES POUR LE DASHBOARD ===== */
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    background: #e0e0e0;
-    color: #333;
-}
-
-.status-badge.vip {
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    color: #000;
-}
-
-/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
-.user-avatar {
-    position: relative;
-}
-
-.avatar-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #3c84f6;
-    transition: transform 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    background: linear-gradient(135deg, #3c84f6, #1e88e5);
-}
-
-.avatar-img:hover {
-    transform: scale(1.1);
-}
-
-.user-menu {
-    position: absolute;
-    top: 100%;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    min-width: 180px;
-    padding: 10px 0;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.3s;
-    z-index: 1000;
-}
-
-.user-avatar:hover .user-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.user-menu a {
-    display: block;
-    padding: 10px 20px;
-    color: #333;
-    text-decoration: none;
-    transition: background 0.2s;
-}
-
-.user-menu a:hover {
-    background: #f8f9fa;
-    color: #3c84f6;
-}
-
-.user-menu .logout-btn {
-    color: #e74c3c;
-    border-top: 1px solid #eee;
-    margin-top: 5px;
-}
-
-.user-menu .logout-btn:hover {
-    background: #ffeaea;
-}
-
-/* Style pour les boutons connectés */
-.login-btn.connected {
-    background-color: #4CAF50 !important;
-}
-
-.login-btn.connected:hover {
-    background-color: #45a049 !important;
-}
-
-/* Styles pour l'avatar et menu mobile */
-@media (max-width: 768px) {
-    .user-avatar {
-        margin-left: auto !important;
-        margin-right: 10px !important;
-        order: 2; /* Position dans le header mobile */
-    }
-    
-    .user-menu {
-        right: auto !important;
-        left: 0 !important;
-    }
-    
-    /* Ajustement header avec avatar */
-    .header-content {
-        gap: 10px !important;
-    }
-    
-    .mobile-login-btn-header {
-        order: 3;
-        z-index: 1001;
-    }
-    
-    .logo-section {
-        order: 2;
-    }
-    
-    .hamburger-menu {
-        order: 1;
-    }
-    
-    /* Menu mobile - section utilisateur */
-    .mobile-user-section {
-        background: white;
-        border-bottom: 1px solid rgba(0,0,0,0.1);
-        padding: 20px;
-        text-align: center;
-        width: 100%;
-    }
-    
-    .mobile-user-section a, 
-    .mobile-user-section button {
-        display: block;
-        width: 100%;
-        padding: 12px;
-        margin-bottom: 8px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 500;
-        text-align: center;
-    }
-    
-    .mobile-logout-btn {
-        background: #ffeaea !important;
-        color: #e74c3c !important;
-        border: none;
-        cursor: pointer;
-        font-size: 1rem;
-    }
-    
-    .mobile-logout-btn:hover {
-        background: #ffd6d6 !important;
-    }
-}
-
-/* Correction pour le menu utilisateur sur desktop */
-@media (min-width: 769px) {
-    .user-menu {
-        right: 0;
-        left: auto;
     }
 }
