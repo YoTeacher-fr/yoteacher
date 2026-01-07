@@ -128,18 +128,18 @@ button {
 }
 
 .header-content {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
     padding: 8px 0 !important;
-    flex-wrap: wrap;
-    gap: 15px;
+    gap: 20px;
 }
 
 .logo-section {
     display: flex;
     align-items: center;
     gap: 10px;
+    grid-column: 1;
 }
 
 .logo {
@@ -160,14 +160,16 @@ button {
 }
 
 .nav-menu.desktop-menu {
+    grid-column: 2;
     display: flex;
     gap: 15px !important;
     align-items: center;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .nav-spacer {
-    flex-grow: 1;
+    display: none;
 }
 
 .nav-link {
@@ -198,11 +200,13 @@ button {
 }
 
 /* ===== GROUPEMENT DES BOUTONS DROITE ===== */
+/* ===== GROUPEMENT DES BOUTONS DROITE ===== */
 .header-right-group {
+    grid-column: 3;
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-left: 15px;
+    margin-left: 0;
     flex-shrink: 0;
 }
 
@@ -2268,28 +2272,28 @@ button {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
 }
 
-/* Bouton Dashboard avec icône */
+/* Bouton Dashboard avec avatar intégré et croix */
 .dashboard-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     background-color: #4f9ad1;
     color: white;
-    padding: 10px 20px;
+    padding: 6px 35px 6px 6px;
     border-radius: 50px;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.95rem;
     transition: all 0.3s;
     text-decoration: none;
-    border: 2px solid #4f9ad1;
+    border: none;
+    position: relative;
+    cursor: pointer;
 }
 
 .dashboard-btn:hover {
     background-color: #3f8ac1;
-    border-color: #3f8ac1;
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(79, 154, 209, 0.3);
 }
@@ -2304,34 +2308,44 @@ button {
     color: white;
     font-weight: bold;
     background: linear-gradient(135deg, #3c84f6, #1e88e5);
-    border: 2px solid white;
     flex-shrink: 0;
+    font-size: 0.85rem;
+    pointer-events: none;
 }
 
-/* Bouton déconnexion (croix) */
+/* Bouton déconnexion intégré dans le dashboard */
 .logout-btn-icon {
-    width: 40px;
-    height: 40px;
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    background-color: #e74c3c;
-    color: white;
+    background-color: white;
+    color: #e74c3c;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1rem;
     cursor: pointer;
-    border: 2px solid #e74c3c;
+    border: 2px solid white;
     transition: all 0.3s;
     font-weight: bold;
+    z-index: 2;
 }
 
 .logout-btn-icon:hover {
-    background-color: #c0392b;
-    border-color: #c0392b;
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 20px rgba(231, 76, 60, 0.3);
+    background-color: #e74c3c;
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
 }
 
+/* Suppression de l'ancien menu déroulant */
+.user-menu {
+    display: none !important;
+}
 /* Suppression de l'ancien menu déroulant */
 .user-menu {
     display: none !important;
@@ -2343,25 +2357,25 @@ button {
         margin-left: 0 !important;
         margin-right: 0 !important;
         order: 3;
-        gap: 5px;
     }
     
     .dashboard-btn {
-        padding: 8px 15px;
-        font-size: 0.9rem;
-        gap: 8px;
+        padding: 5px 30px 5px 5px;
+        font-size: 0.85rem;
+        gap: 6px;
     }
     
     .dashboard-btn .avatar-img {
         width: 28px;
         height: 28px;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
     
     .logout-btn-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 1.1rem;
+        width: 22px;
+        height: 22px;
+        font-size: 0.9rem;
+        right: 5px;
     }
     
     .header-content {

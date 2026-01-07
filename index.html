@@ -17,25 +17,38 @@
         font-weight: 400;
     }
     
-/* Navigation centrée */
+/* Navigation centrée - FIX COMPLET */
+    .header-content {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .logo-section {
+        grid-column: 1;
+    }
+    
     .nav-menu.desktop-menu {
-        flex: 1;
+        grid-column: 2;
+        display: flex;
         justify-content: center;
+        align-items: center;
         gap: 15px !important;
+    }
+    
+    .header-right-group {
+        grid-column: 3;
+        display: flex;
+        align-items: center;
+        gap: 6px !important;
+        margin-left: 0;
+        flex-shrink: 0;
     }
     
     .nav-spacer {
         display: none;
     }
-       
-/* 1. Bloc de droite : Rapprochement maximal des éléments */
-        .header-right-group {
-            display: flex;
-            align-items: center;
-            gap: 6px !important;
-            margin-left: auto;
-            flex-shrink: 0;
-        }
 
         /* 2. Devise : Miniaturisation et centrage du texte */
         .currency-selector {
