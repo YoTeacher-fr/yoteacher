@@ -133,13 +133,14 @@ button {
     align-items: center;
     padding: 15px 0;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 10px;
 }
 
 .logo-section {
     display: flex;
     align-items: center;
     gap: 10px;
+    order: 1;
 }
 
 .logo {
@@ -159,59 +160,126 @@ button {
     font-size: 1.5rem;
 }
 
-.nav-menu {
+/* ===== GROUPE DROIT POUR LANGUE, DEVISE ET AVATAR ===== */
+.header-right-group {
     display: flex;
-    gap: 30px;
     align-items: center;
-    flex-wrap: wrap;
+    gap: 5px;
+    margin-left: auto;
+    order: 2;
 }
 
-.nav-spacer {
-    flex-grow: 1;
+/* Style pour le sélecteur de devise */
+.currency-selector {
+    margin-left: 5px;
 }
 
-.nav-link {
-    color: var(--neutral-dark);
-    font-weight: 500;
-    font-size: 1rem;
-    position: relative;
-    padding: 8px 0;
+.currency-selector select {
+    border: 1px solid #ddd;
+    color: #333;
+    padding: 5px 8px;
+    font-size: 0.85rem;
+    border-radius: 15px;
+    background: white;
+    min-width: 70px;
+    cursor: pointer;
+    transition: border-color 0.3s;
 }
 
-.nav-link:hover {
-    color: var(--primary-blue);
+.currency-selector select:hover {
+    border-color: #3c84f6;
 }
 
-.nav-link::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 2px;
-    background-color: var(--primary-blue);
-    left: 0;
-    bottom: 0;
-    transition: width var(--transition-fast);
-}
-
-.nav-link:hover::after {
-    width: 100%;
-}
-
+/* Style pour le sélecteur de langue */
 .language-switcher {
     display: flex;
     align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    padding: 8px 12px;
-    border-radius: 50px;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 15px;
     transition: background-color var(--transition-fast);
     font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
 }
 
 .language-switcher:hover {
     background-color: var(--neutral-light);
 }
 
+/* Avatar utilisateur */
+.user-avatar {
+    position: relative;
+    margin-left: 5px;
+}
+
+.avatar-img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+    font-size: 0.9rem;
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+    font-size: 0.9rem;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+
+/* Bouton de connexion */
 .login-btn {
     background-color: #4f9ad1;
     color: var(--text-light);
@@ -219,6 +287,7 @@ button {
     border-radius: 50px;
     font-weight: 500;
     transition: all var(--transition-fast);
+    order: 3;
 }
 
 .login-btn:hover {
@@ -243,6 +312,7 @@ button {
     border: none;
     cursor: pointer;
     z-index: 1001;
+    order: 0;
 }
 
 .hamburger-menu span {
@@ -1429,14 +1499,13 @@ button {
     
     /* CORRECTION HAMBURGER MENU - CONSERVER LES 3 TRAITS */
     .hamburger-menu {
-        order: 1;
+        order: 0;
         flex: 0 0 auto;
         display: flex !important;
         flex-direction: column;
         justify-content: space-between;
         width: 30px;
         height: 22px;
-        margin-right: 0;
         min-width: 30px;
     }
     
@@ -1455,7 +1524,7 @@ button {
     
     /* Logo PARFAITEMENT centré avec distances égales */
     .logo-section {
-        order: 2;
+        order: 1;
         flex: 1;
         display: flex;
         justify-content: center;
@@ -1493,7 +1562,7 @@ button {
         cursor: pointer;
         text-align: center;
         line-height: 1.4;
-        order: 3;
+        order: 2;
         flex: 1;
         display: flex;
         justify-content: flex-end;
@@ -1506,6 +1575,16 @@ button {
         transform: translateY(-2px);
     }
     
+    /* Cacher le groupe droit sur mobile */
+    .header-right-group {
+        display: none;
+    }
+    
+    /* Cacher le bouton connexion desktop sur mobile */
+    .login-btn {
+        display: none;
+    }
+    
     /* MODIFICATION: Changer le texte pour mobile */
     .desktop-stat {
         display: none;
@@ -1513,11 +1592,6 @@ button {
     
     .mobile-stat {
         display: block;
-    }
-    
-    /* Cacher le bouton connexion desktop sur mobile */
-    .login-btn {
-        display: none;
     }
     
     /* 2. HERO SECTION */
@@ -1719,6 +1793,11 @@ button {
     .mobile-login-btn-header {
         display: none !important;
     }
+    
+    /* Afficher le groupe droit sur desktop */
+    .header-right-group {
+        display: flex;
+    }
 }
 
 /* TRÈS PETITS ÉCRANS */
@@ -1879,94 +1958,15 @@ button {
     color: #000;
 }
 
-/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
-.user-avatar {
+/* ===== STYLES POUR L'AVATAR UTILISATEUR DANS LE HEADER ===== */
+.main-header .user-avatar {
     position: relative;
-    margin-left: 15px;
+    margin-left: 5px;
 }
 
-.avatar-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #3c84f6;
-    transition: transform 0.3s;
-}
-
-.avatar-img:hover {
-    transform: scale(1.1);
-}
-
-.user-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    min-width: 180px;
-    padding: 10px 0;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.3s;
-    z-index: 1000;
-}
-
-.user-avatar:hover .user-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.user-menu a {
-    display: block;
-    padding: 10px 20px;
-    color: #333;
-    text-decoration: none;
-    transition: background 0.2s;
-}
-
-.user-menu a:hover {
-    background: #f8f9fa;
-    color: #3c84f6;
-}
-
-.user-menu .logout-btn {
-    color: #e74c3c;
-    border-top: 1px solid #eee;
-    margin-top: 5px;
-}
-
-.user-menu .logout-btn:hover {
-    background: #ffeaea;
-}
-/* ===== STYLES POUR LE DASHBOARD ===== */
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    background: #e0e0e0;
-    color: #333;
-}
-
-.status-badge.vip {
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    color: #000;
-}
-
-/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
-.user-avatar {
-    position: relative;
-    margin-left: 15px;
-}
-
-.avatar-img {
-    width: 40px;
-    height: 40px;
+.main-header .avatar-img {
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid #3c84f6;
@@ -1977,13 +1977,14 @@ button {
     color: white;
     font-weight: bold;
     background: linear-gradient(135deg, #3c84f6, #1e88e5);
+    font-size: 0.9rem;
 }
 
-.avatar-img:hover {
+.main-header .avatar-img:hover {
     transform: scale(1.1);
 }
 
-.user-menu {
+.main-header .user-menu {
     position: absolute;
     top: 100%;
     right: 0;
@@ -1999,32 +2000,33 @@ button {
     z-index: 1000;
 }
 
-.user-avatar:hover .user-menu {
+.main-header .user-avatar:hover .user-menu {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
 }
 
-.user-menu a {
+.main-header .user-menu a {
     display: block;
     padding: 10px 20px;
     color: #333;
     text-decoration: none;
     transition: background 0.2s;
+    font-size: 0.9rem;
 }
 
-.user-menu a:hover {
+.main-header .user-menu a:hover {
     background: #f8f9fa;
     color: #3c84f6;
 }
 
-.user-menu .logout-btn {
+.main-header .user-menu .logout-btn {
     color: #e74c3c;
     border-top: 1px solid #eee;
     margin-top: 5px;
 }
 
-.user-menu .logout-btn:hover {
+.main-header .user-menu .logout-btn:hover {
     background: #ffeaea;
 }
 
@@ -2200,4 +2202,79 @@ button {
         right: 0;
         left: auto;
     }
+}
+
+/* Style pour les bulles de sélection de durée sans prix */
+.duration-option {
+    flex: 1;
+    min-width: 80px;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.duration-option:hover {
+    border-color: #3c84f6;
+    background: #f0f7ff;
+    color: #3c84f6;
+}
+
+.duration-option.selected {
+    background: #3c84f6;
+    border-color: #3c84f6;
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
+}
+
+/* Style pour les badges de réduction */
+.discount-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #4CAF50;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+/* Style pour les boutons de nombre de cours */
+.courses-count-option {
+    flex: 1;
+    min-width: 70px;
+    padding: 12px 10px;
+    background: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    position: relative;
+}
+
+.courses-count-option:hover {
+    border-color: #3c84f6;
+    background: #f0f7ff;
+    color: #3c84f6;
+}
+
+.courses-count-option.selected {
+    background: #3c84f6;
+    border-color: #3c84f6;
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
 }
