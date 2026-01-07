@@ -129,11 +129,10 @@ button {
 
 .header-content {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 8px 0 !important;
-    flex-wrap: wrap;
-    gap: 15px;
+    justify-content: space-between; /* Logo à gauche, boutons à droite */
+    position: relative; 
+    padding: 12px 0;
 }
 
 .logo-section {
