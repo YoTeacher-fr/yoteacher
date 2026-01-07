@@ -140,8 +140,6 @@ button {
     display: flex;
     align-items: center;
     gap: 10px;
-    position: relative;
-    z-index: 2;
 }
 
 .logo {
@@ -206,8 +204,6 @@ button {
     gap: 8px;
     margin-left: 15px;
     flex-shrink: 0;
-    position: relative;
-    z-index: 2;
 }
 
 .language-switcher {
@@ -1906,59 +1902,85 @@ button {
         min-height: 44px !important;
     }
 }
-
-/* ===== CENTRAGE DES NAVLINKS DANS LE HEADER (DESKTOP) ===== */
-@media (min-width: 993px) {
-    /* Position absolue pour centrer le menu de navigation */
-    .nav-menu.desktop-menu {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 30px !important;
-        align-items: center;
-        z-index: 1;
-        background: transparent;
-        padding: 8px 0;
-    }
-    
-    /* Ajuster le header-content pour laisser de l'espace */
-    .header-content {
-        position: relative;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0 !important;
-    }
-    
-    /* Logo à gauche */
-    .logo-section {
-        position: relative;
-        z-index: 2;
-        flex: 0 0 auto;
-    }
-    
-    /* Groupe de droite reste à droite */
-    .header-right-group {
-        position: relative;
-        z-index: 2;
-        flex: 0 0 auto;
-        margin-left: 0;
-    }
-    
-    /* Cacher le spacer */
-    .nav-spacer {
-        display: none !important;
-    }
-    
-    /* Ajuster la taille des liens de navigation */
-    .nav-link {
-        font-size: 1.2rem !important;
-        font-weight: 400;
-        padding: 8px 12px;
-    }
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
 }
 
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+    margin-left: 15px;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
 /* ===== STYLES POUR LE DASHBOARD ===== */
 .status-badge {
     display: inline-block;
@@ -2004,6 +2026,98 @@ button {
     position: absolute;
     top: 100%;
     right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+
+/* Style pour les boutons connectés */
+.login-btn.connected {
+    background-color: #4CAF50 !important;
+}
+
+.login-btn.connected:hover {
+    background-color: #45a049 !important;
+}
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
+
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
     background: white;
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
