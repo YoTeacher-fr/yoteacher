@@ -11,57 +11,55 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Miniaturisation et centrage du sélecteur de devise */
+        /* 1. Bloc de droite : Rapprochement maximal des éléments */
+        .header-right-group {
+            display: flex;
+            align-items: center;
+            gap: 6px !important; /* Espace réduit entre devise, langue et connexion */
+            margin-left: 10px;
+        }
+
+        /* 2. Devise : Miniaturisation et centrage du texte */
         .currency-selector {
             display: flex;
             align-items: center;
-            gap: 3px; /* Espace réduit entre l'icône et la bulle */
+            gap: 3px;
         }
         
         .currency-selector select {
             background: white;
             border: 1px solid rgba(0, 0, 0, 0.15);
             border-radius: 4px;
-            padding: 2px 4px;   /* Espace interne réduit au maximum */
+            padding: 2px 4px;   /* Réduit au strict minimum */
             color: #333;
-            font-size: 0.8rem;  /* Taille de police réduite */
+            font-size: 0.8rem;  /* Taille miniature */
             font-weight: 600;
             cursor: pointer;
             outline: none;
             width: auto;
-            text-align: center;      /* Centrage horizontal du texte */
-            text-align-last: center; /* Force le centrage sur tous les navigateurs */
-            appearance: none;        /* Retire la flèche pour libérer l'espace et centrer */
+            text-align: center;      /* Centrage horizontal */
+            text-align-last: center; /* Force le centrage sur Chrome/Safari */
+            appearance: none;        /* Retire la flèche pour libérer de l'espace */
             -webkit-appearance: none;
-            -moz-appearance: none;
             transition: all 0.3s ease;
         }
         
-        /* État transparent (haut de page) */
+        /* Couleur du texte quand le header est transparent */
         .main-header:not(.scrolled) .currency-selector select {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: white;
         }
-        
-        .currency-selector i {
-            font-size: 0.75rem;
-            opacity: 0.9;
-        }
 
-        /* Rapprochement des blocs de droite (Currency, Language, Connexion) */
-        .header-right-group {
-            display: flex;
-            align-items: center;
-            gap: 8px !important; /* Réduction de l'espace entre les éléments */
-        }
-
+        /* 3. Langue : Miniaturisation */
         .language-switcher {
             font-size: 0.8rem;
-            gap: 3px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
         }
 
-        /* Ajustement bouton connexion pour harmoniser avec la petite taille */
+        /* 4. Bouton Connexion : Affinement pour correspondre au bloc */
         .login-btn {
             padding: 6px 14px !important;
             font-size: 0.85rem !important;

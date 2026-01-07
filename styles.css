@@ -77,7 +77,7 @@ button {
     padding: 0 20px;
 }
 
-/* ===== HEADER AVEC STRUCTURE CORRECTE ===== */
+/* ===== HEADER PLUS BLANC ===== */
 .main-header {
     background-color: transparent;
     box-shadow: none;
@@ -127,24 +127,19 @@ button {
     background-color: #3f8ac1 !important;
 }
 
-/* Structure du header avec logo à gauche, nav au centre, boutons à droite */
 .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 0;
+    padding: 8px 0 !important;
     flex-wrap: wrap;
     gap: 15px;
-    position: relative;
 }
 
-/* Logo à gauche avec drapeau */
 .logo-section {
     display: flex;
     align-items: center;
     gap: 10px;
-    z-index: 1;
-    flex: 0 0 auto;
 }
 
 .logo {
@@ -164,24 +159,23 @@ button {
     font-size: 1.5rem;
 }
 
-/* Navigation centrée */
-.nav-menu {
+.nav-menu.desktop-menu {
     display: flex;
-    gap: 25px;
+    gap: 15px !important;
     align-items: center;
     flex-wrap: wrap;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+}
+
+.nav-spacer {
+    flex-grow: 1;
 }
 
 .nav-link {
     color: var(--neutral-dark);
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 1rem;
     position: relative;
     padding: 8px 0;
-    white-space: nowrap;
 }
 
 .nav-link:hover {
@@ -203,195 +197,43 @@ button {
     width: 100%;
 }
 
-.main-header:not(.scrolled) .nav-link {
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.main-header:not(.scrolled) .nav-link:hover {
-    color: white;
-}
-
-/* Groupe des boutons de droite (currency, language, connexion, avatar) */
+/* ===== GROUPEMENT DES BOUTONS DROITE ===== */
 .header-right-group {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-left: auto;
+    margin-left: 15px;
+    flex-shrink: 0;
 }
 
-/* ===== BOUTONS RÉDUITS ===== */
-
-/* Style pour le sélecteur de devise */
-.currency-selector {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.currency-selector select {
-    background: white;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 16px;
-    padding: 4px 6px;
-    color: #333;
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    outline: none;
-    width: 70px;
-    appearance: none;
-    background-image: none !important;
-    transition: all 0.3s ease;
-    height: 28px;
-}
-
-/* Cacher la flèche native */
-.currency-selector select::-ms-expand {
-    display: none;
-}
-
-.currency-selector select:hover {
-    border-color: #1e88e5;
-}
-
-.main-header:not(.scrolled) .currency-selector select {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    color: white;
-}
-
-.main-header:not(.scrolled) .currency-selector select:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.6);
-}
-
-.main-header.scrolled .currency-selector select {
-    border-color: #ddd;
-    color: #333;
-}
-
-.currency-selector i {
-    font-size: 0.8rem;
-    opacity: 0.8;
-}
-
-/* Bouton Langue réduit */
 .language-switcher {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 16px;
+    padding: 8px 12px;
+    border-radius: 50px;
     transition: background-color var(--transition-fast);
     font-weight: 500;
-    font-size: 0.85rem;
-    height: 28px;
 }
 
 .language-switcher:hover {
     background-color: var(--neutral-light);
 }
 
-.main-header:not(.scrolled) .language-switcher {
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.main-header:not(.scrolled) .language-switcher:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Bouton Connexion réduit */
 .login-btn {
     background-color: #4f9ad1;
     color: var(--text-light);
-    padding: 6px 18px;
-    border-radius: 16px;
+    padding: 10px 25px;
+    border-radius: 50px;
     font-weight: 500;
     transition: all var(--transition-fast);
-    font-size: 0.85rem;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .login-btn:hover {
     background-color: #3f8ac1;
     transform: translateY(-2px) scale(1.05);
     box-shadow: 0 8px 20px rgba(79, 154, 209, 0.3);
-}
-
-/* Avatar Utilisateur positionné complètement à droite */
-.user-avatar {
-    position: relative;
-    margin-left: 5px;
-}
-
-.avatar-img {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #3c84f6;
-    transition: transform 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    background: linear-gradient(135deg, #3c84f6, #1e88e5);
-    font-size: 0.9rem;
-}
-
-.avatar-img:hover {
-    transform: scale(1.1);
-}
-
-.user-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    min-width: 180px;
-    padding: 10px 0;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.3s;
-    z-index: 1000;
-}
-
-.user-avatar:hover .user-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.user-menu a {
-    display: block;
-    padding: 10px 20px;
-    color: #333;
-    text-decoration: none;
-    transition: background 0.2s;
-    font-size: 0.9rem;
-}
-
-.user-menu a:hover {
-    background: #f8f9fa;
-    color: #3c84f6;
-}
-
-.user-menu .logout-btn {
-    color: #e74c3c;
-    border-top: 1px solid #eee;
-    margin-top: 5px;
-}
-
-.user-menu .logout-btn:hover {
-    background: #ffeaea;
 }
 
 /* ===== BOUTON CONNEXION MOBILE ===== */
@@ -675,7 +517,7 @@ button {
     box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
 }
 
-/* ===== SECTION À PROPOS - CORRIGÉE ET PARFAITEMENT CENTRÉE ===== */
+/* ===== SECTION À PROPOS - CENTRÉE ===== */
 .about-section-new {
     padding: 80px 0;
     background-color: #f5edeb;
@@ -683,64 +525,6 @@ button {
     margin-top: -50px;
     z-index: 1;
     text-align: center;
-}
-
-.section-header {
-    text-align: center;
-    margin-bottom: 50px;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.section-label {
-    display: inline-block;
-    color: var(--primary-blue);
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    margin-bottom: 15px;
-    padding: 5px 15px;
-    background-color: rgba(30, 136, 229, 0.1);
-    border-radius: 20px;
-}
-
-.section-title {
-    font-size: 2.5rem;
-    color: var(--neutral-dark);
-    margin-bottom: 20px;
-    position: relative;
-    text-align: center;
-}
-
-.section-title::after {
-    content: '';
-    position: absolute;
-    width: 80px;
-    height: 3px;
-    background: linear-gradient(to right, var(--primary-blue), var(--primary-blue-light));
-    bottom: -15px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 2px;
-}
-
-.decorative-line {
-    width: 80px;
-    height: 3px;
-    background: linear-gradient(to right, var(--primary-blue), var(--primary-blue-light));
-    margin: 20px auto 25px;
-    border-radius: 2px;
-}
-
-.section-subtitle {
-    text-align: center;
-    font-size: 1.1rem;
-    color: #666;
-    max-width: 700px;
-    margin: 0 auto;
-    line-height: 1.6;
 }
 
 .about-grid {
@@ -784,6 +568,78 @@ button {
     position: relative;
     z-index: 3;
     text-align: left;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.section-label {
+    display: inline-block;
+    color: var(--primary-blue);
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    padding: 5px 15px;
+    background-color: rgba(30, 136, 229, 0.1);
+    border-radius: 20px;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    color: var(--neutral-dark);
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary-blue), var(--primary-blue-light));
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+
+.about-title {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.about-title::after {
+    display: none;
+}
+
+.decorative-line {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary-blue), var(--primary-blue-light));
+    margin: 20px auto 25px;
+    border-radius: 2px;
+}
+
+.decorative-line-left {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary-blue), var(--primary-blue-light));
+    margin: 20px 0 25px 0;
+    border-radius: 2px;
+}
+
+.section-subtitle {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #666;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.6;
 }
 
 .about-text {
@@ -875,7 +731,7 @@ button {
     color: #3c84f6 !important;
 }
 
-/* ===== COURSES SECTION - CORRIGÉE ET PARFAITEMENT CENTRÉE ===== */
+/* ===== COURSES SECTION - CENTRÉE ===== */
 .courses-section {
     padding: 40px 0 80px 0;
     background-color: #f5f2eb;
@@ -1558,20 +1414,8 @@ button {
     }
     
     /* MENU HAMBURGER SUR TABLETTE */
-    .header-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .logo-section {
-        position: static !important;
-        transform: none !important;
-        left: auto !important;
-        margin: 0 !important;
-        justify-content: center !important;
-        flex: 1 !important;
-        order: 2 !important;
+    .desktop-menu {
+        display: none !important;
     }
     
     .hamburger-menu {
@@ -1580,33 +1424,27 @@ button {
         justify-content: space-between !important;
         width: 30px !important;
         height: 22px !important;
-        order: 1 !important;
     }
     
-    .nav-menu,
-    .header-right-group {
-        display: none !important;
-    }
-    
-    .mobile-login-btn-header {
-        display: block !important;
-        order: 3 !important;
+    .logo-section {
+        justify-content: center;
+        text-align: center;
     }
 }
 
-/* MOBILE */
+/* MOBILE - MODIFICATIONS UNIQUEMENT POUR MOBILE */
 @media (max-width: 768px) {
-    /* 1. HEADER MOBILE */
+    /* 1. HEADER MOBILE AVEC LOGO À ÉGALE DISTANCE */
     .header-content {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 15px 0;
+        padding: 8px 0 !important;
         position: relative;
         width: 100%;
     }
     
-    /* HAMBURGER MENU - à gauche */
+    /* CORRECTION HAMBURGER MENU - CONSERVER LES 3 TRAITS */
     .hamburger-menu {
         order: 1;
         flex: 0 0 auto;
@@ -1632,7 +1470,7 @@ button {
         background-color: white !important;
     }
     
-    /* Logo PARFAITEMENT centré */
+    /* Logo PARFAITEMENT centré avec distances égales */
     .logo-section {
         order: 2;
         flex: 1;
@@ -1656,14 +1494,14 @@ button {
         margin-left: 5px;
     }
     
-    /* Bouton connexion mobile à droite */
+    /* Bouton connexion à droite - 3ème colonne */
     .mobile-login-btn-header {
         display: block !important;
         background-color: #4f9ad1;
         color: white;
-        padding: 6px 12px;
-        border-radius: 16px;
-        font-size: 0.8rem;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
         font-weight: 500;
         text-decoration: none;
         white-space: nowrap;
@@ -1678,8 +1516,6 @@ button {
         justify-content: flex-end;
         margin-left: auto;
         z-index: 1001;
-        height: 28px;
-        align-items: center;
     }
     
     .mobile-login-btn-header:hover {
@@ -1704,11 +1540,6 @@ button {
     /* Cacher le groupe de droite sur mobile */
     .header-right-group {
         display: none;
-    }
-    
-    /* Cacher l'avatar sur mobile */
-    .user-avatar {
-        display: none !important;
     }
     
     /* 2. HERO SECTION */
@@ -1837,6 +1668,7 @@ button {
         font-size: 1.8rem;
     }
     
+    .about-content,
     .section-subtitle {
         font-size: 1rem;
     }
@@ -1908,22 +1740,16 @@ button {
         text-align: center;
     }
     
+    .decorative-line-left {
+        margin: 20px auto 25px auto;
+    }
+    
     .highlights-grid {
         justify-content: center;
     }
     
     .highlight-item {
         justify-content: center;
-    }
-    
-    /* 15. Ajustement de la navigation pour mobile */
-    .nav-menu {
-        display: none;
-    }
-    
-    /* 16. Cacher le currency selector sur mobile */
-    .currency-selector {
-        display: none;
     }
 }
 
@@ -2064,23 +1890,6 @@ button {
     .mobile-menu-overlay {
         display: none !important;
     }
-    
-    /* NAVIGATION CENTRÉE ET BOUTONS À DROITE */
-    .nav-menu {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex !important;
-    }
-    
-    .header-right-group {
-        display: flex !important;
-        margin-left: auto;
-    }
-    
-    .logo-section {
-        flex: 0 0 auto;
-    }
 }
 
 /* Toucher optimisé pour mobile */
@@ -2093,7 +1902,6 @@ button {
         min-height: 44px !important;
     }
 }
-
 /* ===== STYLES POUR LE DASHBOARD ===== */
 .status-badge {
     display: inline-block;
@@ -2110,6 +1918,155 @@ button {
     color: #000;
 }
 
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+    margin-left: 15px;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
+
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+    margin-left: 15px;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+
 /* Style pour les boutons connectés */
 .login-btn.connected {
     background-color: #4CAF50 !important;
@@ -2117,6 +2074,163 @@ button {
 
 .login-btn.connected:hover {
     background-color: #45a049 !important;
+}
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
+
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+
+/* Style pour les boutons connectés */
+.login-btn.connected {
+    background-color: #4CAF50 !important;
+}
+
+.login-btn.connected:hover {
+    background-color: #45a049 !important;
+}
+
+/* Styles pour l'avatar et menu mobile */
+@media (max-width: 768px) {
+    .user-avatar {
+        margin-left: auto !important;
+        margin-right: 10px !important;
+        order: 2; /* Position dans le header mobile */
+    }
+    
+    .user-menu {
+        right: auto !important;
+        left: 0 !important;
+    }
+    
+    /* Ajustement header avec avatar */
+    .header-content {
+        gap: 10px !important;
+    }
+    
+    .mobile-login-btn-header {
+        order: 3;
+        z-index: 1001;
+    }
+    
+    .logo-section {
+        order: 2;
+    }
+    
+    .hamburger-menu {
+        order: 1;
+    }
+    
+    /* Menu mobile - section utilisateur */
+    .mobile-user-section {
+        background: white;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding: 20px;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .mobile-user-section a, 
+    .mobile-user-section button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .mobile-logout-btn {
+        background: #ffeaea !important;
+        color: #e74c3c !important;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .mobile-logout-btn:hover {
+        background: #ffd6d6 !important;
+    }
 }
 
 /* Correction pour le menu utilisateur sur desktop */
