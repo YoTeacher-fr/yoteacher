@@ -128,12 +128,18 @@ button {
 }
 
 .header-content {
-   display: flex;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    padding: 8px 0 !important;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .logo-section {
-    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .logo {
@@ -154,11 +160,10 @@ button {
 }
 
 .nav-menu.desktop-menu {
-    flex: 0; /* Ne s'étire pas */
     display: flex;
-    justify-content: center;
-    gap: 25px;
-    white-space: nowrap;
+    gap: 15px !important;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .nav-spacer {
@@ -194,10 +199,11 @@ button {
 
 /* ===== GROUPEMENT DES BOUTONS DROITE ===== */
 .header-right-group {
-    flex: 1; /* Prend l'espace à droite */
     display: flex;
-    justify-content: flex-end; /* Aligne les boutons à l'extrémité droite */
+    align-items: center;
     gap: 8px;
+    margin-left: 15px;
+    flex-shrink: 0;
 }
 
 .language-switcher {
