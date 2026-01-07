@@ -11,24 +11,47 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Style pour le sélecteur de devise - PLUS SIMPLE */
+        /* Style pour le sélecteur de devise - CORRIGÉ */
         .currency-selector {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-left: 15px;
+            gap: 5px;
         }
         
         .currency-selector select {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.2);
             border-radius: 20px;
-            padding: 6px 12px;
-            color: white;
-            font-size: 0.9rem;
+            padding: 6px 8px;
+            color: #333;
+            font-size: 0.85rem;
+            font-weight: 500;
             cursor: pointer;
             outline: none;
-            min-width: 80px;
+            width: 85px; /* Largeur réduite pour éviter l'espace vide */
+            appearance: none;
+            background-image: none !important; /* Supprime la flèche */
+            transition: all 0.3s ease;
+        }
+        
+        /* Cacher la flèche native sur tous les navigateurs */
+        .currency-selector select::-ms-expand {
+            display: none;
+        }
+        
+        .currency-selector select:hover {
+            border-color: #1e88e5;
+        }
+        
+        .main-header:not(.scrolled) .currency-selector select {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+        }
+        
+        .main-header:not(.scrolled) .currency-selector select:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.6);
         }
         
         .main-header.scrolled .currency-selector select {
@@ -37,13 +60,13 @@
         }
         
         .currency-selector i {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             opacity: 0.8;
         }
         
         @media (max-width: 768px) {
             .currency-selector {
-                display: none; /* Caché sur mobile pour économiser l'espace */
+                display: none;
             }
         }
     </style>
@@ -71,17 +94,23 @@
                 
                 <!-- Menu Desktop -->
                 <nav class="nav-menu desktop-menu">
-                    <div class="nav-spacer"></div>
                     <a href="#about" class="nav-link">À propos</a>
                     <a href="#courses" class="nav-link">Cours</a>
                     <a href="#testimonials" class="nav-link">Témoignages</a>
                     <a href="#contact" class="nav-link">Contact</a>
-                    
+                </nav>
+                
+                <!-- Groupe des boutons de droite -->
+                <div class="header-right-group">
                     <!-- Sélecteur de devise -->
                     <div class="currency-selector">
                         <i class="fas fa-money-bill-wave"></i>
                         <select id="currencySelector">
-                            <!-- Rempli dynamiquement par currency.js -->
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="CAD">CAD</option>
+                            <option value="AUD">AUD</option>
                         </select>
                     </div>
                     
@@ -91,7 +120,7 @@
                     </div>
                     
                     <a href="login.html" class="login-btn">Connexion</a>
-                </nav>
+                </div>
             </div>
         </div>
         
@@ -111,7 +140,11 @@
                         <i class="fas fa-money-bill-wave"></i> Devise
                     </label>
                     <select id="currencySelectorMobile" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                        <!-- Rempli dynamiquement -->
+                        <option value="EUR">EUR</option>
+                        <option value="USD">USD</option>
+                        <option value="GBP">GBP</option>
+                        <option value="CAD">CAD</option>
+                        <option value="AUD">AUD</option>
                     </select>
                 </div>
                 
@@ -158,9 +191,17 @@
         </div>
     </section>
 
-    <!-- Section À propos -->
+    <!-- Section À propos - CORRIGÉE ET CENTRÉE -->
     <section id="about" class="about-section-new">
         <div class="container">
+            <div class="section-header">
+                <span class="section-label">À propos de Yoann</span>
+                <h2 class="section-title">
+                    Votre guide vers la maîtrise du <span class="text-primary">français</span>
+                </h2>
+                <div class="decorative-line"></div>
+            </div>
+            
             <div class="about-grid">
                 <!-- Colonne Image -->
                 <div class="about-image-col">
@@ -176,12 +217,6 @@
 
                 <!-- Colonne Contenu -->
                 <div class="about-content-col">
-                    <span class="section-label">À propos de Yoann</span>
-                    <h2 class="section-title about-title">
-                        Votre guide vers la maîtrise du <span class="text-primary">français</span>
-                    </h2>
-                    <div class="decorative-line-left"></div>
-
                     <div class="about-text">
                         <p>
                             Bonjour ! Je suis Yoann, professeur de français passionné depuis 4 ans.
@@ -236,7 +271,7 @@
         </div>
     </section>
 
-    <!-- Section Cours -->
+    <!-- Section Cours - CORRIGÉE ET CENTRÉE -->
     <section id="courses" class="courses-section">
         <div class="container">
             <div class="section-header">
@@ -253,7 +288,115 @@
             </div>
             
             <div class="courses-container" id="coursesContainer">
-                <!-- Les cartes seront générées par JavaScript -->
+                <!-- Cours 1 : Essai -->
+                <div class="course-card" data-base-price="5">
+                    <div class="course-header">
+                        <h3 class="course-type">Cours d'essai</h3>
+                        <p class="course-focus">Découvrez ma méthode d'enseignement</p>
+                    </div>
+                    <div class="course-body">
+                        <div class="course-price">
+                            <span class="price-main">5€</span>
+                            <div class="price-details">
+                                <div>1 cours de 30 minutes</div>
+                                <div>Évaluation de votre niveau</div>
+                            </div>
+                        </div>
+                        <div class="course-features">
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Découverte de la méthode</span>
+                            </div>
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Évaluation de votre niveau</span>
+                            </div>
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Plan personnalisé</span>
+                            </div>
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Conseils pour progresser</span>
+                            </div>
+                        </div>
+                        <a href="booking.html?type=essai" class="btn btn-primary">Réserver maintenant</a>
+                    </div>
+                </div>
+                
+                <!-- Cours 2 : Régulier -->
+                <div class="course-card featured" data-base-price="18">
+                    <div class="course-header">
+                        <h3 class="course-type">Cours régulier</h3>
+                        <p class="course-focus">Progression constante et régulière</p>
+                    </div>
+                    <div class="course-body">
+                        <div class="course-price">
+                            <span class="price-main">18€<span class="price-per-hour">/heure</span></span>
+                            <div class="price-details">
+                                <div>1 cours = 18€ (60 min)</div>
+                                <div>5 cours = 85€ (économisez 5€)</div>
+                                <div>10 cours = 160€ (économisez 20€)</div>
+                            </div>
+                        </div>
+                        <div class="course-features">
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Cours personnalisés</span>
+                            </div>
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Support pédagogique inclus</span>
+                            </div>
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Accès à la plateforme</span>
+                            </div>
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Flexibilité horaire</span>
+                            </div>
+                        </div>
+                        <a href="booking.html?type=regulier" class="btn btn-primary">Choisir ce forfait</a>
+                    </div>
+                </div>
+                
+                <!-- Cours 3 : Intensif -->
+                <div class="course-card" data-base-price="16">
+                    <div class="course-header">
+                        <h3 class="course-type">Cours intensif</h3>
+                        <p class="course-focus">Accélérez votre apprentissage</p>
+                    </div>
+                    <div class="course-body">
+                        <div class="course-price">
+                            <span class="price-main">16€<span class="price-per-hour">/heure</span></span>
+                            <div class="price-details">
+                                <div>Minimum 2h/semaine</div>
+                                <div>Programme sur mesure</div>
+                                <div>Progression rapide garantie</div>
+                            </div>
+                        </div>
+                        <div class="course-features">
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Programme intensif</span>
+                            </div>
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Suivi personnalisé</span>
+                            </div>
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Exercices quotidiens</span>
+                            </div>
+                            <div class="course-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Objectifs précis</span>
+                            </div>
+                        </div>
+                        <a href="booking.html?type=intensif" class="btn btn-primary">Choisir ce forfait</a>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -277,7 +420,71 @@
                 </button>
                 
                 <div class="testimonials-slider" id="testimonialsSlider">
-                    <!-- Les témoignages seront générés ici -->
+                    <!-- Témoignage 1 -->
+                    <div class="testimonial-card">
+                        <div class="quote-icon">❝</div>
+                        <div class="rating-stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="testimonial-content">
+                            Yoann est un professeur exceptionnel ! Ses cours sont toujours bien préparés et adaptés à mes besoins. Grâce à lui, j'ai enfin surmonté ma peur de parler français.
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">S</div>
+                            <div class="author-info">
+                                <h4>Sarah M.</h4>
+                                <p><i class="fas fa-map-marker-alt"></i> New York, États-Unis</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Témoignage 2 -->
+                    <div class="testimonial-card">
+                        <div class="quote-icon">❝</div>
+                        <div class="rating-stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="testimonial-content">
+                            Les cours avec Yoann sont un véritable plaisir. Sa passion pour la langue française et sa culture est contagieuse. Je recommande vivement !
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">T</div>
+                            <div class="author-info">
+                                <h4>Thomas L.</h4>
+                                <p><i class="fas fa-map-marker-alt"></i> Londres, Royaume-Uni</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Témoignage 3 -->
+                    <div class="testimonial-card">
+                        <div class="quote-icon">❝</div>
+                        <div class="rating-stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="testimonial-content">
+                            Après avoir essayé plusieurs professeurs, j'ai enfin trouvé celui qui correspond à mes attentes. Yoann est patient, compétent et sait rendre l'apprentissage amusant.
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">M</div>
+                            <div class="author-info">
+                                <h4>Maria R.</h4>
+                                <p><i class="fas fa-map-marker-alt"></i> Madrid, Espagne</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <button class="slider-btn next-btn" id="nextTestimonial">
