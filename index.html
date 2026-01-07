@@ -10,67 +10,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Style pour le sélecteur de devise - CORRIGÉ ET RÉDUIT */
-        .currency-selector {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .currency-selector select {
-            background: white;
-            border: 1px solid rgba(0, 0, 0, 0.2);
-            border-radius: 16px;
-            padding: 4px 6px;
-            color: #333;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            outline: none;
-            width: 70px; /* Largeur encore plus réduite */
-            appearance: none;
-            background-image: none !important; /* Supprime la flèche */
-            transition: all 0.3s ease;
-            height: 28px;
-        }
-        
-        /* Cacher la flèche native */
-        .currency-selector select::-ms-expand {
-            display: none;
-        }
-        
-        .currency-selector select:hover {
-            border-color: #1e88e5;
-        }
-        
-        .main-header:not(.scrolled) .currency-selector select {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            color: white;
-        }
-        
-        .main-header:not(.scrolled) .currency-selector select:hover {
-            background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.6);
-        }
-        
-        .main-header.scrolled .currency-selector select {
-            border-color: #ddd;
-            color: #333;
-        }
-        
-        .currency-selector i {
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-        
-        @media (max-width: 768px) {
-            .currency-selector {
-                display: none;
-            }
-        }
-    </style>
 </head>
 <body>
     <!-- Header -->
@@ -84,60 +23,57 @@
                     <span></span>
                 </button>
                 
-                <!-- Logo au CENTRE -->
+                <!-- Logo et drapeau à gauche -->
                 <div class="logo-section">
-                    <a href="index.html" class="logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
+                    <a href="index.html" class="logo">Yoann</a>
+                </div>
+                
+                <!-- Navigation au centre -->
+                <nav class="nav-menu desktop-menu">
+                    <a href="#about" class="nav-link">À propos</a>
+                    <a href="#courses" class="nav-link">Cours</a>
+                    <a href="#testimonials" class="nav-link">Témoignages</a>
+                    <a href="#contact" class="nav-link">Contact</a>
+                </nav>
+                
+                <!-- Groupe des boutons de droite -->
+                <div class="header-right-group">
+                    <!-- Sélecteur de devise -->
+                    <div class="currency-selector">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <select id="currencySelector">
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="CAD">CAD</option>
+                            <option value="AUD">AUD</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Bouton Langue -->
+                    <div class="language-switcher">
+                        <span class="flag">🌐</span>
+                        <span>FR</span>
+                    </div>
+                    
+                    <!-- Bouton Connexion (caché si connecté) -->
+                    <a href="login.html" class="login-btn">Connexion</a>
+                    
+                    <!-- Avatar Utilisateur (visible seulement si connecté) -->
+                    <div class="user-avatar" style="display: none;">
+                        <div class="avatar-img">Y</div>
+                        <div class="user-menu">
+                            <a href="dashboard.html">Mon compte</a>
+                            <a href="booking.html">Mes réservations</a>
+                            <a href="profile.html">Mon profil</a>
+                            <a href="#" class="logout-btn">Déconnexion</a>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Bouton Connexion Mobile (visible uniquement sur mobile) -->
                 <a href="login.html" class="mobile-login-btn-header">Connexion</a>
-                
-                <!-- Groupe principal de droite -->
-                <div class="header-right-container">
-                    <!-- Navigation à droite -->
-                    <nav class="nav-menu desktop-menu">
-                        <a href="#about" class="nav-link">À propos</a>
-                        <a href="#courses" class="nav-link">Cours</a>
-                        <a href="#testimonials" class="nav-link">Témoignages</a>
-                        <a href="#contact" class="nav-link">Contact</a>
-                    </nav>
-                    
-                    <!-- Groupe des boutons de droite -->
-                    <div class="header-right-group">
-                        <!-- Sélecteur de devise -->
-                        <div class="currency-selector">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <select id="currencySelector">
-                                <option value="EUR">EUR</option>
-                                <option value="USD">USD</option>
-                                <option value="GBP">GBP</option>
-                                <option value="CAD">CAD</option>
-                                <option value="AUD">AUD</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Bouton Langue -->
-                        <div class="language-switcher">
-                            <span class="flag">🌐</span>
-                            <span>FR</span>
-                        </div>
-                        
-                        <!-- Bouton Connexion (caché si connecté) -->
-                        <a href="login.html" class="login-btn">Connexion</a>
-                        
-                        <!-- Avatar Utilisateur (visible seulement si connecté) -->
-                        <div class="user-avatar" style="display: none;">
-                            <div class="avatar-img">Y</div>
-                            <div class="user-menu">
-                                <a href="dashboard.html">Mon compte</a>
-                                <a href="booking.html">Mes réservations</a>
-                                <a href="profile.html">Mon profil</a>
-                                <a href="#" class="logout-btn">Déconnexion</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         
@@ -175,7 +111,6 @@
         </div>
     </header>
 
-    <!-- Le reste du code reste identique... -->
     <!-- Section Hero avec texte à gauche -->
     <section class="hero">
         <div class="container">
@@ -607,9 +542,8 @@
     <script src="booking.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
-    <script src="currency.js"></script> <!-- Nouveau fichier -->
+    <script src="currency.js"></script>
     <script src="script.js"></script>
-
 
     <script>
         // Fonction pour mettre à jour les liens de connexion avec redirect
