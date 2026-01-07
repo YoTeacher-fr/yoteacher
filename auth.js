@@ -542,13 +542,13 @@ class AuthManager {
         
         const initials = this.getUserInitials();
         
-        // Nouveau design : Bouton Dashboard + Bouton Déconnexion
+        // Nouveau design : Bouton Dashboard avec avatar intégré et croix de déconnexion
         avatar.innerHTML = `
             <a href="dashboard.html" class="dashboard-btn">
                 <div class="avatar-img">${initials}</div>
                 <span>Dashboard</span>
+                <button class="logout-btn-icon" id="logoutBtnIcon" title="Déconnexion">×</button>
             </a>
-            <button class="logout-btn-icon" id="logoutBtnIcon" title="Déconnexion">×</button>
         `;
         
         // Ajouter l'avatar à la fin du container
@@ -570,6 +570,10 @@ class AuthManager {
         const dashboardBtn = avatar.querySelector('.dashboard-btn');
         if (dashboardBtn) {
             dashboardBtn.addEventListener('click', (e) => {
+                // Si on clique sur la croix, ne pas rediriger
+                if (e.target.id === 'logoutBtnIcon' || e.target.closest('#logoutBtnIcon')) {
+                    return;
+                }
                 e.preventDefault();
                 window.location.href = 'dashboard.html';
             });
