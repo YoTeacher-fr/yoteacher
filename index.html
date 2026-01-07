@@ -11,42 +11,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Style pour le sélecteur de devise - MODIFIÉ */
+        /* Style pour le sélecteur de devise - PLUS SIMPLE */
         .currency-selector {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            margin-left: 15px;
         }
         
         .currency-selector select {
-            background: white;
-            border: 1px solid rgba(0, 0, 0, 0.2);
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 20px;
-            padding: 6px 10px;
-            color: #333;
-            font-size: 0.85rem;
-            font-weight: 500;
+            padding: 6px 12px;
+            color: white;
+            font-size: 0.9rem;
             cursor: pointer;
             outline: none;
-            min-width: auto;
-            width: auto;
-            appearance: none;
-            transition: all 0.3s ease;
-        }
-        
-        .currency-selector select:hover {
-            border-color: #1e88e5;
-        }
-        
-        .main-header:not(.scrolled) .currency-selector select {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            color: white;
-        }
-        
-        .main-header:not(.scrolled) .currency-selector select:hover {
-            background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.6);
+            min-width: 80px;
         }
         
         .main-header.scrolled .currency-selector select {
@@ -55,7 +37,7 @@
         }
         
         .currency-selector i {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             opacity: 0.8;
         }
         
@@ -95,23 +77,20 @@
                     <a href="#testimonials" class="nav-link">Témoignages</a>
                     <a href="#contact" class="nav-link">Contact</a>
                     
-                    <!-- Groupe des boutons de droite -->
-                    <div class="header-right-group">
-                        <!-- Sélecteur de devise -->
-                        <div class="currency-selector">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <select id="currencySelector">
-                                <!-- Rempli dynamiquement par currency.js -->
-                            </select>
-                        </div>
-                        
-                        <div class="language-switcher">
-                            <span class="flag">🌐</span>
-                            <span>FR</span>
-                        </div>
-                        
-                        <a href="login.html" class="login-btn">Connexion</a>
+                    <!-- Sélecteur de devise -->
+                    <div class="currency-selector">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <select id="currencySelector">
+                            <!-- Rempli dynamiquement par currency.js -->
+                        </select>
                     </div>
+                    
+                    <div class="language-switcher">
+                        <span class="flag">🌐</span>
+                        <span>FR</span>
+                    </div>
+                    
+                    <a href="login.html" class="login-btn">Connexion</a>
                 </nav>
             </div>
         </div>
@@ -179,17 +158,9 @@
         </div>
     </section>
 
-    <!-- Section À propos - CENTRÉE -->
+    <!-- Section À propos -->
     <section id="about" class="about-section-new">
         <div class="container">
-            <div class="section-header">
-                <span class="section-label">À propos de Yoann</span>
-                <h2 class="section-title">
-                    Votre guide vers la maîtrise du <span class="text-primary">français</span>
-                </h2>
-                <div class="decorative-line"></div>
-            </div>
-            
             <div class="about-grid">
                 <!-- Colonne Image -->
                 <div class="about-image-col">
@@ -205,6 +176,12 @@
 
                 <!-- Colonne Contenu -->
                 <div class="about-content-col">
+                    <span class="section-label">À propos de Yoann</span>
+                    <h2 class="section-title about-title">
+                        Votre guide vers la maîtrise du <span class="text-primary">français</span>
+                    </h2>
+                    <div class="decorative-line-left"></div>
+
                     <div class="about-text">
                         <p>
                             Bonjour ! Je suis Yoann, professeur de français passionné depuis 4 ans.
@@ -259,7 +236,7 @@
         </div>
     </section>
 
-    <!-- Section Cours - CENTRÉE -->
+    <!-- Section Cours -->
     <section id="courses" class="courses-section">
         <div class="container">
             <div class="section-header">
