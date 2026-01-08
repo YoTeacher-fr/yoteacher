@@ -161,11 +161,12 @@ button {
 }
 
 .nav-menu.desktop-menu {
-    flex: 1;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 0 auto;
 }
 
 .nav-links-wrapper {
@@ -211,7 +212,7 @@ button {
     right: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     z-index: 10;
 }
 

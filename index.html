@@ -32,12 +32,13 @@
     }
     
     .nav-menu.desktop-menu {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 0 auto;
-    }
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
     
     .nav-links-wrapper {
         display: flex;
@@ -46,13 +47,13 @@
     }
     
     .header-right-group {
-        position: absolute;
-        right: 0;
-        display: flex;
-        align-items: center;
-        gap: 6px !important;
-        z-index: 10;
-    }
+    position: absolute;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px !important;
+    z-index: 10;
+}
     
     .nav-spacer {
         display: none;
