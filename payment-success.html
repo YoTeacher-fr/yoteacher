@@ -6,11 +6,23 @@
     <title>Paiement Réussi - YoTeacher</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #97b4d4;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
         .success-section {
-            padding: 120px 20px 60px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 60px 20px 40px;
+            background: #97b4d4;
             min-height: 100vh;
             color: white;
             display: flex;
@@ -20,20 +32,20 @@
         }
         
         .success-container {
-            max-width: 600px;
+            max-width: 550px;
             margin: 0 auto;
         }
         
         .success-icon {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             background: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 30px;
-            font-size: 3rem;
+            margin: 0 auto 25px;
+            font-size: 2.5rem;
             color: #4CAF50;
             animation: bounce 1s infinite alternate;
         }
@@ -44,25 +56,31 @@
         }
         
         .success-title {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
+            font-size: 2.2rem;
+            margin-bottom: 15px;
             color: white;
         }
         
         .success-message {
-            font-size: 1.2rem;
-            margin-bottom: 30px;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
             opacity: 0.9;
             line-height: 1.6;
         }
         
         .success-details {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
             border-radius: 16px;
-            padding: 25px;
-            margin: 30px 0;
+            padding: 20px;
+            margin: 25px 0;
             text-align: left;
+        }
+        
+        .success-details h3 {
+            margin-bottom: 15px;
+            color: white;
+            font-size: 1.3rem;
         }
         
         .detail-item {
@@ -78,16 +96,16 @@
         
         .success-actions {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: center;
-            margin-top: 40px;
+            margin-top: 30px;
             flex-wrap: wrap;
         }
         
         .btn-success {
             background: white;
-            color: #667eea;
-            padding: 15px 30px;
+            color: #97b4d4;
+            padding: 14px 28px;
             border-radius: 50px;
             font-weight: 600;
             text-decoration: none;
@@ -95,6 +113,7 @@
             align-items: center;
             gap: 10px;
             transition: all 0.3s;
+            font-size: 0.95rem;
         }
         
         .btn-success:hover {
@@ -106,7 +125,7 @@
             background: transparent;
             color: white;
             border: 2px solid white;
-            padding: 15px 30px;
+            padding: 14px 28px;
             border-radius: 50px;
             font-weight: 600;
             text-decoration: none;
@@ -114,42 +133,38 @@
             align-items: center;
             gap: 10px;
             transition: all 0.3s;
+            font-size: 0.95rem;
         }
         
         .btn-outline-white:hover {
             background: white;
-            color: #667eea;
-        }
-        
-        .email-confirmation {
-            margin-top: 30px;
-            font-size: 0.9rem;
-            opacity: 0.8;
+            color: #97b4d4;
         }
         
         .warning-notice {
             background: rgba(255, 193, 7, 0.2);
             border: 1px solid rgba(255, 193, 7, 0.5);
             border-radius: 10px;
-            padding: 20px;
+            padding: 18px;
             margin: 20px 0;
             text-align: left;
         }
         
         .warning-notice i {
             color: #FFC107;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             margin-right: 10px;
         }
         
         .warning-notice h4 {
             color: #FFC107;
             margin-bottom: 10px;
+            font-size: 1.1rem;
         }
         
         .reservation-status {
             margin: 20px 0;
-            padding: 15px;
+            padding: 12px;
             border-radius: 10px;
             font-weight: 600;
         }
@@ -168,11 +183,11 @@
         
         @media (max-width: 768px) {
             .success-section {
-                padding: 100px 15px 40px;
+                padding: 40px 15px 30px;
             }
             
             .success-title {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             
             .success-actions {
@@ -208,7 +223,7 @@
             <div id="warningNotice" class="warning-notice" style="display: none;">
                 <h4><i class="fas fa-exclamation-triangle"></i> Réservation en attente</h4>
                 <p>Votre paiement a été accepté mais nous avons rencontré un problème technique avec la réservation automatique.</p>
-                <p><strong>Ne vous inquiétez pas !</strong> Nous allons créer manuellement votre réservation et vous enverrons un email de confirmation dans les 24 heures.</p>
+                <p><strong>Ne vous inquiétez pas !</strong> Nous allons créer manuellement votre réservation dans les 24 heures.</p>
                 <p>Votre créneau horaire est réservé pour vous.</p>
             </div>
             
@@ -226,10 +241,6 @@
                 <a href="booking.html" class="btn-outline-white">
                     <i class="fas fa-calendar-plus"></i> Réserver un autre cours
                 </a>
-            </div>
-            
-            <div class="email-confirmation" id="emailConfirmation">
-                <i class="fas fa-envelope"></i> Vérifiez votre boîte email pour le lien de la visioconférence
             </div>
         </div>
     </section>
@@ -276,7 +287,7 @@
             });
             
             detailsDiv.innerHTML = `
-                <h3 style="margin-bottom: 20px; color: white;">Récapitulatif de votre réservation</h3>
+                <h3>Récapitulatif de votre réservation</h3>
                 <div class="detail-item">
                     <span>Cours:</span>
                     <span>${booking.courseType === 'essai' ? 'Cours d\'essai' : 
@@ -304,19 +315,15 @@
         function updateReservationStatus(booking, hasWarning) {
             const statusDiv = document.getElementById('reservationStatus');
             const warningDiv = document.getElementById('warningNotice');
-            const emailConfirmation = document.getElementById('emailConfirmation');
             
             if (hasWarning || booking.status === 'payment_ok_reservation_failed') {
                 // Réservation Cal.com échouée
                 statusDiv.innerHTML = `
                     <div class="reservation-status status-pending">
-                        <i class="fas fa-clock"></i> Réservation en cours de traitement manuel
+                        <i class="fas fa-clock"></i> Erreur lors de la réservation. Veuillez me contacter
                     </div>
                 `;
                 warningDiv.style.display = 'block';
-                emailConfirmation.innerHTML = `
-                    <i class="fas fa-envelope"></i> Vous recevrez un email de confirmation manuelle dans les 24h
-                `;
             } else if (booking.calcomId) {
                 // Réservation Cal.com réussie
                 statusDiv.innerHTML = `
@@ -325,9 +332,6 @@
                     </div>
                 `;
                 warningDiv.style.display = 'none';
-                emailConfirmation.innerHTML = `
-                    <i class="fas fa-envelope"></i> Vérifiez votre boîte email pour le lien de la visioconférence
-                `;
             } else {
                 // Statut inconnu
                 statusDiv.innerHTML = `
@@ -346,7 +350,7 @@
                     <div style="text-align: center; padding: 20px;">
                         <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #FFC107; margin-bottom: 15px;"></i>
                         <p>Impossible de récupérer les détails de la réservation.</p>
-                        <p>Veuillez vérifier votre email pour la confirmation.</p>
+                        <p>Veuillez contacter le support si vous avez des questions.</p>
                     </div>
                 `;
             }
