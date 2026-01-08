@@ -18,7 +18,9 @@
             transition: opacity 0.3s ease;
             padding-top: 60px !important;
             margin: 0;
-            height: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         
         body.loaded {
@@ -86,29 +88,32 @@
             background-color: #f5f5f5;
         }
 
-        /* PROFILE CONTENT */
+        /* PROFILE CONTENT - CENTRÉ VERTICALEMENT */
         .profile-section {
-            padding: 20px 20px 40px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            min-height: calc(100vh - 60px);
         }
 
         .profile-container {
             max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
-        .profile-header {
-            margin-bottom: 30px;
-            display: none; /* Cache complètement l'en-tête avec le titre */
-        }
-
-        /* MODIFICATION CRUCIALE : GRID AVEC COLONNE DROITE PLUS LARGE */
+        /* GRID AVEC COLONNE DROITE PLUS LARGE */
         .profile-grid {
             display: grid;
-            grid-template-columns: 350px 1fr; /* Colonne droite prend le reste */
+            grid-template-columns: 350px 1fr;
             gap: 30px;
-            min-height: 600px; /* Hauteur minimale pour égaliser */
+            height: 100%;
+            max-height: 700px;
         }
 
         .profile-sidebar {
@@ -118,7 +123,6 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
-            height: 100%; /* Prend toute la hauteur disponible */
         }
 
         .profile-content {
@@ -126,14 +130,9 @@
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            height: 100%; /* Prend toute la hauteur disponible */
             display: flex;
             flex-direction: column;
-        }
-
-        /* Rendre les deux colonnes de même hauteur */
-        .profile-sidebar, .profile-content {
-            min-height: 600px; /* Assure une hauteur minimale égale */
+            overflow: hidden;
         }
 
         /* AVATAR */
@@ -206,7 +205,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-top: auto; /* Pousse la navigation vers le bas */
+            margin-top: auto;
         }
 
         .nav-item {
@@ -234,7 +233,8 @@
         /* CONTENU DES ONGLETS */
         .tab-content {
             display: none;
-            flex: 1; /* Prend tout l'espace disponible */
+            flex: 1;
+            overflow-y: auto;
         }
 
         .tab-content.active {
@@ -311,19 +311,13 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            margin-top: auto; /* Pousse le bouton vers le bas */
+            margin-top: auto;
         }
 
         .btn-save:hover {
             background: #2c74e6;
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
-        }
-
-        .password-form {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
         }
 
         /* MESSAGES */
@@ -355,19 +349,11 @@
         @media (max-width: 992px) {
             .profile-grid {
                 grid-template-columns: 1fr;
-                min-height: auto;
+                max-height: none;
             }
             
-            .profile-sidebar, .profile-content {
-                min-height: auto;
-            }
-            
-            .profile-nav {
-                margin-top: 20px;
-            }
-            
-            .btn-save {
-                margin-top: 20px;
+            .profile-section {
+                padding: 20px;
             }
         }
 
@@ -399,7 +385,7 @@
             }
             
             .profile-section {
-                padding: 15px 15px 30px;
+                padding: 15px;
             }
             
             .profile-sidebar, .profile-content {
@@ -505,11 +491,6 @@
 
     <section class="profile-section">
         <div class="profile-container">
-            <!-- Titre "Mon profil" supprimé ici -->
-            <div class="profile-header" style="display: none;">
-                <!-- Le contenu a été supprimé -->
-            </div>
-
             <div class="profile-grid">
                 <!-- Sidebar -->
                 <div class="profile-sidebar">
@@ -626,7 +607,7 @@
                             <p>Mettez à jour votre mot de passe de connexion</p>
                         </div>
 
-                        <form id="passwordForm" class="password-form">
+                        <form id="passwordForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-group">
                                 <label for="currentPassword" class="form-label">Mot de passe actuel</label>
                                 <input type="password" id="currentPassword" class="form-input" required>
