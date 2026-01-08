@@ -81,9 +81,9 @@
             background-color: #f5f5f5;
         }
         
-        /* CORRECTION DU PADDING DU BODY */
+        /* CORRECTION DU PADDING DU BODY - AUGMENTÉ */
         body {
-            padding-top: 60px !important;
+            padding-top: 80px !important; /* Augmenté de 60px à 80px */
             margin: 0;
             height: 100%;
         }
@@ -103,7 +103,7 @@
         .dashboard {
             padding: 15px 20px 30px;
             background: #f8f9fa;
-            min-height: calc(100vh - 60px);
+            min-height: calc(100vh - 80px); /* Ajusté pour le nouveau padding-top */
         }
 
         .dashboard-container {
@@ -138,15 +138,17 @@
             margin-bottom: 15px;
         }
 
-        /* Deuxième section */
+        /* Deuxième section - AJOUT D'ESPACE SUPPLÉMENTAIRE */
         .bottom-section {
-            margin-top: 15px;
+            margin-top: 25px; /* Augmenté de 15px à 25px */
+            padding-top: 20px; /* NOUVEAU: padding pour créer de l'espace */
+            border-top: 2px solid #f0f0f0; /* Ligne de séparation plus visible */
         }
 
         .section-title {
             font-size: 1.4rem;
             color: #333;
-            margin-bottom: 12px;
+            margin-bottom: 20px !important; /* Augmenté de 12px à 20px */
             font-weight: 600;
         }
 
@@ -340,7 +342,7 @@
         .course-buttons-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            gap: 20px; /* Augmenté de 15px à 20px */
             margin-top: 15px;
         }
 
@@ -427,6 +429,7 @@
             .top-row,
             .course-buttons-row {
                 grid-template-columns: 1fr;
+                gap: 25px; /* Augmenté pour mobile aussi */
             }
         }
 
@@ -494,11 +497,11 @@
             }
             
             body {
-                padding-top: 55px !important;
+                padding-top: 65px !important; /* Augmenté de 55px à 65px */
             }
             
             .dashboard {
-                min-height: calc(100vh - 55px);
+                min-height: calc(100vh - 65px); /* Ajusté pour correspondre au nouveau padding-top */
             }
         }
         
