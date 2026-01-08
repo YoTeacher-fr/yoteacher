@@ -8,14 +8,16 @@ class BookingManager {
         this.eventTypeMap = {
             'essai': config.CALCOM_EVENT_TYPE_ESSAI || '4139074',
             'conversation': config.CALCOM_EVENT_TYPE_CONVERSATION || '',
-            'curriculum': config.CALCOM_EVENT_TYPE_CURRICULUM || ''
+            'curriculum': config.CALCOM_EVENT_TYPE_CURRICULUM || '',
+            'examen': config.CALCOM_EVENT_TYPE_EXAMEN || '4139076' // NOUVEAU
         };
         
         // Durées disponibles pour chaque type de cours (en minutes)
         this.durationOptions = {
             'essai': [15],
             'conversation': [30, 45, 60],
-            'curriculum': [30, 45, 60]
+            'curriculum': [30, 45, 60],
+            'examen': [30, 45, 60] // NOUVEAU
         };
         
         this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -250,6 +252,7 @@ class BookingManager {
             case 'essai': return 15;
             case 'conversation': return 60;
             case 'curriculum': return 60;
+            case 'examen': return 60; // NOUVEAU
             default: return 60;
         }
     }

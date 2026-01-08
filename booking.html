@@ -767,6 +767,7 @@
                                 <option value="essai">Cours d'essai (15 min)</option>
                                 <option value="conversation">Conversation</option>
                                 <option value="curriculum">Curriculum complet</option>
+                                <option value="examen">Préparation d'examen</option> <!-- NOUVEAU -->
                             </select>
                         </div>
 
@@ -1055,7 +1056,7 @@
             }
 
             // Vérifier si l'utilisateur doit être connecté
-            if ((courseType === 'conversation' || courseType === 'curriculum') && !window.authManager?.getCurrentUser()) {
+            if ((courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') && !window.authManager?.getCurrentUser()) {
                 showError('Veuillez vous connecter pour réserver ce type de cours');
                 return;
             }
@@ -1081,6 +1082,9 @@
                 } else if (courseType === 'curriculum') {
                     // Tarifs curriculum: 30=17.5€, 45=26.25€, 60=35€
                     priceEUR = duration === 30 ? 17.5 : duration === 45 ? 26.25 : 35;
+                } else if (courseType === 'examen') {
+                    // Tarifs examen: 30=15€, 45=22.5€, 60=30€
+                    priceEUR = duration === 30 ? 15 : duration === 45 ? 22.5 : 30;
                 }
 
                 // Appliquer le nombre de cours
@@ -1162,10 +1166,10 @@
             let courseTypeParam = urlParams.get('type');
             
             // Si pas de paramètre "type", vérifier dans localStorage
-            if (!courseTypeParam || !['essai', 'conversation', 'curriculum'].includes(courseTypeParam)) {
+            if (!courseTypeParam || !['essai', 'conversation', 'curriculum', 'examen'].includes(courseTypeParam)) {
                 const storedCourseType = localStorage.getItem('preLoginCourseType');
                 
-                if (storedCourseType && ['essai', 'conversation', 'curriculum'].includes(storedCourseType)) {
+                if (storedCourseType && ['essai', 'conversation', 'curriculum', 'examen'].includes(storedCourseType)) {
                     courseTypeParam = storedCourseType;
                     localStorage.removeItem('preLoginCourseType');
                 } else {
@@ -1306,7 +1310,7 @@
                 durationGroup.classList.remove('visible');
                 coursesCountGroup.style.display = 'none';
                 loginRequired.style.display = 'none';
-            } else if (courseType === 'conversation' || courseType === 'curriculum') {
+            } else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
                 if (isLoggedIn) {
                     // Connecté: afficher le sélecteur de durée
                     durationGroup.classList.add('visible');
@@ -1318,7 +1322,9 @@
                     durationGroup.classList.remove('visible');
                     coursesCountGroup.style.display = 'none';
                     loginRequired.style.display = 'block';
-                    courseTypeName.textContent = courseType === 'conversation' ? 'Conversation' : 'Curriculum complet';
+                    if (courseType === 'conversation') courseTypeName.textContent = 'Conversation';
+                    else if (courseType === 'curriculum') courseTypeName.textContent = 'Curriculum complet';
+                    else if (courseType === 'examen') courseTypeName.textContent = 'Préparation d\'examen';
                     console.log('Message connexion affiché pour', courseType);
                 }
             } else {
@@ -1350,7 +1356,7 @@
                 const courseType = document.getElementById('courseType').value || 'essai';
                 
                 // Pour essai: pas besoin de durée
-                // Pour conversation/curriculum: utiliser la durée sélectionnée si connecté
+                // Pour conversation/curriculum/examen: utiliser la durée sélectionnée si connecté
                 let duration = null;
                 if (courseType !== 'essai' && durationGroup.classList.contains('visible')) {
                     duration = parseInt(durationInput.value) || 60;
@@ -1550,6 +1556,40 @@
                 } else {
                     duration = '60 min';
                     let unitPriceEUR = 35;
+                    let totalPriceEUR = unitPriceEUR * coursesCount;
+                    
+                    if (window.currencyManager) {
+                        price = window.currencyManager.formatPrice(totalPriceEUR);
+                    } else {
+                        price = totalPriceEUR + '€';
+                    }
+                }
+            } else if (courseType === 'examen') {
+                courseName = 'Préparation d\'examen';
+                if (user && durationGroup.classList.contains('visible')) {
+                    const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
+                    duration = selectedDuration + ' min';
+                    
+                    // Prix unitaire en EUR selon la durée
+                    let unitPriceEUR = 30;
+                    if (selectedDuration === 30) unitPriceEUR = 15;
+                    else if (selectedDuration === 45) unitPriceEUR = 22.5;
+                    
+                    // Appliquer le nombre de cours et la réduction
+                    let totalPriceEUR = unitPriceEUR * coursesCount;
+                    if (discountPercent > 0) {
+                        totalPriceEUR = totalPriceEUR * (1 - discountPercent / 100);
+                    }
+                    
+                    // Convertir dans la devise actuelle
+                    if (window.currencyManager) {
+                        price = window.currencyManager.formatPrice(totalPriceEUR);
+                    } else {
+                        price = totalPriceEUR + '€';
+                    }
+                } else {
+                    duration = '60 min';
+                    let unitPriceEUR = 30;
                     let totalPriceEUR = unitPriceEUR * coursesCount;
                     
                     if (window.currencyManager) {

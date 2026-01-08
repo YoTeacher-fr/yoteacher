@@ -48,20 +48,23 @@ const coursesData = [
     },
     {
         id: 3,
-        type: "Cours d'Essai",
-        focus: "Premier contact, évaluation",
-        price: 5,
-        basePriceEUR: 5,
-        duration: "15 minutes",
+        type: "Préparation d'examen",
+        focus: "DELF, DALF, TCF",
+        price: 30,
+        basePriceEUR: 30,
+        duration: "60 minutes",
         features: [
-            "Évaluation de votre niveau",
-            "Définition des objectifs",
-            "Découverte de la méthode"
+            "Simulations d'examen",
+            "Correction détaillée",
+            "Stratégies de réussite",
+            "Feedbacks personnalisés"
         ],
         details: [
-            { duration: "Confirmation automatique" }
+            { duration: "30min", price: 15, basePriceEUR: 15 },
+            { duration: "45min", price: 22.5, basePriceEUR: 22.5 },
+            { duration: "Forfait 10 cours", price: 285, basePriceEUR: 285, discount: "(-5%)" }
         ],
-        buttonText: "Essayer",
+        buttonText: "Choisir ce cours",
         featured: false
     }
 ];
@@ -211,7 +214,7 @@ const coursesManager = {
         // HTML pour le prix avec "/h" en plus petit
         let priceHTML = '';
         if (course.id === 3) {
-            priceHTML = `<span class="price-main">${course.price}€</span>`;
+            priceHTML = `<span class="price-main">${course.price}€<span class="price-per-hour">/h</span></span>`;
         } else {
             priceHTML = `
                 <span class="price-main">${course.price}€<span class="price-per-hour">/h</span></span>
@@ -313,10 +316,9 @@ const coursesManager = {
                 if (course) {
                     let courseType = 'essai';
                     if (course.id === 1) courseType = 'conversation';
-                    if (course.id === 2) courseType = 'grammaire';
-                    if (course.id === 3) courseType = 'essai';
+                    if (course.id === 2) courseType = 'curriculum';
+                    if (course.id === 3) courseType = 'examen';
                     
-                    // Correction pour mobile: navigation directe sans notification
                     window.location.href = `booking.html?type=${courseType}`;
                 }
             });
