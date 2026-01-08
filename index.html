@@ -13,41 +13,16 @@
     <style>
 /* 1. Navigation : Augmentation de la taille du texte */
     .nav-link {
-        font-size: 1.2rem !important;
+        font-size: 1.2rem !important; /* Plus grand pour À propos, Cours, etc. */
         font-weight: 400;
-    }
-    
-/* Navigation centrée - FIX COMPLET */
-    .header-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 20px;
-    }
-    
-    .logo-section {
-        flex-shrink: 0;
-    }
-    
-    .nav-menu.desktop-menu {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 15px !important;
-    }
-    
-    .header-right-group {
-        display: flex;
-        align-items: center;
-        gap: 6px !important;
-        margin-left: auto;
-        flex-shrink: 0;
-    }
-    
-    .nav-spacer {
-        display: none;
-    }
+    }       
+ /* 1. Bloc de droite : Rapprochement maximal des éléments */
+        .header-right-group {
+            display: flex;
+            align-items: center;
+            gap: 6px !important; /* Espace réduit entre devise, langue et connexion */
+            margin-left: 10px;
+        }
 
         /* 2. Devise : Miniaturisation et centrage du texte */
         .currency-selector {
@@ -60,20 +35,21 @@
             background: white;
             border: 1px solid rgba(0, 0, 0, 0.15);
             border-radius: 20px;
-            padding: 2px 4px;
+            padding: 2px 4px;   /* Réduit au strict minimum */
             color: #333;
-            font-size: 0.8rem;
+            font-size: 0.8rem;  /* Taille miniature */
             font-weight: 600;
             cursor: pointer;
             outline: none;
             width: auto;
-            text-align: center;
-            text-align-last: center;
-            appearance: none;
+            text-align: center;      /* Centrage horizontal */
+            text-align-last: center; /* Force le centrage sur Chrome/Safari */
+            appearance: none;        /* Retire la flèche pour libérer de l'espace */
             -webkit-appearance: none;
             transition: all 0.3s ease;
         }
         
+        /* Couleur du texte quand le header est transparent */
         .main-header:not(.scrolled) .currency-selector select {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -88,18 +64,18 @@
             gap: 2px;
         }
 
-        /* 4. Bouton Connexion : Affinement */
+        /* 4. Bouton Connexion : Affinement pour correspondre au bloc */
         .login-btn {
             padding: 10px 22px !important;
             font-size: 1rem !important;
-            font-weight: 600 !important;
-            border-radius: 50px;
+font-weight: 600 !important;
+        border-radius: 50px;
         }
 
         @media (max-width: 768px) {
             .currency-selector { display: none; }
         }
-</style>
+    </style>
 </head>
 <body>
     <!-- Header -->
