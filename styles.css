@@ -2313,24 +2313,21 @@ button {
 }
 
 /* Bouton déconnexion intégré dans le dashboard */
-/* Bouton déconnexion intégré dans le dashboard */
 .logout-btn-icon {
     position: absolute;
-    right: -1px;
-    top: -1px;
+    right: -8px;
+    top: -8px;
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background-color: transparent;
     color: #e74c3c;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1rem;
     cursor: pointer;
-    border: 2px solid rgba(231, 76, 60, 0.3);
+    border: 2px solid #e74c3c;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transition: all 0.3s;
     font-weight: bold;
@@ -2338,15 +2335,12 @@ button {
 }
 
 .logout-btn-icon:hover {
-    background-color: rgba(231, 76, 60, 0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background-color: #e74c3c;
     color: white;
-    border-color: rgba(231, 76, 60, 0.8);
+    border-color: #e74c3c;
     transform: scale(1.15);
     box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
 }
-
 /* Suppression de l'ancien menu déroulant */
 .user-menu {
     display: none !important;
