@@ -18,8 +18,7 @@
             transition: opacity 0.3s ease;
             padding-top: 60px !important;
             margin: 0;
-            height: 100vh; /* Utiliser toute la hauteur de la fenêtre */
-            overflow: hidden; /* Empêcher le scroll global */
+            height: 100%;
         }
         
         body.loaded {
@@ -27,7 +26,7 @@
             visibility: visible;
         }
 
-        /* HEADER COMME LOGIN - SANS BOUTON PROFIL */
+        /* HEADER COMME LOGIN */
         .main-header {
             background-color: rgba(255, 255, 255, 0.98) !important;
             box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
@@ -69,6 +68,24 @@
             margin-left: auto !important;
         }
         
+        /* Bouton profil Desktop */
+        .profile-btn {
+            background-color: #4f9ad1;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .profile-btn:hover {
+            background-color: #3f8ac1;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 154, 209, 0.3);
+        }
+        
         /* Sélecteur de langue */
         .language-switcher {
             display: flex;
@@ -87,84 +104,86 @@
             background-color: #f5f5f5;
         }
 
-        /* PROFILE CONTENT - PAS DE SCROLL */
+        /* PROFILE CONTENT - MODIFICATION PRINCIPALE */
         .profile-section {
-            padding: 15px 20px 20px; /* Réduit le padding */
+            padding: 20px 20px 40px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            height: calc(100vh - 60px); /* Hauteur exacte moins header */
-            overflow: hidden; /* Pas de scroll dans cette section */
+            min-height: calc(100vh - 60px);
         }
 
         .profile-container {
             max-width: 1200px;
             margin: 0 auto;
-            height: 100%; /* Prend toute la hauteur disponible */
         }
 
         .profile-header {
-            margin-bottom: 15px; /* Réduit la marge */
+            margin-bottom: 30px;
         }
 
         .profile-header h1 {
-            font-size: 1.8rem; /* Réduit la taille du texte */
+            font-size: 2.2rem;
             color: #333;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
         .profile-header p {
             color: #666;
-            font-size: 0.95rem; /* Réduit la taille du texte */
+            font-size: 1.1rem;
         }
 
-        /* GRID AVEC HAUTEUR FIXE POUR ÉVITER LE SCROLL */
+        /* MODIFICATION CRUCIALE : GRID AVEC COLONNE DROITE PLUS LARGE */
         .profile-grid {
             display: grid;
-            grid-template-columns: 320px 1fr; /* Colonne droite plus large */
-            gap: 20px; /* Réduit l'espace entre colonnes */
-            height: calc(100% - 70px); /* Hauteur calculée pour pas de scroll */
-            min-height: 0; /* Important pour éviter l'expansion */
-        }
-
-        /* STYLES POUR LES DEUX COLONNES */
-        .profile-sidebar, .profile-content {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-            overflow: hidden; /* Contenu ne dépasse pas */
-            display: flex;
-            flex-direction: column;
-            height: 100%; /* Prend toute la hauteur disponible */
-            min-height: 0; /* Important pour flex */
+            grid-template-columns: 350px 1fr; /* Colonne droite prend le reste */
+            gap: 30px;
+            min-height: 600px; /* Hauteur minimale pour égaliser */
         }
 
         .profile-sidebar {
-            padding: 20px; /* Réduit le padding */
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* Prend toute la hauteur disponible */
         }
 
         .profile-content {
-            padding: 25px; /* Réduit le padding */
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            height: 100%; /* Prend toute la hauteur disponible */
+            display: flex;
+            flex-direction: column;
         }
 
-        /* AVATAR - PLUS PETIT */
+        /* Rendre les deux colonnes de même hauteur */
+        .profile-sidebar, .profile-content {
+            min-height: 600px; /* Assure une hauteur minimale égale */
+        }
+
+        /* AVATAR */
         .profile-avatar {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
 
         .avatar-large {
-            width: 100px; /* Réduit la taille */
-            height: 100px;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
             background: linear-gradient(135deg, #3c84f6, #1e88e5);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 15px;
-            font-size: 2rem; /* Réduit la taille */
+            margin: 0 auto 20px;
+            font-size: 3rem;
             color: white;
             font-weight: 700;
-            border: 4px solid white;
-            box-shadow: 0 8px 20px rgba(60, 132, 246, 0.2);
+            border: 5px solid white;
+            box-shadow: 0 10px 30px rgba(60, 132, 246, 0.2);
             overflow: hidden;
         }
 
@@ -176,7 +195,7 @@
 
         .avatar-upload {
             position: relative;
-            margin-top: 10px;
+            margin-top: 15px;
         }
 
         .avatar-upload input {
@@ -189,12 +208,12 @@
 
         .avatar-upload label {
             display: inline-block;
-            padding: 6px 12px;
+            padding: 8px 16px;
             background: #f8f9fa;
             border: 1px solid #e0e0e0;
             border-radius: 50px;
             cursor: pointer;
-            font-size: 0.85rem; /* Texte plus petit */
+            font-size: 0.9rem;
             color: #666;
             transition: all 0.3s;
         }
@@ -204,31 +223,30 @@
         }
 
         .upload-help {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             color: #888;
-            margin-top: 5px;
+            margin-top: 8px;
             text-align: center;
         }
 
-        /* NAVIGATION - PLUS COMPACTE */
+        /* NAVIGATION */
         .profile-nav {
             display: flex;
             flex-direction: column;
-            gap: 5px; /* Moins d'espace entre éléments */
-            margin-top: auto;
+            gap: 10px;
+            margin-top: auto; /* Pousse la navigation vers le bas */
         }
 
         .nav-item {
-            padding: 12px 15px;
-            border-radius: 10px;
+            padding: 15px 20px;
+            border-radius: 12px;
             text-decoration: none;
             color: #666;
             font-weight: 500;
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 0.9rem; /* Texte plus petit */
+            gap: 12px;
         }
 
         .nav-item:hover {
@@ -241,12 +259,10 @@
             color: #3c84f6;
         }
 
-        /* CONTENU DES ONGLETS - PERMET LE SCROLL INTERNE SI NÉCESSAIRE */
+        /* CONTENU DES ONGLETS */
         .tab-content {
             display: none;
-            flex: 1;
-            overflow-y: auto; /* Scroll interne seulement si nécessaire */
-            max-height: calc(100% - 70px); /* Limite la hauteur */
+            flex: 1; /* Prend tout l'espace disponible */
         }
 
         .tab-content.active {
@@ -254,47 +270,46 @@
             flex-direction: column;
         }
 
-        /* Réduire la taille des formulaires */
         .tab-header {
-            margin-bottom: 15px;
+            margin-bottom: 25px;
         }
 
         .tab-header h2 {
-            font-size: 1.4rem; /* Réduit */
+            font-size: 1.8rem;
             color: #333;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         .tab-header p {
             color: #666;
-            font-size: 0.9rem; /* Réduit */
+            font-size: 1rem;
         }
 
-        /* FORMULAIRES COMPACTS */
+        /* FORMULAIRES */
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 20px;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             font-weight: 600;
             color: #444;
-            font-size: 0.9rem; /* Réduit */
+            font-size: 0.95rem;
         }
 
         .form-input, .form-select, .form-textarea {
             width: 100%;
-            padding: 12px 14px; /* Réduit */
+            padding: 14px 16px;
             border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 0.95rem; /* Réduit */
+            border-radius: 12px;
+            font-size: 1rem;
             transition: all 0.3s;
             background: #f8f9fa;
         }
@@ -307,57 +322,60 @@
         }
 
         .form-textarea {
-            min-height: 80px; /* Réduit */
+            min-height: 120px;
             resize: vertical;
         }
 
-        /* BOUTONS */
         .btn-save {
-            padding: 12px 30px;
+            padding: 15px 40px;
             background: #3c84f6;
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 0.95rem; /* Réduit */
+            border-radius: 12px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            margin-top: 10px;
+            gap: 10px;
+            margin-top: auto; /* Pousse le bouton vers le bas */
         }
 
         .btn-save:hover {
             background: #2c74e6;
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(60, 132, 246, 0.3);
+            box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+        }
+
+        .password-form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         /* MESSAGES */
         .error-message {
             background: #ffeaea;
             color: #d32f2f;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.85rem; /* Réduit */
+            gap: 10px;
             display: none;
         }
 
         .success-message {
             background: #e8f5e9;
             color: #2e7d32;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.85rem; /* Réduit */
+            gap: 10px;
             display: none;
         }
 
@@ -365,22 +383,19 @@
         @media (max-width: 992px) {
             .profile-grid {
                 grid-template-columns: 1fr;
-                height: auto;
-                min-height: 0;
+                min-height: auto;
             }
             
-            .profile-section {
-                height: auto;
-                overflow: visible;
+            .profile-sidebar, .profile-content {
+                min-height: auto;
             }
             
-            body {
-                overflow: auto;
-                height: auto;
+            .profile-nav {
+                margin-top: 20px;
             }
             
-            .tab-content {
-                max-height: none;
+            .btn-save {
+                margin-top: 20px;
             }
         }
 
@@ -412,15 +427,15 @@
             }
             
             .profile-section {
-                padding: 10px 15px 15px;
+                padding: 15px 15px 30px;
             }
             
             .profile-header h1 {
-                font-size: 1.6rem;
+                font-size: 1.8rem;
             }
             
             .profile-sidebar, .profile-content {
-                padding: 18px;
+                padding: 25px;
             }
             
             .form-row {
@@ -428,23 +443,23 @@
             }
             
             .avatar-large {
-                width: 80px;
-                height: 80px;
-                font-size: 1.8rem;
+                width: 120px;
+                height: 120px;
+                font-size: 2.5rem;
             }
         }
 
         @media (max-width: 480px) {
             .profile-content {
-                padding: 15px;
+                padding: 20px;
             }
             
             .profile-sidebar {
-                padding: 15px;
+                padding: 20px;
             }
             
             .tab-header h2 {
-                font-size: 1.3rem;
+                font-size: 1.5rem;
             }
             
             .btn-save {
@@ -498,7 +513,7 @@
         setTimeout(checkAuthentication, 200);
     </script>
 
-    <!-- Header simplifié sans bouton profil -->
+    <!-- Header comme login.html -->
     <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
@@ -508,13 +523,15 @@
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-                <!-- Groupe de droite avec seulement le sélecteur de langue -->
+                <!-- Bouton Profil Desktop -->
                 <div class="header-right-group">
                     <!-- Sélecteur de langue -->
                     <div class="language-switcher">
                         <span class="flag">🌐</span>
                         <span>FR</span>
                     </div>
+                    
+                    <a href="profile.html" class="profile-btn">Mon Profil</a>
                 </div>
             </div>
         </div>
@@ -524,7 +541,7 @@
         <div class="profile-container">
             <div class="profile-header">
                 <h1>Mon profil</h1>
-                <p>Gérez vos informations personnelles</p>
+                <p>Gérez vos informations personnelles et paramètres</p>
             </div>
 
             <div class="profile-grid">
@@ -537,10 +554,10 @@
                         <div class="avatar-upload">
                             <input type="file" id="avatarInput" accept="image/*">
                             <label for="avatarInput">
-                                <i class="fas fa-camera"></i> Changer
+                                <i class="fas fa-camera"></i> Changer la photo
                             </label>
                         </div>
-                        <div class="upload-help">JPG/PNG, max 5MB</div>
+                        <div class="upload-help">JPG, PNG - max 5MB</div>
                     </div>
 
                     <nav class="profile-nav">
@@ -548,7 +565,7 @@
                             <i class="fas fa-user"></i> Informations
                         </a>
                         <a href="#" class="nav-item" data-tab="language">
-                            <i class="fas fa-language"></i> Niveau
+                            <i class="fas fa-language"></i> Niveau français
                         </a>
                         <a href="#" class="nav-item" data-tab="password">
                             <i class="fas fa-key"></i> Mot de passe
@@ -556,7 +573,7 @@
                     </nav>
                 </div>
 
-                <!-- Contenu principal -->
+                <!-- Contenu principal - COLONNE PLUS LARGE -->
                 <div class="profile-content">
                     <!-- Messages -->
                     <div class="error-message" id="errorMessage">
@@ -572,8 +589,8 @@
                     <!-- Onglet: Informations personnelles -->
                     <div class="tab-content active" id="personalTab">
                         <div class="tab-header">
-                            <h2>Informations</h2>
-                            <p>Mettez à jour vos informations</p>
+                            <h2>Informations personnelles</h2>
+                            <p>Mettez à jour vos informations de contact</p>
                         </div>
 
                         <form id="personalForm" style="display: flex; flex-direction: column; flex: 1;">
@@ -589,17 +606,17 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="email" class="form-label">Email</label>
+                                <label for="email" class="form-label">Adresse email</label>
                                 <input type="email" id="email" class="form-input" required>
                             </div>
 
                             <div class="form-group">
-                                <label for="description" class="form-label">Description</label>
+                                <label for="description" class="form-label">Description (optionnel)</label>
                                 <textarea id="description" class="form-textarea" placeholder="Parlez-nous un peu de vous..."></textarea>
                             </div>
 
                             <button type="submit" class="btn-save">
-                                <i class="fas fa-save"></i> Enregistrer
+                                <i class="fas fa-save"></i> Enregistrer les modifications
                             </button>
                         </form>
                     </div>
@@ -607,15 +624,15 @@
                     <!-- Onglet: Niveau de français -->
                     <div class="tab-content" id="languageTab">
                         <div class="tab-header">
-                            <h2>Niveau français</h2>
-                            <p>Votre niveau actuel</p>
+                            <h2>Niveau de français</h2>
+                            <p>Définissez votre niveau actuel en français</p>
                         </div>
 
                         <form id="languageForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-group">
-                                <label for="currentLevel" class="form-label">Niveau (CEFR)</label>
+                                <label for="currentLevel" class="form-label">Niveau actuel (CEFR)</label>
                                 <select id="currentLevel" class="form-select">
-                                    <option value="">Sélectionnez</option>
+                                    <option value="">Sélectionnez votre niveau</option>
                                     <option value="A1">A1 - Débutant</option>
                                     <option value="A2">A2 - Élémentaire</option>
                                     <option value="B1">B1 - Intermédiaire</option>
@@ -626,12 +643,12 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="learningGoals" class="form-label">Objectifs</label>
-                                <textarea id="learningGoals" class="form-textarea" placeholder="Ex: Préparer le DELF B2..."></textarea>
+                                <label for="learningGoals" class="form-label">Objectifs d'apprentissage</label>
+                                <textarea id="learningGoals" class="form-textarea" placeholder="Ex: Préparer le DELF B2, Améliorer mon français professionnel..."></textarea>
                             </div>
 
                             <button type="submit" class="btn-save">
-                                <i class="fas fa-save"></i> Enregistrer
+                                <i class="fas fa-save"></i> Enregistrer les préférences
                             </button>
                         </form>
                     </div>
@@ -639,29 +656,29 @@
                     <!-- Onglet: Mot de passe -->
                     <div class="tab-content" id="passwordTab">
                         <div class="tab-header">
-                            <h2>Mot de passe</h2>
-                            <p>Changez votre mot de passe</p>
+                            <h2>Changer le mot de passe</h2>
+                            <p>Mettez à jour votre mot de passe de connexion</p>
                         </div>
 
-                        <form id="passwordForm" style="display: flex; flex-direction: column; flex: 1;">
+                        <form id="passwordForm" class="password-form">
                             <div class="form-group">
                                 <label for="currentPassword" class="form-label">Mot de passe actuel</label>
                                 <input type="password" id="currentPassword" class="form-input" required>
                             </div>
 
                             <div class="form-group">
-                                <label for="newPassword" class="form-label">Nouveau</label>
+                                <label for="newPassword" class="form-label">Nouveau mot de passe</label>
                                 <input type="password" id="newPassword" class="form-input" required>
-                                <small style="color: #666; font-size: 0.8rem; display: block; margin-top: 5px;">8 caractères minimum</small>
+                                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">Minimum 8 caractères</small>
                             </div>
 
                             <div class="form-group">
-                                <label for="confirmPassword" class="form-label">Confirmer</label>
+                                <label for="confirmPassword" class="form-label">Confirmer le nouveau mot de passe</label>
                                 <input type="password" id="confirmPassword" class="form-input" required>
                             </div>
 
                             <button type="submit" class="btn-save">
-                                <i class="fas fa-key"></i> Changer
+                                <i class="fas fa-key"></i> Changer le mot de passe
                             </button>
                         </form>
                     </div>
@@ -736,23 +753,24 @@
                     if (!file) return;
                     
                     if (file.size > 5 * 1024 * 1024) {
-                        showError('Image trop grande (max 5MB)');
+                        showError('La taille de l\'image ne doit pas dépasser 5MB');
                         return;
                     }
                     
                     try {
-                        // Aperçu local
+                        // Créer un aperçu local
                         const reader = new FileReader();
                         reader.onload = function(event) {
                             const avatar = document.getElementById('userAvatar');
-                            avatar.innerHTML = `<img src="${event.target.result}" alt="Photo">`;
+                            avatar.innerHTML = `<img src="${event.target.result}" alt="Photo profil">`;
                         };
                         reader.readAsDataURL(file);
                         
-                        showSuccess('Photo mise à jour');
+                        // Upload vers Supabase Storage (à adapter selon votre configuration)
+                        showSuccess('Photo mise à jour localement. Sauvegarde cloud à configurer.');
                         
                     } catch (error) {
-                        showError('Erreur: ' + error.message);
+                        showError('Erreur lors du chargement de l\'image: ' + error.message);
                     }
                 });
                 
@@ -774,7 +792,7 @@
                         
                         if (error) throw error;
                         
-                        showSuccess('Profil mis à jour');
+                        showSuccess('Profil mis à jour avec succès !');
                         
                     } catch (error) {
                         showError('Erreur: ' + error.message);
@@ -795,7 +813,7 @@
                         
                         if (error) throw error;
                         
-                        showSuccess('Niveau mis à jour');
+                        showSuccess('Niveau de français mis à jour !');
                         
                     } catch (error) {
                         showError('Erreur: ' + error.message);
@@ -806,27 +824,30 @@
                 document.getElementById('passwordForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
+                    const currentPassword = document.getElementById('currentPassword').value;
                     const newPassword = document.getElementById('newPassword').value;
                     const confirmPassword = document.getElementById('confirmPassword').value;
                     
                     if (newPassword.length < 8) {
-                        showError('8 caractères minimum');
+                        showError('Le mot de passe doit contenir au moins 8 caractères');
                         return;
                     }
                     
                     if (newPassword !== confirmPassword) {
-                        showError('Mots de passe différents');
+                        showError('Les mots de passe ne correspondent pas');
                         return;
                     }
                     
                     try {
+                        // Note: Supabase ne permet pas de vérifier l'ancien mot de passe directement
+                        // Vous devrez implémenter une logique de vérification appropriée
                         const { error } = await supabase.auth.updateUser({
                             password: newPassword
                         });
                         
                         if (error) throw error;
                         
-                        showSuccess('Mot de passe changé');
+                        showSuccess('Mot de passe mis à jour avec succès !');
                         document.getElementById('passwordForm').reset();
                         
                     } catch (error) {
@@ -836,7 +857,7 @@
                 
             } catch (error) {
                 console.error('Erreur:', error);
-                showError('Erreur chargement profil');
+                showError('Erreur lors du chargement du profil');
             }
         }
         
@@ -866,7 +887,7 @@
             
             setTimeout(() => {
                 errorDiv.style.display = 'none';
-            }, 4000);
+            }, 5000);
         }
         
         function showSuccess(message) {
