@@ -100,12 +100,7 @@
 
         .profile-header {
             margin-bottom: 30px;
-        }
-
-        .profile-header h1 {
-            font-size: 2.2rem;
-            color: #333;
-            margin-bottom: 8px;
+            display: none; /* Cache complètement l'en-tête avec le titre */
         }
 
         /* MODIFICATION CRUCIALE : GRID AVEC COLONNE DROITE PLUS LARGE */
@@ -407,10 +402,6 @@
                 padding: 15px 15px 30px;
             }
             
-            .profile-header h1 {
-                font-size: 1.8rem;
-            }
-            
             .profile-sidebar, .profile-content {
                 padding: 25px;
             }
@@ -514,9 +505,9 @@
 
     <section class="profile-section">
         <div class="profile-container">
-            <div class="profile-header">
-                <h1>Mon profil</h1>
-                <!-- Texte descriptif supprimé -->
+            <!-- Titre "Mon profil" supprimé ici -->
+            <div class="profile-header" style="display: none;">
+                <!-- Le contenu a été supprimé -->
             </div>
 
             <div class="profile-grid">
