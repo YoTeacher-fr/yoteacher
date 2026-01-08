@@ -129,17 +129,18 @@ button {
 
 .header-content {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    position: relative;
     padding: 8px 0 !important;
-    flex-wrap: wrap;
-    gap: 15px;
 }
 
 .logo-section {
+    position: absolute;
+    left: 0;
     display: flex;
     align-items: center;
     gap: 10px;
+    z-index: 10;
 }
 
 .logo {
@@ -160,14 +161,21 @@ button {
 }
 
 .nav-menu.desktop-menu {
+    flex: 1;
     display: flex;
-    gap: 15px !important;
+    justify-content: center;
     align-items: center;
-    flex-wrap: wrap;
+    margin: 0 auto;
+}
+
+.nav-links-wrapper {
+    display: flex;
+    gap: 15px;
+    align-items: center;
 }
 
 .nav-spacer {
-    flex-grow: 1;
+    display: none;
 }
 
 .nav-link {
@@ -199,11 +207,12 @@ button {
 
 /* ===== GROUPEMENT DES BOUTONS DROITE ===== */
 .header-right-group {
+    position: absolute;
+    right: 0;
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-left: 15px;
-    flex-shrink: 0;
+    z-index: 10;
 }
 
 .language-switcher {
@@ -2238,5 +2247,195 @@ button {
     .user-menu {
         right: 0;
         left: auto;
+    }
+}
+/* ===== NAVIGATION CENTRÉE ===== */
+.nav-menu.desktop-menu {
+    display: flex;
+    gap: 15px !important;
+    align-items: center;
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: center;
+}
+
+.nav-spacer {
+    display: none;
+}
+
+/* ===== GROUPEMENT DES BOUTONS DROITE ===== */
+.header-right-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Bouton Dashboard avec avatar intégré et croix */
+.dashboard-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #4f9ad1;
+    color: white;
+    padding: 6px 35px 6px 6px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    text-decoration: none;
+    border: none;
+    position: relative;
+    cursor: pointer;
+}
+
+.dashboard-btn:hover {
+    background-color: #3f8ac1;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(79, 154, 209, 0.3);
+}
+
+.dashboard-btn .avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+/* Bouton déconnexion intégré dans le dashboard */
+.logout-btn-icon {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: white;
+    color: #e74c3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    border: 2px solid white;
+    transition: all 0.3s;
+    font-weight: bold;
+    z-index: 2;
+}
+
+.logout-btn-icon:hover {
+    background-color: #e74c3c;
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+/* Suppression de l'ancien menu déroulant */
+.user-menu {
+    display: none !important;
+}
+/* Suppression de l'ancien menu déroulant */
+.user-menu {
+    display: none !important;
+}
+
+/* Styles pour l'avatar et menu mobile */
+@media (max-width: 768px) {
+    .user-avatar {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        order: 3;
+    }
+    
+    .dashboard-btn {
+        padding: 5px 30px 5px 5px;
+        font-size: 0.85rem;
+        gap: 6px;
+    }
+    
+    .dashboard-btn .avatar-img {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+    
+    .logout-btn-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 0.9rem;
+        right: 5px;
+    }
+    
+    .header-content {
+        gap: 10px !important;
+    }
+    
+    .mobile-login-btn-header {
+        order: 3;
+        z-index: 1001;
+    }
+    
+    .logo-section {
+        order: 2;
+    }
+    
+    .hamburger-menu {
+        order: 1;
+    }
+    
+    .mobile-user-section {
+        background: white;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding: 20px;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .mobile-user-section a, 
+    .mobile-user-section button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .mobile-logout-btn {
+        background: #ffeaea !important;
+        color: #e74c3c !important;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .mobile-logout-btn:hover {
+        background: #ffd6d6 !important;
+    }
+}
+
+/* Correction pour le menu utilisateur sur desktop */
+@media (min-width: 769px) {
+    .header-right-group {
+        margin-left: auto;
     }
 }

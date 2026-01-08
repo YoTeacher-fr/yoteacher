@@ -13,16 +13,50 @@
     <style>
 /* 1. Navigation : Augmentation de la taille du texte */
     .nav-link {
-        font-size: 1.2rem !important; /* Plus grand pour À propos, Cours, etc. */
+        font-size: 1.2rem !important;
         font-weight: 400;
-    }       
- /* 1. Bloc de droite : Rapprochement maximal des éléments */
-        .header-right-group {
-            display: flex;
-            align-items: center;
-            gap: 6px !important; /* Espace réduit entre devise, langue et connexion */
-            margin-left: 10px;
-        }
+    }
+    
+/* Navigation centrée - SOLUTION DÉFINITIVE */
+    .header-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+        padding: 8px 0 !important;
+    }
+    
+    .logo-section {
+        position: absolute;
+        left: 0;
+        z-index: 10;
+    }
+    
+    .nav-menu.desktop-menu {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto;
+    }
+    
+    .nav-links-wrapper {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .header-right-group {
+        position: absolute;
+        right: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px !important;
+        z-index: 10;
+    }
+    
+    .nav-spacer {
+        display: none;
+    }
 
         /* 2. Devise : Miniaturisation et centrage du texte */
         .currency-selector {
@@ -35,21 +69,20 @@
             background: white;
             border: 1px solid rgba(0, 0, 0, 0.15);
             border-radius: 20px;
-            padding: 2px 4px;   /* Réduit au strict minimum */
+            padding: 2px 4px;
             color: #333;
-            font-size: 0.8rem;  /* Taille miniature */
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
             outline: none;
             width: auto;
-            text-align: center;      /* Centrage horizontal */
-            text-align-last: center; /* Force le centrage sur Chrome/Safari */
-            appearance: none;        /* Retire la flèche pour libérer de l'espace */
+            text-align: center;
+            text-align-last: center;
+            appearance: none;
             -webkit-appearance: none;
             transition: all 0.3s ease;
         }
         
-        /* Couleur du texte quand le header est transparent */
         .main-header:not(.scrolled) .currency-selector select {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -64,18 +97,18 @@
             gap: 2px;
         }
 
-        /* 4. Bouton Connexion : Affinement pour correspondre au bloc */
+        /* 4. Bouton Connexion : Affinement */
         .login-btn {
             padding: 10px 22px !important;
             font-size: 1rem !important;
-font-weight: 600 !important;
-        border-radius: 50px;
+            font-weight: 600 !important;
+            border-radius: 50px;
         }
 
         @media (max-width: 768px) {
             .currency-selector { display: none; }
         }
-    </style>
+</style>
 </head>
 <body>
     <!-- Header -->
@@ -100,14 +133,16 @@ font-weight: 600 !important;
                 
                 <!-- Menu Desktop -->
                 <nav class="nav-menu desktop-menu">
-                    <div class="nav-spacer"></div>
-                    <a href="#about" class="nav-link">À propos</a>
-                    <a href="#courses" class="nav-link">Cours</a>
-                    <a href="#testimonials" class="nav-link">Témoignages</a>
-                    <a href="#contact" class="nav-link">Contact</a>
-                    
-                    <!-- Groupe des boutons de droite -->
-                    <div class="header-right-group">
+    <div class="nav-links-wrapper">
+        <a href="#about" class="nav-link">À propos</a>
+        <a href="#courses" class="nav-link">Cours</a>
+        <a href="#testimonials" class="nav-link">Témoignages</a>
+        <a href="#contact" class="nav-link">Contact</a>
+    </div>
+</nav>
+
+<!-- Groupe des boutons de droite -->
+<div class="header-right-group">
                         <!-- Sélecteur de devise -->
                         <div class="currency-selector">
                             <i class="fas fa-money-bill-wave"></i>
