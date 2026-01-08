@@ -92,6 +92,8 @@
         /* CORRECTION DU PADDING DU BODY */
         body {
             padding-top: 60px !important;
+            margin: 0;
+            height: 100%;
         }
         
         /* CENTRAGE PARFAIT DU FORMULAIRE */
@@ -100,14 +102,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px 20px;
+            padding: 0 20px;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
 
         .auth-container {
             max-width: 420px;
             width: 100%;
-            margin: 0 auto;
+            margin: 40px auto;
         }
 
         .auth-card {
@@ -116,7 +118,8 @@
             padding: 40px 35px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            margin: 20px 0;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .auth-header {
@@ -304,12 +307,15 @@
             
             .auth-section {
                 min-height: calc(100vh - 55px);
-                padding: 30px 15px;
+                padding: 0 15px;
+            }
+            
+            .auth-container {
+                margin: 30px auto;
             }
             
             .auth-card {
                 padding: 30px 20px;
-                margin: 10px 0;
             }
             
             .auth-logo {
