@@ -527,21 +527,19 @@
                     const result = await window.authManager.signUp(email, password, fullName);
                     
                     if (result.success) {
-                        const successMsg = result.message || 'Compte créé avec succès ! Vérifiez votre email pour confirmer votre inscription.';
-                        showSuccess(successMsg);
-                        
-                        // Réinitialiser le formulaire
-                        form.reset();
-                        
-                        // Redirection automatique vers login après 5 secondes
-                        setTimeout(() => {
-                            window.location.href = 'login.html?message=check_email';
-                        }, 5000);
-                    } else {
-                        showError(result.error || 'Erreur lors de l\'inscription');
-                        button.innerHTML = originalText;
-                        button.disabled = false;
-                    }
+                        // MODIFICATION ICI : On ne demande plus de vérifier les emails
+    showSuccess("Compte créé avec succès ! Préparation de votre espace...");
+    
+    // On attend 1.5 seconde pour que l'utilisateur voit le message de succès
+    setTimeout(() => {
+        // Redirection vers le dashboard
+        window.location.href = 'dashboard.html';
+    }, 1500);
+} else {
+    showError(result.error);
+    button.innerHTML = originalText;
+    button.disabled = false;
+}
                 } catch (error) {
                     showError('Une erreur est survenue : ' + error.message);
                     button.innerHTML = originalText;
