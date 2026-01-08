@@ -257,7 +257,12 @@
             display: none !important;
         }
         
-        /* Cacher les liens de navigation dans le menu desktop */
+        /* Groupe de droite complètement à droite */
+        .header-right-group {
+            margin-left: auto !important;
+        }
+        
+        /* Cacher les liens de navigation */
         .nav-menu.desktop-menu .nav-links-wrapper {
             display: none !important;
         }
@@ -290,16 +295,9 @@
                         <!-- Pas de liens ici -->
                     </div>
                     
-                    <!-- Groupe des boutons de droite -->
+                    <!-- Groupe des boutons de droite - COMPLÈTEMENT À DROITE -->
                     <div class="header-right-group">
-                        <!-- Sélecteur de devise -->
-                        <div class="currency-selector">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <select id="currencySelector">
-                                <!-- Rempli dynamiquement par currency.js -->
-                            </select>
-                        </div>
-                        
+                        <!-- Sélecteur de langue uniquement -->
                         <div class="language-switcher">
                             <span class="flag">🌐</span>
                             <span>FR</span>
@@ -364,7 +362,6 @@
     <script src="booking.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
-    <script src="currency.js"></script> <!-- Important pour le sélecteur de devise -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('loginForm');
@@ -378,13 +375,6 @@
             if (window.authManager?.isAuthenticated()) {
                 window.location.href = 'dashboard.html';
             }
-
-            // Initialiser le sélecteur de devise
-            setTimeout(() => {
-                if (window.currencyManager) {
-                    initLoginCurrencySelector();
-                }
-            }, 300);
             
             // Empêcher le lien du header de recharger la page
             preventHeaderLoginLink();
@@ -489,31 +479,6 @@
                     const separator = currentHref.includes('?') ? '&' : '?';
                     signupLink.href = `${currentHref}${separator}redirect=${redirectParam}`;
                 }
-            }
-            
-            // Initialiser le sélecteur de devise sur la page login
-            function initLoginCurrencySelector() {
-                const selector = document.getElementById('currencySelector');
-                if (!selector || !window.currencyManager) return;
-                
-                // Remplir les options
-                window.currencyManager.supportedCurrencies.forEach(currency => {
-                    const option = document.createElement('option');
-                    option.value = currency;
-                    option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
-                    
-                    if (currency === window.currencyManager.currentCurrency) {
-                        option.selected = true;
-                    }
-                    
-                    selector.appendChild(option);
-                });
-                
-                // Écouter les changements
-                selector.addEventListener('change', (e) => {
-                    const newCurrency = e.target.value;
-                    window.currencyManager.setCurrency(newCurrency);
-                });
             }
             
             // Empêcher le lien du header de recharger la page
