@@ -528,13 +528,13 @@
                     
                     if (result.success) {
                         // MODIFICATION ICI : On ne demande plus de vérifier les emails
-    showSuccess("Compte créé avec succès ! Préparation de votre espace...");
+    showSuccess("Compte créé avec succès !");
     
     // On attend 1.5 seconde pour que l'utilisateur voit le message de succès
     setTimeout(() => {
         // Redirection vers le dashboard
         window.location.href = 'dashboard.html';
-    }, 1500);
+    }, 1000);
 } else {
     showError(result.error);
     button.innerHTML = originalText;
