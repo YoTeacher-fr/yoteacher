@@ -338,7 +338,7 @@
             transform: translateY(-2px);
         }
 
-        /* Boutons de réservation de cours */
+        /* Boutons de réservation de cours - REDUITS */
         .course-buttons-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -356,7 +356,7 @@
             text-align: center;
             text-decoration: none;
             color: inherit;
-            height: 100px;
+            height: 80px; /* Réduit de 100px à 80px */
             cursor: pointer;
             border: none;
             width: 100%;
@@ -369,7 +369,7 @@
 
         .course-button-content {
             color: white;
-            padding: 25px 15px;
+            padding: 20px 15px; /* Réduit de 25px à 20px */
             border-radius: 12px;
             height: 100%;
             display: flex;
@@ -380,13 +380,13 @@
         }
 
         .course-button-title {
-            font-size: 1.4rem;
+            font-size: 1.2rem; /* Réduit de 1.4rem à 1.2rem */
             font-weight: 700;
-            margin-bottom: 6px;
+            margin-bottom: 4px; /* Réduit de 6px à 4px */
         }
 
         .course-button-subtitle {
-            font-size: 0.85rem;
+            font-size: 0.8rem; /* Réduit de 0.85rem à 0.8rem */
             opacity: 0.9;
         }
 
@@ -447,15 +447,19 @@
             }
             
             .course-button {
-                height: 90px;
+                height: 70px; /* Réduit de 90px à 70px */
             }
             
             .course-button-title {
-                font-size: 1.2rem;
+                font-size: 1.1rem; /* Réduit de 1.2rem à 1.1rem */
             }
             
             .course-button-content {
-                padding: 20px 15px;
+                padding: 15px 12px; /* Réduit de 20px à 15px */
+            }
+            
+            .course-button-subtitle {
+                font-size: 0.75rem; /* Réduit de 0.8rem à 0.75rem */
             }
             
             .mobile-login-btn-header {
@@ -507,15 +511,15 @@
         
         @media (max-width: 480px) {
             .course-button {
-                height: 80px;
+                height: 65px; /* Réduit de 80px à 65px */
             }
             
             .course-button-title {
-                font-size: 1.1rem;
+                font-size: 1rem; /* Réduit de 1.1rem à 1rem */
             }
             
             .course-button-subtitle {
-                font-size: 0.8rem;
+                font-size: 0.7rem; /* Réduit de 0.8rem à 0.7rem */
             }
             
             .dashboard-card {
