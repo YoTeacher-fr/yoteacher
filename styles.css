@@ -2315,9 +2315,8 @@ button {
 /* Bouton déconnexion intégré dans le dashboard */
 .logout-btn-icon {
     position: absolute;
-    right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
+    right: -8px;
+    top: -8px;
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -2329,6 +2328,7 @@ button {
     font-size: 1rem;
     cursor: pointer;
     border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transition: all 0.3s;
     font-weight: bold;
     z-index: 2;
@@ -2337,7 +2337,7 @@ button {
 .logout-btn-icon:hover {
     background-color: #e74c3c;
     color: white;
-    transform: translateY(-50%) scale(1.1);
+    transform: scale(1.15);
     box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
 }
 
@@ -2374,7 +2374,8 @@ button {
         width: 22px;
         height: 22px;
         font-size: 0.9rem;
-        right: 5px;
+        right: -6px;
+        top: -6px;
     }
     
     .header-content {
