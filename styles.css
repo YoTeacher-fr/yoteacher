@@ -2315,8 +2315,8 @@ button {
 /* Bouton déconnexion intégré dans le dashboard */
 .logout-btn-icon {
     position: absolute;
-    right: -8px;
-    top: -8px;
+    right: -0.5px;
+    top: -0.5px;
     width: 24px;
     height: 24px;
     border-radius: 50%;
