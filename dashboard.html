@@ -259,56 +259,88 @@
             transform: translateY(-2px);
         }
 
-        /* Boutons de réservation de cours */
-        .course-buttons-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 25px;
-            margin-top: 20px;
-        }
-
-        .course-button {
-            display: block;
+        /* Cartes de cours */
+        .course-offer-card {
             background: white;
             border-radius: 16px;
-            padding: 0;
+            padding: 25px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
             text-align: center;
-            text-decoration: none;
-            color: inherit;
-            height: 120px;
-            cursor: pointer;
-            border: none;
-            width: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
-        .course-button:hover {
+        .course-offer-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
         }
 
-        .course-button-content {
+        .course-offer-header {
+            background: linear-gradient(135deg, #3c84f6, #1e88e5);
             color: white;
-            padding: 30px 20px;
-            border-radius: 16px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
         }
 
-        .course-button-title {
+        .course-offer-title {
             font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
 
-        .course-button-subtitle {
+        .course-offer-subtitle {
             font-size: 0.9rem;
             opacity: 0.9;
+        }
+
+        .course-offer-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3c84f6;
+            margin: 20px 0;
+        }
+
+        .course-offer-features {
+            text-align: left;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .course-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            color: #555;
+        }
+
+        .course-feature i {
+            color: #4caf50;
+        }
+
+        .btn-book {
+            width: 100%;
+            padding: 15px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-book:hover {
+            background: #e68900;
+            transform: translateY(-2px);
         }
 
         .no-upcoming {
@@ -337,7 +369,7 @@
 
         @media (max-width: 1200px) {
             .top-row,
-            .course-buttons-row {
+            .courses-row {
                 grid-template-columns: 1fr;
             }
         }
@@ -353,14 +385,6 @@
 
             .lesson-actions {
                 flex-direction: column;
-            }
-            
-            .course-button {
-                height: 100px;
-            }
-            
-            .course-button-title {
-                font-size: 1.3rem;
             }
         }
     </style>
@@ -510,6 +534,7 @@
                         <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
                             <div id="profileInfo">
                                 <p style="margin-bottom: 10px;"><strong>Email:</strong><br><span id="userEmail" style="color: #666;"></span></p>
+                                <p style="margin-bottom: 10px;"><strong>Statut:</strong> <span id="userStatus" class="status-badge">Standard</span></p>
                                 <p><strong>Membre depuis:</strong><br><span id="joinDate" style="color: #666;"></span></p>
                             </div>
                             <a href="profile.html" class="btn-profile">
@@ -522,30 +547,84 @@
                 <!-- Deuxième section : Réserver un cours -->
                 <div class="bottom-section">
                     <h2 class="section-title">Réserver un cours</h2>
-                    <div class="course-buttons-row">
+                    <div class="courses-row">
                         <!-- Cours d'essai -->
-                        <a href="booking.html?type=essai" class="course-button">
-                            <div class="course-button-content" style="background: linear-gradient(135deg, #2d8de2, #2d8de2);">
-                                <div class="course-button-title">Cours d'essai</div>
-                                <div class="course-button-subtitle">Découvrez ma méthode</div>
+                        <div class="course-offer-card">
+                            <div class="course-offer-header" style="background: linear-gradient(135deg, #2d8de2, #2d8de2);">
+                                <div class="course-offer-title">Cours d'essai</div>
+                                <div class="course-offer-subtitle">Découvrez ma méthode</div>
                             </div>
-                        </a>
+                            <div class="course-offer-price">5€</div>
+                            <div class="course-offer-features">
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>30 minutes</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Évaluation de niveau</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Plan personnalisé</span>
+                                </div>
+                            </div>
+                            <a href="booking.html?type=essai" class="btn-book">
+                                <i class="fas fa-calendar-plus"></i> Réserver
+                            </a>
+                        </div>
 
                         <!-- Conversation -->
-                        <a href="booking.html?type=conversation" class="course-button">
-                            <div class="course-button-content" style="background: linear-gradient(135deg, #636dcd, #636dcd);">
-                                <div class="course-button-title">Conversation</div>
-                                <div class="course-button-subtitle">Pratiquez l'oral</div>
+                        <div class="course-offer-card">
+                            <div class="course-offer-header" style="background: linear-gradient(135deg, #636dcd, #636dcd);">
+                                <div class="course-offer-title">Conversation</div>
+                                <div class="course-offer-subtitle">Pratiquez l'oral</div>
                             </div>
-                        </a>
+                            <div class="course-offer-price">20€/h</div>
+                            <div class="course-offer-features">
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>60 minutes</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Thèmes variés</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Corrections en direct</span>
+                                </div>
+                            </div>
+                            <a href="booking.html?type=conversation" class="btn-book">
+                                <i class="fas fa-calendar-plus"></i> Réserver
+                            </a>
+                        </div>
 
                         <!-- Curriculum -->
-                        <a href="booking.html?type=curriculum" class="course-button">
-                            <div class="course-button-content" style="background: linear-gradient(135deg, #135cb7, #135cb7);">
-                                <div class="course-button-title">Curriculum</div>
-                                <div class="course-button-subtitle">Apprentissage complet</div>
+                        <div class="course-offer-card">
+                            <div class="course-offer-header" style="background: linear-gradient(135deg, #135cb7, #135cb7);">
+                                <div class="course-offer-title">Curriculum</div>
+                                <div class="course-offer-subtitle">Apprentissage complet</div>
                             </div>
-                        </a>
+                            <div class="course-offer-price">25€/h</div>
+                            <div class="course-offer-features">
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>60 minutes</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Programme structuré</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Supports inclus</span>
+                                </div>
+                            </div>
+                            <a href="booking.html?type=curriculum" class="btn-book">
+                                <i class="fas fa-calendar-plus"></i> Réserver
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -604,7 +683,12 @@
                         .single();
                         
                     if (profile) {
-                        // Crédits par type
+                        if (profile.is_vip) {
+                            document.getElementById('userStatus').textContent = 'VIP';
+                            document.getElementById('userStatus').className = 'status-badge vip';
+                        }
+                        
+                        // Crédits par type (à adapter selon votre structure DB)
                         document.getElementById('creditsEssai').textContent = profile.credits_essai || 0;
                         document.getElementById('creditsConversation').textContent = profile.credits_conversation || 0;
                         document.getElementById('creditsCurriculum').textContent = profile.credits_curriculum || 0;
