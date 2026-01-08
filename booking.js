@@ -423,12 +423,12 @@ class BookingManager {
             const bookingPayload = {
                 start: bookingData.startTime,
                 eventTypeId: parseInt(eventTypeId),
-                attendees: [{
+                attendee: {
         name: bookingData.name,
         email: bookingData.email,
         timeZone: bookingData.timeZone || this.timeZone,
         language: bookingData.language || 'fr'
-    }],
+    },
                 metadata: {
                     userId: user?.id ? String(user.id) : "", 
                     courseType: String(bookingData.courseType || ''),
