@@ -100,7 +100,7 @@
     @media (max-width: 768px) {
         .currency-selector { display: none; }
     }
-</style>
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -114,43 +114,42 @@
                     <span></span>
                 </button>
                 
-                <!-- Logo au CENTRE -->
+                <!-- Logo -->
                 <div class="logo-section">
                     <a href="index.html" class="logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-                <!-- Bouton Connexion Mobile (visible uniquement sur mobile) -->
+                <!-- Bouton Connexion Mobile -->
                 <a href="login.html" class="mobile-login-btn-header">Connexion</a>
                 
                 <!-- Menu Desktop -->
                 <nav class="nav-menu desktop-menu">
-    <div class="nav-links-wrapper">
-        <a href="#about" class="nav-link">À propos</a>
-        <a href="#courses" class="nav-link">Cours</a>
-        <a href="#testimonials" class="nav-link">Témoignages</a>
-        <a href="#contact" class="nav-link">Contact</a>
-    </div>
-</nav>
-
-<!-- Groupe des boutons de droite -->
-<div class="header-right-group">
-                        <!-- Sélecteur de devise -->
-                        <div class="currency-selector">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <select id="currencySelector">
-                                <!-- Rempli dynamiquement par currency.js -->
-                            </select>
-                        </div>
-                        
-                        <div class="language-switcher">
-                            <span class="flag">🌐</span>
-                            <span>FR</span>
-                        </div>
-                        
-                        <a href="login.html" class="login-btn">Connexion</a>
+                    <div class="nav-links-wrapper">
+                        <a href="#about" class="nav-link">À propos</a>
+                        <a href="#courses" class="nav-link">Cours</a>
+                        <a href="#testimonials" class="nav-link">Témoignages</a>
+                        <a href="#contact" class="nav-link">Contact</a>
                     </div>
                 </nav>
+                
+                <!-- Groupe des boutons de droite -->
+                <div class="header-right-group">
+                    <!-- Sélecteur de devise -->
+                    <div class="currency-selector">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <select id="currencySelector">
+                            <!-- Rempli dynamiquement par currency.js -->
+                        </select>
+                    </div>
+                    
+                    <div class="language-switcher">
+                        <span class="flag">🌐</span>
+                        <span>FR</span>
+                    </div>
+                    
+                    <a href="login.html" class="login-btn">Connexion</a>
+                </div>
             </div>
         </div>
         
@@ -264,7 +263,39 @@
                             <i class="fas fa-globe-europe highlight-icon"></i>
                             <span class="highlight-text">Originaire de Marseille</span>
                         </div>
-                        <div class="highlight-i
+                        <div class="highlight-item">
+                            <i class="fas fa-plane highlight-icon"></i>
+                            <span class="highlight-text">75 pays visités</span>
+                        </div>
+                        <div class="highlight-item">
+                            <i class="fas fa-book-open highlight-icon"></i>
+                            <span class="highlight-text">Ancien comptable reconverti</span>
+                        </div>
+                        <div class="highlight-item">
+                            <i class="fas fa-award highlight-icon"></i>
+                            <span class="highlight-text">Certifié en anglais</span>
+                        </div>
+                    </div>
+
+                    <!-- Tags de personnalité -->
+                    <div class="personality-section">
+                        <p class="personality-title">
+                            Ce que mes étudiants disent de moi :
+                        </p>
+                        <div class="personality-tags">
+                            <span class="personality-tag">Professionnel</span>
+                            <span class="personality-tag">Chaleureux et sociable</span>
+                            <span class="personality-tag">Ouvert d'esprit</span>
+                            <span class="personality-tag">Aventureux</span>
+                            <span class="personality-tag">Bienveillant</span>
+                            <span class="personality-tag">Dynamique</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Section Cours - CENTRÉE -->
     <section id="courses" class="courses-section">
         <div class="container">
@@ -411,125 +442,7 @@
     <script src="booking.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
-    <script src="currency.js"></script> <!-- Nouveau fichier -->
+    <script src="currency.js"></script>
     <script src="script.js"></script>
-
-
-    <script>
-        // Fonction pour mettre à jour les liens de connexion avec redirect
-        function updateMobileLoginLinks() {
-            if (window.innerWidth <= 768) {
-                const mobileLoginBtn = document.querySelector('.mobile-login-btn');
-                const mobileLoginHeaderBtn = document.querySelector('.mobile-login-btn-header');
-                
-                // Mettre à jour le bouton dans le header
-                if (mobileLoginHeaderBtn && !window.location.pathname.includes('login.html')) {
-                    const currentUrl = encodeURIComponent(window.location.href);
-                    mobileLoginHeaderBtn.href = `login.html?redirect=${currentUrl}`;
-                }
-                
-                // Mettre à jour le bouton dans le menu mobile
-                if (mobileLoginBtn && !window.location.pathname.includes('login.html')) {
-                    const currentUrl = encodeURIComponent(window.location.href);
-                    mobileLoginBtn.href = `login.html?redirect=${currentUrl}`;
-                }
-            }
-        }
-        
-        // Initialiser le sélecteur de devise mobile
-        function initMobileCurrencySelector() {
-            const mobileSelector = document.getElementById('currencySelectorMobile');
-            if (!mobileSelector || !window.currencyManager) return;
-            
-            // Remplir les options
-            window.currencyManager.supportedCurrencies.forEach(currency => {
-                const option = document.createElement('option');
-                option.value = currency;
-                option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
-                
-                if (currency === window.currencyManager.currentCurrency) {
-                    option.selected = true;
-                }
-                
-                mobileSelector.appendChild(option);
-            });
-            
-            // Écouter les changements
-            mobileSelector.addEventListener('change', (e) => {
-                const newCurrency = e.target.value;
-                if (window.currencyManager.setCurrency(newCurrency)) {
-                    // Fermer le menu mobile après changement
-                    const mobileMenu = document.getElementById('mobileMenu');
-                    if (mobileMenu) {
-                        mobileMenu.classList.remove('active');
-                    }
-                }
-            });
-        }
-        
-        // Mettre à jour les prix sur la page d'accueil
-        function updateHomePagePrices() {
-            if (!window.currencyManager) return;
-            
-            const currency = window.currencyManager.currentCurrency;
-            const symbol = window.currencyManager.getSymbol();
-            
-            // Mettre à jour l'affichage de la devise dans le footer
-            const currencyDisplay = document.getElementById('currentCurrencyDisplay');
-            if (currencyDisplay) {
-                currencyDisplay.textContent = currency;
-            }
-            
-            // Mettre à jour le prix du cours d'essai dans le CTA
-            const essaiPriceBtn = document.getElementById('essaiPriceBtn');
-            if (essaiPriceBtn) {
-                const priceElement = essaiPriceBtn.querySelector('.price-essai');
-                if (priceElement) {
-                    const formattedPrice = window.currencyManager.formatPrice(5);
-                    priceElement.textContent = formattedPrice;
-                }
-            }
-            
-            // Mettre à jour les prix des cartes de cours
-            document.querySelectorAll('.course-card').forEach(card => {
-                const priceElement = card.querySelector('.price-main');
-                if (priceElement) {
-                    // Récupérer le prix de base en EUR depuis un attribut data
-                    const basePrice = parseFloat(card.dataset.basePrice || '0');
-                    if (basePrice > 0) {
-                        const formattedPrice = window.currencyManager.formatPrice(basePrice);
-                        priceElement.innerHTML = formattedPrice;
-                    }
-                }
-                
-                // Mettre à jour les prix détaillés
-                const priceDetails = card.querySelector('.price-details');
-                if (priceDetails) {
-                    // Logique spécifique pour chaque type de cours
-                    // (sera gérée par script.js)
-                }
-            });
-        }
-        
-        // Appeler cette fonction après le chargement
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(updateMobileLoginLinks, 300);
-            
-            // Re-mettre à jour si la taille de l'écran change
-            window.addEventListener('resize', updateMobileLoginLinks);
-            
-            // Initialiser le sélecteur de devise mobile
-            initMobileCurrencySelector();
-            
-            // Écouter les changements de devise
-            window.addEventListener('currency:ready', updateHomePagePrices);
-            window.addEventListener('currency:changed', updateHomePagePrices);
-            
-            // Mettre à jour les prix une fois que currencyManager est prêt
-            if (window.currencyManager && !window.currencyManager.isLoading) {
-                setTimeout(updateHomePagePrices, 500);
-            }
-        });
-    </script>
 </body>
 </html>
