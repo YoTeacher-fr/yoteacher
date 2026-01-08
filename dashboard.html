@@ -8,6 +8,87 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
+        /* HEADER IDENTIQUE À LOGIN */
+        .main-header {
+            background-color: rgba(255, 255, 255, 0.98) !important;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
+            backdrop-filter: blur(10px) !important;
+            min-height: 60px !important;
+        }
+        
+        .header-content {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 10px 0 !important;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo {
+            font-size: 1.5rem !important;
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            color: #3c84f6;
+        }
+        
+        .header-right-group {
+            display: flex !important;
+            align-items: center !important;
+            gap: 15px !important;
+            margin-left: auto !important;
+        }
+        
+        .nav-menu.desktop-menu {
+            display: none !important;
+        }
+        
+        .login-btn {
+            background-color: #4f9ad1;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .login-btn:hover {
+            background-color: #3f8ac1;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 154, 209, 0.3);
+        }
+        
+        .language-switcher {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        .language-switcher:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* CORRECTION DU PADDING DU BODY */
+        body {
+            padding-top: 60px !important;
+            margin: 0;
+            height: 100%;
+        }
+
+        /* DASHBOARD COMPACT */
         body {
             opacity: 0;
             visibility: hidden;
@@ -20,66 +101,60 @@
         }
 
         .dashboard {
-            padding: 100px 20px 60px;
+            padding: 15px 20px 30px;
             background: #f8f9fa;
-            min-height: 100vh;
+            min-height: calc(100vh - 60px);
         }
 
         .dashboard-container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         .dashboard-header {
             background: linear-gradient(135deg, #3c84f6, #1e88e5);
             color: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(60, 132, 246, 0.2);
-            margin-bottom: 30px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(60, 132, 246, 0.2);
+            margin-bottom: 15px;
         }
 
         .welcome-message h1 {
-            font-size: 2.2rem;
-            margin-bottom: 10px;
+            font-size: 1.6rem;
+            margin-bottom: 5px;
         }
 
         .welcome-message p {
             opacity: 0.9;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
         }
 
         /* Première ligne - 3 cartes égales */
         .top-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 25px;
-            margin-bottom: 30px;
+            gap: 15px;
+            margin-bottom: 15px;
         }
 
         /* Deuxième section */
         .bottom-section {
-            margin-top: 30px;
+            margin-top: 15px;
         }
 
         .section-title {
-            font-size: 1.8rem;
+            font-size: 1.4rem;
             color: #333;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             font-weight: 600;
-        }
-
-        .courses-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 25px;
         }
 
         .dashboard-card {
             background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
             height: 100%;
             display: flex;
@@ -87,33 +162,33 @@
         }
 
         .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
         .card-header {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
         }
 
         .card-header i {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             color: #3c84f6;
             background: rgba(60, 132, 246, 0.1);
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .card-header h2 {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             color: #333;
             margin: 0;
         }
@@ -122,25 +197,26 @@
         .next-lesson-card {
             background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
             border: 2px solid #4caf50;
-            padding: 20px;
-            border-radius: 12px;
+            padding: 15px;
+            border-radius: 10px;
         }
 
         .lesson-date {
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #2e7d32;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .lesson-info {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .lesson-info-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 6px 0;
+            font-size: 0.9rem;
             border-bottom: 1px solid rgba(0,0,0,0.1);
         }
 
@@ -160,27 +236,27 @@
 
         .lesson-actions {
             display: flex;
-            gap: 10px;
-            margin-top: 15px;
+            gap: 8px;
+            margin-top: 12px;
         }
 
         .btn-small {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 50px;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
+            gap: 6px;
+            font-size: 0.85rem;
             flex: 1;
             justify-content: center;
         }
 
         .btn-cancel {
             background: transparent;
-            border: 2px solid #e74c3c;
+            border: 1px solid #e74c3c;
             color: #e74c3c;
         }
 
@@ -191,7 +267,7 @@
 
         .btn-reschedule {
             background: transparent;
-            border: 2px solid #3c84f6;
+            border: 1px solid #3c84f6;
             color: #3c84f6;
         }
 
@@ -202,18 +278,19 @@
 
         /* Carte Forfaits */
         .credits-list {
-            margin-top: 15px;
+            margin-top: 12px;
         }
 
         .credit-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
+            padding: 12px;
             background: #f8f9fa;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #e9ecef;
+            font-size: 0.9rem;
         }
 
         .credit-item:last-child {
@@ -225,11 +302,11 @@
             color: #333;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .credit-count {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: #3c84f6;
         }
@@ -237,19 +314,19 @@
         /* Bouton Mon Profil */
         .btn-profile {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             background: #3c84f6;
             color: white;
             border: none;
             border-radius: 50px;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             text-decoration: none;
             margin-top: auto;
         }
@@ -259,132 +336,213 @@
             transform: translateY(-2px);
         }
 
-        /* Cartes de cours */
-        .course-offer-card {
+        /* Boutons de réservation de cours */
+        .course-buttons-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .course-button {
+            display: block;
             background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
             text-align: center;
+            text-decoration: none;
+            color: inherit;
+            height: 100px;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+        }
+
+        .course-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .course-button-content {
+            color: white;
+            padding: 25px 15px;
+            border-radius: 12px;
+            height: 100%;
             display: flex;
             flex-direction: column;
-        }
-
-        .course-offer-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-        }
-
-        .course-offer-header {
-            background: linear-gradient(135deg, #3c84f6, #1e88e5);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        .course-offer-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .course-offer-subtitle {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .course-offer-price {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #3c84f6;
-            margin: 20px 0;
-        }
-
-        .course-offer-features {
-            text-align: left;
-            margin-bottom: 20px;
-            flex-grow: 1;
-        }
-
-        .course-feature {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 0;
-            color: #555;
-        }
-
-        .course-feature i {
-            color: #4caf50;
-        }
-
-        .btn-book {
-            width: 100%;
-            padding: 15px;
-            background: #ff9800;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 10px;
+            align-items: center;
+            transition: all 0.3s;
         }
 
-        .btn-book:hover {
-            background: #e68900;
-            transform: translateY(-2px);
+        .course-button-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .course-button-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
         }
 
         .no-upcoming {
             text-align: center;
-            padding: 30px;
+            padding: 25px 20px;
             color: #666;
         }
 
         .no-upcoming i {
-            font-size: 3rem;
+            font-size: 2.5rem;
             color: #ddd;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .loading {
             text-align: center;
-            padding: 60px;
+            padding: 50px 20px;
             color: #666;
         }
 
         .loading i {
-            font-size: 2rem;
+            font-size: 1.8rem;
             margin-bottom: 20px;
             color: #3c84f6;
         }
 
+        /* Info profil plus compact */
+        #profileInfo p {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        #profileInfo strong {
+            display: block;
+            margin-bottom: 3px;
+        }
+
         @media (max-width: 1200px) {
             .top-row,
-            .courses-row {
+            .course-buttons-row {
                 grid-template-columns: 1fr;
             }
         }
 
         @media (max-width: 768px) {
             .dashboard {
-                padding: 80px 15px 40px;
+                padding: 20px 15px 30px;
             }
             
             .welcome-message h1 {
-                font-size: 1.8rem;
+                font-size: 1.6rem;
             }
 
             .lesson-actions {
                 flex-direction: column;
+            }
+            
+            .course-button {
+                height: 90px;
+            }
+            
+            .course-button-title {
+                font-size: 1.2rem;
+            }
+            
+            .course-button-content {
+                padding: 20px 15px;
+            }
+            
+            .mobile-login-btn-header {
+                display: block !important;
+                background-color: #4f9ad1;
+                color: white;
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 500;
+                text-decoration: none;
+                margin-left: auto;
+                z-index: 1001;
+            }
+            
+            .logo-section {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            
+            .logo {
+                font-size: 1.3rem !important;
+            }
+            
+            .flag {
+                font-size: 1.2rem;
+            }
+            
+            .header-right-group {
+                display: none !important;
+            }
+            
+            .main-header {
+                min-height: 55px !important;
+            }
+            
+            body {
+                padding-top: 55px !important;
+            }
+            
+            .dashboard {
+                min-height: calc(100vh - 55px);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .course-button {
+                height: 80px;
+            }
+            
+            .course-button-title {
+                font-size: 1.1rem;
+            }
+            
+            .course-button-subtitle {
+                font-size: 0.8rem;
+            }
+            
+            .dashboard-card {
+                padding: 15px;
+            }
+            
+            .card-header i {
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
+            
+            .card-header h2 {
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Cacher le menu hamburger sur la page dashboard */
+        .hamburger-menu {
+            display: none !important;
+        }
+        
+        /* Cacher le bouton mobile sur desktop */
+        @media (min-width: 769px) {
+            .mobile-login-btn-header {
+                display: none !important;
+            }
+            
+            .header-right-group {
+                display: flex !important;
             }
         }
     </style>
@@ -428,43 +586,35 @@
         setTimeout(checkAuthentication, 200);
     </script>
 
-    <header class="main-header">
+    <!-- Header identique à login -->
+    <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
-                <button class="hamburger-menu" id="hamburgerBtn">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-                
+                <!-- Logo à gauche -->
                 <div class="logo-section">
                     <a href="index.html" class="logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                <!-- Bouton Déconnexion Mobile -->
+                <a href="#" id="mobileLogoutBtn" class="mobile-login-btn-header">Déconnexion</a>
                 
-                <nav class="nav-menu desktop-menu">
-                    <div class="nav-links-wrapper">
-                        <a href="index.html#about" class="nav-link">À propos</a>
-                        <a href="index.html#courses" class="nav-link">Cours</a>
-                        <a href="index.html#testimonials" class="nav-link">Témoignages</a>
-                        <a href="index.html#contact" class="nav-link">Contact</a>
-                    </div>
-                </nav>
-                
+                <!-- Groupe des boutons de droite -->
                 <div class="header-right-group">
+                    <!-- Sélecteur de langue -->
                     <div class="language-switcher">
                         <span class="flag">🌐</span>
                         <span>FR</span>
                     </div>
                     
-                    <a href="login.html" class="login-btn">Connexion</a>
+                    <!-- Bouton Déconnexion Desktop -->
+                    <a href="#" id="logoutBtn" class="login-btn">Déconnexion</a>
                 </div>
             </div>
         </div>
     </header>
 
+    <!-- Dashboard compact -->
     <section class="dashboard">
         <div class="dashboard-container">
             <div class="dashboard-header welcome-message" id="welcomeMessage">
@@ -533,8 +683,7 @@
                         </div>
                         <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
                             <div id="profileInfo">
-                                <p style="margin-bottom: 10px;"><strong>Email:</strong><br><span id="userEmail" style="color: #666;"></span></p>
-                                <p style="margin-bottom: 10px;"><strong>Statut:</strong> <span id="userStatus" class="status-badge">Standard</span></p>
+                                <p><strong>Email:</strong><br><span id="userEmail" style="color: #666;"></span></p>
                                 <p><strong>Membre depuis:</strong><br><span id="joinDate" style="color: #666;"></span></p>
                             </div>
                             <a href="profile.html" class="btn-profile">
@@ -544,87 +693,33 @@
                     </div>
                 </div>
 
-                <!-- Deuxième section : Réserver un cours -->
+                <!-- Deuxième section : Réserver un cours (3 boutons uniquement) -->
                 <div class="bottom-section">
                     <h2 class="section-title">Réserver un cours</h2>
-                    <div class="courses-row">
+                    <div class="course-buttons-row">
                         <!-- Cours d'essai -->
-                        <div class="course-offer-card">
-                            <div class="course-offer-header" style="background: linear-gradient(135deg, #2d8de2, #2d8de2);">
-                                <div class="course-offer-title">Cours d'essai</div>
-                                <div class="course-offer-subtitle">Découvrez ma méthode</div>
+                        <a href="booking.html?type=essai" class="course-button">
+                            <div class="course-button-content" style="background: linear-gradient(135deg, #2d8de2, #2d8de2);">
+                                <div class="course-button-title">Cours d'essai</div>
+                                <div class="course-button-subtitle">Découvrez ma méthode</div>
                             </div>
-                            <div class="course-offer-price">5€</div>
-                            <div class="course-offer-features">
-                                <div class="course-feature">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>30 minutes</span>
-                                </div>
-                                <div class="course-feature">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Évaluation de niveau</span>
-                                </div>
-                                <div class="course-feature">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Plan personnalisé</span>
-                                </div>
-                            </div>
-                            <a href="booking.html?type=essai" class="btn-book">
-                                <i class="fas fa-calendar-plus"></i> Réserver
-                            </a>
-                        </div>
+                        </a>
 
                         <!-- Conversation -->
-                        <div class="course-offer-card">
-                            <div class="course-offer-header" style="background: linear-gradient(135deg, #636dcd, #636dcd);">
-                                <div class="course-offer-title">Conversation</div>
-                                <div class="course-offer-subtitle">Pratiquez l'oral</div>
+                        <a href="booking.html?type=conversation" class="course-button">
+                            <div class="course-button-content" style="background: linear-gradient(135deg, #636dcd, #636dcd);">
+                                <div class="course-button-title">Conversation</div>
+                                <div class="course-button-subtitle">Pratiquez l'oral</div>
                             </div>
-                            <div class="course-offer-price">20€/h</div>
-                            <div class="course-offer-features">
-                                <div class="course-feature">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>60 minutes</span>
-                                </div>
-                                <div class="course-feature">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Thèmes variés</span>
-                                </div>
-                                <div class="course-feature">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Corrections en direct</span>
-                                </div>
-                            </div>
-                            <a href="booking.html?type=conversation" class="btn-book">
-                                <i class="fas fa-calendar-plus"></i> Réserver
-                            </a>
-                        </div>
+                        </a>
 
                         <!-- Curriculum -->
-                        <div class="course-offer-card">
-                            <div class="course-offer-header" style="background: linear-gradient(135deg, #135cb7, #135cb7);">
-                                <div class="course-offer-title">Curriculum</div>
-                                <div class="course-offer-subtitle">Apprentissage complet</div>
+                        <a href="booking.html?type=curriculum" class="course-button">
+                            <div class="course-button-content" style="background: linear-gradient(135deg, #135cb7, #135cb7);">
+                                <div class="course-button-title">Curriculum</div>
+                                <div class="course-button-subtitle">Apprentissage complet</div>
                             </div>
-                            <div class="course-offer-price">25€/h</div>
-                            <div class="course-offer-features">
-                                <div class="course-feature">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>60 minutes</span>
-                                </div>
-                                <div class="course-feature">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Programme structuré</span>
-                                </div>
-                                <div class="course-feature">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Supports inclus</span>
-                                </div>
-                            </div>
-                            <a href="booking.html?type=curriculum" class="btn-book">
-                                <i class="fas fa-calendar-plus"></i> Réserver
-                            </a>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -683,12 +778,7 @@
                         .single();
                         
                     if (profile) {
-                        if (profile.is_vip) {
-                            document.getElementById('userStatus').textContent = 'VIP';
-                            document.getElementById('userStatus').className = 'status-badge vip';
-                        }
-                        
-                        // Crédits par type (à adapter selon votre structure DB)
+                        // Crédits par type
                         document.getElementById('creditsEssai').textContent = profile.credits_essai || 0;
                         document.getElementById('creditsConversation').textContent = profile.credits_conversation || 0;
                         document.getElementById('creditsCurriculum').textContent = profile.credits_curriculum || 0;
@@ -770,6 +860,35 @@
         function rescheduleLesson(lessonId) {
             alert('Fonction de report à implémenter');
         }
+        
+        // Gestion de la déconnexion
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutBtn = document.getElementById('logoutBtn');
+            const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+            
+            async function handleLogout() {
+                try {
+                    await window.authManager.signOut();
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error('Erreur lors de la déconnexion:', error);
+                }
+            }
+            
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    await handleLogout();
+                });
+            }
+            
+            if (mobileLogoutBtn) {
+                mobileLogoutBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    await handleLogout();
+                });
+            }
+        });
     </script>
 </body>
 </html>
