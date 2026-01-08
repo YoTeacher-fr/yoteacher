@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* MASQUER LA PAGE PAR DÉFAUT */
         body {
             opacity: 0;
             visibility: hidden;
@@ -27,10 +26,8 @@
         }
 
         .dashboard-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            display: grid;
-            gap: 25px;
         }
 
         .dashboard-header {
@@ -39,6 +36,7 @@
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(60, 132, 246, 0.2);
+            margin-bottom: 30px;
         }
 
         .welcome-message h1 {
@@ -51,9 +49,29 @@
             font-size: 1.1rem;
         }
 
-        .dashboard-grid {
+        /* Première ligne - 3 cartes égales */
+        .top-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        /* Deuxième section */
+        .bottom-section {
+            margin-top: 30px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .courses-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 25px;
         }
 
@@ -63,6 +81,9 @@
             padding: 25px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .dashboard-card:hover {
@@ -92,71 +113,59 @@
         }
 
         .card-header h2 {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             color: #333;
+            margin: 0;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .stat-box {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            border: 2px solid #e9ecef;
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #3c84f6;
-            display: block;
-            line-height: 1;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .next-lesson {
+        /* Carte Cours à venir */
+        .next-lesson-card {
             background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
             border: 2px solid #4caf50;
             padding: 20px;
             border-radius: 12px;
-            margin-bottom: 20px;
         }
 
-        .lesson-time {
-            font-size: 1.3rem;
-            font-weight: 600;
+        .lesson-date {
+            font-size: 1.4rem;
+            font-weight: 700;
             color: #2e7d32;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
-        .lesson-details {
+        .lesson-info {
+            margin-bottom: 15px;
+        }
+
+        .lesson-info-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .lesson-info-item:last-child {
+            border-bottom: none;
+        }
+
+        .lesson-info-label {
+            color: #555;
+            font-weight: 500;
+        }
+
+        .lesson-info-value {
+            color: #2e7d32;
+            font-weight: 600;
+        }
+
+        .lesson-actions {
+            display: flex;
+            gap: 10px;
             margin-top: 15px;
         }
 
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .btn-outline {
-            padding: 12px 24px;
-            border: 2px solid #3c84f6;
-            color: #3c84f6;
+        .btn-small {
+            padding: 10px 20px;
             border-radius: 50px;
             font-weight: 600;
             text-decoration: none;
@@ -164,12 +173,186 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            font-size: 0.9rem;
+            flex: 1;
+            justify-content: center;
         }
 
-        .btn-outline:hover {
+        .btn-cancel {
+            background: transparent;
+            border: 2px solid #e74c3c;
+            color: #e74c3c;
+        }
+
+        .btn-cancel:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-reschedule {
+            background: transparent;
+            border: 2px solid #3c84f6;
+            color: #3c84f6;
+        }
+
+        .btn-reschedule:hover {
             background: #3c84f6;
             color: white;
+        }
+
+        /* Carte Forfaits */
+        .credits-list {
+            margin-top: 15px;
+        }
+
+        .credit-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .credit-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .credit-type {
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .credit-count {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3c84f6;
+        }
+
+        /* Bouton Mon Profil */
+        .btn-profile {
+            width: 100%;
+            padding: 15px;
+            background: #3c84f6;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+            margin-top: auto;
+        }
+
+        .btn-profile:hover {
+            background: #2c74e6;
             transform: translateY(-2px);
+        }
+
+        /* Cartes de cours */
+        .course-offer-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .course-offer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .course-offer-header {
+            background: linear-gradient(135deg, #3c84f6, #1e88e5);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .course-offer-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .course-offer-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .course-offer-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3c84f6;
+            margin: 20px 0;
+        }
+
+        .course-offer-features {
+            text-align: left;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .course-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            color: #555;
+        }
+
+        .course-feature i {
+            color: #4caf50;
+        }
+
+        .btn-book {
+            width: 100%;
+            padding: 15px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-book:hover {
+            background: #e68900;
+            transform: translateY(-2px);
+        }
+
+        .no-upcoming {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        .no-upcoming i {
+            font-size: 3rem;
+            color: #ddd;
+            margin-bottom: 15px;
         }
 
         .loading {
@@ -184,13 +367,11 @@
             color: #3c84f6;
         }
 
-        .error-message {
-            background: #ffeaea;
-            color: #d32f2f;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            margin: 20px 0;
+        @media (max-width: 1200px) {
+            .top-row,
+            .courses-row {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 768px) {
@@ -198,58 +379,45 @@
                 padding: 80px 15px 40px;
             }
             
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
             .welcome-message h1 {
                 font-size: 1.8rem;
+            }
+
+            .lesson-actions {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <!-- SCRIPT DE VÉRIFICATION D'AUTHENTIFICATION -->
     <script>
-        // Masquer la page immédiatement
         document.body.style.opacity = '0';
         document.body.style.visibility = 'hidden';
         
-        // Fonction pour vérifier l'authentification
         function checkAuthentication() {
             let attempts = 0;
-            const maxAttempts = 30; // 3 secondes maximum
+            const maxAttempts = 30;
             
             function check() {
                 attempts++;
                 
-                // Vérifier si authManager est disponible
                 if (window.authManager && window.authManager.isAuthenticated !== undefined) {
                     if (window.authManager.isAuthenticated()) {
-                        // Authentifié - afficher la page
                         document.body.classList.add('loaded');
                         document.body.style.opacity = '1';
                         document.body.style.visibility = 'visible';
                         
-                        // Lancer le chargement du dashboard
                         setTimeout(() => {
                             if (window.loadDashboard) window.loadDashboard();
                         }, 100);
                     } else {
-                        // Non authentifié - rediriger
                         const currentUrl = encodeURIComponent(window.location.href);
                         window.location.replace(`login.html?redirect=${currentUrl}`);
                     }
                 } else if (attempts >= maxAttempts) {
-                    // Timeout - rediriger par précaution
                     const currentUrl = encodeURIComponent(window.location.href);
                     window.location.replace(`login.html?redirect=${currentUrl}`);
                 } else {
-                    // Réessayer
                     setTimeout(check, 100);
                 }
             }
@@ -257,11 +425,9 @@
             check();
         }
         
-        // Démarrer la vérification après un court délai
         setTimeout(checkAuthentication, 200);
     </script>
 
-    <!-- Header existant -->
     <header class="main-header">
         <div class="container">
             <div class="header-content">
@@ -279,19 +445,22 @@
                 <a href="login.html" class="mobile-login-btn-header">Connexion</a>
                 
                 <nav class="nav-menu desktop-menu">
-                    <div class="nav-spacer"></div>
-                    <a href="index.html#about" class="nav-link">À propos</a>
-                    <a href="index.html#courses" class="nav-link">Cours</a>
-                    <a href="index.html#testimonials" class="nav-link">Témoignages</a>
-                    <a href="index.html#contact" class="nav-link">Contact</a>
-                    
+                    <div class="nav-links-wrapper">
+                        <a href="index.html#about" class="nav-link">À propos</a>
+                        <a href="index.html#courses" class="nav-link">Cours</a>
+                        <a href="index.html#testimonials" class="nav-link">Témoignages</a>
+                        <a href="index.html#contact" class="nav-link">Contact</a>
+                    </div>
+                </nav>
+                
+                <div class="header-right-group">
                     <div class="language-switcher">
                         <span class="flag">🌐</span>
                         <span>FR</span>
                     </div>
                     
                     <a href="login.html" class="login-btn">Connexion</a>
-                </nav>
+                </div>
             </div>
         </div>
     </header>
@@ -308,104 +477,160 @@
                 <p>Chargement de vos données...</p>
             </div>
 
-            <div class="error-message" id="errorSection" style="display: none;">
-                <h3><i class="fas fa-exclamation-triangle"></i> Erreur de chargement</h3>
-                <p id="errorText"></p>
-                <a href="index.html" class="btn-outline">Retour à l'accueil</a>
-            </div>
-
-            <div class="dashboard-grid" id="dashboardContent" style="display: none;">
-                <!-- Vue d'ensemble -->
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <i class="fas fa-chart-line"></i>
-                        <h2>Vue d'ensemble</h2>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-box">
-                            <span class="stat-number" id="creditsCount">0</span>
-                            <span class="stat-label">Cours restants</span>
+            <div id="dashboardContent" style="display: none;">
+                <!-- Première ligne : 3 cartes -->
+                <div class="top-row">
+                    <!-- Carte 1 : Cours à venir -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <i class="fas fa-calendar-check"></i>
+                            <h2>Cours à venir</h2>
                         </div>
-                        <div class="stat-box">
-                            <span class="stat-number" id="completedCount">0</span>
-                            <span class="stat-label">Cours terminés</span>
+                        <div id="nextLessonContent">
+                            <div class="no-upcoming">
+                                <i class="far fa-calendar"></i>
+                                <p>Aucun cours programmé</p>
+                            </div>
                         </div>
                     </div>
-                    <div id="nextLessonContainer">
-                        <!-- Prochain cours sera inséré ici -->
+
+                    <!-- Carte 2 : Forfaits -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <i class="fas fa-ticket-alt"></i>
+                            <h2>Mes crédits</h2>
+                        </div>
+                        <div class="credits-list">
+                            <div class="credit-item">
+                                <div class="credit-type">
+                                    <i class="fas fa-play-circle" style="color: #3c84f6;"></i>
+                                    Cours d'essai
+                                </div>
+                                <div class="credit-count" id="creditsEssai">0</div>
+                            </div>
+                            <div class="credit-item">
+                                <div class="credit-type">
+                                    <i class="fas fa-comments" style="color: #ff9800;"></i>
+                                    Conversation
+                                </div>
+                                <div class="credit-count" id="creditsConversation">0</div>
+                            </div>
+                            <div class="credit-item">
+                                <div class="credit-type">
+                                    <i class="fas fa-book" style="color: #4caf50;"></i>
+                                    Curriculum
+                                </div>
+                                <div class="credit-count" id="creditsCurriculum">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Carte 3 : Mon Profil -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <i class="fas fa-user-circle"></i>
+                            <h2>Mon Profil</h2>
+                        </div>
+                        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div id="profileInfo">
+                                <p style="margin-bottom: 10px;"><strong>Email:</strong><br><span id="userEmail" style="color: #666;"></span></p>
+                                <p style="margin-bottom: 10px;"><strong>Statut:</strong> <span id="userStatus" class="status-badge">Standard</span></p>
+                                <p><strong>Membre depuis:</strong><br><span id="joinDate" style="color: #666;"></span></p>
+                            </div>
+                            <a href="profile.html" class="btn-profile">
+                                <i class="fas fa-edit"></i> Modifier mon profil
+                            </a>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Réserver un cours -->
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <i class="fas fa-calendar-plus"></i>
-                        <h2>Réserver un cours</h2>
-                    </div>
-                    <p>Choisissez le type de cours et sélectionnez un créneau disponible.</p>
-                    <div class="btn-group">
-                        <a href="booking.html?type=essai" class="btn-outline">
-                            <i class="fas fa-play-circle"></i> Cours d'essai (5€)
-                        </a>
-                        <a href="booking.html?type=conversation" class="btn-outline">
-                            <i class="fas fa-comments"></i> Conversation
-                        </a>
-                    </div>
-                </div>
+                <!-- Deuxième section : Réserver un cours -->
+                <div class="bottom-section">
+                    <h2 class="section-title">Réserver un cours</h2>
+                    <div class="courses-row">
+                        <!-- Cours d'essai -->
+                        <div class="course-offer-card">
+                            <div class="course-offer-header" style="background: linear-gradient(135deg, #2d8de2, #2d8de2);">
+                                <div class="course-offer-title">Cours d'essai</div>
+                                <div class="course-offer-subtitle">Découvrez ma méthode</div>
+                            </div>
+                            <div class="course-offer-price">5€</div>
+                            <div class="course-offer-features">
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>30 minutes</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Évaluation de niveau</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Plan personnalisé</span>
+                                </div>
+                            </div>
+                            <a href="booking.html?type=essai" class="btn-book">
+                                <i class="fas fa-calendar-plus"></i> Réserver
+                            </a>
+                        </div>
 
-                <!-- Mes forfaits -->
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <i class="fas fa-gift"></i>
-                        <h2>Mes forfaits</h2>
-                    </div>
-                    <div id="packagesList">
-                        <p>Aucun forfait actif.</p>
-                    </div>
-                    <a href="packages.html" class="btn-outline" style="margin-top: 15px;">
-                        <i class="fas fa-shopping-cart"></i> Acheter un forfait
-                    </a>
-                </div>
+                        <!-- Conversation -->
+                        <div class="course-offer-card">
+                            <div class="course-offer-header" style="background: linear-gradient(135deg, #636dcd, #636dcd);">
+                                <div class="course-offer-title">Conversation</div>
+                                <div class="course-offer-subtitle">Pratiquez l'oral</div>
+                            </div>
+                            <div class="course-offer-price">20€/h</div>
+                            <div class="course-offer-features">
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>60 minutes</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Thèmes variés</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Corrections en direct</span>
+                                </div>
+                            </div>
+                            <a href="booking.html?type=conversation" class="btn-book">
+                                <i class="fas fa-calendar-plus"></i> Réserver
+                            </a>
+                        </div>
 
-                <!-- Historique des cours -->
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <i class="fas fa-history"></i>
-                        <h2>Résumés récents</h2>
-                    </div>
-                    <div id="lessonHistory">
-                        <p>Aucun cours terminé.</p>
-                    </div>
-                    <a href="history.html" class="btn-outline" style="margin-top: 15px;">
-                        <i class="fas fa-list"></i> Voir tout l'historique
-                    </a>
-                </div>
-
-                <!-- Mon profil -->
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <i class="fas fa-user-cog"></i>
-                        <h2>Mon profil</h2>
-                    </div>
-                    <div id="profileInfo">
-                        <p><strong>Email:</strong> <span id="userEmail"></span></p>
-                        <p><strong>Statut:</strong> <span id="userStatus" class="status-badge">Standard</span></p>
-                        <p><strong>Inscrit depuis:</strong> <span id="joinDate"></span></p>
-                    </div>
-                    <div class="btn-group">
-                        <a href="profile.html" class="btn-outline">
-                            <i class="fas fa-edit"></i> Modifier profil
-                        </a>
-                        <button id="logoutBtn" class="btn-outline" style="color: #e74c3c; border-color: #e74c3c;">
-                            <i class="fas fa-sign-out-alt"></i> Déconnexion
-                        </button>
+                        <!-- Curriculum -->
+                        <div class="course-offer-card">
+                            <div class="course-offer-header" style="background: linear-gradient(135deg, #135cb7, #135cb7);">
+                                <div class="course-offer-title">Curriculum</div>
+                                <div class="course-offer-subtitle">Apprentissage complet</div>
+                            </div>
+                            <div class="course-offer-price">25€/h</div>
+                            <div class="course-offer-features">
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>60 minutes</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Programme structuré</span>
+                                </div>
+                                <div class="course-feature">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Supports inclus</span>
+                                </div>
+                            </div>
+                            <a href="booking.html?type=curriculum" class="btn-book">
+                                <i class="fas fa-calendar-plus"></i> Réserver
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Scripts -->
     <script src="config.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
@@ -414,183 +639,136 @@
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
 
-    
     <script>
-        // Fonction pour attendre que authManager soit prêt
-        function waitForAuthManager() {
-            return new Promise((resolve) => {
-                let attempts = 0;
-                const maxAttempts = 50; // 5 secondes max
-                
-                const check = () => {
-                    attempts++;
-                    if (window.authManager && window.authManager.getCurrentUser !== undefined) {
-                        resolve();
-                    } else if (attempts >= maxAttempts) {
-                        resolve(); // Continuer même si pas trouvé
-                    } else {
-                        setTimeout(check, 100);
-                    }
-                };
-                check();
-            });
-        }
-        
-        // Gestion du dashboard
         async function loadDashboard() {
             try {
-                // Attendre que authManager soit initialisé
-                await waitForAuthManager();
-                
                 const user = window.authManager?.getCurrentUser();
                 
                 if (!user) {
-                    console.log('Utilisateur non trouvé, vérification en cours...');
-                    return; // La redirection se fera via le script d'authentification
+                    console.log('Utilisateur non trouvé');
+                    return;
                 }
                 
-                // Charger les données utilisateur
                 await loadUserData(user);
                 
-                // Masquer le chargement, afficher le contenu
                 document.getElementById('loadingSection').style.display = 'none';
-                document.getElementById('dashboardContent').style.display = 'grid';
-                
-                // Gestion de la déconnexion
-                document.getElementById('logoutBtn').addEventListener('click', async () => {
-                    if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                        await window.authManager.signOut();
-                        window.location.href = 'index.html';
-                    }
-                });
+                document.getElementById('dashboardContent').style.display = 'block';
                 
             } catch (error) {
                 console.error('Erreur chargement dashboard:', error);
-                showError('Impossible de charger les données: ' + error.message);
             }
         }
         
         async function loadUserData(user) {
-            // Mettre à jour le message de bienvenue
             const welcomeDiv = document.getElementById('welcomeMessage');
             const userName = user.user_metadata?.full_name || user.email.split('@')[0];
             const now = new Date();
             const hour = now.getHours();
-            let greeting = 'Bonjour';
-            
-            if (hour < 12) greeting = 'Bonjour';
-            else if (hour < 18) greeting = 'Bon après-midi';
-            else greeting = 'Bonsoir';
+            let greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
             
             welcomeDiv.innerHTML = `
                 <h1>${greeting} ${userName} ! 👋</h1>
                 <p>Bienvenue sur votre dashboard YoTeacher</p>
             `;
             
-            // Mettre à jour les infos profil
             document.getElementById('userEmail').textContent = user.email;
             document.getElementById('joinDate').textContent = new Date(user.created_at).toLocaleDateString('fr-FR');
             
-            // Charger les données supplémentaires depuis Supabase
             if (window.supabase) {
                 try {
-                    const { data: profile, error } = await supabase
+                    const { data: profile } = await supabase
                         .from('profiles')
                         .select('*')
                         .eq('id', user.id)
                         .single();
                         
-                    if (profile && !error) {
+                    if (profile) {
                         if (profile.is_vip) {
                             document.getElementById('userStatus').textContent = 'VIP';
                             document.getElementById('userStatus').className = 'status-badge vip';
                         }
                         
-                        document.getElementById('creditsCount').textContent = profile.credits || 0;
+                        // Crédits par type (à adapter selon votre structure DB)
+                        document.getElementById('creditsEssai').textContent = profile.credits_essai || 0;
+                        document.getElementById('creditsConversation').textContent = profile.credits_conversation || 0;
+                        document.getElementById('creditsCurriculum').textContent = profile.credits_curriculum || 0;
                     }
                     
-                    // Charger les réservations
-                    await loadBookings(user.id);
+                    await loadNextLesson(user.id);
                 } catch (error) {
                     console.error('Erreur chargement données:', error);
                 }
             }
         }
         
-        async function loadBookings(userId) {
+        async function loadNextLesson(userId) {
             if (!window.supabase) return;
             
             try {
-                const { data: bookings, error } = await supabase
+                const { data: bookings } = await supabase
                     .from('bookings')
                     .select('*')
                     .eq('user_id', userId)
-                    .order('start_time', { ascending: true });
+                    .eq('status', 'confirmed')
+                    .gte('start_time', new Date().toISOString())
+                    .order('start_time', { ascending: true })
+                    .limit(1);
                     
-                if (bookings && !error) {
-                    const completed = bookings.filter(b => b.status === 'completed');
-                    const upcoming = bookings.filter(b => b.status === 'confirmed' && new Date(b.start_time) > new Date());
+                if (bookings && bookings.length > 0) {
+                    const lesson = bookings[0];
+                    const lessonDate = new Date(lesson.start_time);
                     
-                    document.getElementById('completedCount').textContent = completed.length;
-                    
-                    // Afficher le prochain cours
-                    if (upcoming.length > 0) {
-                        const nextLesson = upcoming[0];
-                        const nextLessonDiv = document.getElementById('nextLessonContainer');
-                        
-                        nextLessonDiv.innerHTML = `
-                            <div class="next-lesson">
-                                <div class="lesson-time">
-                                    <i class="far fa-calendar-check"></i>
-                                    ${new Date(nextLesson.start_time).toLocaleDateString('fr-FR', { 
-                                        weekday: 'long', 
-                                        day: 'numeric', 
-                                        month: 'long',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}
+                    document.getElementById('nextLessonContent').innerHTML = `
+                        <div class="next-lesson-card">
+                            <div class="lesson-date">
+                                ${lessonDate.toLocaleDateString('fr-FR', { 
+                                    weekday: 'long', 
+                                    day: 'numeric', 
+                                    month: 'long'
+                                })}
+                            </div>
+                            <div class="lesson-info">
+                                <div class="lesson-info-item">
+                                    <span class="lesson-info-label">Heure</span>
+                                    <span class="lesson-info-value">${lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
-                                <p><strong>Type:</strong> ${nextLesson.event_type || 'Cours'}</p>
-                                <div class="lesson-details">
-                                    <a href="${nextLesson.meet_link || '#'}" target="_blank" class="btn-outline">
-                                        <i class="fas fa-video"></i> Rejoindre
-                                    </a>
-                                    <button class="btn-outline" onclick="cancelBooking('${nextLesson.id}')" style="color: #e74c3c; border-color: #e74c3c;">
-                                        <i class="fas fa-times"></i> Annuler
-                                    </button>
+                                <div class="lesson-info-item">
+                                    <span class="lesson-info-label">Durée</span>
+                                    <span class="lesson-info-value">${lesson.duration || 60} min</span>
+                                </div>
+                                <div class="lesson-info-item">
+                                    <span class="lesson-info-label">Type</span>
+                                    <span class="lesson-info-value">${lesson.event_type || 'Cours'}</span>
+                                </div>
+                                <div class="lesson-info-item">
+                                    <span class="lesson-info-label">Référence</span>
+                                    <span class="lesson-info-value">#${lesson.id.substring(0, 8)}</span>
                                 </div>
                             </div>
-                        `;
-                    }
-                    
-                    // Afficher l'historique récent
-                    const historyDiv = document.getElementById('lessonHistory');
-                    if (completed.length > 0) {
-                        const recent = completed.slice(0, 3);
-                        historyDiv.innerHTML = recent.map(lesson => `
-                            <div style="padding: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px;">
-                                <strong>${new Date(lesson.start_time).toLocaleDateString('fr-FR')}</strong><br>
-                                ${lesson.event_type || 'Cours'}
+                            <div class="lesson-actions">
+                                <button class="btn-small btn-cancel" onclick="cancelLesson('${lesson.id}')">
+                                    <i class="fas fa-times"></i> Annuler
+                                </button>
+                                <button class="btn-small btn-reschedule" onclick="rescheduleLesson('${lesson.id}')">
+                                    <i class="fas fa-calendar-alt"></i> Reporter
+                                </button>
                             </div>
-                        `).join('');
-                    }
+                        </div>
+                    `;
                 }
             } catch (error) {
-                console.error('Erreur chargement réservations:', error);
+                console.error('Erreur chargement cours:', error);
             }
         }
         
-        function cancelBooking(bookingId) {
+        function cancelLesson(lessonId) {
             if (confirm('Êtes-vous sûr de vouloir annuler ce cours ?')) {
-                // Ici vous ajouterez la logique d'annulation
                 alert('Fonction d\'annulation à implémenter');
             }
         }
         
-        function showError(message) {
-            document.getElementById('loadingSection').style.display = 'none';
-            document.getElementById('errorSection').style.display = 'block';
-            document.getElementById('errorText').textContent = message;
+        function rescheduleLesson(lessonId) {
+            alert('Fonction de report à implémenter');
         }
     </script>
 </body>
