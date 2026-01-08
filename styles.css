@@ -128,19 +128,17 @@ button {
 }
 
 .header-content {
-    display: flex;
+    display: grid;
+    grid-template-columns: 200px 1fr 200px;
     align-items: center;
-    position: relative;
     padding: 8px 0 !important;
 }
 
 .logo-section {
-    position: absolute;
-    left: 0;
     display: flex;
     align-items: center;
     gap: 10px;
-    z-index: 10;
+    justify-self: start;
 }
 
 .logo {
@@ -161,11 +159,9 @@ button {
 }
 
 .nav-menu.desktop-menu {
-    flex: 1;
+    justify-self: center;
     display: flex;
-    justify-content: center;
     align-items: center;
-    margin: 0 auto;
 }
 
 .nav-links-wrapper {
@@ -173,6 +169,7 @@ button {
     gap: 15px;
     align-items: center;
 }
+
 
 .nav-spacer {
     display: none;
@@ -207,12 +204,10 @@ button {
 
 /* ===== GROUPEMENT DES BOUTONS DROITE ===== */
 .header-right-group {
-    position: absolute;
-    right: 0;
+    justify-self: end;
     display: flex;
     align-items: center;
-    gap: 8px;
-    z-index: 10;
+    gap: 4px;
 }
 
 .language-switcher {
