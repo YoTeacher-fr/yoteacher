@@ -68,24 +68,6 @@
             margin-left: auto !important;
         }
         
-        /* Bouton profil Desktop */
-        .profile-btn {
-            background-color: #4f9ad1;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.3s;
-            text-decoration: none;
-        }
-        
-        .profile-btn:hover {
-            background-color: #3f8ac1;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(79, 154, 209, 0.3);
-        }
-        
         /* Sélecteur de langue */
         .language-switcher {
             display: flex;
@@ -104,7 +86,7 @@
             background-color: #f5f5f5;
         }
 
-        /* PROFILE CONTENT - MODIFICATION PRINCIPALE */
+        /* PROFILE CONTENT */
         .profile-section {
             padding: 20px 20px 40px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -124,11 +106,6 @@
             font-size: 2.2rem;
             color: #333;
             margin-bottom: 8px;
-        }
-
-        .profile-header p {
-            color: #666;
-            font-size: 1.1rem;
         }
 
         /* MODIFICATION CRUCIALE : GRID AVEC COLONNE DROITE PLUS LARGE */
@@ -513,7 +490,7 @@
         setTimeout(checkAuthentication, 200);
     </script>
 
-    <!-- Header comme login.html -->
+    <!-- Header comme login.html sans bouton profil -->
     <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
@@ -523,15 +500,13 @@
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-                <!-- Bouton Profil Desktop -->
+                <!-- Groupe de droite avec seulement le sélecteur de langue -->
                 <div class="header-right-group">
                     <!-- Sélecteur de langue -->
                     <div class="language-switcher">
                         <span class="flag">🌐</span>
                         <span>FR</span>
                     </div>
-                    
-                    <a href="profile.html" class="profile-btn">Mon Profil</a>
                 </div>
             </div>
         </div>
@@ -541,7 +516,7 @@
         <div class="profile-container">
             <div class="profile-header">
                 <h1>Mon profil</h1>
-                <p>Gérez vos informations personnelles et paramètres</p>
+                <!-- Texte descriptif supprimé -->
             </div>
 
             <div class="profile-grid">
