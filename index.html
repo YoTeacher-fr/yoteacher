@@ -11,176 +11,215 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-/* 1. Navigation : Augmentation de la taille du texte */
-    .nav-link {
-        font-size: 1.2rem !important;
-        font-weight: 400;
-    }
-    
-/* Navigation centrée - SOLUTION SIMPLE ET EFFICACE */
-    .header-content {
-        display: grid;
-        grid-template-columns: 200px 1fr 220px;
-        align-items: center;
-        padding: 8px 0 !important;
-    }
-    
-    .logo-section {
-        justify-self: start;
-    }
-    
-    .nav-menu.desktop-menu {
-        justify-self: center;
-    }
-    
-    .nav-links-wrapper {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-    }
-    
-    .header-right-group {
-        justify-self: end;
-        display: flex;
-        align-items: center;
-        gap: 4px !important;
-    }
-    
-    .nav-spacer {
-        display: none;
-    }
+        /* 1. Navigation : Augmentation de la taille du texte */
+        .nav-link {
+            font-size: 1.2rem !important;
+            font-weight: 400;
+        }
+        
+        /* Navigation centrée */
+        .header-content {
+            display: grid;
+            grid-template-columns: 200px 1fr 220px;
+            align-items: center;
+            padding: 8px 0 !important;
+        }
+        
+        .logo-section {
+            justify-self: start;
+        }
+        
+        .nav-menu.desktop-menu {
+            justify-self: center;
+        }
+        
+        .nav-links-wrapper {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .header-right-group {
+            justify-self: end;
+            display: flex;
+            align-items: center;
+            gap: 4px !important;
+        }
+        
+        .nav-spacer {
+            display: none;
+        }
 
-    /* Devise */
-    .currency-selector {
-        display: flex;
-        align-items: center;
-        gap: 3px;
-    }
-    
-    .currency-selector select {
-        background: white;
-        border: 1px solid rgba(0, 0, 0, 0.15);
-        border-radius: 20px;
-        padding: 2px 4px;
-        color: #333;
-        font-size: 0.8rem;
-        font-weight: 600;
-        cursor: pointer;
-        outline: none;
-        width: auto;
-        text-align: center;
-        text-align-last: center;
-        appearance: none;
-        -webkit-appearance: none;
-        transition: all 0.3s ease;
-    }
-    
-    .main-header:not(.scrolled) .currency-selector select {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
-    }
+        /* Devise */
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .currency-selector select {
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            padding: 2px 4px;
+            color: #333;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            width: auto;
+            text-align: center;
+            text-align-last: center;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: all 0.3s ease;
+        }
+        
+        .main-header:not(.scrolled) .currency-selector select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
 
-    /* Langue */
-    .language-switcher {
-        font-size: 0.8rem;
-        display: flex;
-        align-items: center;
-        gap: 2px;
-    }
+        /* Langue */
+        .language-switcher {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
 
-    /* Bouton Connexion */
-    .login-btn {
-        padding: 10px 22px !important;
-        font-size: 1rem !important;
-        font-weight: 600 !important;
-        border-radius: 50px;
-    }
+        /* Bouton Connexion */
+        .login-btn {
+            padding: 10px 22px !important;
+            font-size: 1rem !important;
+            font-weight: 600 !important;
+            border-radius: 50px;
+        }
 
-    @media (max-width: 768px) {
-        .currency-selector { display: none; }
-    }
-</style>
+        /* Styles pour le header mobile */
+        .currency-selector-mobile-index {
+            display: none;
+            order: 1;
+            margin-right: 10px;
+        }
+        
+        .user-avatar-index {
+            display: none;
+            order: 3;
+            margin-left: auto;
+        }
+        
+        .user-avatar-index .avatar-img {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3c84f6, #1e88e5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            /* Header mobile index */
+            .main-header .header-content {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                padding: 8px 0 !important;
+                position: relative;
+            }
+            
+            .currency-selector-mobile-index {
+                display: block !important;
+            }
+            
+            .logo-section {
+                order: 2;
+                position: absolute !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                text-align: center;
+            }
+            
+            .user-avatar-index {
+                display: flex !important;
+            }
+            
+            /* Cacher les éléments desktop sur mobile */
+            .nav-menu.desktop-menu {
+                display: none !important;
+            }
+            
+            .hamburger-menu {
+                display: none !important;
+            }
+            
+            .mobile-login-btn-header {
+                display: none !important;
+            }
+            
+            .mobile-menu-overlay {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
     <header class="main-header">
         <div class="container">
             <div class="header-content">
-                <!-- Menu Hamburger (Mobile) -->
-                <button class="hamburger-menu" id="hamburgerBtn">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
+                <!-- Sélecteur de devise mobile -->
+                <div class="currency-selector-mobile-index">
+                    <select id="currencySelectorMobileIndex">
+                        <!-- Rempli dynamiquement -->
+                    </select>
+                </div>
                 
-                <!-- Logo au CENTRE -->
+                <!-- Logo centré -->
                 <div class="logo-section">
                     <a href="index.html" class="logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-                <!-- Bouton Connexion Mobile (visible uniquement sur mobile) -->
-                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                <!-- Avatar pour mobile (si connecté) -->
+                <div class="user-avatar-index" id="userAvatarIndex">
+                    <div class="avatar-img" id="avatarInitialsIndex">Y</div>
+                </div>
                 
                 <!-- Menu Desktop -->
                 <nav class="nav-menu desktop-menu">
-    <div class="nav-links-wrapper">
-        <a href="#about" class="nav-link">À propos</a>
-        <a href="#courses" class="nav-link">Cours</a>
-        <a href="#testimonials" class="nav-link">Témoignages</a>
-        <a href="#contact" class="nav-link">Contact</a>
-    </div>
-</nav>
-
-<!-- Groupe des boutons de droite -->
-<div class="header-right-group">
-                        <!-- Sélecteur de devise -->
-                        <div class="currency-selector">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <select id="currencySelector">
-                                <!-- Rempli dynamiquement par currency.js -->
-                            </select>
-                        </div>
-                        
-                        <div class="language-switcher">
-                            <span class="flag">🌐</span>
-                            <span>FR</span>
-                        </div>
-                        
-                        <a href="login.html" class="login-btn">Connexion</a>
+                    <div class="nav-links-wrapper">
+                        <a href="#about" class="nav-link">À propos</a>
+                        <a href="#courses" class="nav-link">Cours</a>
+                        <a href="#testimonials" class="nav-link">Témoignages</a>
+                        <a href="#contact" class="nav-link">Contact</a>
                     </div>
                 </nav>
+
+                <!-- Groupe des boutons de droite -->
+                <div class="header-right-group">
+                    <!-- Sélecteur de devise -->
+                    <div class="currency-selector">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <select id="currencySelector">
+                            <!-- Rempli dynamiquement par currency.js -->
+                        </select>
+                    </div>
+                    
+                    <div class="language-switcher">
+                        <span class="flag">🌐</span>
+                        <span>FR</span>
+                    </div>
+                    
+                    <a href="login.html" class="login-btn" id="loginBtnIndex">Connexion</a>
+                </div>
             </div>
-        </div>
-        
-        <!-- Menu Mobile -->
-        <div class="mobile-menu-overlay" id="mobileMenu">
-            <nav class="mobile-nav">
-                <button class="close-menu" id="closeMenuBtn">×</button>
-                <!-- La section utilisateur sera ajoutée dynamiquement ici -->
-                <a href="#about" class="mobile-nav-link">À propos</a>
-                <a href="#courses" class="mobile-nav-link">Cours</a>
-                <a href="#testimonials" class="mobile-nav-link">Témoignages</a>
-                <a href="#contact" class="mobile-nav-link">Contact</a>
-                
-                <!-- Sélecteur de devise mobile -->
-                <div class="currency-selector-mobile" style="padding: 15px 20px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                        <i class="fas fa-money-bill-wave"></i> Devise
-                    </label>
-                    <select id="currencySelectorMobile" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                        <!-- Rempli dynamiquement -->
-                    </select>
-                </div>
-                
-                <div class="mobile-language">
-                    <span class="flag">🌐</span>
-                    <span>Français (FR)</span>
-                </div>
-                
-                <a href="login.html" class="btn btn-primary mobile-login-btn">Connexion</a>
-            </nav>
         </div>
     </header>
 
@@ -444,59 +483,69 @@
     <script src="currency.js"></script> <!-- Nouveau fichier -->
     <script src="script.js"></script>
 
-
     <script>
-        // Fonction pour mettre à jour les liens de connexion avec redirect
-        function updateMobileLoginLinks() {
-            if (window.innerWidth <= 768) {
-                const mobileLoginBtn = document.querySelector('.mobile-login-btn');
-                const mobileLoginHeaderBtn = document.querySelector('.mobile-login-btn-header');
-                
-                // Mettre à jour le bouton dans le header
-                if (mobileLoginHeaderBtn && !window.location.pathname.includes('login.html')) {
-                    const currentUrl = encodeURIComponent(window.location.href);
-                    mobileLoginHeaderBtn.href = `login.html?redirect=${currentUrl}`;
+        // Gestion de l'authentification pour le header mobile
+        function initMobileHeaderAuth() {
+            const user = window.authManager?.getCurrentUser();
+            const userAvatarIndex = document.getElementById('userAvatarIndex');
+            const loginBtnIndex = document.getElementById('loginBtnIndex');
+            
+            if (user) {
+                // Connecté
+                if (userAvatarIndex) {
+                    userAvatarIndex.style.display = 'flex';
+                    const initials = document.getElementById('avatarInitialsIndex');
+                    const fullName = user.user_metadata?.full_name || '';
+                    const avatarInitials = fullName ? 
+                        fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 
+                        user.email.substring(0, 2).toUpperCase();
+                    initials.textContent = avatarInitials;
+                    
+                    // Lien vers dashboard
+                    userAvatarIndex.addEventListener('click', function() {
+                        window.location.href = 'dashboard.html';
+                    });
+                    userAvatarIndex.style.cursor = 'pointer';
                 }
                 
-                // Mettre à jour le bouton dans le menu mobile
-                if (mobileLoginBtn && !window.location.pathname.includes('login.html')) {
-                    const currentUrl = encodeURIComponent(window.location.href);
-                    mobileLoginBtn.href = `login.html?redirect=${currentUrl}`;
+                if (loginBtnIndex) {
+                    loginBtnIndex.style.display = 'none';
+                }
+            } else {
+                // Non connecté
+                if (userAvatarIndex) {
+                    userAvatarIndex.style.display = 'none';
+                }
+                if (loginBtnIndex) {
+                    loginBtnIndex.style.display = 'block';
                 }
             }
         }
-        
+
         // Initialiser le sélecteur de devise mobile
-        function initMobileCurrencySelector() {
-            const mobileSelector = document.getElementById('currencySelectorMobile');
-            if (!mobileSelector || !window.currencyManager) return;
-            
-            // Remplir les options
-            window.currencyManager.supportedCurrencies.forEach(currency => {
-                const option = document.createElement('option');
-                option.value = currency;
-                option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
-                
-                if (currency === window.currencyManager.currentCurrency) {
-                    option.selected = true;
-                }
-                
-                mobileSelector.appendChild(option);
-            });
-            
-            // Écouter les changements
-            mobileSelector.addEventListener('change', (e) => {
-                const newCurrency = e.target.value;
-                if (window.currencyManager.setCurrency(newCurrency)) {
-                    // Fermer le menu mobile après changement
-                    const mobileMenu = document.getElementById('mobileMenu');
-                    if (mobileMenu) {
-                        mobileMenu.classList.remove('active');
+        function initMobileCurrencySelectors() {
+            // Pour index.html
+            const mobileSelectorIndex = document.getElementById('currencySelectorMobileIndex');
+            if (mobileSelectorIndex && window.currencyManager) {
+                mobileSelectorIndex.innerHTML = '';
+                window.currencyManager.supportedCurrencies.forEach(currency => {
+                    const option = document.createElement('option');
+                    option.value = currency;
+                    option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
+                    
+                    if (currency === window.currencyManager.currentCurrency) {
+                        option.selected = true;
                     }
-                }
-            });
+                    
+                    mobileSelectorIndex.appendChild(option);
+                });
+                
+                mobileSelectorIndex.addEventListener('change', (e) => {
+                    window.currencyManager.setCurrency(e.target.value);
+                });
+            }
         }
-        
+
         // Mettre à jour les prix sur la page d'accueil
         function updateHomePagePrices() {
             if (!window.currencyManager) return;
@@ -541,15 +590,17 @@
             });
         }
         
-        // Appeler cette fonction après le chargement
+        // Écouter les événements
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(updateMobileLoginLinks, 300);
+            // Attendre que authManager soit prêt
+            setTimeout(() => {
+                initMobileHeaderAuth();
+                initMobileCurrencySelectors();
+            }, 500);
             
-            // Re-mettre à jour si la taille de l'écran change
-            window.addEventListener('resize', updateMobileLoginLinks);
-            
-            // Initialiser le sélecteur de devise mobile
-            initMobileCurrencySelector();
+            // Écouter les changements d'authentification
+            window.addEventListener('auth:login', initMobileHeaderAuth);
+            window.addEventListener('auth:logout', initMobileHeaderAuth);
             
             // Écouter les changements de devise
             window.addEventListener('currency:ready', updateHomePagePrices);
