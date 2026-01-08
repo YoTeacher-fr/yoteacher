@@ -17,11 +17,7 @@
         }
         
         .header-content {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
             padding: 10px 0 !important;
-            position: relative;
         }
         
         .main-header .nav-link {
@@ -581,6 +577,13 @@
                 font-size: 1.3rem !important;
             }
             
+            .mobile-login-btn-header {
+                padding: 6px 12px !important;
+                font-size: 0.85rem !important;
+                order: 3;
+                z-index: 1001;
+            }
+            
             /* Cacher le sélecteur de devise sur mobile */
             .main-header .currency-selector {
                 display: none;
@@ -649,68 +652,6 @@
                 transform: translateY(0);
             }
         }
-        
-        /* Styles pour le header mobile booking */
-        .user-avatar-mobile {
-            display: none;
-            align-items: center;
-            order: 3;
-            margin-left: auto;
-        }
-        
-        .user-avatar-mobile .avatar-img {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3c84f6, #1e88e5);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-        
-        .currency-selector-mobile-header {
-            display: none;
-            order: 2;
-            margin-right: 10px;
-        }
-        
-        @media (max-width: 768px) {
-            /* Header mobile booking */
-            .main-header .header-content {
-                display: flex !important;
-                justify-content: space-between !important;
-                padding: 8px 0 !important;
-            }
-            
-            .logo-section {
-                position: absolute !important;
-                left: 50% !important;
-                transform: translateX(-50%) !important;
-                text-align: center;
-            }
-            
-            .currency-selector-mobile-header {
-                display: block !important;
-            }
-            
-            .user-avatar-mobile {
-                display: flex;
-            }
-            
-            /* Cacher le bouton connexion mobile dans booking */
-            .mobile-login-btn-header {
-                display: none !important;
-            }
-            
-            /* Cacher le hamburger menu sur mobile */
-            .hamburger-menu {
-                display: none !important;
-            }
-        }
     </style>
 </head>
 <body>
@@ -718,23 +659,50 @@
     <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
-                <!-- Logo centré -->
+                <button class="hamburger-menu" id="hamburgerBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
                 <div class="logo-section">
                     <a href="index.html" class="logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-                <!-- Sélecteur de devise pour mobile -->
-                <div class="currency-selector-mobile-header">
-                    <select id="currencySelectorMobileHeader">
-                        <!-- Rempli dynamiquement -->
-                    </select>
-                </div>
+                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
                 
-                <!-- Avatar utilisateur (visible si connecté) -->
-                <div class="user-avatar-mobile" id="userAvatarMobile">
-                    <div class="avatar-img" id="avatarInitialsMobile">Y</div>
-                </div>
+                <nav class="nav-menu desktop-menu">
+                    <!-- Groupe droit pour langue, devise et avatar -->
+                    <div class="header-right-group">
+                        <!-- Avatar utilisateur -->
+                        <div class="user-avatar" id="userAvatar" style="display: none;">
+                            <div class="avatar-img" id="avatarInitials">Y</div>
+                            <div class="user-menu">
+                                <a href="dashboard.html">Mon tableau de bord</a>
+                                <a href="profile.html">Mon profil</a>
+                                <a href="bookings.html">Mes réservations</a>
+                                <a href="#" class="logout-btn" id="logoutBtn">Déconnexion</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Sélecteur de devise -->
+                        <div class="currency-selector">
+                            <select id="currencySelector">
+                                <!-- Rempli dynamiquement par currency.js -->
+                            </select>
+                        </div>
+                        
+                        <!-- Sélecteur de langue -->
+                        <div class="language-switcher">
+                            <span class="flag">🌐</span>
+                            <span>FR</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Bouton de connexion (visible si non connecté) -->
+                    <a href="login.html" class="login-btn" id="loginBtn">Connexion</a>
+                </nav>
             </div>
         </div>
     </header>
@@ -921,6 +889,7 @@
     <script src="supabase.js"></script>
     <script src="auth.js"></script>
     <script src="booking.js"></script>
+    <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
     <script src="currency.js"></script>
  
@@ -953,8 +922,8 @@
         const coursesCountGroup = document.getElementById('coursesCountGroup');
         const coursesCountInput = document.getElementById('coursesCount');
         const discountPercentInput = document.getElementById('discountPercent');
-        const userAvatarMobile = document.getElementById('userAvatarMobile');
-        const avatarInitialsMobile = document.getElementById('avatarInitialsMobile');
+        const userAvatar = document.getElementById('userAvatar');
+        const loginBtn = document.getElementById('loginBtn');
 
         // Stocker le type de cours avant redirection
         let preLoginCourseType = null;
@@ -1228,9 +1197,6 @@
             
             // Mettre à jour l'interface utilisateur
             updateUserInterface();
-            
-            // Initialiser le sélecteur de devise mobile
-            initMobileCurrencySelector();
         }
 
         function initCalendar() {
@@ -1632,68 +1598,38 @@
             const user = window.authManager?.getCurrentUser();
             const isLoggedIn = !!user;
             
-            // Mettre à jour l'avatar mobile
-            updateMobileHeaderForAuth();
-            
-            // Mettre à jour les informations du formulaire
             if (isLoggedIn && user) {
-                document.getElementById('name').value = user.user_metadata?.full_name || user.email?.split('@')[0] || '';
+                // Afficher l'avatar et masquer le bouton de connexion
+                userAvatar.style.display = 'block';
+                loginBtn.style.display = 'none';
+                
+                // Mettre à jour les initiales de l'avatar
+                const avatarInitials = document.getElementById('avatarInitials');
+                const fullName = user.user_metadata?.full_name || '';
+                const initials = fullName ? 
+                    fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 
+                    user.email.substring(0, 2).toUpperCase();
+                avatarInitials.textContent = initials;
+                
+                // Ajouter l'événement de déconnexion
+                document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await window.authManager.logout();
+                    window.location.href = 'index.html';
+                });
+                
+                // Mettre à jour les informations du formulaire
+                document.getElementById('name').value = fullName || user.email?.split('@')[0] || '';
                 document.getElementById('email').value = user.email || '';
+            } else {
+                // Masquer l'avatar et afficher le bouton de connexion
+                userAvatar.style.display = 'none';
+                loginBtn.style.display = 'block';
             }
             
             // Mettre à jour l'interface en fonction du type de cours
             const currentCourseType = document.getElementById('courseType').value;
             updateUIForCourseType(currentCourseType, true);
-        }
-        
-        function updateMobileHeaderForAuth() {
-            const user = window.authManager?.getCurrentUser();
-            
-            if (user) {
-                // Connecté : afficher avatar, masquer bouton connexion
-                if (userAvatarMobile) {
-                    userAvatarMobile.style.display = 'flex';
-                    const fullName = user.user_metadata?.full_name || '';
-                    const avatarInitials = fullName ? 
-                        fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 
-                        user.email.substring(0, 2).toUpperCase();
-                    avatarInitialsMobile.textContent = avatarInitials;
-                    
-                    // Ajouter un lien vers le dashboard
-                    userAvatarMobile.addEventListener('click', function() {
-                        window.location.href = 'dashboard.html';
-                    });
-                    userAvatarMobile.style.cursor = 'pointer';
-                }
-            } else {
-                // Non connecté : masquer avatar
-                if (userAvatarMobile) {
-                    userAvatarMobile.style.display = 'none';
-                }
-            }
-        }
-        
-        function initMobileCurrencySelector() {
-            const mobileSelector = document.getElementById('currencySelectorMobileHeader');
-            if (!mobileSelector || !window.currencyManager) return;
-            
-            // Remplir les options
-            window.currencyManager.supportedCurrencies.forEach(currency => {
-                const option = document.createElement('option');
-                option.value = currency;
-                option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
-                
-                if (currency === window.currencyManager.currentCurrency) {
-                    option.selected = true;
-                }
-                
-                mobileSelector.appendChild(option);
-            });
-            
-            // Écouter les changements
-            mobileSelector.addEventListener('change', (e) => {
-                window.currencyManager.setCurrency(e.target.value);
-            });
         }
     });
     </script>
