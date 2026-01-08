@@ -313,6 +313,24 @@
             color: #3c84f6;
         }
 
+        /* Message aucun crédit */
+        .no-credits {
+            text-align: center;
+            padding: 25px 20px;
+            color: #666;
+        }
+
+        .no-credits i {
+            font-size: 2rem;
+            color: #ddd;
+            margin-bottom: 10px;
+        }
+
+        .no-credits p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
         /* Bouton Mon Profil */
         .btn-profile {
             width: 100%;
@@ -414,15 +432,39 @@
             color: #3c84f6;
         }
 
-        /* Info profil plus compact */
-        #profileInfo p {
-            margin-bottom: 8px;
-            font-size: 0.9rem;
+        /* Info profil plus compact - AMÉLIORÉ */
+        #profileInfo {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
         }
 
-        #profileInfo strong {
-            display: block;
+        .profile-field {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .profile-field:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .profile-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.85rem;
             margin-bottom: 3px;
+            display: block;
+        }
+
+        .profile-value {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            word-break: break-word;
         }
 
         @media (max-width: 1200px) {
@@ -657,27 +699,11 @@
                             <i class="fas fa-ticket-alt"></i>
                             <h2>Mes crédits</h2>
                         </div>
-                        <div class="credits-list">
-                            <div class="credit-item">
-                                <div class="credit-type">
-                                    <i class="fas fa-play-circle" style="color: #3c84f6;"></i>
-                                    Cours d'essai
-                                </div>
-                                <div class="credit-count" id="creditsEssai">0</div>
-                            </div>
-                            <div class="credit-item">
-                                <div class="credit-type">
-                                    <i class="fas fa-comments" style="color: #ff9800;"></i>
-                                    Conversation
-                                </div>
-                                <div class="credit-count" id="creditsConversation">0</div>
-                            </div>
-                            <div class="credit-item">
-                                <div class="credit-type">
-                                    <i class="fas fa-book" style="color: #4caf50;"></i>
-                                    Curriculum
-                                </div>
-                                <div class="credit-count" id="creditsCurriculum">0</div>
+                        <div id="creditsContainer">
+                            <!-- Le contenu des crédits sera généré dynamiquement -->
+                            <div class="no-credits">
+                                <i class="fas fa-ticket-alt"></i>
+                                <p>Aucun crédit disponible</p>
                             </div>
                         </div>
                     </div>
@@ -690,8 +716,7 @@
                         </div>
                         <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
                             <div id="profileInfo">
-                                <p><strong>Email:</strong><br><span id="userEmail" style="color: #666;"></span></p>
-                                <p><strong>Membre depuis:</strong><br><span id="joinDate" style="color: #666;"></span></p>
+                                <!-- Le contenu du profil sera généré dynamiquement -->
                             </div>
                             <a href="profile.html" class="btn-profile">
                                 <i class="fas fa-edit"></i> Modifier mon profil
@@ -773,8 +798,8 @@
                 <p>Bienvenue sur votre dashboard YoTeacher</p>
             `;
             
-            document.getElementById('userEmail').textContent = user.email;
-            document.getElementById('joinDate').textContent = new Date(user.created_at).toLocaleDateString('fr-FR');
+            // Mettre à jour les informations du profil avec un meilleur formatage
+            updateProfileInfo(user);
             
             if (window.supabase) {
                 try {
@@ -785,16 +810,86 @@
                         .single();
                         
                     if (profile) {
-                        // Crédits par type
-                        document.getElementById('creditsEssai').textContent = profile.credits_essai || 0;
-                        document.getElementById('creditsConversation').textContent = profile.credits_conversation || 0;
-                        document.getElementById('creditsCurriculum').textContent = profile.credits_curriculum || 0;
+                        // Mettre à jour les crédits avec la nouvelle logique
+                        updateCreditsDisplay(profile);
                     }
                     
                     await loadNextLesson(user.id);
                 } catch (error) {
                     console.error('Erreur chargement données:', error);
                 }
+            }
+        }
+        
+        function updateProfileInfo(user) {
+            const profileInfo = document.getElementById('profileInfo');
+            const joinDate = new Date(user.created_at).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            
+            profileInfo.innerHTML = `
+                <div class="profile-field">
+                    <span class="profile-label">Email</span>
+                    <span class="profile-value">${user.email}</span>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-label">Membre depuis</span>
+                    <span class="profile-value">${joinDate}</span>
+                </div>
+            `;
+        }
+        
+        function updateCreditsDisplay(profile) {
+            const creditsContainer = document.getElementById('creditsContainer');
+            const essai = profile.credits_essai || 0;
+            const conversation = profile.credits_conversation || 0;
+            const curriculum = profile.credits_curriculum || 0;
+            
+            // Vérifier si tous les crédits sont à 0
+            if (essai === 0 && conversation === 0 && curriculum === 0) {
+                creditsContainer.innerHTML = `
+                    <div class="no-credits">
+                        <i class="fas fa-ticket-alt"></i>
+                        <p>Aucun crédit disponible</p>
+                    </div>
+                `;
+            } else {
+                // Afficher les crédits disponibles
+                creditsContainer.innerHTML = `
+                    <div class="credits-list">
+                        ${essai > 0 ? `
+                        <div class="credit-item">
+                            <div class="credit-type">
+                                <i class="fas fa-play-circle" style="color: #3c84f6;"></i>
+                                Cours d'essai
+                            </div>
+                            <div class="credit-count">${essai}</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${conversation > 0 ? `
+                        <div class="credit-item">
+                            <div class="credit-type">
+                                <i class="fas fa-comments" style="color: #ff9800;"></i>
+                                Conversation
+                            </div>
+                            <div class="credit-count">${conversation}</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${curriculum > 0 ? `
+                        <div class="credit-item">
+                            <div class="credit-type">
+                                <i class="fas fa-book" style="color: #4caf50;"></i>
+                                Curriculum
+                            </div>
+                            <div class="credit-count">${curriculum}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
             }
         }
         
