@@ -441,33 +441,121 @@
     <script src="script.js"></script>
 
 
-       <script>
-    // Fonction pour mettre à jour les liens de connexion mobile
-    function updateMobileLoginLinks() {
-        if (window.innerWidth <= 768) {
-            const mobileLoginBtn = document.querySelector('.mobile-login-btn');
-            const mobileLoginHeaderBtn = document.querySelector('.mobile-login-btn-header');
-            
-            if (mobileLoginHeaderBtn && !window.location.pathname.includes('login.html')) {
-                const currentUrl = encodeURIComponent(window.location.href);
-                mobileLoginHeaderBtn.href = `login.html?redirect=${currentUrl}`;
-            }
-            
-            if (mobileLoginBtn && !window.location.pathname.includes('login.html')) {
-                const currentUrl = encodeURIComponent(window.location.href);
-                mobileLoginBtn.href = `login.html?redirect=${currentUrl}`;
+    <script>
+        // Fonction pour mettre à jour les liens de connexion avec redirect
+        function updateMobileLoginLinks() {
+            if (window.innerWidth <= 768) {
+                const mobileLoginBtn = document.querySelector('.mobile-login-btn');
+                const mobileLoginHeaderBtn = document.querySelector('.mobile-login-btn-header');
+                
+                // Mettre à jour le bouton dans le header
+                if (mobileLoginHeaderBtn && !window.location.pathname.includes('login.html')) {
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    mobileLoginHeaderBtn.href = `login.html?redirect=${currentUrl}`;
+                }
+                
+                // Mettre à jour le bouton dans le menu mobile
+                if (mobileLoginBtn && !window.location.pathname.includes('login.html')) {
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    mobileLoginBtn.href = `login.html?redirect=${currentUrl}`;
+                }
             }
         }
-    }
-    
-    // Appeler cette fonction après le chargement
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(updateMobileLoginLinks, 300);
         
-        // Re-mettre à jour si la taille de l'écran change
-        window.addEventListener('resize', updateMobileLoginLinks);
-    });
-</script>
+        // Initialiser le sélecteur de devise mobile
+        function initMobileCurrencySelector() {
+            const mobileSelector = document.getElementById('currencySelectorMobile');
+            if (!mobileSelector || !window.currencyManager) return;
+            
+            // Remplir les options
+            window.currencyManager.supportedCurrencies.forEach(currency => {
+                const option = document.createElement('option');
+                option.value = currency;
+                option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
+                
+                if (currency === window.currencyManager.currentCurrency) {
+                    option.selected = true;
+                }
+                
+                mobileSelector.appendChild(option);
+            });
+            
+            // Écouter les changements
+            mobileSelector.addEventListener('change', (e) => {
+                const newCurrency = e.target.value;
+                if (window.currencyManager.setCurrency(newCurrency)) {
+                    // Fermer le menu mobile après changement
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                }
+            });
+        }
+        
+        // Mettre à jour les prix sur la page d'accueil
+        function updateHomePagePrices() {
+            if (!window.currencyManager) return;
+            
+            const currency = window.currencyManager.currentCurrency;
+            const symbol = window.currencyManager.getSymbol();
+            
+            // Mettre à jour l'affichage de la devise dans le footer
+            const currencyDisplay = document.getElementById('currentCurrencyDisplay');
+            if (currencyDisplay) {
+                currencyDisplay.textContent = currency;
+            }
+            
+            // Mettre à jour le prix du cours d'essai dans le CTA
+            const essaiPriceBtn = document.getElementById('essaiPriceBtn');
+            if (essaiPriceBtn) {
+                const priceElement = essaiPriceBtn.querySelector('.price-essai');
+                if (priceElement) {
+                    const formattedPrice = window.currencyManager.formatPrice(5);
+                    priceElement.textContent = formattedPrice;
+                }
+            }
+            
+            // Mettre à jour les prix des cartes de cours
+            document.querySelectorAll('.course-card').forEach(card => {
+                const priceElement = card.querySelector('.price-main');
+                if (priceElement) {
+                    // Récupérer le prix de base en EUR depuis un attribut data
+                    const basePrice = parseFloat(card.dataset.basePrice || '0');
+                    if (basePrice > 0) {
+                        const formattedPrice = window.currencyManager.formatPrice(basePrice);
+                        priceElement.innerHTML = formattedPrice;
+                    }
+                }
+                
+                // Mettre à jour les prix détaillés
+                const priceDetails = card.querySelector('.price-details');
+                if (priceDetails) {
+                    // Logique spécifique pour chaque type de cours
+                    // (sera gérée par script.js)
+                }
+            });
+        }
+        
+        // Appeler cette fonction après le chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updateMobileLoginLinks, 300);
+            
+            // Re-mettre à jour si la taille de l'écran change
+            window.addEventListener('resize', updateMobileLoginLinks);
+            
+            // Initialiser le sélecteur de devise mobile
+            initMobileCurrencySelector();
+            
+            // Écouter les changements de devise
+            window.addEventListener('currency:ready', updateHomePagePrices);
+            window.addEventListener('currency:changed', updateHomePagePrices);
+            
+            // Mettre à jour les prix une fois que currencyManager est prêt
+            if (window.currencyManager && !window.currencyManager.isLoading) {
+                setTimeout(updateHomePagePrices, 500);
+            }
+        });
     </script>
 </body>
 </html>
