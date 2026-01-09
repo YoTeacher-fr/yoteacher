@@ -431,23 +431,31 @@
                 <form id="signupForm">
                     <div class="form-group">
                         <label class="form-label" for="fullName" data-i18n="signup.full_name">Nom complet</label>
-                        <input type="text" id="fullName" class="form-input" placeholder="Votre nom et prénom" required>
+                        <input type="text" id="fullName" class="form-input" 
+                               data-i18n-placeholder="signup.full_name_placeholder" 
+                               placeholder="Votre nom et prénom" required>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="email" data-i18n="login.email">Adresse email</label>
-                        <input type="email" id="email" class="form-input" placeholder="votre@email.com" required>
+                        <input type="email" id="email" class="form-input" 
+                               data-i18n-placeholder="login.email_placeholder" 
+                               placeholder="votre@email.com" required>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="password" data-i18n="login.password">Mot de passe</label>
-                        <input type="password" id="password" class="form-input" placeholder="Au moins 6 caractères" required minlength="6">
+                        <input type="password" id="password" class="form-input" 
+                               data-i18n-placeholder="signup.password_placeholder" 
+                               placeholder="Au moins 6 caractères" required minlength="6">
                         <div class="password-hint" data-i18n="signup.password_hint">Minimum 6 caractères</div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="confirmPassword" data-i18n="signup.confirm_password">Confirmer le mot de passe</label>
-                        <input type="password" id="confirmPassword" class="form-input" placeholder="Retapez votre mot de passe" required>
+                        <input type="password" id="confirmPassword" class="form-input" 
+                               data-i18n-placeholder="signup.confirm_password_placeholder" 
+                               placeholder="Retapez votre mot de passe" required>
                     </div>
 
                     <button type="submit" class="btn-auth">

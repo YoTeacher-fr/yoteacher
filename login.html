@@ -415,12 +415,16 @@
                 <form id="loginForm">
                     <div class="form-group">
                         <label class="form-label" for="email" data-i18n="login.email">Adresse email</label>
-                        <input type="email" id="email" class="form-input" placeholder="votre@email.com" required>
+                        <input type="email" id="email" class="form-input" 
+                               data-i18n-placeholder="login.email_placeholder" 
+                               placeholder="votre@email.com" required>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="password" data-i18n="login.password">Mot de passe</label>
-                        <input type="password" id="password" class="form-input" placeholder="Votre mot de passe" required>
+                        <input type="password" id="password" class="form-input" 
+                               data-i18n-placeholder="login.password_placeholder" 
+                               placeholder="Votre mot de passe" required>
                     </div>
 
                     <div class="forgot-password">
