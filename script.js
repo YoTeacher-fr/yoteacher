@@ -762,7 +762,7 @@ const mobileManager = {
     }
 };
 
-// ===== GESTION DE LA TRADUCTION DES COURS =====
+// ===== GESTION COMPLÈTE DE LA TRADUCTION =====
 const translationManager = {
     init: () => {
         // Vérifier que le gestionnaire de traduction est disponible
@@ -780,7 +780,15 @@ const translationManager = {
         window.addEventListener('language:changed', () => {
             console.log('🌍 Changement de langue détecté');
             translationManager.translateCourses();
+            
+            // Recharger les témoignages si nécessaire
+            if (state.testimonialsLoaded) {
+                testimonialsManager.init();
+            }
         });
+        
+        // Ajouter des écouteurs d'événements supplémentaires
+        translationManager.bindLanguageSwitchers();
     },
     
     translateCourses: () => {
@@ -790,6 +798,16 @@ const translationManager = {
         
         // Recharger toutes les cartes de cours avec les nouvelles traductions
         coursesManager.reloadCourses();
+    },
+    
+    bindLanguageSwitchers: () => {
+        // S'assurer que les sélecteurs de langue sont cliquables
+        document.querySelectorAll('.language-switcher, .mobile-language').forEach(element => {
+            element.style.cursor = 'pointer';
+            element.title = window.translationManager.currentLanguage === 'fr' 
+                ? 'Switch to English' 
+                : 'Passer en Français';
+        });
     }
 };
 

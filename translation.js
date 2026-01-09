@@ -23,7 +23,7 @@ class TranslationManager {
                 'hero.stat1': 'Ans d\'expérience',
                 'hero.stat2': 'Étudiants',
                 'hero.stat3': 'Leçons données',
-                'hero.trial': 'Réserver un cours d\'essai',
+                'hero.trial': 'Réserver un cours d'essai',
                 'hero.signup': 'Créer un compte gratuit',
                 
                 // About section
@@ -53,22 +53,28 @@ class TranslationManager {
                 'courses.conversation_focus': 'Discussion uniquement',
                 'courses.curriculum': 'Curriculum Complet',
                 'courses.curriculum_focus': 'Grammaire, exercices, structure',
-                'courses.exam': 'Préparation d\'examen',
+                'courses.exam': 'Préparation d'examen',
                 'courses.exam_focus': 'DELF, DALF, TCF',
                 'courses.feature1': 'Fluidité à l\'oral',
                 'courses.feature2': 'Vocabulaire quotidien',
                 'courses.feature3': 'Correction en temps réel',
-                'courses.feature4': 'Sujets variés d\'actualité',
+                'courses.feature4': 'Sujets variés d'actualité',
                 'courses.feature5': 'Grammaire approfondie',
                 'courses.feature6': 'Exercices personnalisés',
                 'courses.feature7': 'Structure complète',
                 'courses.feature8': 'Programme sur mesure',
-                'courses.feature9': 'Simulations d\'examen',
+                'courses.feature9': 'Simulations d'examen',
                 'courses.feature10': 'Correction détaillée',
                 'courses.feature11': 'Stratégies de réussite',
                 'courses.feature12': 'Feedbacks personnalisés',
-                'courses.button': 'Choisir ce cours',
+                'courses.button_reserve': 'Réserver',
+                'courses.button_choose': 'Choisir ce cours',
+                'courses.duration_60': '60 minutes',
+                'courses.detail_30min': '30min',
+                'courses.detail_45min': '45min',
                 'courses.detail_forfait': 'Forfait 10 cours',
+                'courses.price_per_hour': '/h',
+                'courses.discount': '(-5%)',
                 
                 // Testimonials
                 'testimonials.label': 'Témoignages',
@@ -79,7 +85,7 @@ class TranslationManager {
                 // CTA section
                 'cta.title': 'Prêt à commencer votre voyage vers la',
                 'cta.mastery': 'maîtrise du français',
-                'cta.subtitle': 'Rejoignez plus de 500 étudiants satisfaits. Réservez votre cours d\'essai aujourd\'hui et découvrez une nouvelle façon d\'apprendre le français.',
+                'cta.subtitle': 'Rejoignez plus de 500 étudiants satisfaits. Réservez votre cours d'essai aujourd'hui et découvrez une nouvelle façon d'apprendre le français.',
                 'cta.trial': 'Essayer maintenant',
                 'cta.account': 'Créer un compte gratuit',
                 'cta.note1': 'Conversion automatique selon votre localisation',
@@ -88,16 +94,16 @@ class TranslationManager {
                 
                 // Booking page
                 'booking.title': 'Réserver un cours',
-                'booking.subtitle': 'Choisissez la date, l\'heure et le type de cours qui vous convient',
+                'booking.subtitle': 'Choisissez la date, l'heure et le type de cours qui vous convient',
                 'booking.choose_slot': 'Choisir un créneau',
                 'booking.available_slots': 'Créneaux disponibles',
                 'booking.details': 'Détails de la réservation',
                 'booking.course_type': 'Type de cours',
                 'booking.select_course': 'Sélectionnez un type de cours',
-                'booking.trial': 'Cours d\'essai (15 min)',
+                'booking.trial': 'Cours d'essai (15 min)',
                 'booking.conversation': 'Conversation',
                 'booking.curriculum': 'Curriculum complet',
-                'booking.examen': 'Préparation d\'examen',
+                'booking.examen': 'Préparation d'examen',
                 'booking.duration': 'Durée du cours',
                 'booking.courses_count': 'Nombre de cours',
                 'booking.communication': 'Moyen de communication',
@@ -118,7 +124,7 @@ class TranslationManager {
                 'booking.secure_note': 'Vous serez redirigé vers la page de paiement après confirmation',
                 'booking.loading_slots': 'Chargement des créneaux...',
                 'booking.no_slots': 'Aucun créneau disponible pour cette date.',
-                'booking.all_slots_taken': 'Tous les créneaux sont complets pour aujourd\'hui.',
+                'booking.all_slots_taken': 'Tous les créneaux sont complets pour aujourd'hui.',
                 'booking.error_slots': 'Erreur lors du chargement des créneaux',
                 'booking.retry': 'Réessayer',
                 'booking.login_required': 'Pour réserver un cours',
@@ -136,52 +142,54 @@ class TranslationManager {
                 'booking.select_date': 'Sélectionnez une date',
                 'booking.select_time': 'Sélectionnez une heure',
                 'booking.payment_redirect': 'Redirection vers le paiement...',
-                //Payment page
-'payment.title': 'Finaliser votre paiement',
-'payment.subtitle': 'Choisissez votre moyen de paiement et confirmez votre réservation',
-'payment.choose_method': 'Choisir un moyen de paiement',
-'payment.method.revolut': 'Revolut',
-'payment.method.wise': 'Wise',
-'payment.method.interac': 'Interac',
-'payment.method.paypal': 'PayPal',
-'payment.method.card': 'Visa/Mastercard/Amex (Stripe)',
-'payment.details.link': 'Lien {method}',
-'payment.details.beneficiary': 'Nom du bénéficiaire',
-'payment.details.reference': 'Référence',
-'payment.details.amount': 'Montant',
-'payment.details.email': 'Email {method}',
-'payment.details.security_question': 'Question de sécurité',
-'payment.details.security_answer': 'Réponse',
-'payment.note.revolut': 'Une fois le paiement effectué sur Revolut, cliquez sur "J\'ai payé avec Revolut" pour confirmer votre réservation.',
-'payment.note.wise': 'Une fois le paiement effectué sur Wise, cliquez sur "J\'ai payé avec Wise" pour confirmer votre réservation.',
-'payment.note.interac': 'Une fois le virement effectué, cliquez sur "J\'ai payé avec Interac" pour confirmer votre réservation.',
-'payment.note.paypal': 'Une fois le paiement effectué sur PayPal, cliquez sur "J\'ai payé avec PayPal" pour confirmer votre réservation.',
-'payment.note.card': 'Votre paiement est chiffré et sécurisé par Stripe. Aucune information bancaire n\'est stockée sur nos serveurs.',
-'payment.button.revolut': 'J\'ai payé avec Revolut',
-'payment.button.wise': 'J\'ai payé avec Wise',
-'payment.button.interac': 'J\'ai payé avec Interac',
-'payment.button.paypal': 'J\'ai payé avec PayPal',
-'payment.button.card': 'Payer par carte',
-'payment.summary': 'Récapitulatif',
-'payment.summary.title': 'Détails de votre réservation',
-'payment.summary.type': 'Type de cours:',
-'payment.summary.date': 'Date:',
-'payment.summary.time': 'Heure:',
-'payment.summary.duration': 'Durée:',
-'payment.summary.platform': 'Plateforme:',
-'payment.summary.total': 'Total à payer:',
-'payment.security.title': 'Paiement 100% sécurisé',
-'payment.security.encrypted': 'Vos données bancaires sont chiffrées',
-'payment.security.no_storage': 'Aucune information stockée sur nos serveurs',
-'payment.security.guaranteed': 'Réservation garantie après paiement',
-'payment.booking_note': 'Votre créneau est réservé pendant 15 minutes. Une fois le paiement confirmé, vous recevrez un email avec le lien de la visioconférence.',
-'payment.currency_note': 'Prix affichés en {currency} - Conversion automatique',
-'payment.interac_note': 'Note importante : Les paiements Interac doivent être effectués en dollars canadiens (CAD). La devise a été automatiquement ajustée pour vous.',
-'payment.error.interac_currency': 'Les paiements Interac doivent être effectués en dollars canadiens (CAD). Veuillez sélectionner CAD comme devise.',
-'payment.interac.title': 'Paiement Interac',
-'payment.interac.instructions': 'Veuillez effectuer un virement Interac aux coordonnées suivantes :',
-'payment.important': 'Important :',
-'payment.secure': 'Sécurisé :',
+                
+                // Payment page
+                'payment.title': 'Finaliser votre paiement',
+                'payment.subtitle': 'Choisissez votre moyen de paiement et confirmez votre réservation',
+                'payment.choose_method': 'Choisir un moyen de paiement',
+                'payment.method.revolut': 'Revolut',
+                'payment.method.wise': 'Wise',
+                'payment.method.interac': 'Interac',
+                'payment.method.paypal': 'PayPal',
+                'payment.method.card': 'Visa/Mastercard/Amex (Stripe)',
+                'payment.details.link': 'Lien {method}',
+                'payment.details.beneficiary': 'Nom du bénéficiaire',
+                'payment.details.reference': 'Référence',
+                'payment.details.amount': 'Montant',
+                'payment.details.email': 'Email {method}',
+                'payment.details.security_question': 'Question de sécurité',
+                'payment.details.security_answer': 'Réponse',
+                'payment.note.revolut': 'Une fois le paiement effectué sur Revolut, cliquez sur "J'ai payé avec Revolut" pour confirmer votre réservation.',
+                'payment.note.wise': 'Une fois le paiement effectué sur Wise, cliquez sur "J'ai payé avec Wise" pour confirmer votre réservation.',
+                'payment.note.interac': 'Une fois le virement effectué, cliquez sur "J'ai payé avec Interac" pour confirmer votre réservation.',
+                'payment.note.paypal': 'Une fois le paiement effectué sur PayPal, cliquez sur "J'ai payé avec PayPal" pour confirmer votre réservation.',
+                'payment.note.card': 'Votre paiement est chiffré et sécurisé par Stripe. Aucune information bancaire n'est stockée sur nos serveurs.',
+                'payment.button.revolut': 'J'ai payé avec Revolut',
+                'payment.button.wise': 'J'ai payé avec Wise',
+                'payment.button.interac': 'J'ai payé avec Interac',
+                'payment.button.paypal': 'J'ai payé avec PayPal',
+                'payment.button.card': 'Payer par carte',
+                'payment.summary': 'Récapitulatif',
+                'payment.summary.title': 'Détails de votre réservation',
+                'payment.summary.type': 'Type de cours:',
+                'payment.summary.date': 'Date:',
+                'payment.summary.time': 'Heure:',
+                'payment.summary.duration': 'Durée:',
+                'payment.summary.platform': 'Plateforme:',
+                'payment.summary.total': 'Total à payer:',
+                'payment.security.title': 'Paiement 100% sécurisé',
+                'payment.security.encrypted': 'Vos données bancaires sont chiffrées',
+                'payment.security.no_storage': 'Aucune information stockée sur nos serveurs',
+                'payment.security.guaranteed': 'Réservation garantie après paiement',
+                'payment.booking_note': 'Votre créneau est réservé pendant 15 minutes. Une fois le paiement confirmé, vous recevrez un email avec le lien de la visioconférence.',
+                'payment.currency_note': 'Prix affichés en {currency} - Conversion automatique',
+                'payment.interac_note': 'Note importante : Les paiements Interac doivent être effectués en dollars canadiens (CAD). La devise a été automatiquement ajustée pour vous.',
+                'payment.error.interac_currency': 'Les paiements Interac doivent être effectués en dollars canadiens (CAD). Veuillez sélectionner CAD comme devise.',
+                'payment.interac.title': 'Paiement Interac',
+                'payment.interac.instructions': 'Veuillez effectuer un virement Interac aux coordonnées suivantes :',
+                'payment.important': 'Important :',
+                'payment.secure': 'Sécurisé :',
+                
                 // Login page
                 'login.title': 'Connexion',
                 'login.subtitle': 'Connectez-vous à votre espace étudiant',
@@ -194,7 +202,7 @@ class TranslationManager {
                 'login.loading': 'Connexion en cours...',
                 'login.success': 'Connexion réussie ! Redirection...',
                 'login.no_account': 'Pas encore de compte ?',
-                'login.signup': 'S\'inscrire gratuitement',
+                'login.signup': 'S'inscrire gratuitement',
                 
                 // Signup page
                 'signup.title': 'Inscription',
@@ -209,7 +217,7 @@ class TranslationManager {
                 'signup.confirm_password': 'Confirmer le mot de passe',
                 'signup.confirm_placeholder': 'Retapez votre mot de passe',
                 'signup.terms': 'En vous inscrivant, vous acceptez nos',
-                'signup.terms_link': 'Conditions d\'utilisation',
+                'signup.terms_link': 'Conditions d'utilisation',
                 'signup.privacy_link': 'Politique de confidentialité',
                 'signup.submit': 'Créer mon compte',
                 'signup.loading': 'Création du compte...',
@@ -233,10 +241,10 @@ class TranslationManager {
                 'dashboard.reference': 'Référence',
                 'dashboard.cancel': 'Annuler',
                 'dashboard.reschedule': 'Reporter',
-                'dashboard.trial': 'Cours d\'essai',
+                'dashboard.trial': 'Cours d'essai',
                 'dashboard.trial_subtitle': 'Découvrez ma méthode',
                 'dashboard.conversation': 'Conversation',
-                'dashboard.conversation_subtitle': 'Pratiquez l\'oral',
+                'dashboard.conversation_subtitle': 'Pratiquez l'oral',
                 'dashboard.curriculum': 'Curriculum',
                 'dashboard.curriculum_subtitle': 'Apprentissage complet',
                 'dashboard.loading': 'Chargement de vos données...',
@@ -254,7 +262,7 @@ class TranslationManager {
                 'profile.language_subtitle': 'Définissez votre niveau actuel en français',
                 'profile.current_level': 'Niveau actuel (CEFR)',
                 'profile.select_level': 'Sélectionnez votre niveau',
-                'profile.learning_goals': 'Objectifs d\'apprentissage',
+                'profile.learning_goals': 'Objectifs d'apprentissage',
                 'profile.goals_placeholder': 'Ex: Préparer le DELF B2, Améliorer mon français professionnel...',
                 'profile.save_preferences': 'Enregistrer les préférences',
                 'profile.password': 'Changer le mot de passe',
@@ -279,37 +287,10 @@ class TranslationManager {
                 'footer.legal': 'Mentions légales',
                 'footer.terms': 'Conditions Générales de Vente',
                 'footer.privacy': 'Politique de confidentialité',
-                'footer.cancellation': 'Politique d\'annulation',
+                'footer.cancellation': 'Politique d'annulation',
                 'footer.copyright': 'Fait avec ❤️ à Marseille',
                 'footer.email': 'contact@yoteacher.com',
-                // Script Cours
-// Ajoutez ces lignes dans l'objet 'fr' :
-'courses.conversation': 'Conversation',
-'courses.curriculum': 'Curriculum Complet',
-'courses.exam': 'Préparation d\'examen',
-'courses.conversation_focus': 'Discussion uniquement',
-'courses.curriculum_focus': 'Grammaire, exercices, structure',
-'courses.exam_focus': 'DELF, DALF, TCF',
-'courses.feature1': 'Fluidité à l\'oral',
-'courses.feature2': 'Vocabulaire quotidien',
-'courses.feature3': 'Correction en temps réel',
-'courses.feature4': 'Sujets variés d\'actualité',
-'courses.feature5': 'Grammaire approfondie',
-'courses.feature6': 'Exercices personnalisés',
-'courses.feature7': 'Structure complète',
-'courses.feature8': 'Programme sur mesure',
-'courses.feature9': 'Simulations d\'examen',
-'courses.feature10': 'Correction détaillée',
-'courses.feature11': 'Stratégies de réussite',
-'courses.feature12': 'Feedbacks personnalisés',
-'courses.button_reserve': 'Réserver',
-'courses.button_choose': 'Choisir ce cours',
-'courses.duration_60': '60 minutes',
-'courses.detail_30min': '30min',
-'courses.detail_45min': '45min',
-'courses.detail_forfait': 'Forfait 10 cours',
-'courses.price_per_hour': '/h',
-'courses.discount': '(-5%)',
+                
                 // Common
                 'common.loading': 'Chargement...',
                 'common.error': 'Erreur',
@@ -345,7 +326,7 @@ class TranslationManager {
                 'common.week': 'semaine',
                 'common.month': 'mois',
                 'common.year': 'an',
-                'common.today': 'Aujourd\'hui',
+                'common.today': 'Aujourd'hui',
                 'common.tomorrow': 'Demain',
                 'common.yesterday': 'Hier',
                 'common.yes': 'Oui',
@@ -425,8 +406,14 @@ class TranslationManager {
                 'courses.feature10': 'Detailed correction',
                 'courses.feature11': 'Success strategies',
                 'courses.feature12': 'Personalized feedback',
-                'courses.button': 'Choose this course',
+                'courses.button_reserve': 'Book',
+                'courses.button_choose': 'Choose this course',
+                'courses.duration_60': '60 minutes',
+                'courses.detail_30min': '30min',
+                'courses.detail_45min': '45min',
                 'courses.detail_forfait': '10-course package',
+                'courses.price_per_hour': '/h',
+                'courses.discount': '(-5%)',
                 
                 // Testimonials
                 'testimonials.label': 'Testimonials',
@@ -494,52 +481,54 @@ class TranslationManager {
                 'booking.select_date': 'Select a date',
                 'booking.select_time': 'Select a time',
                 'booking.payment_redirect': 'Redirecting to payment...',
+                
                 // Payment page
-'payment.title': 'Finalize Your Payment',
-'payment.subtitle': 'Choose your payment method and confirm your booking',
-'payment.choose_method': 'Choose a Payment Method',
-'payment.method.revolut': 'Revolut',
-'payment.method.wise': 'Wise',
-'payment.method.interac': 'Interac',
-'payment.method.paypal': 'PayPal',
-'payment.method.card': 'Visa/Mastercard/Amex (Stripe)',
-'payment.details.link': '{method} Link',
-'payment.details.beneficiary': 'Beneficiary Name',
-'payment.details.reference': 'Reference',
-'payment.details.amount': 'Amount',
-'payment.details.email': '{method} Email',
-'payment.details.security_question': 'Security Question',
-'payment.details.security_answer': 'Answer',
-'payment.note.revolut': 'Once the payment is made on Revolut, click "I paid with Revolut" to confirm your booking.',
-'payment.note.wise': 'Once the payment is made on Wise, click "I paid with Wise" to confirm your booking.',
-'payment.note.interac': 'Once the transfer is made, click "I paid with Interac" to confirm your booking.',
-'payment.note.paypal': 'Once the payment is made on PayPal, click "I paid with PayPal" to confirm your booking.',
-'payment.note.card': 'Your payment is encrypted and secured by Stripe. No banking information is stored on our servers.',
-'payment.button.revolut': 'I paid with Revolut',
-'payment.button.wise': 'I paid with Wise',
-'payment.button.interac': 'I paid with Interac',
-'payment.button.paypal': 'I paid with PayPal',
-'payment.button.card': 'Pay by Card',
-'payment.summary': 'Summary',
-'payment.summary.title': 'Your Booking Details',
-'payment.summary.type': 'Lesson type:',
-'payment.summary.date': 'Date:',
-'payment.summary.time': 'Time:',
-'payment.summary.duration': 'Duration:',
-'payment.summary.platform': 'Platform:',
-'payment.summary.total': 'Total to pay:',
-'payment.security.title': '100% Secure Payment',
-'payment.security.encrypted': 'Your banking data is encrypted',
-'payment.security.no_storage': 'No information stored on our servers',
-'payment.security.guaranteed': 'Booking guaranteed after payment',
-'payment.booking_note': 'Your time slot is reserved for 15 minutes. Once the payment is confirmed, you will receive an email with the video conference link.',
-'payment.currency_note': 'Prices displayed in {currency} - Automatic conversion',
-'payment.interac_note': 'Important note: Interac payments must be made in Canadian dollars (CAD). The currency has been automatically adjusted for you.',
-'payment.error.interac_currency': 'Interac payments must be made in Canadian dollars (CAD). Please select CAD as currency.',
-'payment.interac.title': 'Interac Payment',
-'payment.interac.instructions': 'Please make an Interac transfer to the following details:',
-'payment.important': 'Important:',
-'payment.secure': 'Secure:',
+                'payment.title': 'Finalize Your Payment',
+                'payment.subtitle': 'Choose your payment method and confirm your booking',
+                'payment.choose_method': 'Choose a Payment Method',
+                'payment.method.revolut': 'Revolut',
+                'payment.method.wise': 'Wise',
+                'payment.method.interac': 'Interac',
+                'payment.method.paypal': 'PayPal',
+                'payment.method.card': 'Visa/Mastercard/Amex (Stripe)',
+                'payment.details.link': '{method} Link',
+                'payment.details.beneficiary': 'Beneficiary Name',
+                'payment.details.reference': 'Reference',
+                'payment.details.amount': 'Amount',
+                'payment.details.email': '{method} Email',
+                'payment.details.security_question': 'Security Question',
+                'payment.details.security_answer': 'Answer',
+                'payment.note.revolut': 'Once the payment is made on Revolut, click "I paid with Revolut" to confirm your booking.',
+                'payment.note.wise': 'Once the payment is made on Wise, click "I paid with Wise" to confirm your booking.',
+                'payment.note.interac': 'Once the transfer is made, click "I paid with Interac" to confirm your booking.',
+                'payment.note.paypal': 'Once the payment is made on PayPal, click "I paid with PayPal" to confirm your booking.',
+                'payment.note.card': 'Your payment is encrypted and secured by Stripe. No banking information is stored on our servers.',
+                'payment.button.revolut': 'I paid with Revolut',
+                'payment.button.wise': 'I paid with Wise',
+                'payment.button.interac': 'I paid with Interac',
+                'payment.button.paypal': 'I paid with PayPal',
+                'payment.button.card': 'Pay by Card',
+                'payment.summary': 'Summary',
+                'payment.summary.title': 'Your Booking Details',
+                'payment.summary.type': 'Lesson type:',
+                'payment.summary.date': 'Date:',
+                'payment.summary.time': 'Time:',
+                'payment.summary.duration': 'Duration:',
+                'payment.summary.platform': 'Platform:',
+                'payment.summary.total': 'Total to pay:',
+                'payment.security.title': '100% Secure Payment',
+                'payment.security.encrypted': 'Your banking data is encrypted',
+                'payment.security.no_storage': 'No information stored on our servers',
+                'payment.security.guaranteed': 'Booking guaranteed after payment',
+                'payment.booking_note': 'Your time slot is reserved for 15 minutes. Once the payment is confirmed, you will receive an email with the video conference link.',
+                'payment.currency_note': 'Prices displayed in {currency} - Automatic conversion',
+                'payment.interac_note': 'Important note: Interac payments must be made in Canadian dollars (CAD). The currency has been automatically adjusted for you.',
+                'payment.error.interac_currency': 'Interac payments must be made in Canadian dollars (CAD). Please select CAD as currency.',
+                'payment.interac.title': 'Interac Payment',
+                'payment.interac.instructions': 'Please make an Interac transfer to the following details:',
+                'payment.important': 'Important:',
+                'payment.secure': 'Secure:',
+                
                 // Login page
                 'login.title': 'Login',
                 'login.subtitle': 'Log in to your student space',
@@ -640,34 +629,7 @@ class TranslationManager {
                 'footer.cancellation': 'Cancellation Policy',
                 'footer.copyright': 'Made with ❤️ in Marseille',
                 'footer.email': 'contact@yoteacher.com',
-                // Script Cours
-// Ajoutez ces lignes dans l'objet 'en' :
-'courses.conversation': 'Conversation',
-'courses.curriculum': 'Complete Curriculum',
-'courses.exam': 'Exam Preparation',
-'courses.conversation_focus': 'Discussion only',
-'courses.curriculum_focus': 'Grammar, exercises, structure',
-'courses.exam_focus': 'DELF, DALF, TCF',
-'courses.feature1': 'Oral fluency',
-'courses.feature2': 'Daily vocabulary',
-'courses.feature3': 'Real-time correction',
-'courses.feature4': 'Varied current topics',
-'courses.feature5': 'In-depth grammar',
-'courses.feature6': 'Personalized exercises',
-'courses.feature7': 'Complete structure',
-'courses.feature8': 'Customized program',
-'courses.feature9': 'Exam simulations',
-'courses.feature10': 'Detailed correction',
-'courses.feature11': 'Success strategies',
-'courses.feature12': 'Personalized feedback',
-'courses.button_reserve': 'Book',
-'courses.button_choose': 'Choose this course',
-'courses.duration_60': '60 minutes',
-'courses.detail_30min': '30min',
-'courses.detail_45min': '45min',
-'courses.detail_forfait': '10-course package',
-'courses.price_per_hour': '/h',
-'courses.discount': '(-5%)',
+                
                 // Common
                 'common.loading': 'Loading...',
                 'common.error': 'Error',
@@ -736,38 +698,72 @@ class TranslationManager {
             this.currentLanguage = browserLanguage;
         }
         
+        console.log(`🌍 Langue initialisée: ${this.currentLanguage}`);
+        
         // Initialiser le gestionnaire d'événements
         this.initEventListeners();
     }
 
     initEventListeners() {
-        // Écouter les clics sur les sélecteurs de langue
-        document.addEventListener('DOMContentLoaded', () => {
-            this.updatePage();
-            
-            // Gérer les sélecteurs de langue dans le header
-            const languageSwitchers = document.querySelectorAll('.language-switcher');
-            languageSwitchers.forEach(switcher => {
-                switcher.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.toggleLanguage();
-                });
+        // Initialiser la traduction
+        this.updatePage();
+        
+        // Attendre que le DOM soit complètement chargé
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.setupClickHandlers();
             });
+        } else {
+            this.setupClickHandlers();
+        }
+    }
 
-            // Gérer le sélecteur de langue mobile
-            const mobileLanguageSwitchers = document.querySelectorAll('.mobile-language');
-            mobileLanguageSwitchers.forEach(switcher => {
-                switcher.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.toggleLanguage();
-                });
+    setupClickHandlers() {
+        console.log('🌍 Configuration des gestionnaires de clics...');
+        
+        // Gérer les clics sur le sélecteur de langue desktop
+        const languageSwitchers = document.querySelectorAll('.language-switcher');
+        languageSwitchers.forEach(switcher => {
+            // Supprimer les anciens écouteurs
+            switcher.replaceWith(switcher.cloneNode(true));
+        });
+        
+        // Re-sélectionner après le clonage
+        const newLanguageSwitchers = document.querySelectorAll('.language-switcher');
+        newLanguageSwitchers.forEach(switcher => {
+            switcher.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🌍 Clic sur le sélecteur de langue desktop');
+                this.toggleLanguage();
             });
         });
+
+        // Gérer les clics sur le sélecteur de langue mobile
+        const mobileLanguageSwitchers = document.querySelectorAll('.mobile-language');
+        mobileLanguageSwitchers.forEach(switcher => {
+            // Supprimer les anciens écouteurs
+            switcher.replaceWith(switcher.cloneNode(true));
+        });
+        
+        // Re-sélectionner après le clonage
+        const newMobileLanguageSwitchers = document.querySelectorAll('.mobile-language');
+        newMobileLanguageSwitchers.forEach(switcher => {
+            switcher.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🌍 Clic sur le sélecteur de langue mobile');
+                this.toggleLanguage();
+            });
+        });
+        
+        console.log('✅ Gestionnaires de langue configurés');
     }
 
     toggleLanguage() {
         this.currentLanguage = this.currentLanguage === 'fr' ? 'en' : 'fr';
         localStorage.setItem('language', this.currentLanguage);
+        console.log(`🌍 Changement de langue vers: ${this.currentLanguage}`);
         this.updatePage();
         
         // Déclencher un événement pour informer les autres composants
@@ -777,10 +773,14 @@ class TranslationManager {
     }
 
     updatePage() {
+        console.log(`🌍 Mise à jour de la page en ${this.currentLanguage}`);
+        
         // Mettre à jour le texte des sélecteurs de langue
         const languageDisplays = document.querySelectorAll('.language-switcher span:last-child, .mobile-language span:last-child');
         languageDisplays.forEach(display => {
-            display.textContent = this.currentLanguage === 'fr' ? 'FR' : 'EN';
+            // Récupérer la traduction pour 'header.language'
+            const translation = this.getTranslation('header.language');
+            display.textContent = translation;
         });
 
         // Appliquer les traductions aux éléments avec data-i18n
@@ -788,6 +788,8 @@ class TranslationManager {
         
         // Mettre à jour les attributs lang
         document.documentElement.lang = this.currentLanguage;
+        
+        console.log('✅ Page traduite avec succès');
     }
 
     translatePage() {
@@ -795,7 +797,7 @@ class TranslationManager {
         document.querySelectorAll('[data-i18n]').forEach(element => {
             const key = element.getAttribute('data-i18n');
             const translation = this.getTranslation(key);
-            if (translation) {
+            if (translation && translation !== key) {
                 element.textContent = translation;
             }
         });
@@ -804,7 +806,7 @@ class TranslationManager {
         document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
             const key = element.getAttribute('data-i18n-placeholder');
             const translation = this.getTranslation(key);
-            if (translation) {
+            if (translation && translation !== key) {
                 element.placeholder = translation;
             }
         });
@@ -813,7 +815,7 @@ class TranslationManager {
         document.querySelectorAll('[data-i18n-title]').forEach(element => {
             const key = element.getAttribute('data-i18n-title');
             const translation = this.getTranslation(key);
-            if (translation) {
+            if (translation && translation !== key) {
                 element.title = translation;
             }
         });
@@ -822,7 +824,7 @@ class TranslationManager {
         document.querySelectorAll('[data-i18n-value]').forEach(element => {
             const key = element.getAttribute('data-i18n-value');
             const translation = this.getTranslation(key);
-            if (translation) {
+            if (translation && translation !== key) {
                 element.value = translation;
             }
         });
@@ -831,7 +833,7 @@ class TranslationManager {
         document.querySelectorAll('option[data-i18n]').forEach(element => {
             const key = element.getAttribute('data-i18n');
             const translation = this.getTranslation(key);
-            if (translation) {
+            if (translation && translation !== key) {
                 element.textContent = translation;
             }
         });
