@@ -152,8 +152,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     }
 }
 
-// Dans supabase.js, modifiez la fin :
-
+// Exposer Supabase globalement
 window.supabaseInitialized = new Promise(async (resolve) => {
     try {
         const client = await initSupabase();
@@ -165,12 +164,6 @@ window.supabaseInitialized = new Promise(async (resolve) => {
             await checkDatabaseTables();
             
             console.log("✨ Supabase prêt à l'emploi");
-            
-            // S'assurer que supabase.auth existe
-            if (window.supabase && window.supabase.auth) {
-                console.log("✅ Supabase.auth disponible");
-            }
-            
             resolve(true);
         } else {
             console.error("❌ Échec de l'initialisation de Supabase");
@@ -182,12 +175,17 @@ window.supabaseInitialized = new Promise(async (resolve) => {
     }
 });
 
-// Garantir que supabase est disponible globalement
-window.getSupabase = function() {
-    return window.supabase;
+// Fonction helper pour attendre Supabase (pour compatibilité)
+window.waitForSupabase = function(callback) {
+    window.supabaseInitialized.then((initialized) => {
+        if (callback) callback();
+    });
 };
 
-// Fonction helper pour attendre Supabase
-window.waitForSupabase = function() {
-    return window.supabaseInitialized;
-};
+// Exporter pour utilisation
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { 
+        initSupabase, 
+        supabaseClient 
+    };
+}
