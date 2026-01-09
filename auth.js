@@ -1,4 +1,4 @@
-// Gestion de l'authentification avec gestion des paiements
+// auth.js - Gestion de l'authentification avec Supabase
 class AuthManager {
     constructor() {
         this.user = null;
@@ -9,7 +9,6 @@ class AuthManager {
 
     async init() {
         try {
-            // Attendre que Supabase soit prêt
             await this.waitForSupabase();
             
             if (!this.supabaseReady) {
@@ -18,31 +17,32 @@ class AuthManager {
                 return;
             }
 
-            // Vérifier la session existante
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session) {
                     this.user = session.user;
                     this.saveUserToStorage();
                     this.updateUI();
-                    // Événement : utilisateur déjà connecté
                     this.emitAuthEvent('login', this.user);
+                    
+                    // Vérifier/créer le profil
+                    await this.ensureProfileExists();
                 }
 
-                // Écouter les changements d'authentification
                 supabase.auth.onAuthStateChange((event, session) => {
                     console.log('Auth state changed:', event, session);
                     if (session) {
                         this.user = session.user;
                         this.saveUserToStorage();
                         this.updateUI();
-                        // Événement : connexion
                         this.emitAuthEvent('login', this.user);
+                        
+                        // Vérifier/créer le profil
+                        this.ensureProfileExists();
                     } else {
                         this.user = null;
                         this.removeUserFromStorage();
                         this.updateUI();
-                        // Événement : déconnexion
                         this.emitAuthEvent('logout');
                     }
                 });
@@ -56,7 +56,48 @@ class AuthManager {
         }
     }
 
-    // Méthode pour émettre des événements d'authentification
+    // NOUVELLE MÉTHODE : S'assurer que le profil existe dans la table profiles
+    async ensureProfileExists() {
+        if (!this.supabaseReady || !this.user) return;
+        
+        try {
+            // Vérifier si le profil existe
+            const { data: profile, error: fetchError } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', this.user.id)
+                .single();
+            
+            if (fetchError && fetchError.code === 'PGRST116') {
+                // Profil n'existe pas, le créer
+                console.log('📝 Création du profil utilisateur...');
+                
+                const fullName = this.user.user_metadata?.full_name || this.user.email?.split('@')[0] || 'Utilisateur';
+                
+                const { error: insertError } = await supabase
+                    .from('profiles')
+                    .insert([{
+                        id: this.user.id,
+                        full_name: fullName,
+                        french_level: null,
+                        preferred_platform: 'zoom',
+                        preferred_currency: 'EUR',
+                        is_vip: false
+                    }]);
+                
+                if (insertError) {
+                    console.error('Erreur création profil:', insertError);
+                } else {
+                    console.log('✅ Profil créé avec succès');
+                }
+            } else if (!fetchError) {
+                console.log('✅ Profil existe déjà');
+            }
+        } catch (error) {
+            console.error('Exception vérification profil:', error);
+        }
+    }
+
     emitAuthEvent(eventName, user = null) {
         try {
             console.log(`Événement auth:${eventName} émis`, user ? `pour ${user.email}` : '');
@@ -232,26 +273,9 @@ class AuthManager {
             }
 
             if (data.user) {
-                try {
-                    const { error: profileError } = await supabase
-                        .from('profiles')
-                        .insert([
-                            {
-                                id: data.user.id,
-                                email: email,
-                                full_name: fullName,
-                                is_vip: false,
-                                credits: 0,
-                                created_at: new Date().toISOString()
-                            }
-                        ]);
-
-                    if (profileError) {
-                        console.warn('Erreur création profil:', profileError);
-                    }
-                } catch (profileErr) {
-                    console.warn('Exception création profil:', profileErr);
-                }
+                // Le profil sera créé automatiquement via ensureProfileExists()
+                // au moment de la connexion après confirmation email
+                console.log('✅ Inscription réussie, email de confirmation envoyé');
             }
 
             return { 
@@ -310,9 +334,11 @@ class AuthManager {
             
             this.user = data.user;
             this.saveUserToStorage();
-            this.updateUI();
             
-            // Événement : connexion réussie
+            // Vérifier/créer le profil
+            await this.ensureProfileExists();
+            
+            this.updateUI();
             this.emitAuthEvent('login', this.user);
             
             const returnUrl = this.getReturnUrl();
@@ -366,7 +392,6 @@ class AuthManager {
                         if (user.email === email) {
                             this.user = user;
                             this.updateUI();
-                            // Événement : connexion mock
                             this.emitAuthEvent('login', this.user);
                             resolve({ 
                                 success: true, 
@@ -398,8 +423,6 @@ class AuthManager {
             this.user = null;
             this.removeUserFromStorage();
             this.updateUI();
-            
-            // Événement : déconnexion
             this.emitAuthEvent('logout');
             
             window.location.href = 'index.html#top';
@@ -417,8 +440,6 @@ class AuthManager {
             this.user = null;
             this.removeUserFromStorage();
             this.updateUI();
-            
-            // Événement : déconnexion même en cas d'erreur
             this.emitAuthEvent('logout');
             
             window.location.href = 'index.html#top';
@@ -433,20 +454,16 @@ class AuthManager {
                            window.location.pathname.endsWith('/');
         
         if (user) {
-            // Sur TOUTES les pages : ajouter avatar, retirer bouton Connexion header
             this.removeLoginButtonFromHeader();
             this.addUserAvatar();
             
-            // Sur index.html seulement : Ne rien changer d'autre
             if (isIndexPage) {
-                return; // Sortir ici, ne pas modifier les autres boutons
+                return;
             }
             
-            // Sur les AUTRES pages : modifier tous les boutons
             this.updateAllButtonsForConnectedUser();
             
         } else {
-            // Utilisateur non connecté
             this.removeUserAvatar();
             this.restoreLoginButtonInHeader();
             
@@ -471,7 +488,6 @@ class AuthManager {
             if (btn) {
                 btn.style.display = 'flex';
                 
-                // Ajouter le paramètre redirect si nécessaire
                 if (!window.location.pathname.includes('login.html') && 
                     !window.location.pathname.includes('signup.html') &&
                     btn.href && btn.href.includes('login.html')) {
@@ -484,7 +500,6 @@ class AuthManager {
     }
 
     updateAllButtonsForConnectedUser() {
-        // Boutons "Créer un compte" -> "Mon dashboard"
         document.querySelectorAll('.btn-secondary, .btn-outline-white').forEach(btn => {
             if (!btn || !btn.textContent) return;
             
@@ -506,7 +521,6 @@ class AuthManager {
     }
 
     restoreAllButtonsForDisconnectedUser() {
-        // Boutons "Mon dashboard" -> "Créer un compte gratuit"
         document.querySelectorAll('.btn-outline, .btn-primary').forEach(btn => {
             if (!btn || !btn.textContent) return;
             
@@ -532,7 +546,6 @@ class AuthManager {
         
         if (!this.user) return;
         
-        // Trouver le conteneur header-right-group
         const container = document.querySelector('.header-right-group');
         
         if (!container) return;
@@ -542,7 +555,6 @@ class AuthManager {
         
         const initials = this.getUserInitials();
         
-        // Nouveau design : Bouton Dashboard avec avatar intégré et croix de déconnexion
         avatar.innerHTML = `
             <a href="dashboard.html" class="dashboard-btn">
                 <div class="avatar-img">${initials}</div>
@@ -551,10 +563,8 @@ class AuthManager {
             </a>
         `;
         
-        // Ajouter l'avatar à la fin du container
         container.appendChild(avatar);
         
-        // Gestion du clic sur le bouton de déconnexion
         const logoutBtn = document.getElementById('logoutBtnIcon');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
@@ -566,11 +576,9 @@ class AuthManager {
             });
         }
         
-        // Gestion du clic sur le bouton Dashboard
         const dashboardBtn = avatar.querySelector('.dashboard-btn');
         if (dashboardBtn) {
             dashboardBtn.addEventListener('click', (e) => {
-                // Si on clique sur la croix, ne pas rediriger
                 if (e.target.id === 'logoutBtnIcon' || e.target.closest('#logoutBtnIcon')) {
                     return;
                 }
@@ -668,7 +676,6 @@ class AuthManager {
                 this.user = data.session.user;
                 this.saveUserToStorage();
                 this.updateUI();
-                // Événement : session rafraîchie
                 this.emitAuthEvent('login', this.user);
             }
             
@@ -700,105 +707,23 @@ class AuthManager {
         return errorMap[errorMessage] || errorMessage || 'Une erreur est survenue';
     }
 
-    // NOUVELLE MÉTHODE : Gestion des paiements
+    // MÉTHODE DÉPRÉCIÉE - Ne plus utiliser
     async savePayment(paymentData) {
-        try {
-            if (!this.supabaseReady || !window.supabase) {
-                // Sauvegarder localement en mode dégradé
-                const payments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
-                const paymentRecord = {
-                    ...paymentData,
-                    id: 'local_' + Date.now(),
-                    created_at: new Date().toISOString()
-                };
-                payments.push(paymentRecord);
-                localStorage.setItem('yoteacher_payments', JSON.stringify(payments));
-                return { success: true, id: paymentRecord.id, data: paymentRecord };
-            }
-
-            const { data, error } = await supabase
-                .from('payments')
-                .insert([{
-                    user_id: paymentData.userId || this.user?.id,
-                    booking_id: paymentData.bookingId,
-                    amount: paymentData.amount,
-                    currency: paymentData.currency || 'EUR',
-                    method: paymentData.method,
-                    transaction_id: paymentData.transactionId,
-                    status: paymentData.status || 'completed',
-                    payment_data: paymentData.paymentData || paymentData,
-                    created_at: new Date().toISOString()
-                }])
-                .select();
-
-            if (error) {
-                console.error('Erreur sauvegarde paiement:', error);
-                return { success: false, error: error.message };
-            }
-
-            return { success: true, id: data[0].id, data: data[0] };
-        } catch (error) {
-            console.error('Exception sauvegarde paiement:', error);
-            return { success: false, error: error.message };
-        }
+        console.warn('⚠️ savePayment() est déprécié - Utilisez PaymentManager.createPackageInSupabase() à la place');
+        return { success: false, error: 'Méthode dépréciée' };
     }
 
-    // NOUVELLE MÉTHODE : Mettre à jour le statut d'une réservation après paiement
     async updateBookingStatus(bookingId, status) {
-        try {
-            if (!this.supabaseReady || !window.supabase) {
-                return { success: true, message: 'Mode local - statut mis à jour localement' };
-            }
-
-            const { error } = await supabase
-                .from('bookings')
-                .update({ 
-                    status: status,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', bookingId);
-
-            if (error) {
-                console.error('Erreur mise à jour réservation:', error);
-                return { success: false, error: error.message };
-            }
-
-            return { success: true };
-        } catch (error) {
-            console.error('Exception mise à jour réservation:', error);
-            return { success: false, error: error.message };
-        }
+        console.warn('⚠️ updateBookingStatus() est déprécié - Les statuts sont gérés automatiquement');
+        return { success: false, error: 'Méthode dépréciée' };
     }
 
-    // NOUVELLE MÉTHODE : Obtenir l'historique des paiements
     async getPaymentHistory() {
-        try {
-            if (!this.supabaseReady || !window.supabase || !this.user) {
-                // Retourner les paiements locaux
-                const localPayments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
-                return { success: true, data: localPayments };
-            }
-
-            const { data, error } = await supabase
-                .from('payments')
-                .select('*')
-                .eq('user_id', this.user.id)
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('Erreur récupération historique paiements:', error);
-                return { success: false, error: error.message };
-            }
-
-            return { success: true, data };
-        } catch (error) {
-            console.error('Exception récupération historique paiements:', error);
-            return { success: false, error: error.message };
-        }
+        console.warn('⚠️ getPaymentHistory() est déprécié - Utilisez les nouvelles méthodes');
+        return { success: false, error: 'Méthode dépréciée' };
     }
 }
 
-// Ajout d'écouteurs globaux pour le débogage des événements
 window.addEventListener('auth:login', function(e) {
     console.log('Événement global auth:login reçu', e.detail?.user?.email || 'sans email');
 });
@@ -814,7 +739,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const isDashboardPage = window.location.pathname.includes('dashboard.html') ||
                            window.location.pathname.includes('profile.html');
     
-    // Délai adaptatif selon le device
     const delay = window.innerWidth <= 768 ? 500 : 100;
     
     setTimeout(() => {
