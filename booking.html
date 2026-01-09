@@ -919,7 +919,25 @@
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
     <script src="currency.js"></script>
- 
+ <!-- Ajouter un script d'initialisation -->
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 Initialisation de l\'application...');
+    
+    // Attendre un peu pour que tout soit chargé
+    setTimeout(async () => {
+        // Initialiser currency manager
+        if (window.currencyManager) {
+            await window.currencyManager.init();
+        }
+        
+        // AuthManager s'initialise automatiquement dans son constructeur
+        // BookingManager s'initialise automatiquement
+        
+        console.log('✅ Application initialisée');
+    }, 500);
+});
+</script>
     <script>
 // SCRIPT JAVASCRIPT CORRIGÉ POUR BOOKING.HTML
 // Remplacer le script existant dans booking.html par celui-ci
