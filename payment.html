@@ -8,53 +8,313 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* RÉDUCTION DE LA HAUTEUR DU HEADER - MÊME QUE LOGIN.HTML */
+        /* RÉDUCTION DE LA HAUTEUR DU HEADER - COMME BOOKING.HTML */
         .main-header {
             background-color: rgba(255, 255, 255, 0.98) !important;
             box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
             backdrop-filter: blur(10px) !important;
             min-height: 60px !important;
         }
-        
+
+        /* CORRECTION COMPLÈTE DU HEADER POUR ALIGNEMENT À DROITE */
         .header-content {
-            padding: 10px 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 !important;
+            width: 100%;
         }
-        
+
+        .logo-section {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .main-header .nav-link {
             display: none !important;
         }
-        
+
         .main-header .nav-spacer {
             display: none !important;
         }
-        
+
         .main-header .logo {
             color: #333 !important;
             font-weight: 700;
             font-size: 1.5rem !important;
         }
-        
+
+        /* Grouper langue, devise et avatar à droite */
+        .header-right-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+            flex: 0 0 auto;
+        }
+
+        /* Devise dans le header réduit */
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .currency-selector select {
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            padding: 4px 8px;
+            color: #333;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            width: auto;
+            min-width: 70px;
+            text-align: center;
+            text-align-last: center;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: all 0.3s ease;
+        }
+
+        .currency-selector i {
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        /* Langue dans le header réduit */
+        .language-switcher {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #333;
+            padding: 4px 8px;
+        }
+
+        /* Bouton Connexion dans le header réduit */
         .main-header .login-btn {
-            background-color: #4f9ad1 !important;
-            color: white !important;
             padding: 8px 20px !important;
             font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            border-radius: 50px;
+            background: #4f9ad1 !important;
+            color: white !important;
+            border: none;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            white-space: nowrap;
         }
-        
-        /* Style pour le sélecteur de devise dans le header réduit */
-        .main-header .currency-selector {
-            margin-left: 10px;
+
+        .main-header .login-btn:hover {
+            background: #3c84f6 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
         }
-        
-        .main-header .currency-selector select {
-            border: 1px solid #ddd;
-            color: #333;
-            padding: 5px 10px;
-            font-size: 0.85rem;
-            border-radius: 15px;
+
+        /* Avatar utilisateur */
+        .user-avatar {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .avatar-img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f9ad1, #3c84f6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-menu {
+            position: absolute;
+            top: 45px;
+            right: 0;
             background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            min-width: 180px;
+            padding: 10px 0;
+            display: none;
+            z-index: 1000;
+            border: 1px solid #eee;
         }
-        
+
+        .user-avatar:hover .user-menu {
+            display: block;
+        }
+
+        .user-menu a {
+            display: block;
+            padding: 10px 15px;
+            color: #333;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+
+        .user-menu a:hover {
+            background: #f5f5f5;
+            color: #3c84f6;
+        }
+
+        .user-menu .logout-btn {
+            border-top: 1px solid #eee;
+            color: #d32f2f;
+            margin-top: 5px;
+        }
+
+        .user-menu .logout-btn:hover {
+            background: #ffeaea;
+        }
+
+        /* Menu hamburger */
+        .hamburger-menu {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 10px;
+        }
+
+        .hamburger-menu span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background: #333;
+            margin: 4px 0;
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+
+        /* Menu mobile */
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .mobile-menu-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background: white;
+            padding: 20px;
+            overflow-y: auto;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+        }
+
+        .mobile-menu-overlay.active .mobile-nav {
+            transform: translateX(0);
+        }
+
+        .close-menu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .mobile-nav-link {
+            display: block;
+            padding: 15px 0;
+            color: #333;
+            text-decoration: none;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* CORRECTION DU PADDING DU BODY */
+        body {
+            padding-top: 60px !important;
+        }
+
+        /* Bouton connexion mobile */
+        .mobile-login-btn-header {
+            display: none !important;
+        }
+
+        /* Styles pour le menu mobile */
+        .currency-selector-mobile {
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+            margin-top: 15px;
+        }
+
+        .currency-selector-mobile label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .currency-selector-mobile select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 0.9rem;
+        }
+
+        .mobile-language {
+            padding: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #333;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            margin-top: 15px;
+        }
+
+        .mobile-login-btn {
+            margin: 20px 0 10px;
+            padding: 12px;
+            text-align: center;
+            background: #3c84f6;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            display: block;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .mobile-login-btn:hover {
+            background: #2c74e6;
+        }
+
         /* Style pour la notification Interac */
         .interac-currency-notice {
             background: #e3f2fd;
@@ -69,11 +329,6 @@
         .interac-currency-notice i {
             color: #1565c0;
             margin-right: 8px;
-        }
-        
-        /* CORRECTION DU PADDING DU BODY */
-        body {
-            padding-top: 60px !important;
         }
         
         /* NOUVELLE STRUCTURE DE PAIEMENT */
@@ -493,6 +748,54 @@
             margin-right: 5px;
         }
 
+        /* Header mobile ajusté */
+        @media (max-width: 768px) {
+            .hamburger-menu {
+                display: block;
+            }
+            
+            .mobile-login-btn-header {
+                display: block !important;
+                padding: 6px 12px;
+                font-size: 0.85rem;
+                background: #4f9ad1;
+                color: white;
+                border-radius: 20px;
+                text-decoration: none;
+            }
+            
+            /* Cacher les éléments du groupe droit sur mobile */
+            .header-right-group {
+                display: none;
+            }
+            
+            .main-header .login-btn {
+                display: none !important;
+            }
+            
+            .language-switcher {
+                display: none;
+            }
+            
+            .currency-selector {
+                display: none;
+            }
+            
+            .user-avatar {
+                display: none;
+            }
+            
+            .logo-section {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            
+            .header-content {
+                justify-content: space-between;
+            }
+        }
+
         @media (max-width: 992px) {
             .payment-grid {
                 grid-template-columns: 1fr;
@@ -540,7 +843,6 @@
                 padding: 15px;
             }
             
-            /* Header mobile ajusté */
             .main-header {
                 min-height: 55px !important;
             }
@@ -558,11 +860,6 @@
                 font-size: 0.85rem !important;
                 order: 3;
                 z-index: 1001;
-            }
-            
-            /* Cacher le sélecteur de devise sur mobile */
-            .main-header .currency-selector {
-                display: none;
             }
             
             body {
@@ -607,7 +904,7 @@
     </style>
 </head>
 <body>
-    <!-- Header réduit comme login.html -->
+    <!-- Header réduit comme booking.html -->
     <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
@@ -624,8 +921,18 @@
                 
                 <a href="login.html" class="mobile-login-btn-header">Connexion</a>
                 
-                <nav class="nav-menu desktop-menu">
-                    <!-- Supprimé les liens de navigation -->
+                <!-- Groupe droit pour langue, devise et avatar -->
+                <div class="header-right-group">
+                    <!-- Avatar utilisateur -->
+                    <div class="user-avatar" id="userAvatar" style="display: none;">
+                        <div class="avatar-img" id="avatarInitials">Y</div>
+                        <div class="user-menu">
+                            <a href="dashboard.html">Mon tableau de bord</a>
+                            <a href="profile.html">Mon profil</a>
+                            <a href="bookings.html">Mes réservations</a>
+                            <a href="#" class="logout-btn" id="logoutBtn">Déconnexion</a>
+                        </div>
+                    </div>
                     
                     <!-- Sélecteur de devise -->
                     <div class="currency-selector">
@@ -635,14 +942,43 @@
                         </select>
                     </div>
                     
+                    <!-- Sélecteur de langue -->
                     <div class="language-switcher">
                         <span class="flag">🌐</span>
                         <span>FR</span>
                     </div>
                     
-                    <a href="login.html" class="login-btn">Connexion</a>
-                </nav>
+                    <!-- Bouton de connexion (visible si non connecté) -->
+                    <a href="login.html" class="login-btn" id="loginBtn">Connexion</a>
+                </div>
             </div>
+        </div>
+        
+        <!-- Menu Mobile -->
+        <div class="mobile-menu-overlay" id="mobileMenu">
+            <nav class="mobile-nav">
+                <button class="close-menu" id="closeMenuBtn">×</button>
+                <!-- La section utilisateur sera ajoutée dynamiquement ici -->
+                <a href="index.html#about" class="mobile-nav-link">À propos</a>
+                <a href="index.html#courses" class="mobile-nav-link">Cours</a>
+                <a href="index.html#testimonials" class="mobile-nav-link">Témoignages</a>
+                <a href="index.html#contact" class="mobile-nav-link">Contact</a>
+                
+                <!-- Sélecteur de devise mobile -->
+                <div class="currency-selector-mobile">
+                    <label><i class="fas fa-money-bill-wave"></i> Devise</label>
+                    <select id="currencySelectorMobile">
+                        <!-- Rempli dynamiquement -->
+                    </select>
+                </div>
+                
+                <div class="mobile-language">
+                    <span class="flag">🌐</span>
+                    <span>Français (FR)</span>
+                </div>
+                
+                <a href="login.html" class="mobile-login-btn">Connexion</a>
+            </nav>
         </div>
     </header>
 
@@ -969,6 +1305,125 @@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Initialisation page paiement...');
+        
+        // Initialiser le menu mobile
+        function initMobileMenu() {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const closeMenuBtn = document.getElementById('closeMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if (hamburgerBtn && mobileMenu) {
+                hamburgerBtn.addEventListener('click', () => {
+                    mobileMenu.classList.add('active');
+                });
+            }
+            
+            if (closeMenuBtn && mobileMenu) {
+                closeMenuBtn.addEventListener('click', () => {
+                    mobileMenu.classList.remove('active');
+                });
+            }
+            
+            // Fermer le menu en cliquant en dehors
+            if (mobileMenu) {
+                mobileMenu.addEventListener('click', (e) => {
+                    if (e.target === mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                });
+            }
+        }
+        
+        // Initialiser le sélecteur de devise mobile
+        function initMobileCurrencySelector() {
+            const mobileSelector = document.getElementById('currencySelectorMobile');
+            if (!mobileSelector || !window.currencyManager) return;
+            
+            // Vider les options existantes
+            mobileSelector.innerHTML = '';
+            
+            // Remplir les options
+            window.currencyManager.supportedCurrencies.forEach(currency => {
+                const option = document.createElement('option');
+                option.value = currency;
+                option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
+                
+                if (currency === window.currencyManager.currentCurrency) {
+                    option.selected = true;
+                }
+                
+                mobileSelector.appendChild(option);
+            });
+            
+            // Écouter les changements
+            mobileSelector.addEventListener('change', (e) => {
+                const newCurrency = e.target.value;
+                if (window.currencyManager.setCurrency(newCurrency)) {
+                    // Fermer le menu mobile après changement
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                }
+            });
+        }
+        
+        // Mettre à jour l'interface utilisateur
+        function updateUserInterface() {
+            const user = window.authManager?.getCurrentUser();
+            const isLoggedIn = !!user;
+            
+            const userAvatar = document.getElementById('userAvatar');
+            const loginBtn = document.getElementById('loginBtn');
+            const avatarInitials = document.getElementById('avatarInitials');
+            
+            if (isLoggedIn && user) {
+                // Afficher l'avatar et masquer le bouton de connexion
+                if (userAvatar) userAvatar.style.display = 'block';
+                if (loginBtn) loginBtn.style.display = 'none';
+                
+                // Mettre à jour les initiales
+                if (avatarInitials && user.user_metadata?.full_name) {
+                    const name = user.user_metadata.full_name;
+                    avatarInitials.textContent = name.charAt(0).toUpperCase();
+                } else if (avatarInitials && user.email) {
+                    avatarInitials.textContent = user.email.charAt(0).toUpperCase();
+                }
+                
+                // Ajouter un gestionnaire pour le bouton de déconnexion
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try {
+                            await window.authManager.logout();
+                            window.location.href = 'index.html';
+                        } catch (error) {
+                            console.error('Erreur déconnexion:', error);
+                        }
+                    });
+                }
+            } else {
+                // Afficher le bouton de connexion et masquer l'avatar
+                if (userAvatar) userAvatar.style.display = 'none';
+                if (loginBtn) loginBtn.style.display = 'block';
+            }
+        }
+        
+        // Initialiser le menu mobile
+        initMobileMenu();
+        
+        // Initialiser le sélecteur de devise mobile quand la devise est prête
+        window.addEventListener('currency:ready', function() {
+            initMobileCurrencySelector();
+        });
+        
+        // Mettre à jour l'interface utilisateur
+        updateUserInterface();
+        
+        // Écouter les événements d'authentification
+        window.addEventListener('auth:login', updateUserInterface);
+        window.addEventListener('auth:logout', updateUserInterface);
         
         // Récupérer la réservation depuis l'URL
         const urlParams = new URLSearchParams(window.location.search);
