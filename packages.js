@@ -72,26 +72,30 @@ class PackagesManager {
     }
 
     async getUserCredits(userId) {
-        if (!window.supabase || !userId) return 0;
-        
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('credits, active_packages')
-                .eq('id', userId)
-                .single();
+    if (!window.supabase || !userId) return 0;
+    
+    try {
+        // Utiliser la table packages comme dans votre schéma
+        const { data, error } = await supabase
+            .from('packages')
+            .select('remaining_credits')
+            .eq('user_id', userId)
+            .eq('status', 'active')
+            .gt('expires_at', new Date().toISOString());
 
-            if (error) {
-                console.warn('Erreur récupération crédits:', error);
-                return 0;
-            }
-
-            return data?.credits || 0;
-        } catch (error) {
-            console.error('Exception crédits:', error);
+        if (error) {
+            console.warn('Erreur récupération crédits:', error);
             return 0;
         }
+
+        // Somme de tous les crédits restants
+        const totalCredits = data.reduce((sum, pkg) => sum + (pkg.remaining_credits || 0), 0);
+        return totalCredits;
+    } catch (error) {
+        console.error('Exception crédits:', error);
+        return 0;
     }
+}
 
     async useCredit(userId, courseType, bookingData) {
         if (!window.supabase || !userId) return false;

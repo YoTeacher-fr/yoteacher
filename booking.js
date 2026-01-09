@@ -22,7 +22,7 @@ class BookingManager {
         
         this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         
-        // Rate limits: API Key = 120 req/min
+        // Rate limits: API Key = 120 req/minBookingManager
         this.rateLimitInfo = {
             limit: 120,
             remaining: 120,
@@ -559,44 +559,44 @@ class BookingManager {
     }
 
     async saveBookingToSupabase(calcomBooking, userId, status = 'confirmed') {
-        try {
-            if (!window.supabase) {
-                console.warn('Supabase non disponible pour sauvegarde');
-                return null;
-            }
-
-            const bookingData = {
-                user_id: userId,
-                calcom_id: calcomBooking.id || calcomBooking.uid,
-                event_type: calcomBooking.eventType || 'essai',
-                start_time: calcomBooking.start || calcomBooking.startTime,
-                end_time: calcomBooking.end || calcomBooking.endTime,
-                status: status,
-                meet_link: calcomBooking.location || calcomBooking.meetingUrl,
-                booking_data: calcomBooking,
-                created_at: new Date().toISOString()
-            };
-
-            console.log('💾 Sauvegarde dans Supabase:', bookingData);
-
-            const { data, error } = await supabase
-                .from('bookings')
-                .insert([bookingData])
-                .select();
-
-            if (error) {
-                console.warn('Erreur sauvegarde Supabase:', error);
-                return null;
-            }
-            
-            console.log('✅ Réservation sauvegardée dans Supabase avec ID:', data[0].id);
-            return data[0].id;
-            
-        } catch (error) {
-            console.error('Exception sauvegarde Supabase:', error);
+    try {
+        if (!window.supabase) {
+            console.warn('Supabase non disponible pour sauvegarde');
             return null;
         }
+
+        const bookingData = {
+            user_id: userId,
+            calcom_booking_id: calcomBooking.id || calcomBooking.uid,
+            event_type: calcomBooking.eventType || 'essai',
+            start_time: calcomBooking.start || calcomBooking.startTime,
+            end_time: calcomBooking.end || calcomBooking.endTime,
+            status: status,
+            meet_link: calcomBooking.location || calcomBooking.meetingUrl,
+            booking_data: calcomBooking,
+            created_at: new Date().toISOString()
+        };
+
+        console.log('💾 Sauvegarde dans Supabase:', bookingData);
+
+        const { data, error } = await supabase
+            .from('bookings')
+            .insert([bookingData])
+            .select();
+
+        if (error) {
+            console.warn('Erreur sauvegarde Supabase:', error);
+            return null;
+        }
+        
+        console.log('✅ Réservation sauvegardée dans Supabase avec ID:', data[0].id);
+        return data[0].id;
+        
+    } catch (error) {
+        console.error('Exception sauvegarde Supabase:', error);
+        return null;
     }
+}
 
     getToday() {
         return new Date().toISOString().split('T')[0];
@@ -965,3 +965,8 @@ window.checkDurationConfiguration = async function() {
         console.error('❌ Erreur vérification configuration:', error);
     }
 };
+window.addEventListener('auth:login', (e) => {
+    console.log("Re-vérification du statut pour le booking...");
+    this.checkAuthStatus(); // Force la mise à jour des champs nom/email
+    this.updateUI();        // Cache le message "nécessité d'un compte"
+});
