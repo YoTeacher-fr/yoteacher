@@ -160,9 +160,7 @@ let state = {
     currentTestimonialSlide: 0
 };
 
-// ===== FONCTIONS UTILITAIRES =====
-
-// Fonction utilitaire pour obtenir une traduction
+// ===== FONCTION UTILITAIRE POUR LES TRADUCTIONS =====
 function getTranslation(key, fallback) {
     if (window.translationManager) {
         const translation = window.translationManager.getTranslation(key);
@@ -762,34 +760,16 @@ const mobileManager = {
     }
 };
 
-// ===== GESTION DE LA TRADUCTION DES COURS =====
+// ===== GESTION DE LA TRADUCTION =====
 const translationManager = {
     init: () => {
-        // Vérifier que le gestionnaire de traduction est disponible
-        if (!window.translationManager) {
-            console.warn('TranslationManager non disponible');
-            return;
-        }
+        console.log('🌍 Initialisation de la gestion de traduction...');
         
-        console.log('🌍 Initialisation du gestionnaire de traduction...');
-        
-        // Mettre à jour les cartes de cours avec les traductions
-        translationManager.translateCourses();
-        
-        // Écouter les changements de langue
+        // Écouter les changements de langue pour mettre à jour les cours
         window.addEventListener('language:changed', () => {
-            console.log('🌍 Changement de langue détecté');
-            translationManager.translateCourses();
+            console.log('🌍 Changement de langue détecté, rechargement des cours...');
+            coursesManager.reloadCourses();
         });
-    },
-    
-    translateCourses: () => {
-        if (!window.translationManager) return;
-        
-        console.log('🌍 Traduction des cours...');
-        
-        // Recharger toutes les cartes de cours avec les nouvelles traductions
-        coursesManager.reloadCourses();
     }
 };
 
