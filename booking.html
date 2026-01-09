@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Réserver un cours - YoTeacher</title>
+    <title data-i18n="booking.page_title">Réserver un cours - YoTeacher</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
@@ -94,6 +94,14 @@
             gap: 4px;
             color: #333;
             padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .language-switcher:hover {
+            background: rgba(0, 0, 0, 0.05);
         }
         
         /* Bouton Connexion dans le header réduit */
@@ -778,6 +786,12 @@
             font-size: 0.9rem;
             border-top: 1px solid #eee;
             margin-top: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .mobile-language:hover {
+            background: rgba(0, 0, 0, 0.05);
         }
         
         .mobile-login-btn {
@@ -960,10 +974,10 @@
                     <div class="user-avatar" id="userAvatar" style="display: none;">
                         <div class="avatar-img" id="avatarInitials">Y</div>
                         <div class="user-menu">
-                            <a href="dashboard.html">Mon tableau de bord</a>
-                            <a href="profile.html">Mon profil</a>
-                            <a href="bookings.html">Mes réservations</a>
-                            <a href="#" class="logout-btn" id="logoutBtn">Déconnexion</a>
+                            <a href="dashboard.html" data-i18n="dashboard.my_dashboard">Mon tableau de bord</a>
+                            <a href="profile.html" data-i18n="dashboard.my_profile">Mon profil</a>
+                            <a href="bookings.html" data-i18n="payment.my_bookings">Mes réservations</a>
+                            <a href="#" class="logout-btn" id="logoutBtn" data-i18n="dashboard.logout">Déconnexion</a>
                         </div>
                     </div>
                     
@@ -976,13 +990,13 @@
                     </div>
                     
                     <!-- Sélecteur de langue -->
-                    <div class="language-switcher">
+                    <div class="language-switcher" id="languageSwitcherDesktop">
                         <span class="flag">🌐</span>
-                        <span>FR</span>
+                        <span data-i18n="header.language">EN</span>
                     </div>
                     
                     <!-- Bouton de connexion (visible si non connecté) -->
-                    <a href="login.html" class="login-btn" id="loginBtn">Connexion</a>
+                    <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
                 </div>
             </div>
         </div>
@@ -992,10 +1006,10 @@
             <nav class="mobile-nav">
                 <button class="close-menu" id="closeMenuBtn">×</button>
                 <!-- La section utilisateur sera ajoutée dynamiquement ici -->
-                <a href="index.html#about" class="mobile-nav-link">À propos</a>
-                <a href="index.html#courses" class="mobile-nav-link">Cours</a>
-                <a href="index.html#testimonials" class="mobile-nav-link">Témoignages</a>
-                <a href="index.html#contact" class="mobile-nav-link">Contact</a>
+                <a href="index.html#about" class="mobile-nav-link" data-i18n="nav.about">À propos</a>
+                <a href="index.html#courses" class="mobile-nav-link" data-i18n="nav.courses">Cours</a>
+                <a href="index.html#testimonials" class="mobile-nav-link" data-i18n="nav.testimonials">Témoignages</a>
+                <a href="index.html#contact" class="mobile-nav-link" data-i18n="nav.contact">Contact</a>
                 
                 <!-- Sélecteur de devise mobile -->
                 <div class="currency-selector-mobile">
@@ -1005,12 +1019,12 @@
                     </select>
                 </div>
                 
-                <div class="mobile-language">
+                <div class="mobile-language" id="languageSwitcherMobile">
                     <span class="flag">🌐</span>
-                    <span>Français (FR)</span>
+                    <span data-i18n="header.language">EN</span>
                 </div>
                 
-                <a href="login.html" class="mobile-login-btn">Connexion</a>
+                <a href="login.html" class="mobile-login-btn" data-i18n="header.login">Connexion</a>
             </nav>
         </div>
     </header>
@@ -1018,8 +1032,8 @@
     <section class="booking-section">
         <div class="booking-container">
             <div class="booking-header">
-                <h1 class="booking-title">Réserver un cours</h1>
-                <p class="booking-subtitle">Choisissez la date, l'heure et le type de cours qui vous convient</p>
+                <h1 class="booking-title" data-i18n="booking.title">Réserver un cours</h1>
+                <p class="booking-subtitle" data-i18n="booking.subtitle">Choisissez la date, l'heure et le type de cours qui vous convient</p>
             </div>
 
             <div class="error-message" id="errorMessage">
@@ -1033,7 +1047,7 @@
             <div class="booking-grid">
                 <!-- Colonne gauche : Calendrier et créneaux -->
                 <div class="booking-card">
-                    <h2 class="card-title">Choisir un créneau</h2>
+                    <h2 class="card-title" data-i18n="booking.choose_slot">Choisir un créneau</h2>
                     
                     <div class="calendar-container">
                         <div class="calendar-header">
@@ -1049,7 +1063,7 @@
                         </div>
                     </div>
 
-                    <h3 style="margin-bottom: 15px;">Créneaux disponibles</h3>
+                    <h3 style="margin-bottom: 15px;" data-i18n="booking.available_slots">Créneaux disponibles</h3>
                     <div class="time-slots" id="timeSlots">
                         <!-- Les créneaux seront générés par JavaScript -->
                     </div>
@@ -1057,34 +1071,34 @@
 
                 <!-- Colonne droite : Formulaire et récapitulatif -->
                 <div class="booking-card">
-                    <h2 class="card-title">Détails de la réservation</h2>
+                    <h2 class="card-title" data-i18n="booking.details">Détails de la réservation</h2>
                     
                     <!-- Message de connexion requise -->
                     <div class="login-required" id="loginRequired" style="display: none;">
-                        <i class="fas fa-info-circle"></i> Pour réserver un cours <span id="courseTypeName"></span>, 
-                        <a href="login.html" id="loginLink">connectez-vous</a> ou 
-                        <a href="signup.html" id="signupLink">créez un compte</a>.
+                        <i class="fas fa-info-circle"></i> <span data-i18n="booking.login_required">Pour réserver un cours</span> <span id="courseTypeName"></span>, 
+                        <a href="login.html" id="loginLink" data-i18n="booking.connect">connectez-vous</a> <span data-i18n="booking.or">ou</span> 
+                        <a href="signup.html" id="signupLink" data-i18n="booking.create_account">créez un compte</a>.
                     </div>
                     
                     <form id="bookingForm">
                         <div class="form-group">
-                            <label class="form-label" for="courseType">Type de cours</label>
+                            <label class="form-label" for="courseType" data-i18n="booking.course_type">Type de cours</label>
                             <select id="courseType" class="form-select" required>
-                                <option value="">Sélectionnez un type de cours</option>
-                                <option value="essai">Cours d'essai (15 min)</option>
-                                <option value="conversation">Conversation</option>
-                                <option value="curriculum">Curriculum complet</option>
-                                <option value="examen">Préparation d'examen</option>
+                                <option value="" data-i18n="booking.select_course">Sélectionnez un type de cours</option>
+                                <option value="essai" data-i18n="courses.trial">Cours d'essai (15 min)</option>
+                                <option value="conversation" data-i18n="courses.conversation">Conversation</option>
+                                <option value="curriculum" data-i18n="courses.curriculum">Curriculum complet</option>
+                                <option value="examen" data-i18n="courses.exam">Préparation d'examen</option>
                             </select>
                         </div>
 
                         <!-- Sélecteur de durée en bulles cliquables -->
                         <div class="form-group duration-group" id="durationGroup">
-                            <label class="form-label">Durée du cours</label>
+                            <label class="form-label" data-i18n="booking.duration">Durée du cours</label>
                             <div class="duration-options">
-                                <button type="button" class="duration-option" data-duration="30" data-price-eur="10">30 min</button>
-                                <button type="button" class="duration-option" data-duration="45" data-price-eur="15">45 min</button>
-                                <button type="button" class="duration-option" data-duration="60" data-price-eur="20" data-selected="true">60 min</button>
+                                <button type="button" class="duration-option" data-duration="30" data-price-eur="10" data-i18n="courses.detail_30min">30 min</button>
+                                <button type="button" class="duration-option" data-duration="45" data-price-eur="15" data-i18n="courses.detail_45min">45 min</button>
+                                <button type="button" class="duration-option" data-duration="60" data-price-eur="20" data-selected="true" data-i18n="courses.duration_60">60 min</button>
                             </div>
                             <input type="hidden" id="duration" value="60">
                             <input type="hidden" id="basePriceEUR" value="20">
@@ -1092,18 +1106,18 @@
 
                         <!-- Nouveau: Sélecteur du nombre de cours -->
                         <div class="form-group courses-count-group" id="coursesCountGroup">
-                            <label class="form-label">Nombre de cours</label>
+                            <label class="form-label" data-i18n="booking.courses_count">Nombre de cours</label>
                             <div class="courses-count-options">
-                                <button type="button" class="courses-count-option selected" data-count="1" data-discount="0">
+                                <button type="button" class="courses-count-option selected" data-count="1" data-discount="0" data-i18n="booking.one_course">
                                     1 cours
                                 </button>
-                                <button type="button" class="courses-count-option" data-count="5" data-discount="2">
+                                <button type="button" class="courses-count-option" data-count="5" data-discount="2" data-i18n="booking.five_courses">
                                     5 cours
-                                    <span class="discount-badge">-2%</span>
+                                    <span class="discount-badge" data-i18n="booking.discount_badge">-2%</span>
                                 </button>
-                                <button type="button" class="courses-count-option" data-count="10" data-discount="5">
+                                <button type="button" class="courses-count-option" data-count="10" data-discount="5" data-i18n="booking.ten_courses">
                                     10 cours
-                                    <span class="discount-badge">-5%</span>
+                                    <span class="discount-badge" data-i18n="booking.discount_badge_5">-5%</span>
                                 </button>
                             </div>
                             <input type="hidden" id="coursesCount" value="10">
@@ -1112,78 +1126,78 @@
 
                         <!-- Sélecteur de moyen de communication -->
                         <div class="form-group" id="locationGroup">
-                            <label class="form-label">Moyen de communication</label>
+                            <label class="form-label" data-i18n="booking.communication">Moyen de communication</label>
                             <div class="duration-options">
                                 <button type="button" class="duration-option location-btn" data-location="integrations:zoom">
-                                    <i class="fab fa-zoom"></i> Zoom
+                                    <i class="fab fa-zoom"></i> <span data-i18n="booking.zoom">Zoom</span>
                                 </button>
                                 <button type="button" class="duration-option location-btn" data-location="https://teams.live.com/l/invite/FEAJFWoKc8mbrQCGwM?v=g1">
-                                    <i class="fab fa-microsoft"></i> Teams
+                                    <i class="fab fa-microsoft"></i> <span data-i18n="booking.teams">Teams</span>
                                 </button>
                                 <button type="button" class="duration-option location-btn selected" data-location="integrations:google:meet">
-                                    <i class="fab fa-google"></i> Meet
+                                    <i class="fab fa-google"></i> <span data-i18n="booking.meet">Meet</span>
                                 </button>
                             </div>
                             <input type="hidden" id="selectedLocation" value="integrations:google:meet">
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="name">Nom complet</label>
+                            <label class="form-label" for="name" data-i18n="booking.full_name">Nom complet</label>
                             <input type="text" id="name" class="form-input" required>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="email">Email</label>
+                            <label class="form-label" for="email" data-i18n="booking.email">Email</label>
                             <input type="email" id="email" class="form-input" required>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="notes">Notes pour le professeur (optionnel)</label>
-                            <textarea id="notes" class="form-textarea" placeholder="Votre niveau, objectifs, sujets de discussion préférés..."></textarea>
+                            <label class="form-label" for="notes" data-i18n="booking.notes">Notes pour le professeur (optionnel)</label>
+                            <textarea id="notes" class="form-textarea" placeholder="Votre niveau, objectifs, sujets de discussion préférés..." data-i18n-placeholder="booking.notes_placeholder"></textarea>
                         </div>
 
                         <div class="booking-summary">
-                            <h3 style="margin-bottom: 15px;">Récapitulatif</h3>
+                            <h3 style="margin-bottom: 15px;" data-i18n="booking.summary">Récapitulatif</h3>
                             <div class="summary-item">
-                                <span>Type de cours:</span>
+                                <span data-i18n="booking.summary_type">Type de cours:</span>
                                 <span id="summaryType">-</span>
                             </div>
                             <div class="summary-item">
-                                <span>Nombre de cours:</span>
+                                <span data-i18n="booking.summary_courses">Nombre de cours:</span>
                                 <span id="summaryCoursesCount">1 cours</span>
                             </div>
                             <div class="summary-item">
-                                <span>Réduction:</span>
+                                <span data-i18n="booking.summary_discount">Réduction:</span>
                                 <span id="summaryDiscount">0%</span>
                             </div>
                             <div class="summary-item">
-                                <span>Date:</span>
+                                <span data-i18n="booking.summary_date">Date:</span>
                                 <span id="summaryDate">-</span>
                             </div>
                             <div class="summary-item">
-                                <span>Heure:</span>
+                                <span data-i18n="booking.summary_time">Heure:</span>
                                 <span id="summaryTime">-</span>
                             </div>
                             <div class="summary-item">
-                                <span>Durée:</span>
+                                <span data-i18n="booking.summary_duration">Durée:</span>
                                 <span id="summaryDuration">-</span>
                             </div>
                             <div class="summary-item">
-                                <span>Plateforme:</span>
+                                <span data-i18n="booking.summary_platform">Plateforme:</span>
                                 <span id="summaryPlatform">Google Meet</span>
                             </div>
                             <div class="summary-item total">
-                                <span>Total:</span>
+                                <span data-i18n="booking.summary_total">Total:</span>
                                 <span id="summaryPrice">-</span>
                             </div>
                         </div>
 
                         <button type="submit" class="btn-booking" id="submitBooking" disabled>
-                            <i class="fas fa-calendar-check"></i> Réserver et payer
+                            <i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>
                         </button>
                         
                         <div style="margin-top: 15px; text-align: center; font-size: 0.9rem; color: #666;">
-                            <i class="fas fa-lock"></i> Vous serez redirigé vers la page de paiement après confirmation
+                            <i class="fas fa-lock"></i> <span data-i18n="booking.payment_redirect">Vous serez redirigé vers la page de paiement après confirmation</span>
                         </div>
                     </form>
                 </div>
@@ -1199,6 +1213,7 @@
     <script src="booking.js"></script>
     <script src="common.js"></script>
     <script src="currency.js"></script>
+    <script src="translation.js"></script>
  
     <script>
         // SCRIPT JAVASCRIPT POUR BOOKING.HTML
@@ -1469,6 +1484,13 @@
             window.addEventListener('currency:changed', function() {
                 updateSummary();
             });
+            
+            // Écouter les changements de langue
+            window.addEventListener('language:changed', function() {
+                // Mettre à jour le calendrier avec les noms de mois dans la bonne langue
+                initCalendar();
+                updateSummary();
+            });
 
             // Fonction pour initialiser le sélecteur de devise mobile
             function initMobileCurrencySelector() {
@@ -1589,6 +1611,35 @@
                         }
                     });
                 }
+                
+                // Gestion du changement de langue mobile
+                const mobileLanguageSwitcher = document.getElementById('languageSwitcherMobile');
+                if (mobileLanguageSwitcher) {
+                    mobileLanguageSwitcher.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (window.translationManager) {
+                            window.translationManager.toggleLanguage();
+                        }
+                        
+                        // Fermer le menu mobile après changement
+                        if (mobileMenu) {
+                            mobileMenu.classList.remove('active');
+                        }
+                    });
+                }
+                
+                // Gestion du changement de langue desktop
+                const desktopLanguageSwitcher = document.getElementById('languageSwitcherDesktop');
+                if (desktopLanguageSwitcher) {
+                    desktopLanguageSwitcher.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (window.translationManager) {
+                            window.translationManager.toggleLanguage();
+                        }
+                    });
+                }
             }
             
             // NOUVELLE FONCTION: Pré-sélectionner les valeurs par défaut
@@ -1627,10 +1678,20 @@
             }
 
             function initCalendar() {
-                const monthNames = [
+                // Déterminer la langue actuelle
+                const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                
+                const monthNamesFr = [
                     'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
                     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
                 ];
+                
+                const monthNamesEn = [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                ];
+                
+                const monthNames = isFrench ? monthNamesFr : monthNamesEn;
                 currentMonthElement.textContent = `${monthNames[currentMonth]} ${currentYear}`;
 
                 const firstDay = new Date(currentYear, currentMonth, 1);
@@ -1638,7 +1699,10 @@
                 const daysInMonth = lastDay.getDate();
                 const startingDay = firstDay.getDay();
 
-                const dayHeaders = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+                const dayHeadersFr = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+                const dayHeadersEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const dayHeaders = isFrench ? dayHeadersFr : dayHeadersEn;
+                
                 calendarDays.innerHTML = '';
 
                 dayHeaders.forEach(day => {
@@ -1727,9 +1791,16 @@
                         durationGroup.classList.remove('visible');
                         coursesCountGroup.style.display = 'none';
                         loginRequired.style.display = 'block';
-                        if (courseType === 'conversation') courseTypeName.textContent = 'Conversation';
-                        else if (courseType === 'curriculum') courseTypeName.textContent = 'Curriculum complet';
-                        else if (courseType === 'examen') courseTypeName.textContent = 'Préparation d\'examen';
+                        // Mettre à jour le nom du type de cours dans le message
+                        if (window.translationManager) {
+                            if (courseType === 'conversation') courseTypeName.textContent = window.translationManager.getTranslation('courses.conversation');
+                            else if (courseType === 'curriculum') courseTypeName.textContent = window.translationManager.getTranslation('courses.curriculum');
+                            else if (courseType === 'examen') courseTypeName.textContent = window.translationManager.getTranslation('courses.exam');
+                        } else {
+                            if (courseType === 'conversation') courseTypeName.textContent = 'Conversation';
+                            else if (courseType === 'curriculum') courseTypeName.textContent = 'Curriculum complet';
+                            else if (courseType === 'examen') courseTypeName.textContent = 'Préparation d\'examen';
+                        }
                         console.log('Message connexion affiché pour', courseType);
                     }
                 } else {
@@ -1752,7 +1823,11 @@
 
             async function loadAvailableSlots(date = null) {
                 try {
-                    timeSlots.innerHTML = '<div class="loading-slots"><i class="fas fa-spinner fa-spin"></i> Chargement des créneaux...</div>';
+                    const loadingText = window.translationManager ? 
+                        window.translationManager.getTranslation('booking.loading_slots') : 
+                        'Chargement des créneaux...';
+                    
+                    timeSlots.innerHTML = `<div class="loading-slots"><i class="fas fa-spinner fa-spin"></i> ${loadingText}</div>`;
                     
                     const courseType = document.getElementById('courseType').value || 'essai';
                     
@@ -1766,7 +1841,10 @@
                     timeSlots.innerHTML = '';
                     
                     if (slots.length === 0) {
-                        timeSlots.innerHTML = '<p class="no-slots">Aucun créneau disponible pour cette date.</p>';
+                        const noSlotsText = window.translationManager ?
+                            window.translationManager.getTranslation('booking.no_slots') :
+                            'Aucun créneau disponible pour cette date.';
+                        timeSlots.innerHTML = `<p class="no-slots">${noSlotsText}</p>`;
                         return;
                     }
 
@@ -1780,10 +1858,15 @@
                             hasFutureSlots = true;
                             const slotElement = document.createElement('div');
                             slotElement.className = 'time-slot';
+                            
+                            // Déterminer la langue pour le format d'heure
+                            const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                            const timeOptions = { hour: '2-digit', minute: '2-digit' };
+                            
                             slotElement.innerHTML = `
                                 <div class="time-slot-time">
                                     <i class="far fa-clock"></i>
-                                    ${slotDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                    ${slotDate.toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions)}
                                 </div>
                                 <div class="time-slot-duration">
                                     ${window.bookingManager.formatTime(slot.start)} - ${slot.duration}
@@ -1796,18 +1879,30 @@
                     });
 
                     if (!hasFutureSlots) {
-                        timeSlots.innerHTML = '<p class="no-slots">Tous les créneaux sont complets pour aujourd\'hui.</p>';
+                        const noFutureSlotsText = window.translationManager ?
+                            window.translationManager.getTranslation('booking.no_future_slots') :
+                            'Tous les créneaux sont complets pour aujourd\'hui.';
+                        timeSlots.innerHTML = `<p class="no-slots">${noFutureSlotsText}</p>`;
                     }
 
                 } catch (error) {
                     console.error('Erreur chargement créneaux:', error);
+                    
+                    const errorTitle = window.translationManager ?
+                        window.translationManager.getTranslation('booking.error_loading') :
+                        'Erreur lors du chargement des créneaux';
+                    
+                    const retryText = window.translationManager ?
+                        window.translationManager.getTranslation('booking.retry') :
+                        'Réessayer';
+                    
                     timeSlots.innerHTML = `
                         <div class="error-slots">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <p>Erreur lors du chargement des créneaux</p>
+                            <p>${errorTitle}</p>
                             <p class="error-details">${error.message || 'Veuillez réessayer'}</p>
                             <button onclick="loadAvailableSlots('${date}')" class="retry-btn">
-                                <i class="fas fa-redo"></i> Réessayer
+                                <i class="fas fa-redo"></i> ${retryText}
                             </button>
                         </div>
                     `;
@@ -1840,7 +1935,12 @@
                 element.classList.add('selected');
                 
                 selectedSlot = slot;
-                selectedTime = new Date(slot.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                
+                // Déterminer la langue pour le format d'heure
+                const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                const timeOptions = { hour: '2-digit', minute: '2-digit' };
+                
+                selectedTime = new Date(slot.start).toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions);
                 
                 // NE PLUS changer automatiquement la durée sélectionnée
                 // L'utilisateur garde sa sélection
@@ -1860,13 +1960,13 @@
 
                 // Déterminer la plateforme
                 const locationValue = selectedLocationInput.value;
-                if (locationValue.includes('zoom')) platform = 'Zoom';
-                else if (locationValue.includes('google')) platform = 'Google Meet';
-                else if (locationValue.includes('teams')) platform = 'Microsoft Teams';
+                if (locationValue.includes('zoom')) platform = window.translationManager ? window.translationManager.getTranslation('booking.zoom') : 'Zoom';
+                else if (locationValue.includes('google')) platform = window.translationManager ? window.translationManager.getTranslation('booking.meet') : 'Google Meet';
+                else if (locationValue.includes('teams')) platform = window.translationManager ? window.translationManager.getTranslation('booking.teams') : 'Microsoft Teams';
 
                 // Calculer en fonction du type de cours
                 if (courseType === 'essai') {
-                    courseName = 'Cours d\'essai';
+                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
                     let unitPriceEUR = 5;
                     let totalPriceEUR = unitPriceEUR * coursesCount;
                     
@@ -1877,7 +1977,7 @@
                     }
                     duration = '15 min';
                 } else if (courseType === 'conversation') {
-                    courseName = 'Conversation';
+                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
                     if (user && durationGroup.classList.contains('visible')) {
                         const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
                         duration = selectedDuration + ' min';
@@ -1908,7 +2008,7 @@
                         }
                     }
                 } else if (courseType === 'curriculum') {
-                    courseName = 'Curriculum complet';
+                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
                     if (user && durationGroup.classList.contains('visible')) {
                         const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
                         duration = selectedDuration + ' min';
@@ -1939,7 +2039,7 @@
                         }
                     }
                 } else if (courseType === 'examen') {
-                    courseName = 'Préparation d\'examen';
+                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
                     if (user && durationGroup.classList.contains('visible')) {
                         const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
                         duration = selectedDuration + ' min';
@@ -1971,11 +2071,26 @@
                     }
                 }
 
+                // Mettre à jour les éléments du récapitulatif
                 document.getElementById('summaryType').textContent = courseName;
-                document.getElementById('summaryCoursesCount').textContent = `${coursesCount} cours`;
+                document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
                 document.getElementById('summaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
-                document.getElementById('summaryDate').textContent = selectedDate ? 
-                    new Date(selectedDate).toLocaleDateString('fr-FR') : '-';
+                
+                // Formater la date selon la langue
+                if (selectedDate) {
+                    const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                    const dateObj = new Date(selectedDate);
+                    const formattedDate = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    document.getElementById('summaryDate').textContent = formattedDate;
+                } else {
+                    document.getElementById('summaryDate').textContent = '-';
+                }
+                
                 document.getElementById('summaryTime').textContent = selectedTime || '-';
                 document.getElementById('summaryDuration').textContent = duration;
                 document.getElementById('summaryPlatform').textContent = platform;

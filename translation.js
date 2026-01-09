@@ -103,6 +103,52 @@ class TranslationManager {
                 'footer.copyright': 'Fait avec ❤️ à Marseille',
                 'footer.email': 'contact@yoteacher.com',
                 
+                // Booking page
+                'booking.page_title': 'Réserver un cours - YoTeacher',
+                'booking.title': 'Réserver un cours',
+                'booking.subtitle': 'Choisissez la date, l\'heure et le type de cours qui vous convient',
+                'booking.choose_slot': 'Choisir un créneau',
+                'booking.details': 'Détails de la réservation',
+                'booking.available_slots': 'Créneaux disponibles',
+                'booking.loading_slots': 'Chargement des créneaux...',
+                'booking.no_slots': 'Aucun créneau disponible pour cette date.',
+                'booking.no_future_slots': 'Tous les créneaux sont complets pour aujourd\'hui.',
+                'booking.error_loading': 'Erreur lors du chargement des créneaux',
+                'booking.retry': 'Réessayer',
+                'booking.course_type': 'Type de cours',
+                'booking.select_course': 'Sélectionnez un type de cours',
+                'booking.duration': 'Durée du cours',
+                'booking.courses_count': 'Nombre de cours',
+                'booking.one_course': '1 cours',
+                'booking.five_courses': '5 cours',
+                'booking.ten_courses': '10 cours',
+                'booking.discount_badge': '-2%',
+                'booking.discount_badge_5': '-5%',
+                'booking.communication': 'Moyen de communication',
+                'booking.zoom': 'Zoom',
+                'booking.teams': 'Teams',
+                'booking.meet': 'Meet',
+                'booking.full_name': 'Nom complet',
+                'booking.email': 'Email',
+                'booking.notes': 'Notes pour le professeur (optionnel)',
+                'booking.notes_placeholder': 'Votre niveau, objectifs, sujets de discussion préférés...',
+                'booking.summary': 'Récapitulatif',
+                'booking.summary_type': 'Type de cours:',
+                'booking.summary_courses': 'Nombre de cours:',
+                'booking.courses': 'cours',
+                'booking.summary_discount': 'Réduction:',
+                'booking.summary_date': 'Date:',
+                'booking.summary_time': 'Heure:',
+                'booking.summary_duration': 'Durée:',
+                'booking.summary_platform': 'Plateforme:',
+                'booking.summary_total': 'Total:',
+                'booking.book_and_pay': 'Réserver et payer',
+                'booking.payment_redirect': 'Vous serez redirigé vers la page de paiement après confirmation',
+                'booking.login_required': 'Pour réserver un cours',
+                'booking.connect': 'connectez-vous',
+                'booking.or': 'ou',
+                'booking.create_account': 'créez un compte',
+                
                 // Login page
                 'login.title': 'Connexion - YoTeacher',
                 'login.subtitle': 'Connectez-vous à votre espace étudiant',
@@ -155,6 +201,8 @@ class TranslationManager {
                 'dashboard.cancel_function': 'Fonction d\'annulation à implémenter',
                 'dashboard.reschedule_function': 'Fonction de report à implémenter',
                 'dashboard.logout': 'Déconnexion',
+                'dashboard.my_dashboard': 'Mon tableau de bord',
+                'dashboard.my_profile': 'Mon profil',
                 
                 // Profile page
                 'profile.title': 'Mon profil - YoTeacher',
@@ -369,6 +417,52 @@ class TranslationManager {
                 'footer.copyright': 'Made with ❤️ in Marseille',
                 'footer.email': 'contact@yoteacher.com',
                 
+                // Booking page
+                'booking.page_title': 'Book a Course - YoTeacher',
+                'booking.title': 'Book a Course',
+                'booking.subtitle': 'Choose the date, time and type of course that suits you',
+                'booking.choose_slot': 'Choose a Time Slot',
+                'booking.details': 'Booking Details',
+                'booking.available_slots': 'Available Slots',
+                'booking.loading_slots': 'Loading time slots...',
+                'booking.no_slots': 'No time slots available for this date.',
+                'booking.no_future_slots': 'All time slots are full for today.',
+                'booking.error_loading': 'Error loading time slots',
+                'booking.retry': 'Try again',
+                'booking.course_type': 'Course Type',
+                'booking.select_course': 'Select a course type',
+                'booking.duration': 'Course Duration',
+                'booking.courses_count': 'Number of Courses',
+                'booking.one_course': '1 course',
+                'booking.five_courses': '5 courses',
+                'booking.ten_courses': '10 courses',
+                'booking.discount_badge': '-2%',
+                'booking.discount_badge_5': '-5%',
+                'booking.communication': 'Communication Method',
+                'booking.zoom': 'Zoom',
+                'booking.teams': 'Teams',
+                'booking.meet': 'Meet',
+                'booking.full_name': 'Full Name',
+                'booking.email': 'Email',
+                'booking.notes': 'Notes for the teacher (optional)',
+                'booking.notes_placeholder': 'Your level, goals, favorite discussion topics...',
+                'booking.summary': 'Summary',
+                'booking.summary_type': 'Course Type:',
+                'booking.summary_courses': 'Number of Courses:',
+                'booking.courses': 'courses',
+                'booking.summary_discount': 'Discount:',
+                'booking.summary_date': 'Date:',
+                'booking.summary_time': 'Time:',
+                'booking.summary_duration': 'Duration:',
+                'booking.summary_platform': 'Platform:',
+                'booking.summary_total': 'Total:',
+                'booking.book_and_pay': 'Book and Pay',
+                'booking.payment_redirect': 'You will be redirected to the payment page after confirmation',
+                'booking.login_required': 'To book a',
+                'booking.connect': 'log in',
+                'booking.or': 'or',
+                'booking.create_account': 'create an account',
+                
                 // Login page
                 'login.title': 'Login - YoTeacher',
                 'login.subtitle': 'Log in to your student space',
@@ -421,6 +515,8 @@ class TranslationManager {
                 'dashboard.cancel_function': 'Cancel function to implement',
                 'dashboard.reschedule_function': 'Reschedule function to implement',
                 'dashboard.logout': 'Logout',
+                'dashboard.my_dashboard': 'My dashboard',
+                'dashboard.my_profile': 'My profile',
                 
                 // Profile page
                 'profile.title': 'My Profile - YoTeacher',
@@ -657,6 +753,34 @@ class TranslationManager {
             const translation = this.getTranslation(key);
             if (translation && translation !== key) {
                 titleElement.textContent = translation;
+            }
+        }
+        
+        // Mettre à jour les titres de page sans attribut data-i18n
+        const title = document.querySelector('title');
+        if (title && !title.hasAttribute('data-i18n')) {
+            const currentPath = window.location.pathname;
+            let pageKey = '';
+            
+            if (currentPath.includes('booking.html')) {
+                pageKey = 'booking.page_title';
+            } else if (currentPath.includes('login.html')) {
+                pageKey = 'login.title';
+            } else if (currentPath.includes('signup.html')) {
+                pageKey = 'signup.title';
+            } else if (currentPath.includes('dashboard.html')) {
+                pageKey = 'dashboard.title';
+            } else if (currentPath.includes('profile.html')) {
+                pageKey = 'profile.title';
+            } else if (currentPath.includes('payment.html')) {
+                pageKey = 'payment.title';
+            }
+            
+            if (pageKey) {
+                const translation = this.getTranslation(pageKey);
+                if (translation && translation !== pageKey) {
+                    title.textContent = translation;
+                }
             }
         }
     }
