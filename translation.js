@@ -15,7 +15,7 @@ class TranslationManager {
                 'header.dashboard': 'Mon tableau de bord',
                 'header.profile': 'Mon profil',
                 'header.bookings': 'Mes réservations',
-                'header.language': 'FR',
+                'header.language': 'EN',
                 
                 // Hero section
                 'hero.title': 'Apprenez le français simplement',
@@ -346,7 +346,7 @@ class TranslationManager {
                 'header.dashboard': 'My Dashboard',
                 'header.profile': 'My Profile',
                 'header.bookings': 'My Bookings',
-                'header.language': 'EN',
+                'header.language': 'FR',
                 
                 // Hero section
                 'hero.title': 'Learn French Simply',
