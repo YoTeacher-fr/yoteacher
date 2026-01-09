@@ -6,7 +6,30 @@ class AuthManager {
         this.pendingPayment = null;
         this.init();
     }
-
+async checkSupabaseConnection() {
+    try {
+        if (!window.supabase) {
+            console.warn('Supabase non disponible');
+            return false;
+        }
+        
+        // Tester une requête simple
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('count', { count: 'exact', head: true });
+            
+        if (error) {
+            console.warn('Erreur connexion Supabase:', error);
+            return false;
+        }
+        
+        console.log('✅ Connexion Supabase OK');
+        return true;
+    } catch (error) {
+        console.error('Exception vérification connexion:', error);
+        return false;
+    }
+}
     async init() {
         try {
             // Attendre que Supabase soit prêt
@@ -17,7 +40,13 @@ class AuthManager {
                 this.setupDegradedMode();
                 return;
             }
-
+ // Vérifier la connexion
+        const connected = await this.checkSupabaseConnection();
+        if (!connected) {
+            console.warn('Mode dégradé activé : Supabase non disponible');
+            this.setupDegradedMode();
+            return;
+        }
             // Vérifier la session existante
             try {
                 const { data: { session } } = await supabase.auth.getSession();
@@ -204,70 +233,81 @@ class AuthManager {
         localStorage.removeItem('yoteacher_user');
     }
 
-    async signUp(email, password, fullName) {
-        try {
-            if (!this.supabaseReady) {
-                return this.mockSignUp(email, password, fullName);
-            }
+    // Dans auth.js, modifiez la méthode signUp :
 
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        full_name: fullName,
-                        created_at: new Date().toISOString()
-                    },
-                    emailRedirectTo: `${window.location.origin}/login.html?message=confirmed`
-                }
-            });
-
-            if (error) {
-                console.error('Supabase signUp error details:', {
-                    message: error.message,
-                    status: error.status,
-                    name: error.name
-                });
-                throw error;
-            }
-
-            if (data.user) {
-                try {
-                    const { error: profileError } = await supabase
-                        .from('profiles')
-                        .insert([
-                            {
-                                id: data.user.id,
-                                email: email,
-                                full_name: fullName,
-                                is_vip: false,
-                                credits: 0,
-                                created_at: new Date().toISOString()
-                            }
-                        ]);
-
-                    if (profileError) {
-                        console.warn('Erreur création profil:', profileError);
-                    }
-                } catch (profileErr) {
-                    console.warn('Exception création profil:', profileErr);
-                }
-            }
-
-            return { 
-                success: true, 
-                data,
-                message: 'Compte créé ! Veuillez vérifier votre email pour confirmer votre compte.'
-            };
-        } catch (error) {
-            console.error('Erreur inscription:', error);
-            return { 
-                success: false, 
-                error: this.getUserFriendlyError(error.message),
-                details: error.message
-            };
+async signUp(email, password, fullName) {
+    try {
+        if (!this.supabaseReady) {
+            return this.mockSignUp(email, password, fullName);
         }
+
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: fullName,
+                    created_at: new Date().toISOString()
+                },
+                emailRedirectTo: `${window.location.origin}/login.html?message=confirmed`
+            }
+        });
+
+        if (error) {
+            console.error('Supabase signUp error details:', {
+                message: error.message,
+                status: error.status,
+                name: error.name
+            });
+            throw error;
+        }
+
+        if (data.user) {
+            try {
+                // Utiliser votre schéma avec les bons champs
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .insert([
+                        {
+                            id: data.user.id,
+                            full_name: fullName,
+                            country: null,
+                            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                            french_level: null,
+                            learning_goals: null,
+                            preferred_platform: 'zoom',
+                            preferred_currency: 'EUR',
+                            is_vip: false
+                            // created_at et updated_at sont automatiques dans votre schéma
+                        }
+                    ]);
+
+                if (profileError) {
+                    console.warn('Erreur création profil:', profileError);
+                    // Ne pas lever d'erreur, laisser l'inscription se terminer
+                } else {
+                    console.log('✅ Profil créé avec succès selon votre schéma');
+                }
+            } catch (profileErr) {
+                console.warn('Exception création profil:', profileErr);
+                // Continuer même en cas d'erreur
+            }
+        }
+
+        return { 
+            success: true, 
+            data,
+            message: 'Compte créé ! Veuillez vérifier votre email pour confirmer votre compte.'
+        };
+    } catch (error) {
+        console.error('Erreur inscription:', error);
+        return { 
+            success: false, 
+            error: this.getUserFriendlyError(error.message),
+            details: error.message
+        };
     }
+}
 
     mockSignUp(email, password, fullName) {
         return new Promise((resolve) => {
@@ -702,46 +742,56 @@ class AuthManager {
 
     // NOUVELLE MÉTHODE : Gestion des paiements
     async savePayment(paymentData) {
-        try {
-            if (!this.supabaseReady || !window.supabase) {
-                // Sauvegarder localement en mode dégradé
-                const payments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
-                const paymentRecord = {
-                    ...paymentData,
-                    id: 'local_' + Date.now(),
-                    created_at: new Date().toISOString()
-                };
-                payments.push(paymentRecord);
-                localStorage.setItem('yoteacher_payments', JSON.stringify(payments));
-                return { success: true, id: paymentRecord.id, data: paymentRecord };
-            }
+    try {
+        if (!this.supabaseReady || !window.supabase) {
+            // Sauvegarder localement en mode dégradé
+            const payments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
+            const paymentRecord = {
+                ...paymentData,
+                id: 'local_' + Date.now(),
+                created_at: new Date().toISOString()
+            };
+            payments.push(paymentRecord);
+            localStorage.setItem('yoteacher_payments', JSON.stringify(payments));
+            return { success: true, id: paymentRecord.id, data: paymentRecord };
+        }
 
-            const { data, error } = await supabase
-                .from('payments')
-                .insert([{
-                    user_id: paymentData.userId || this.user?.id,
-                    booking_id: paymentData.bookingId,
-                    amount: paymentData.amount,
-                    currency: paymentData.currency || 'EUR',
-                    method: paymentData.method,
-                    transaction_id: paymentData.transactionId,
-                    status: paymentData.status || 'completed',
-                    payment_data: paymentData.paymentData || paymentData,
-                    created_at: new Date().toISOString()
-                }])
-                .select();
+        // Votre schéma n'a pas de table payments, on utilise bookings
+        // On crée une réservation directement
+        const bookingData = {
+            user_id: paymentData.userId || this.user?.id,
+            course_type: paymentData.booking?.courseType || 'conversation',
+            duration_minutes: parseInt(paymentData.booking?.duration) || 60,
+            start_time: paymentData.booking?.startTime,
+            end_time: paymentData.booking?.endTime,
+            platform: paymentData.booking?.location?.includes('zoom') ? 'zoom' : 
+                     paymentData.booking?.location?.includes('google') ? 'google_meet' : 'teams',
+            price_paid: paymentData.amount,
+            currency: paymentData.currency || 'EUR',
+            payment_method: paymentData.method,
+            payment_reference: paymentData.transactionId,
+            status: 'confirmed',
+            // booking_number sera généré par le trigger
+        };
 
-            if (error) {
-                console.error('Erreur sauvegarde paiement:', error);
-                return { success: false, error: error.message };
-            }
+        console.log('💾 Enregistrement paiement dans bookings:', bookingData);
 
-            return { success: true, id: data[0].id, data: data[0] };
-        } catch (error) {
-            console.error('Exception sauvegarde paiement:', error);
+        const { data, error } = await supabase
+            .from('bookings')
+            .insert([bookingData])
+            .select();
+
+        if (error) {
+            console.error('Erreur sauvegarde paiement (dans bookings):', error);
             return { success: false, error: error.message };
         }
+
+        return { success: true, id: data[0].id, data: data[0] };
+    } catch (error) {
+        console.error('Exception sauvegarde paiement:', error);
+        return { success: false, error: error.message };
     }
+}
 
     // NOUVELLE MÉTHODE : Mettre à jour le statut d'une réservation après paiement
     async updateBookingStatus(bookingId, status) {
@@ -771,30 +821,31 @@ class AuthManager {
     }
 
     // NOUVELLE MÉTHODE : Obtenir l'historique des paiements
-    async getPaymentHistory() {
-        try {
-            if (!this.supabaseReady || !window.supabase || !this.user) {
-                // Retourner les paiements locaux
-                const localPayments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
-                return { success: true, data: localPayments };
-            }
+   async getPaymentHistory() {
+    try {
+        if (!this.supabaseReady || !window.supabase || !this.user) {
+            // Retourner les paiements locaux
+            const localPayments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
+            return { success: true, data: localPayments };
+        }
 
-            const { data, error } = await supabase
-                .from('payments')
-                .select('*')
-                .eq('user_id', this.user.id)
-                .order('created_at', { ascending: false });
+        // Récupérer depuis bookings avec paiement
+        const { data, error } = await supabase
+            .from('bookings')
+            .select('*')
+            .eq('user_id', this.user.id)
+            .not('payment_method', 'is', null)
+            .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('Erreur récupération historique paiements:', error);
-                return { success: false, error: error.message };
-            }
-
-            return { success: true, data };
-        } catch (error) {
-            console.error('Exception récupération historique paiements:', error);
+        if (error) {
+            console.error('Erreur récupération historique (bookings):', error);
             return { success: false, error: error.message };
         }
+
+        return { success: true, data };
+    } catch (error) {
+        console.error('Exception récupération historique:', error);
+        return { success: false, error: error.message };
     }
 }
 

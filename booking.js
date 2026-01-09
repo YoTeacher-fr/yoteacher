@@ -558,26 +558,54 @@ class BookingManager {
         });
     }
 
-    async saveBookingToSupabase(calcomBooking, userId, status = 'confirmed') {
+    // Dans booking.js, modifiez saveBookingToSupabase :
+
+async saveBookingToSupabase(calcomBooking, userId, status = 'confirmed') {
     try {
         if (!window.supabase) {
             console.warn('Supabase non disponible pour sauvegarde');
             return null;
         }
 
+        // Générer un numéro de réservation à 6 chiffres
+        const bookingNumber = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Déterminer le type de cours
+        let courseType = 'conversation';
+        if (calcomBooking.eventType === '4139074') courseType = 'essai';
+        if (calcomBooking.eventType === '4139076') courseType = 'examen';
+        if (calcomBooking.eventType === '4139503') courseType = 'curriculum';
+        
+        // Déterminer la durée en minutes
+        const startTime = new Date(calcomBooking.start);
+        const endTime = new Date(calcomBooking.end);
+        const durationMinutes = Math.round((endTime - startTime) / (1000 * 60));
+        
+        // Déterminer la plateforme
+        let platform = 'zoom';
+        if (calcomBooking.location && calcomBooking.location.includes('google')) platform = 'google_meet';
+        if (calcomBooking.location && calcomBooking.location.includes('teams')) platform = 'teams';
+        
         const bookingData = {
+            booking_number: bookingNumber,
             user_id: userId,
-            calcom_booking_id: calcomBooking.id || calcomBooking.uid,
-            event_type: calcomBooking.eventType || 'essai',
+            course_type: courseType,
+            duration_minutes: durationMinutes,
             start_time: calcomBooking.start || calcomBooking.startTime,
             end_time: calcomBooking.end || calcomBooking.endTime,
+            platform: platform,
+            meeting_link: calcomBooking.location || calcomBooking.meetingUrl,
+            price_paid: this.calculatePriceForBooking(courseType, durationMinutes), // À adapter
+            currency: window.currencyManager?.currentCurrency || 'EUR',
+            calcom_booking_id: calcomBooking.id || calcomBooking.uid,
+            calcom_uid: calcomBooking.uid,
             status: status,
-            meet_link: calcomBooking.location || calcomBooking.meetingUrl,
-            booking_data: calcomBooking,
-            created_at: new Date().toISOString()
+            payment_method: 'stripe', // À adapter selon le paiement
+            payment_reference: `calcom_${calcomBooking.id || calcomBooking.uid}`,
+            // created_at sera automatiquement ajouté par Supabase
         };
 
-        console.log('💾 Sauvegarde dans Supabase:', bookingData);
+        console.log('💾 Sauvegarde dans bookings (votre schéma):', bookingData);
 
         const { data, error } = await supabase
             .from('bookings')
@@ -585,8 +613,32 @@ class BookingManager {
             .select();
 
         if (error) {
-            console.warn('Erreur sauvegarde Supabase:', error);
-            return null;
+            console.warn('Erreur sauvegarde dans bookings:', error);
+            
+            // Tentative alternative avec moins de champs
+            const simpleBookingData = {
+                booking_number: bookingNumber,
+                user_id: userId,
+                course_type: courseType,
+                duration_minutes: durationMinutes,
+                start_time: calcomBooking.start || calcomBooking.startTime,
+                end_time: calcomBooking.end || calcomBooking.endTime,
+                platform: platform,
+                status: status
+            };
+            
+            const { data: simpleData, error: simpleError } = await supabase
+                .from('bookings')
+                .insert([simpleBookingData])
+                .select();
+                
+            if (simpleError) {
+                console.error('Erreur sauvegarde simple:', simpleError);
+                return null;
+            }
+            
+            console.log('✅ Réservation sauvegardée (format simplifié)');
+            return simpleData[0].id;
         }
         
         console.log('✅ Réservation sauvegardée dans Supabase avec ID:', data[0].id);
@@ -596,6 +648,18 @@ class BookingManager {
         console.error('Exception sauvegarde Supabase:', error);
         return null;
     }
+}
+
+// Ajoutez cette méthode pour calculer le prix
+calculatePriceForBooking(courseType, durationMinutes) {
+    const prices = {
+        'essai': { 15: 5 },
+        'conversation': { 30: 10, 45: 15, 60: 20 },
+        'curriculum': { 30: 17.5, 45: 26.25, 60: 35 },
+        'examen': { 30: 15, 45: 22.5, 60: 30 }
+    };
+    
+    return prices[courseType]?.[durationMinutes] || prices[courseType]?.[60] || 20;
 }
 
     getToday() {
@@ -966,7 +1030,27 @@ window.checkDurationConfiguration = async function() {
     }
 };
 window.addEventListener('auth:login', (e) => {
-    console.log("Re-vérification du statut pour le booking...");
-    this.checkAuthStatus(); // Force la mise à jour des champs nom/email
-    this.updateUI();        // Cache le message "nécessité d'un compte"
+    console.log('✅ Événement auth:login reçu pour booking');
+    console.log('Utilisateur:', e.detail?.user?.email);
+    
+    // Mettre à jour les formulaires de réservation si présents
+    const bookingForms = document.querySelectorAll('form[id*="booking"], .booking-form');
+    bookingForms.forEach(form => {
+        const user = e.detail?.user;
+        if (user) {
+            const nameInput = form.querySelector('[name="name"], [name="full_name"]');
+            const emailInput = form.querySelector('[name="email"]');
+            
+            if (nameInput && !nameInput.value) {
+                const fullName = user.user_metadata?.full_name || 
+                                user.email?.split('@')[0] || 
+                                'Élève';
+                nameInput.value = fullName;
+            }
+            
+            if (emailInput && !emailInput.value) {
+                emailInput.value = user.email || '';
+            }
+        }
+    });
 });

@@ -71,11 +71,13 @@ class PackagesManager {
         return { credits: 1, discount: null, pricePerCourse: this.calculatePrice(courseType, 1, 60) };
     }
 
-    async getUserCredits(userId) {
+    // Dans packages.js, modifiez getUserCredits :
+
+async getUserCredits(userId) {
     if (!window.supabase || !userId) return 0;
     
     try {
-        // Utiliser la table packages comme dans votre schéma
+        // Votre schéma a les crédits dans la table packages
         const { data, error } = await supabase
             .from('packages')
             .select('remaining_credits')
@@ -88,7 +90,7 @@ class PackagesManager {
             return 0;
         }
 
-        // Somme de tous les crédits restants
+        // Calculer la somme des crédits restants
         const totalCredits = data.reduce((sum, pkg) => sum + (pkg.remaining_credits || 0), 0);
         return totalCredits;
     } catch (error) {
@@ -97,47 +99,63 @@ class PackagesManager {
     }
 }
 
-    async useCredit(userId, courseType, bookingData) {
-        if (!window.supabase || !userId) return false;
-        
-        try {
-            // Vérifier les crédits
-            const { data: profile, error: fetchError } = await supabase
-                .from('profiles')
-                .select('credits')
-                .eq('id', userId)
-                .single();
+// Mettre à jour useCredit pour votre schéma
+async useCredit(userId, courseType, bookingData) {
+    if (!window.supabase || !userId) return false;
+    
+    try {
+        // Trouver un package actif non expiré pour ce type de cours
+        const { data: packages, error: fetchError } = await supabase
+            .from('packages')
+            .select('id, remaining_credits')
+            .eq('user_id', userId)
+            .eq('course_type', courseType)
+            .eq('status', 'active')
+            .gt('remaining_credits', 0)
+            .gt('expires_at', new Date().toISOString())
+            .order('expires_at', { ascending: true }) // Utiliser le plus vieux d'abord
+            .limit(1);
 
-            if (fetchError || !profile || profile.credits < 1) {
-                throw new Error('Crédits insuffisants');
-            }
-
-            // Décrémenter les crédits
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({ credits: profile.credits - 1 })
-                .eq('id', userId);
-
-            if (updateError) throw updateError;
-
-            // Enregistrer l'utilisation du crédit
-            const { error: logError } = await supabase
-                .from('credit_usage')
-                .insert({
-                    user_id: userId,
-                    course_type: courseType,
-                    booking_data: bookingData,
-                    used_at: new Date().toISOString()
-                });
-
-            if (logError) console.warn('Erreur log crédit:', logError);
-
-            return true;
-        } catch (error) {
-            console.error('❌ Erreur utilisation crédit:', error);
-            return false;
+        if (fetchError || !packages || packages.length === 0) {
+            throw new Error('Aucun crédit disponible pour ce type de cours');
         }
+
+        const pkg = packages[0];
+        const creditsBefore = pkg.remaining_credits;
+
+        // Décrémenter le crédit
+        const { error: updateError } = await supabase
+            .from('packages')
+            .update({ 
+                remaining_credits: creditsBefore - 1,
+                status: (creditsBefore - 1) === 0 ? 'depleted' : 'active'
+            })
+            .eq('id', pkg.id);
+
+        if (updateError) throw updateError;
+
+        // Enregistrer la transaction dans credit_transactions
+        const { error: logError } = await supabase
+            .from('credit_transactions')
+            .insert({
+                user_id: userId,
+                package_id: pkg.id,
+                booking_id: bookingData.id, // À fournir si disponible
+                transaction_type: 'use',
+                credits_change: -1,
+                credits_before: creditsBefore,
+                credits_after: creditsBefore - 1,
+                reason: `Crédit utilisé pour un cours de type ${courseType}`
+            });
+
+        if (logError) console.warn('Erreur log crédit:', logError);
+
+        return true;
+    } catch (error) {
+        console.error('❌ Erreur utilisation crédit:', error);
+        return false;
     }
+}
 
     async addCredits(userId, packageType, quantity) {
         if (!window.supabase || !userId) return false;

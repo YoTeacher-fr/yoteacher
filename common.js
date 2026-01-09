@@ -123,3 +123,67 @@ const utils = {
 
 // Exposer utils globalement
 window.utils = utils;
+// Ajoutez dans common.js ou dans un nouveau fichier
+window.debugSupabase = async function() {
+    console.group('🔍 Debug Supabase');
+    
+    // Vérifier la connexion
+    console.log('Supabase disponible:', !!window.supabase);
+    
+    if (window.supabase) {
+        // Vérifier les tables
+        const tables = ['profiles', 'bookings', 'packages', 'credit_transactions'];
+        for (const table of tables) {
+            try {
+                const { data, error } = await supabase
+                    .from(table)
+                    .select('count', { count: 'exact', head: true });
+                    
+                console.log(`Table ${table}:`, error ? '❌ Erreur' : '✅ OK');
+                if (error) console.log('   Erreur:', error.message);
+            } catch (e) {
+                console.log(`Table ${table}: ❌ Exception`);
+            }
+        }
+        
+        // Vérifier l'utilisateur courant
+        if (window.authManager?.user) {
+            console.log('Utilisateur connecté:', window.authManager.user.email);
+            
+            // Tester une insertion simple
+            const testData = {
+                booking_number: 'TEST' + Date.now(),
+                user_id: window.authManager.user.id,
+                course_type: 'conversation',
+                duration_minutes: 60,
+                start_time: new Date().toISOString(),
+                end_time: new Date(Date.now() + 3600000).toISOString(),
+                platform: 'zoom',
+                status: 'pending'
+            };
+            
+            console.log('Test insertion dans bookings:', testData);
+            
+            const { data, error } = await supabase
+                .from('bookings')
+                .insert([testData])
+                .select();
+                
+            if (error) {
+                console.log('❌ Erreur insertion test:', error);
+            } else {
+                console.log('✅ Insertion test réussie:', data[0].id);
+                
+                // Nettoyer
+                await supabase
+                    .from('bookings')
+                    .delete()
+                    .eq('id', data[0].id);
+            }
+        }
+    }
+    
+    console.groupEnd();
+};
+
+// Pour tester, appelez window.debugSupabase() dans la console
