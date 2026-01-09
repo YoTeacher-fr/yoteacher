@@ -166,7 +166,7 @@ let state = {
 
 // Fonction utilitaire pour obtenir une traduction
 function getTranslation(key, fallback) {
-    console.log('🔍 getTranslation appelé avec key:', key);
+    console.log('🔍 getTranslation appelé avec key:', key, 'et fallback:', fallback);
     
     if (window.translationManager) {
         console.log('✅ translationManager trouvé:', window.translationManager);
@@ -434,6 +434,9 @@ const testimonialsManager = {
             return;
         }
         
+        // Réinitialiser à la première slide
+        testimonialsManager.currentSlide = 0;
+        
         // Calculer le nombre de slides en fonction de l'écran
         testimonialsManager.calculateSlidesPerView();
         
@@ -442,13 +445,6 @@ const testimonialsManager = {
         testimonialsData.forEach((testimonial, index) => {
             const card = testimonialsManager.createTestimonialCard(testimonial);
             container.appendChild(card);
-            
-            // Afficher/masquer selon l'index
-            if (index < testimonialsManager.slidesPerView) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
         });
         
         // Générer les indicateurs
@@ -458,8 +454,11 @@ const testimonialsManager = {
         testimonialsManager.addTestimonialEvents();
         testimonialsManager.setupNavigation();
         
+        // Mettre à jour l'affichage
+        testimonialsManager.updateSlider();
+        
         state.testimonialsLoaded = true;
-        console.log(`✅ ${testimonialsData.length} témoignages créés`);
+        console.log(`✅ ${testimonialsData.length} témoignages créés, slidesPerView: ${testimonialsManager.slidesPerView}`);
     },
     
     calculateSlidesPerView: () => {
@@ -471,12 +470,20 @@ const testimonialsManager = {
         } else {
             testimonialsManager.slidesPerView = 1;
         }
+        
+        console.log(`📱 Écran: ${width}px, slidesPerView: ${testimonialsManager.slidesPerView}`);
     },
     
     createTestimonialCard: (testimonial) => {
         const card = document.createElement('div');
         card.className = 'testimonial-card fade-in-up';
         card.setAttribute('data-testimonial-id', testimonial.id);
+        
+        // Obtenir les traductions
+        const name = getTranslation(`testimonial.${testimonial.id}.name`, testimonial.name);
+        const country = getTranslation(`testimonial.${testimonial.id}.country`, testimonial.country);
+        const content = getTranslation(`testimonial.${testimonial.id}.content`, testimonial.content);
+        const lessons = getTranslation(`testimonial.${testimonial.id}.lessons`, testimonial.lessons);
         
         // Générer les étoiles
         let starsHTML = '';
@@ -485,7 +492,7 @@ const testimonialsManager = {
         }
         
         // Première lettre du nom
-        const firstLetter = testimonial.name.charAt(0);
+        const firstLetter = name.charAt(0);
         
         card.innerHTML = `
             <div class="quote-icon">
@@ -497,7 +504,7 @@ const testimonialsManager = {
             </div>
             
             <p class="testimonial-content">
-                "${testimonial.content}"
+                "${content}"
             </p>
             
             <div class="testimonial-author">
@@ -505,8 +512,8 @@ const testimonialsManager = {
                     ${firstLetter}
                 </div>
                 <div class="author-info">
-                    <h4>${testimonial.name}</h4>
-                    <p>${testimonial.country} • ${testimonial.lessons}</p>
+                    <h4>${name}</h4>
+                    <p>${country} • ${lessons}</p>
                 </div>
             </div>
         `;
@@ -529,20 +536,29 @@ const testimonialsManager = {
             });
             container.appendChild(indicator);
         }
+        
+        console.log(`📊 ${totalSlides} indicateurs créés`);
     },
     
     setupNavigation: () => {
+        // Supprimer tous les anciens écouteurs d'événements
+        testimonialsManager.removeAllEventListeners();
+        
         const prevBtn = document.getElementById('prevTestimonial');
         const nextBtn = document.getElementById('nextTestimonial');
         
         if (prevBtn) {
-            prevBtn.addEventListener('click', () => {
+            prevBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 testimonialsManager.prevSlide();
             });
         }
         
         if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
+            nextBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 testimonialsManager.nextSlide();
             });
         }
@@ -558,22 +574,69 @@ const testimonialsManager = {
         
         // Redimensionnement de la fenêtre
         window.addEventListener('resize', () => {
+            const oldSlidesPerView = testimonialsManager.slidesPerView;
             testimonialsManager.calculateSlidesPerView();
-            testimonialsManager.updateSlider();
-            testimonialsManager.generateIndicators(document.getElementById('testimonialIndicators'));
+            
+            // Regénérer seulement si le nombre de slides par vue a changé
+            if (oldSlidesPerView !== testimonialsManager.slidesPerView) {
+                testimonialsManager.init();
+            } else {
+                testimonialsManager.updateSlider();
+            }
+        });
+    },
+    
+    removeAllEventListeners: () => {
+        // Supprimer les événements des boutons précédent/suivant
+        const prevBtn = document.getElementById('prevTestimonial');
+        const nextBtn = document.getElementById('nextTestimonial');
+        
+        if (prevBtn) {
+            const newPrevBtn = prevBtn.cloneNode(true);
+            prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+        }
+        
+        if (nextBtn) {
+            const newNextBtn = nextBtn.cloneNode(true);
+            nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        }
+        
+        // Supprimer les événements des indicateurs
+        const indicators = document.querySelectorAll('.testimonial-indicator');
+        indicators.forEach(indicator => {
+            const newIndicator = indicator.cloneNode(true);
+            indicator.parentNode.replaceChild(newIndicator, indicator);
         });
     },
     
     prevSlide: () => {
         const totalSlides = Math.ceil(testimonialsData.length / testimonialsManager.slidesPerView);
-        testimonialsManager.currentSlide = (testimonialsManager.currentSlide - 1 + totalSlides) % totalSlides;
-        testimonialsManager.updateSlider();
+        
+        if (testimonialsManager.currentSlide > 0) {
+            testimonialsManager.currentSlide--;
+            testimonialsManager.updateSlider();
+        } else {
+            // Revenir à la dernière slide
+            testimonialsManager.currentSlide = totalSlides - 1;
+            testimonialsManager.updateSlider();
+        }
+        
+        console.log(`⬅️ Slide précédente: ${testimonialsManager.currentSlide + 1}/${totalSlides}`);
     },
     
     nextSlide: () => {
         const totalSlides = Math.ceil(testimonialsData.length / testimonialsManager.slidesPerView);
-        testimonialsManager.currentSlide = (testimonialsManager.currentSlide + 1) % totalSlides;
-        testimonialsManager.updateSlider();
+        
+        if (testimonialsManager.currentSlide < totalSlides - 1) {
+            testimonialsManager.currentSlide++;
+            testimonialsManager.updateSlider();
+        } else {
+            // Revenir à la première slide
+            testimonialsManager.currentSlide = 0;
+            testimonialsManager.updateSlider();
+        }
+        
+        console.log(`➡️ Slide suivante: ${testimonialsManager.currentSlide + 1}/${totalSlides}`);
     },
     
     goToSlide: (slideIndex) => {
@@ -581,6 +644,7 @@ const testimonialsManager = {
         if (slideIndex >= 0 && slideIndex < totalSlides) {
             testimonialsManager.currentSlide = slideIndex;
             testimonialsManager.updateSlider();
+            console.log(`🎯 Aller à la slide: ${slideIndex + 1}/${totalSlides}`);
         }
     },
     
@@ -594,15 +658,26 @@ const testimonialsManager = {
         const cards = container.querySelectorAll('.testimonial-card');
         cards.forEach(card => {
             card.style.display = 'none';
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
         });
         
-        // Afficher seulement ceux de la slide actuelle
+        // Calculer les indices des témoignages à afficher
         const startIndex = testimonialsManager.currentSlide * testimonialsManager.slidesPerView;
-        const endIndex = startIndex + testimonialsManager.slidesPerView;
+        const endIndex = Math.min(startIndex + testimonialsManager.slidesPerView, testimonialsData.length);
         
-        for (let i = startIndex; i < endIndex && i < testimonialsData.length; i++) {
+        console.log(`🔄 Affichage des témoignages ${startIndex + 1} à ${endIndex}`);
+        
+        // Afficher seulement ceux de la slide actuelle avec animation
+        for (let i = startIndex; i < endIndex; i++) {
             if (cards[i]) {
                 cards[i].style.display = 'block';
+                // Animation progressive
+                setTimeout(() => {
+                    cards[i].style.opacity = '1';
+                    cards[i].style.transform = 'translateY(0)';
+                    cards[i].style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                }, 100 * (i - startIndex));
             }
         }
         
@@ -621,22 +696,29 @@ const testimonialsManager = {
         const totalSlides = Math.ceil(testimonialsData.length / testimonialsManager.slidesPerView);
         
         if (prevBtn) {
-            prevBtn.disabled = testimonialsManager.currentSlide === 0;
+            prevBtn.disabled = false;
+            prevBtn.style.opacity = '1';
+            prevBtn.style.cursor = 'pointer';
         }
         
         if (nextBtn) {
-            nextBtn.disabled = testimonialsManager.currentSlide === totalSlides - 1;
+            nextBtn.disabled = false;
+            nextBtn.style.opacity = '1';
+            nextBtn.style.cursor = 'pointer';
         }
     },
     
     addTestimonialEvents: () => {
         document.querySelectorAll('.testimonial-card').forEach(card => {
             card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-10px)';
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+                this.style.transition = 'all 0.3s ease';
+                this.style.boxShadow = '0 10px 30px rgba(0,0,0,0.15)';
             });
             
             card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
+                this.style.transform = 'translateY(0) scale(1)';
+                this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
             });
         });
     }
@@ -823,12 +905,12 @@ const appTranslationManager = {
         // Écouter les changements de langue
         window.addEventListener('language:changed', () => {
             console.log('🌍 Changement de langue détecté dans l\'app');
-            appTranslationManager.translateCourses();
             
-            // Recharger les témoignages si nécessaire
-            if (state.testimonialsLoaded) {
-                testimonialsManager.init();
-            }
+            // Réinitialiser complètement les témoignages
+            testimonialsManager.init();
+            
+            // Recharger les cours
+            appTranslationManager.translateCourses();
         });
         
         // Vérifier l'état initial de la langue
@@ -1042,10 +1124,9 @@ if (document.readyState === 'loading') {
     setTimeout(initLanguageButtons, 300);
 }
 
-// Exposer les managers pour le débogage (mais ne pas écraser translationManager !)
+// Exposer les managers pour le débogage
 window.coursesManager = coursesManager;
 window.testimonialsManager = testimonialsManager;
-// ⚠️ NE PAS ÉCRASER window.translationManager !
-// window.translationManager = appTranslationManager;
+window.appTranslationManager = appTranslationManager;
 
 console.log('📦 Script.js chargé avec succès');
