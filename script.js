@@ -771,14 +771,14 @@ const translationManager = {
             return;
         }
         
-        console.log('🌍 Initialisation du gestionnaire de traduction...');
+        console.log('🌍 Initialisation du gestionnaire de traduction dans script.js...');
         
         // Mettre à jour les cartes de cours avec les traductions
         translationManager.translateCourses();
         
         // Écouter les changements de langue
         window.addEventListener('language:changed', () => {
-            console.log('🌍 Changement de langue détecté');
+            console.log('🌍 Changement de langue détecté dans script.js');
             translationManager.translateCourses();
             
             // Recharger les témoignages si nécessaire
@@ -786,9 +786,6 @@ const translationManager = {
                 testimonialsManager.init();
             }
         });
-        
-        // Ajouter des écouteurs d'événements supplémentaires
-        translationManager.bindLanguageSwitchers();
     },
     
     translateCourses: () => {
@@ -798,20 +795,10 @@ const translationManager = {
         
         // Recharger toutes les cartes de cours avec les nouvelles traductions
         coursesManager.reloadCourses();
-    },
-    
-    bindLanguageSwitchers: () => {
-        // S'assurer que les sélecteurs de langue sont cliquables
-        document.querySelectorAll('.language-switcher, .mobile-language').forEach(element => {
-            element.style.cursor = 'pointer';
-            element.title = window.translationManager.currentLanguage === 'fr' 
-                ? 'Switch to English' 
-                : 'Passer en Français';
-        });
     }
 };
 
-// ===== INITIALISATION =====
+// ===== INITIALISATION PRINCIPALE =====
 const app = {
     init: () => {
         console.log('Initialisation de l\'application...');
@@ -870,109 +857,116 @@ const app = {
             coursesManager.updateCoursePrices();
         });
         
+        // Écouter les changements de langue pour les cours
+        window.addEventListener('language:changed', () => {
+            // Les cours seront déjà mis à jour par translationManager
+            // Mais on peut ajouter d'autres logiques ici si besoin
+            console.log('🌍 Changement de langue - Mise à jour de l\'interface');
+        });
+        
         // Debug
         console.log('✅ Application prête !');
+        
+        // Vérifier si translationManager est prêt
+        if (window.translationManager) {
+            console.log(`🌍 Langue actuelle: ${window.translationManager.getCurrentLanguage()}`);
+        }
     }
 };
-// ===== GESTION COMPLÈTE DE LA TRADUCTION =====
-const translationManager = {
-    init: () => {
-        // Vérifier que le gestionnaire de traduction est disponible
-        if (!window.translationManager) {
-            console.warn('TranslationManager non disponible');
-            return;
-        }
-        
-        console.log('🌍 Initialisation du gestionnaire de traduction dans script.js...');
-        
-        // Mettre à jour les cartes de cours avec les traductions
-        translationManager.translateCourses();
-        
-        // Écouter les changements de langue
-        window.addEventListener('language:changed', () => {
-            console.log('🌍 Changement de langue détecté dans script.js');
-            translationManager.translateCourses();
+
+// ===== GESTION DES BOUTONS DE LANGUE (SÉCURITÉ SUPPLÉMENTAIRE) =====
+// Cette fonction assure que les boutons de langue fonctionnent même si
+// le gestionnaire de traduction a des problèmes
+const initLanguageButtons = () => {
+    console.log('🔧 Initialisation des boutons de langue...');
+    
+    // Fonction pour basculer la langue
+    const toggleLanguage = () => {
+        if (window.translationManager) {
+            window.translationManager.toggleLanguage();
+        } else {
+            // Fallback si translationManager n'est pas disponible
+            const currentLang = document.documentElement.lang || 'fr';
+            const newLang = currentLang === 'fr' ? 'en' : 'fr';
             
-            // Recharger les témoignages si nécessaire
-            if (state.testimonialsLoaded) {
-                testimonialsManager.init();
+            // Mettre à jour l'attribut lang
+            document.documentElement.lang = newLang;
+            
+            // Mettre à jour l'affichage des boutons
+            document.querySelectorAll('.language-switcher span:last-child, .mobile-language span:last-child').forEach(el => {
+                el.textContent = newLang === 'fr' ? 'EN' : 'FR';
+            });
+            
+            // Sauvegarder dans localStorage
+            localStorage.setItem('language', newLang);
+            
+            // Déclencher un événement
+            window.dispatchEvent(new CustomEvent('language:changed', { 
+                detail: { language: newLang } 
+            }));
+            
+            console.log(`🌍 Langue basculée vers: ${newLang} (fallback)`);
+        }
+    };
+    
+    // Attacher les événements aux boutons de langue desktop
+    const desktopSwitcher = document.getElementById('languageSwitcherDesktop');
+    if (desktopSwitcher) {
+        desktopSwitcher.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🌍 Clic sur bouton de langue desktop');
+            toggleLanguage();
+        });
+    }
+    
+    // Attacher les événements aux boutons de langue mobile
+    const mobileSwitcher = document.getElementById('languageSwitcherMobile');
+    if (mobileSwitcher) {
+        mobileSwitcher.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🌍 Clic sur bouton de langue mobile');
+            toggleLanguage();
+            
+            // Fermer le menu mobile après changement
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu && mobileMenu.classList.contains('active')) {
+                mobileMenu.classList.remove('active');
             }
         });
-    },
-    
-    translateCourses: () => {
-        if (!window.translationManager) return;
-        
-        console.log('🌍 Traduction des cours...');
-        
-        // Recharger toutes les cartes de cours avec les nouvelles traductions
-        coursesManager.reloadCourses();
     }
+    
+    console.log('✅ Boutons de langue initialisés');
 };
 
-// ===== INITIALISATION =====
-const app = {
-    init: () => {
-        console.log('Initialisation de l\'application...');
-        
-        // Empêcher le retour en haut au rafraîchissement
-        window.addEventListener('beforeunload', () => {
-            sessionStorage.setItem('scrollPosition', window.scrollY);
-        });
-        
-        if (sessionStorage.getItem('scrollPosition')) {
-            window.addEventListener('load', () => {
-                const savedPosition = parseInt(sessionStorage.getItem('scrollPosition'));
-                setTimeout(() => {
-                    window.scrollTo(0, savedPosition);
-                    sessionStorage.removeItem('scrollPosition');
-                }, 100);
-            });
-        }
-        
-        // Vérifier que le DOM est chargé
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', app.setup);
-        } else {
-            app.setup();
-        }
-    },
+// ===== INITIALISATION FINALE =====
+// Attendre que tout soit chargé
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialiser l'application principale
+    app.init();
     
-    setup: () => {
-        console.log('Configuration des modules...');
+    // Initialiser les boutons de langue (double sécurité)
+    setTimeout(initLanguageButtons, 500);
+    
+    // Vérifier l'état des boutons de langue
+    setTimeout(() => {
+        const desktopBtn = document.getElementById('languageSwitcherDesktop');
+        const mobileBtn = document.getElementById('languageSwitcherMobile');
         
-        // Ajuster le padding pour le header fixe
-        document.body.style.paddingTop = '80px';
+        console.log('🔍 Vérification des boutons de langue:');
+        console.log(`- Bouton desktop: ${desktopBtn ? 'TROUVÉ' : 'NON TROUVÉ'}`);
+        console.log(`- Bouton mobile: ${mobileBtn ? 'TROUVÉ' : 'NON TROUVÉ'}`);
         
-        // Initialiser les managers
-        coursesManager.init();
-        testimonialsManager.init();
-        navigationManager.init();
-        uiManager.init();
-        imageManager.init();
-        mobileManager.init();
-        translationManager.init(); // ← AJOUT IMPORTANT
-        
-        // Gestion du redimensionnement
-        window.addEventListener('resize', () => {
-            testimonialsManager.calculateSlidesPerView();
-            testimonialsManager.updateSlider();
-            mobileManager.checkMobileLayout();
-        });
-        
-        // Écouter les changements de devise
-        window.addEventListener('currency:ready', () => {
-            coursesManager.updateCoursePrices();
-        });
-        
-        window.addEventListener('currency:changed', () => {
-            coursesManager.updateCoursePrices();
-        });
-        
-        // Debug
-        console.log('✅ Application prête !');
-    }
-};
+        if (desktopBtn) {
+            console.log('- Bouton desktop est cliquable:', desktopBtn.style.cursor === 'pointer');
+        }
+    }, 1000);
+});
 
-// ===== DÉMARRAGE DE L'APPLICATION =====
-app.init();
+// Exposer les managers pour le débogage
+window.coursesManager = coursesManager;
+window.testimonialsManager = testimonialsManager;
+window.translationManager = translationManager;
+
+console.log('📦 Script.js chargé avec succès');
