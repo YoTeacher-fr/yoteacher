@@ -91,6 +91,7 @@
         transition: all 0.3s ease;
         padding: 5px 10px;
         border-radius: 20px;
+        user-select: none;
     }
 
     .language-switcher:hover {
@@ -107,6 +108,7 @@
         padding: 15px 20px;
         border-top: 1px solid rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
+        user-select: none;
     }
 
     .mobile-language:hover {
@@ -167,7 +169,7 @@
                             </select>
                         </div>
                         
-                        <div class="language-switcher">
+                        <div class="language-switcher" id="languageSwitcherDesktop">
                             <span class="flag">🌐</span>
                             <span data-i18n="header.language">EN</span>
                         </div>
@@ -198,7 +200,7 @@
                     </select>
                 </div>
                 
-                <div class="mobile-language">
+                <div class="mobile-language" id="languageSwitcherMobile">
                     <span class="flag">🌐</span>
                     <span data-i18n="header.language">EN</span>
                 </div>

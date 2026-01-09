@@ -874,6 +874,105 @@ const app = {
         console.log('✅ Application prête !');
     }
 };
+// ===== GESTION COMPLÈTE DE LA TRADUCTION =====
+const translationManager = {
+    init: () => {
+        // Vérifier que le gestionnaire de traduction est disponible
+        if (!window.translationManager) {
+            console.warn('TranslationManager non disponible');
+            return;
+        }
+        
+        console.log('🌍 Initialisation du gestionnaire de traduction dans script.js...');
+        
+        // Mettre à jour les cartes de cours avec les traductions
+        translationManager.translateCourses();
+        
+        // Écouter les changements de langue
+        window.addEventListener('language:changed', () => {
+            console.log('🌍 Changement de langue détecté dans script.js');
+            translationManager.translateCourses();
+            
+            // Recharger les témoignages si nécessaire
+            if (state.testimonialsLoaded) {
+                testimonialsManager.init();
+            }
+        });
+    },
+    
+    translateCourses: () => {
+        if (!window.translationManager) return;
+        
+        console.log('🌍 Traduction des cours...');
+        
+        // Recharger toutes les cartes de cours avec les nouvelles traductions
+        coursesManager.reloadCourses();
+    }
+};
+
+// ===== INITIALISATION =====
+const app = {
+    init: () => {
+        console.log('Initialisation de l\'application...');
+        
+        // Empêcher le retour en haut au rafraîchissement
+        window.addEventListener('beforeunload', () => {
+            sessionStorage.setItem('scrollPosition', window.scrollY);
+        });
+        
+        if (sessionStorage.getItem('scrollPosition')) {
+            window.addEventListener('load', () => {
+                const savedPosition = parseInt(sessionStorage.getItem('scrollPosition'));
+                setTimeout(() => {
+                    window.scrollTo(0, savedPosition);
+                    sessionStorage.removeItem('scrollPosition');
+                }, 100);
+            });
+        }
+        
+        // Vérifier que le DOM est chargé
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', app.setup);
+        } else {
+            app.setup();
+        }
+    },
+    
+    setup: () => {
+        console.log('Configuration des modules...');
+        
+        // Ajuster le padding pour le header fixe
+        document.body.style.paddingTop = '80px';
+        
+        // Initialiser les managers
+        coursesManager.init();
+        testimonialsManager.init();
+        navigationManager.init();
+        uiManager.init();
+        imageManager.init();
+        mobileManager.init();
+        translationManager.init(); // ← AJOUT IMPORTANT
+        
+        // Gestion du redimensionnement
+        window.addEventListener('resize', () => {
+            testimonialsManager.calculateSlidesPerView();
+            testimonialsManager.updateSlider();
+            mobileManager.checkMobileLayout();
+        });
+        
+        // Écouter les changements de devise
+        window.addEventListener('currency:ready', () => {
+            coursesManager.updateCoursePrices();
+        });
+        
+        window.addEventListener('currency:changed', () => {
+            coursesManager.updateCoursePrices();
+        });
+        
+        // Debug
+        console.log('✅ Application prête !');
+    }
+};
 
 // ===== DÉMARRAGE DE L'APPLICATION =====
 app.init();
