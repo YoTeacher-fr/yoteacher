@@ -83,9 +83,9 @@ const testimonialsData = [
         id: 2,
         name: "Kay",
         country: "🇺🇸 États-Unis",
-        content: "J'adore apprendre avec Yoann. Il est patient, professionnel et ses cours sont toujours bien préparés. Il s'adapte parfaitement à mon niveau et mes besoins.",
+        content: "JI've been taking French lessons from Yoann for a few months now and have noticed a marked improvement in my vocabulary and ability to have a conversation in French. He's friendly and funny which makes me comfortable and confident enough to just try and speak the language freely. The topics are varied, and he's great with subtle grammatical correction/suggestions without interrupting the flow of the conversation. The lessons are always entertaining, interactive and fun. I highly recommend him as a teacher. ",
         rating: 5,
-        lessons: "28 cours"
+        lessons: "89 cours"
     },
     {
         id: 3,
