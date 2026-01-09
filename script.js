@@ -46,6 +46,8 @@ const coursesData = [
             { text: "Programme sur mesure", key: "courses.feature8" }
         ],
         details: [
+            { duration: "30min", durationKey: "courses.detail_30min", price: 17.5, basePriceEUR: 17.5 },
+            { duration: "45min", durationKey: "courses.detail_45min", price: 26.25, basePriceEUR: 26.25 },
             { duration: "Forfait 10 cours", durationKey: "courses.detail_forfait", price: 332.50, basePriceEUR: 332.50, discount: "(-5%)", discountKey: "courses.discount" }
         ],
         buttonText: "Choisir ce cours",
@@ -233,41 +235,47 @@ const coursesManager = {
         // Générer les détails de prix
         let priceDetailsHTML = '';
         
-        if (course.id === 1) {
-            const duration30 = getTranslation('courses.detail_30min', '30min');
-            const duration45 = getTranslation('courses.detail_45min', '45min');
+        // Pour TOUTES les cartes, on affiche 30min et 45min sur la même ligne, puis le forfait séparément
+        // Chercher les détails 30min et 45min
+        const detail30min = course.details.find(d => d.duration === '30min' || d.durationKey === 'courses.detail_30min');
+        const detail45min = course.details.find(d => d.duration === '45min' || d.durationKey === 'courses.detail_45min');
+        const forfaitDetail = course.details.find(d => d.durationKey === 'courses.detail_forfait');
+        
+        // Afficher 30min et 45min sur la même ligne avec │
+        if (detail30min && detail45min) {
+            const duration30 = getTranslation(detail30min.durationKey || 'courses.detail_30min', '30min');
+            const duration45 = getTranslation(detail45min.durationKey || 'courses.detail_45min', '45min');
             
             priceDetailsHTML = `
-                <div class="price-detail-item" data-base-price-30="10" data-base-price-45="15">
-                    ${duration30} : <span class="price-30">10€</span> │ ${duration45} : <span class="price-45">15€</span>
+                <div class="price-detail-item" data-base-price-30="${detail30min.basePriceEUR || detail30min.price}" data-base-price-45="${detail45min.basePriceEUR || detail45min.price}">
+                    ${duration30} : <span class="price-30">${detail30min.price}€</span> │ ${duration45} : <span class="price-45">${detail45min.price}€</span>
+                </div>
+            `;
+        } else {
+            // Fallback si on ne trouve pas les deux durées
+            course.details.forEach(detail => {
+                if (detail.duration !== 'Forfait 10 cours' && detail.durationKey !== 'courses.detail_forfait') {
+                    const durationText = getTranslation(detail.durationKey, detail.duration);
+                    priceDetailsHTML += `
+                        <div class="price-detail-item" data-base-price="${detail.basePriceEUR || detail.price}">
+                            ${durationText}: <span class="price-detail">${detail.price}€</span>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        // Ajouter le forfait séparément
+        if (forfaitDetail) {
+            const durationText = getTranslation(forfaitDetail.durationKey, forfaitDetail.duration);
+            const discountText = getTranslation(forfaitDetail.discountKey, forfaitDetail.discount);
+            
+            priceDetailsHTML += `
+                <div class="price-detail-item" data-base-price-forfait="${forfaitDetail.basePriceEUR || forfaitDetail.price}">
+                    ${durationText}: <span class="price-forfait">${forfaitDetail.price}€</span> ${discountText}
                 </div>
             `;
         }
-        
-        // Ajouter les détails supplémentaires (forfaits)
-        course.details.forEach(detail => {
-            const durationText = detail.durationKey ? 
-                getTranslation(detail.durationKey, detail.duration) : 
-                detail.duration;
-            
-            const discountText = detail.discountKey ? 
-                getTranslation(detail.discountKey, detail.discount) : 
-                detail.discount;
-            
-            if (detail.discount) {
-                priceDetailsHTML += `
-                    <div class="price-detail-item" data-base-price-forfait="${detail.basePriceEUR || detail.price}">
-                        ${durationText}: <span class="price-forfait">${detail.price}€</span> ${discountText}
-                    </div>
-                `;
-            } else if (detail.price && course.id !== 1) {
-                priceDetailsHTML += `
-                    <div class="price-detail-item" data-base-price="${detail.basePriceEUR || detail.price}">
-                        ${durationText}: <span class="price-detail">${detail.price}€</span>
-                    </div>
-                `;
-            }
-        });
         
         // Générer les features avec traductions
         const featuresHTML = course.features.map(feature => {
