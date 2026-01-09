@@ -57,46 +57,84 @@ class AuthManager {
     }
 
     // NOUVELLE MÉTHODE : S'assurer que le profil existe dans la table profiles
-    async ensureProfileExists() {
-        if (!this.supabaseReady || !this.user) return;
-        
-        try {
-            // Vérifier si le profil existe
-            const { data: profile, error: fetchError } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('id', this.user.id)
-                .single();
-            
-            if (fetchError && fetchError.code === 'PGRST116') {
-                // Profil n'existe pas, le créer
-                console.log('📝 Création du profil utilisateur...');
-                
-                const fullName = this.user.user_metadata?.full_name || this.user.email?.split('@')[0] || 'Utilisateur';
-                
-                const { error: insertError } = await supabase
-                    .from('profiles')
-                    .insert([{
-                        id: this.user.id,
-                        full_name: fullName,
-                        french_level: null,
-                        preferred_platform: 'zoom',
-                        preferred_currency: 'EUR',
-                        is_vip: false
-                    }]);
-                
-                if (insertError) {
-                    console.error('Erreur création profil:', insertError);
-                } else {
-                    console.log('✅ Profil créé avec succès');
-                }
-            } else if (!fetchError) {
-                console.log('✅ Profil existe déjà');
-            }
-        } catch (error) {
-            console.error('Exception vérification profil:', error);
-        }
+    // Remplacer UNIQUEMENT la méthode ensureProfileExists dans auth.js
+
+async ensureProfileExists() {
+    if (!this.supabaseReady || !this.user) {
+        console.log('⚠️ Supabase ou user non disponible pour création profil');
+        return;
     }
+    
+    try {
+        console.log('🔍 Vérification existence profil pour:', this.user.email);
+        
+        // Vérifier si le profil existe
+        const { data: profile, error: fetchError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', this.user.id)
+            .maybeSingle(); // IMPORTANT: maybeSingle() au lieu de single()
+        
+        // Si le profil existe déjà
+        if (profile) {
+            console.log('✅ Profil existe déjà pour:', this.user.email);
+            return;
+        }
+        
+        // Si erreur autre que "profil non trouvé"
+        if (fetchError && fetchError.code !== 'PGRST116') {
+            console.error('❌ Erreur vérification profil:', fetchError);
+            return;
+        }
+        
+        // Le profil n'existe pas, le créer
+        console.log('📝 Création du profil utilisateur pour:', this.user.email);
+        
+        const fullName = this.user.user_metadata?.full_name || 
+                        this.user.email?.split('@')[0] || 
+                        'Utilisateur';
+        
+        const newProfile = {
+            id: this.user.id,
+            full_name: fullName,
+            french_level: null,
+            preferred_platform: 'zoom',
+            preferred_currency: 'EUR',
+            is_vip: false
+        };
+        
+        console.log('📋 Données profil à créer:', newProfile);
+        
+        const { data: insertedProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert([newProfile])
+            .select()
+            .single();
+        
+        if (insertError) {
+            console.error('❌ Erreur création profil:', insertError);
+            console.error('Code erreur:', insertError.code);
+            console.error('Message:', insertError.message);
+            console.error('Détails:', insertError.details);
+            console.error('Hint:', insertError.hint);
+            
+            // Si erreur de permission (42501 = insufficient_privilege)
+            if (insertError.code === '42501') {
+                console.error('🔒 ERREUR PERMISSION: Les policies RLS ne permettent pas la création du profil');
+                console.error('👉 Solution: Exécuter le script SQL de correction des policies dans Supabase');
+            }
+            
+            return;
+        }
+        
+        console.log('✅ Profil créé avec succès:', insertedProfile);
+        
+    } catch (error) {
+        console.error('❌ Exception vérification/création profil:', error);
+        console.error('Type:', error.constructor.name);
+        console.error('Message:', error.message);
+    }
+}
 
     emitAuthEvent(eventName, user = null) {
         try {
