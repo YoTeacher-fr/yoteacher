@@ -9,13 +9,12 @@ const coursesData = [
     {
         id: 1,
         type: "Conversation",
-        typeKey: "courses.conversation",  // Clé de traduction
+        typeKey: "courses.conversation",
         focus: "Discussion uniquement",
-        focusKey: "courses.conversation_focus",  // Clé de traduction
+        focusKey: "courses.conversation_focus",
         price: 20,
         basePriceEUR: 20,
         duration: "60 minutes",
-        durationKey: "courses.duration_60",  // Clé de traduction
         features: [
             { text: "Fluidité à l'oral", key: "courses.feature1" },
             { text: "Vocabulaire quotidien", key: "courses.feature2" },
@@ -28,7 +27,7 @@ const coursesData = [
             { duration: "Forfait 10 cours", durationKey: "courses.detail_forfait", price: 190, basePriceEUR: 190, discount: "(-5%)", discountKey: "courses.discount" }
         ],
         buttonText: "Réserver",
-        buttonTextKey: "courses.button_reserve",  // Clé de traduction
+        buttonTextKey: "courses.button_reserve",
         featured: false
     },
     {
@@ -40,7 +39,6 @@ const coursesData = [
         price: 35,
         basePriceEUR: 35,
         duration: "60 minutes",
-        durationKey: "courses.duration_60",
         features: [
             { text: "Grammaire approfondie", key: "courses.feature5" },
             { text: "Exercices personnalisés", key: "courses.feature6" },
@@ -63,7 +61,6 @@ const coursesData = [
         price: 30,
         basePriceEUR: 30,
         duration: "60 minutes",
-        durationKey: "courses.duration_60",
         features: [
             { text: "Simulations d'examen", key: "courses.feature9" },
             { text: "Correction détaillée", key: "courses.feature10" },
@@ -165,6 +162,17 @@ let state = {
 
 // ===== FONCTIONS UTILITAIRES =====
 
+// Fonction utilitaire pour obtenir une traduction
+function getTranslation(key, fallback) {
+    if (window.translationManager) {
+        const translation = window.translationManager.getTranslation(key);
+        if (translation && translation !== key) {
+            return translation;
+        }
+    }
+    return fallback;
+}
+
 // ===== GÉNÉRATION DES COURS =====
 const coursesManager = {
     init: () => {
@@ -182,119 +190,107 @@ const coursesManager = {
     },
     
     createCourseCard: (course, container) => {
-    const card = document.createElement('div');
-    card.className = `course-card ${course.featured ? 'featured' : ''}`;
-    card.setAttribute('data-course-id', course.id);
-    card.setAttribute('data-base-price', course.basePriceEUR);
-    
-    // Fonction pour obtenir la traduction
-    const getTranslation = (key, fallback) => {
-        if (window.translationManager) {
-            const translation = window.translationManager.getTranslation(key);
-            if (translation && translation !== key) {
-                return translation;
+        const card = document.createElement('div');
+        card.className = `course-card ${course.featured ? 'featured' : ''}`;
+        card.setAttribute('data-course-id', course.id);
+        card.setAttribute('data-base-price', course.basePriceEUR);
+        
+        // Obtenir les textes traduits
+        const courseType = getTranslation(course.typeKey, course.type);
+        const courseFocus = getTranslation(course.focusKey, course.focus);
+        const courseButtonText = getTranslation(course.buttonTextKey, course.buttonText);
+        const pricePerHour = getTranslation('courses.price_per_hour', '/h');
+        
+        // Générer les détails de prix
+        let priceDetailsHTML = '';
+        
+        if (course.id === 1) {
+            const duration30 = getTranslation('courses.detail_30min', '30min');
+            const duration45 = getTranslation('courses.detail_45min', '45min');
+            
+            priceDetailsHTML = `
+                <div class="price-detail-item" data-base-price-30="10" data-base-price-45="15">
+                    ${duration30} : <span class="price-30">10€</span> │ ${duration45} : <span class="price-45">15€</span>
+                </div>
+            `;
+        }
+        
+        // Ajouter les détails supplémentaires (forfaits)
+        course.details.forEach(detail => {
+            const durationText = detail.durationKey ? 
+                getTranslation(detail.durationKey, detail.duration) : 
+                detail.duration;
+            
+            const discountText = detail.discountKey ? 
+                getTranslation(detail.discountKey, detail.discount) : 
+                detail.discount;
+            
+            if (detail.discount) {
+                priceDetailsHTML += `
+                    <div class="price-detail-item" data-base-price-forfait="${detail.basePriceEUR || detail.price}">
+                        ${durationText}: <span class="price-forfait">${detail.price}€</span> ${discountText}
+                    </div>
+                `;
+            } else if (detail.price && course.id !== 1) {
+                priceDetailsHTML += `
+                    <div class="price-detail-item" data-base-price="${detail.basePriceEUR || detail.price}">
+                        ${durationText}: <span class="price-detail">${detail.price}€</span>
+                    </div>
+                `;
             }
-        }
-        return fallback;
-    };
-    
-    // Obtenir les textes traduits
-    const courseType = getTranslation(course.typeKey, course.type);
-    const courseFocus = getTranslation(course.focusKey, course.focus);
-    const courseButtonText = getTranslation(course.buttonTextKey, course.buttonText);
-    const pricePerHour = getTranslation('courses.price_per_hour', '/h');
-    
-    // Générer les détails de prix
-    let priceDetailsHTML = '';
-    
-    if (course.id === 1) {
-        const duration30 = getTranslation('courses.detail_30min', '30min');
-        const duration45 = getTranslation('courses.detail_45min', '45min');
+        });
         
-        priceDetailsHTML = `
-            <div class="price-detail-item" data-base-price-30="10" data-base-price-45="15">
-                ${duration30} : <span class="price-30">10€</span> │ ${duration45} : <span class="price-45">15€</span>
-            </div>
-        `;
-    }
-    
-    // Ajouter les détails supplémentaires (forfaits)
-    course.details.forEach(detail => {
-        const durationText = detail.durationKey ? 
-            getTranslation(detail.durationKey, detail.duration) : 
-            detail.duration;
-        
-        const discountText = detail.discountKey ? 
-            getTranslation(detail.discountKey, detail.discount) : 
-            detail.discount;
-        
-        if (detail.discount) {
-            priceDetailsHTML += `
-                <div class="price-detail-item" data-base-price-forfait="${detail.basePriceEUR || detail.price}">
-                    ${durationText}: <span class="price-forfait">${detail.price}€</span> ${discountText}
+        // Générer les features avec traductions
+        const featuresHTML = course.features.map(feature => {
+            const featureText = feature.key ? 
+                getTranslation(feature.key, feature.text) : 
+                feature.text;
+            return `
+                <div class="course-feature">
+                    <i class="fas fa-check"></i>
+                    <span>${featureText}</span>
                 </div>
             `;
-        } else if (detail.price && course.id !== 1) {
-            priceDetailsHTML += `
-                <div class="price-detail-item" data-base-price="${detail.basePriceEUR || detail.price}">
-                    ${durationText}: <span class="price-detail">${detail.price}€</span>
-                </div>
+        }).join('');
+        
+        // HTML pour le prix
+        let priceHTML = '';
+        if (course.id === 3) {
+            priceHTML = `<span class="price-main">${course.price}€<span class="price-per-hour">${pricePerHour}</span></span>`;
+        } else {
+            priceHTML = `
+                <span class="price-main">${course.price}€<span class="price-per-hour">${pricePerHour}</span></span>
             `;
         }
-    });
-    
-    // Générer les features avec traductions
-    const featuresHTML = course.features.map(feature => {
-        const featureText = feature.key ? 
-            getTranslation(feature.key, feature.text) : 
-            feature.text;
-        return `
-            <div class="course-feature">
-                <i class="fas fa-check"></i>
-                <span>${featureText}</span>
+        
+        card.innerHTML = `
+            <div class="course-header">
+                <div class="course-type">${courseType}</div>
+                <div class="course-focus">${courseFocus}</div>
+            </div>
+            <div class="course-body">
+                <div class="course-price">
+                    ${priceHTML}
+                    <div class="price-details">${priceDetailsHTML}</div>
+                </div>
+                
+                <div class="course-features">
+                    ${featuresHTML}
+                </div>
+                
+                <button class="btn btn-primary course-book-btn" data-course="${course.id}">
+                    ${courseButtonText}
+                </button>
             </div>
         `;
-    }).join('');
-    
-    // HTML pour le prix
-    let priceHTML = '';
-    if (course.id === 3) {
-        priceHTML = `<span class="price-main">${course.price}€<span class="price-per-hour">${pricePerHour}</span></span>`;
-    } else {
-        priceHTML = `
-            <span class="price-main">${course.price}€<span class="price-per-hour">${pricePerHour}</span></span>
-        `;
-    }
-    
-    card.innerHTML = `
-        <div class="course-header">
-            <div class="course-type">${courseType}</div>
-            <div class="course-focus">${courseFocus}</div>
-        </div>
-        <div class="course-body">
-            <div class="course-price">
-                ${priceHTML}
-                <div class="price-details">${priceDetailsHTML}</div>
-            </div>
-            
-            <div class="course-features">
-                ${featuresHTML}
-            </div>
-            
-            <button class="btn btn-primary course-book-btn" data-course="${course.id}">
-                ${courseButtonText}
-            </button>
-        </div>
-    `;
-    
-    container.appendChild(card);
-},
+        
+        container.appendChild(card);
+    },
     
     updateCoursePrices: () => {
         if (!window.currencyManager) return;
         
         const currency = window.currencyManager.currentCurrency;
-        const symbol = window.currencyManager.getSymbol();
         
         document.querySelectorAll('.course-card').forEach(card => {
             const basePrice = parseFloat(card.dataset.basePrice || '0');
@@ -306,7 +302,7 @@ const coursesManager = {
                 // Garder le "/h" si présent
                 const perHourSpan = priceElement.querySelector('.price-per-hour');
                 if (perHourSpan) {
-                    priceElement.innerHTML = `${formattedPrice}<span class="price-per-hour">/h</span>`;
+                    priceElement.innerHTML = `${formattedPrice}<span class="price-per-hour">${getTranslation('courses.price_per_hour', '/h')}</span>`;
                 } else {
                     priceElement.textContent = formattedPrice;
                 }
@@ -376,10 +372,11 @@ const coursesManager = {
             });
         });
     },
-reloadCourses: () => {
-    console.log('🔄 Rechargement des cours avec les nouvelles traductions...');
-    coursesManager.init();
-}
+    
+    reloadCourses: () => {
+        console.log('🔄 Rechargement des cours avec les nouvelles traductions...');
+        coursesManager.init();
+    }
 };
 
 // ===== GÉNÉRATION DES TÉMOIGNAGES =====
@@ -667,7 +664,6 @@ const navigationManager = {
 // ===== INTERACTIONS UTILISATEUR =====
 const uiManager = {
     init: () => {
-   
         // Gestion du scroll pour le header
         window.addEventListener('scroll', uiManager.handleScroll);
         
@@ -766,6 +762,37 @@ const mobileManager = {
     }
 };
 
+// ===== GESTION DE LA TRADUCTION DES COURS =====
+const translationManager = {
+    init: () => {
+        // Vérifier que le gestionnaire de traduction est disponible
+        if (!window.translationManager) {
+            console.warn('TranslationManager non disponible');
+            return;
+        }
+        
+        console.log('🌍 Initialisation du gestionnaire de traduction...');
+        
+        // Mettre à jour les cartes de cours avec les traductions
+        translationManager.translateCourses();
+        
+        // Écouter les changements de langue
+        window.addEventListener('language:changed', () => {
+            console.log('🌍 Changement de langue détecté');
+            translationManager.translateCourses();
+        });
+    },
+    
+    translateCourses: () => {
+        if (!window.translationManager) return;
+        
+        console.log('🌍 Traduction des cours...');
+        
+        // Recharger toutes les cartes de cours avec les nouvelles traductions
+        coursesManager.reloadCourses();
+    }
+};
+
 // ===== INITIALISATION =====
 const app = {
     init: () => {
@@ -801,8 +828,6 @@ const app = {
         document.body.style.paddingTop = '80px';
         
         // Initialiser les managers
-const initApp = () => {
-        if (window.translationManager) {
         coursesManager.init();
         testimonialsManager.init();
         navigationManager.init();
@@ -810,15 +835,7 @@ const initApp = () => {
         imageManager.init();
         mobileManager.init();
         translationManager.init();
-
-console.log('Application prête !');
-        } else {
-            // Réessayer dans 100ms
-            setTimeout(initApp, 100);
-        }
-    };
-    
-    initApp();
+        
         // Gestion du redimensionnement
         window.addEventListener('resize', () => {
             testimonialsManager.calculateSlidesPerView();
@@ -836,141 +853,9 @@ console.log('Application prête !');
         });
         
         // Debug
-        console.log('Application prête !');
+        console.log('✅ Application prête !');
     }
 };
-// ===== GESTION DE LA TRADUCTION DES COURS =====
-const translationManager = {
-    init: () => {
-        // Vérifier que le gestionnaire de traduction est disponible
-        if (!window.translationManager) {
-            console.warn('TranslationManager non disponible');
-            return;
-        }
-        
-        // Mettre à jour les cartes de cours avec les traductions
-        translationManager.translateCourses();
-        
-        // Écouter les changements de langue
-        window.addEventListener('language:changed', () => {
-            translationManager.translateCourses();
-        });
-    },
-    
-    translateCourses: () => {
-    if (!window.translationManager) return;
-    
-    // Recharger toutes les cartes de cours avec les nouvelles traductions
-    coursesManager.reloadCourses();
-    
-    // Mettre à jour les prix (si nécessaire)
-    coursesManager.updateCoursePrices();
-},
-        
-        // Traduire les boutons des cartes de cours
-        document.querySelectorAll('.course-book-btn').forEach(btn => {
-            const originalText = btn.textContent.trim();
-            let translationKey = '';
-            
-            if (originalText === 'Réserver' || originalText === 'Book') {
-                translationKey = 'courses.button';
-            } else if (originalText === 'Choisir ce cours' || originalText === 'Choose this course') {
-                translationKey = 'courses.button';
-            }
-            
-            if (translationKey) {
-                const translation = window.translationManager.getTranslation(translationKey);
-                if (translation && translation !== translationKey) {
-                    btn.textContent = translation;
-                }
-            }
-        });
-        
-        // Traduire les titres des cours (si générés dynamiquement)
-        document.querySelectorAll('.course-type').forEach(element => {
-            const originalText = element.textContent.trim();
-            let translationKey = '';
-            
-            if (originalText === 'Conversation') {
-                translationKey = 'courses.conversation';
-            } else if (originalText === 'Curriculum Complet') {
-                translationKey = 'courses.curriculum';
-            } else if (originalText === 'Préparation d\'examen') {
-                translationKey = 'courses.exam';
-            }
-            
-            if (translationKey) {
-                const translation = window.translationManager.getTranslation(translationKey);
-                if (translation && translation !== translationKey) {
-                    element.textContent = translation;
-                }
-            }
-        });
-        
-        // Traduire les focus des cours
-        document.querySelectorAll('.course-focus').forEach(element => {
-            const originalText = element.textContent.trim();
-            let translationKey = '';
-            
-            if (originalText === 'Discussion uniquement') {
-                translationKey = 'courses.conversation_focus';
-            } else if (originalText === 'Grammaire, exercices, structure') {
-                translationKey = 'courses.curriculum_focus';
-            } else if (originalText === 'DELF, DALF, TCF') {
-                translationKey = 'courses.exam_focus';
-            }
-            
-            if (translationKey) {
-                const translation = window.translationManager.getTranslation(translationKey);
-                if (translation && translation !== translationKey) {
-                    element.textContent = translation;
-                }
-            }
-        });
-        
-        // Traduire les features des cours
-        document.querySelectorAll('.course-feature span').forEach(element => {
-            const originalText = element.textContent.trim();
-            let translationKey = '';
-            
-            // Mappage des features
-            const featureMap = {
-                'Fluidité à l\'oral': 'courses.feature1',
-                'Vocabulaire quotidien': 'courses.feature2',
-                'Correction en temps réel': 'courses.feature3',
-                'Sujets variés d\'actualité': 'courses.feature4',
-                'Grammaire approfondie': 'courses.feature5',
-                'Exercices personnalisés': 'courses.feature6',
-                'Structure complète': 'courses.feature7',
-                'Programme sur mesure': 'courses.feature8',
-                'Simulations d\'examen': 'courses.feature9',
-                'Correction détaillée': 'courses.feature10',
-                'Stratégies de réussite': 'courses.feature11',
-                'Feedbacks personnalisés': 'courses.feature12'
-            };
-            
-            translationKey = featureMap[originalText];
-            
-            if (translationKey) {
-                const translation = window.translationManager.getTranslation(translationKey);
-                if (translation && translation !== translationKey) {
-                    element.textContent = translation;
-                }
-            }
-        });
-        
-        // Traduire les forfaits
-        document.querySelectorAll('.price-detail-item').forEach(element => {
-            const originalText = element.textContent.trim();
-            
-            if (originalText.includes('Forfait 10 cours')) {
-                const translation = window.translationManager.getTranslation('courses.detail_forfait');
-                if (translation && translation !== 'courses.detail_forfait') {
-                    element.innerHTML = element.innerHTML.replace('Forfait 10 cours', translation);
-                }
-            }
-        });
-    }
-};
+
 // ===== DÉMARRAGE DE L'APPLICATION =====
 app.init();
