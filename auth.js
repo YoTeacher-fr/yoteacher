@@ -99,49 +99,56 @@ async checkSupabaseConnection() {
     }
 
     async waitForSupabase() {
-        return new Promise((resolve) => {
+    return new Promise((resolve) => {
+        // Si supabase est déjà disponible
+        if (window.supabase && window.supabase.auth) {
+            this.supabaseReady = true;
+            resolve();
+            return;
+        }
+        
+        // Utiliser la promesse d'initialisation
+        if (window.supabaseInitialized) {
+            window.supabaseInitialized.then((initialized) => {
+                if (initialized && window.supabase && window.supabase.auth) {
+                    this.supabaseReady = true;
+                } else {
+                    this.supabaseReady = false;
+                }
+                resolve();
+            }).catch(() => {
+                this.supabaseReady = false;
+                resolve();
+            });
+            return;
+        }
+        
+        // Fallback : vérification périodique
+        let attempts = 0;
+        const maxAttempts = 50;
+        
+        const checkSupabase = () => {
+            attempts++;
+            
             if (window.supabase && window.supabase.auth) {
                 this.supabaseReady = true;
                 resolve();
                 return;
             }
-
-            if (window.supabaseInitialized) {
-                window.supabaseInitialized.then((initialized) => {
-                    this.supabaseReady = initialized && window.supabase && window.supabase.auth;
-                    resolve();
-                }).catch(() => {
-                    this.supabaseReady = false;
-                    resolve();
-                });
+            
+            if (attempts >= maxAttempts) {
+                console.warn('Supabase non initialisé après 5 secondes - mode dégradé');
+                this.supabaseReady = false;
+                resolve();
                 return;
             }
-
-            let attempts = 0;
-            const maxAttempts = 100;
             
-            const checkSupabase = () => {
-                attempts++;
-                
-                if (window.supabase && window.supabase.auth) {
-                    this.supabaseReady = true;
-                    resolve();
-                    return;
-                }
-                
-                if (attempts >= maxAttempts) {
-                    console.warn('Supabase non initialisé après 10 secondes - mode dégradé');
-                    this.supabaseReady = false;
-                    resolve();
-                    return;
-                }
-                
-                setTimeout(checkSupabase, 100);
-            };
-            
-            checkSupabase();
-        });
-    }
+            setTimeout(checkSupabase, 100);
+        };
+        
+        checkSupabase();
+    });
+}
 
     setupDegradedMode() {
         const storedUser = localStorage.getItem('yoteacher_user');
@@ -335,41 +342,43 @@ async signUp(email, password, fullName) {
         });
     }
 
-    async signIn(email, password) {
-        try {
-            if (!this.supabaseReady) {
-                return this.mockSignIn(email, password);
-            }
-
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password
-            });
-
-            if (error) throw error;
-            
-            this.user = data.user;
-            this.saveUserToStorage();
-            this.updateUI();
-            
-            // Événement : connexion réussie
-            this.emitAuthEvent('login', this.user);
-            
-            const returnUrl = this.getReturnUrl();
-            
-            return { 
-                success: true, 
-                data,
-                redirectUrl: returnUrl
-            };
-        } catch (error) {
-            console.error('Erreur connexion:', error);
-            return { 
-                success: false, 
-                error: this.getUserFriendlyError(error.message) 
-            };
+   async signIn(email, password) {
+    try {
+        // Vérifier si supabase est prêt
+        if (!this.supabaseReady || !window.supabase || !window.supabase.auth) {
+            console.warn('Supabase non disponible, utilisation du mode mock');
+            return this.mockSignIn(email, password);
         }
+
+        const { data, error } = await window.supabase.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        if (error) throw error;
+        
+        this.user = data.user;
+        this.saveUserToStorage();
+        this.updateUI();
+        
+        // Événement : connexion réussie
+        this.emitAuthEvent('login', this.user);
+        
+        const returnUrl = this.getReturnUrl();
+        
+        return { 
+            success: true, 
+            data,
+            redirectUrl: returnUrl
+        };
+    } catch (error) {
+        console.error('Erreur connexion:', error);
+        return { 
+            success: false, 
+            error: this.getUserFriendlyError(error.message) 
+        };
     }
+}
 
     getReturnUrl() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -624,7 +633,9 @@ async signUp(email, password, fullName) {
         if (!this.user) return '?';
         
         const email = this.user.email || '';
-        const fullName = this.user.user_metadata?.full_name || '';
+        const fullName = (user.user_metadata && user.user_metadata.full_name) || 
+                 (user.email && user.email.split('@')[0]) || 
+                 'Élève';
         
         if (fullName) {
             const names = fullName.split(' ');

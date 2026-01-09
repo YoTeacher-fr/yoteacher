@@ -187,3 +187,23 @@ window.debugSupabase = async function() {
 };
 
 // Pour tester, appelez window.debugSupabase() dans la console
+// Créez un fichier error-handler.js ou ajoutez ceci à common.js
+window.handleAuthError = function(error) {
+    console.error('Erreur d\'authentification:', error);
+    
+    // Si l'erreur est liée à supabase non défini
+    if (error.message && error.message.includes('undefined') && error.message.includes('signIn')) {
+        console.error('⚠️ Supabase non initialisé. Vérifiez:');
+        console.error('1. config.js est chargé');
+        console.error('2. supabase.js est chargé');
+        console.error('3. window.supabase existe:', !!window.supabase);
+        console.error('4. window.supabase.auth existe:', !!(window.supabase && window.supabase.auth));
+        
+        // Rediriger vers une page d'erreur ou recharger
+        if (window.location.pathname.includes('login.html')) {
+            alert('Erreur système. Veuillez rafraîchir la page.');
+        }
+        return false;
+    }
+    return true;
+};
