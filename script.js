@@ -166,7 +166,7 @@ let state = {
 
 // Fonction utilitaire pour obtenir une traduction
 function getTranslation(key, fallback) {
-    console.log('🔍 getTranslation appelé avec key:', key, 'et fallback:', fallback);
+    console.log('🔍 getTranslation appelé avec key:', key);
     
     if (window.translationManager) {
         console.log('✅ translationManager trouvé:', window.translationManager);
@@ -478,12 +478,6 @@ const testimonialsManager = {
         card.className = 'testimonial-card fade-in-up';
         card.setAttribute('data-testimonial-id', testimonial.id);
         
-        // Obtenir les traductions
-        const name = getTranslation(`testimonial.${testimonial.id}.name`, testimonial.name);
-        const country = getTranslation(`testimonial.${testimonial.id}.country`, testimonial.country);
-        const content = getTranslation(`testimonial.${testimonial.id}.content`, testimonial.content);
-        const lessons = getTranslation(`testimonial.${testimonial.id}.lessons`, testimonial.lessons);
-        
         // Générer les étoiles
         let starsHTML = '';
         for (let i = 0; i < testimonial.rating; i++) {
@@ -491,7 +485,7 @@ const testimonialsManager = {
         }
         
         // Première lettre du nom
-        const firstLetter = name.charAt(0);
+        const firstLetter = testimonial.name.charAt(0);
         
         card.innerHTML = `
             <div class="quote-icon">
@@ -503,7 +497,7 @@ const testimonialsManager = {
             </div>
             
             <p class="testimonial-content">
-                "${content}"
+                "${testimonial.content}"
             </p>
             
             <div class="testimonial-author">
@@ -511,8 +505,8 @@ const testimonialsManager = {
                     ${firstLetter}
                 </div>
                 <div class="author-info">
-                    <h4>${name}</h4>
-                    <p>${country} • ${lessons}</p>
+                    <h4>${testimonial.name}</h4>
+                    <p>${testimonial.country} • ${testimonial.lessons}</p>
                 </div>
             </div>
         `;
@@ -1048,9 +1042,10 @@ if (document.readyState === 'loading') {
     setTimeout(initLanguageButtons, 300);
 }
 
-// Exposer les managers pour le débogage
+// Exposer les managers pour le débogage (mais ne pas écraser translationManager !)
 window.coursesManager = coursesManager;
 window.testimonialsManager = testimonialsManager;
-window.appTranslationManager = appTranslationManager;
+// ⚠️ NE PAS ÉCRASER window.translationManager !
+// window.translationManager = appTranslationManager;
 
 console.log('📦 Script.js chargé avec succès');
