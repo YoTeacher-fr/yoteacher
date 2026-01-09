@@ -63,6 +63,9 @@
             font-size: 0.9rem;
             transition: all 0.3s;
             text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
         }
         
         .login-btn:hover {
@@ -303,6 +306,9 @@
                 text-decoration: none;
                 margin-left: auto;
                 z-index: 1001;
+                border: none;
+                cursor: pointer;
+                font-family: 'Inter', sans-serif;
             }
             
             .auth-section {
@@ -379,7 +385,7 @@
                 </div>
                 
                 <!-- Bouton Connexion Mobile -->
-                <a href="#" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
+                <button type="button" class="mobile-login-btn-header" data-i18n="header.login">Connexion</button>
                 
                 <!-- Groupe des boutons de droite - FORCÉ À DROITE -->
                 <div class="header-right-group">
@@ -389,7 +395,7 @@
                         <span data-i18n="header.language">EN</span>
                     </div>
                     
-                    <a href="#" class="login-btn" data-i18n="header.login">Connexion</a>
+                    <button type="button" class="login-btn" data-i18n="header.login">Connexion</button>
                 </div>
             </div>
         </div>
@@ -437,7 +443,10 @@
                 </form>
 
                 <div class="auth-footer">
-                    <p data-i18n="login.no_account">Pas encore de compte ? <a href="signup.html" class="auth-link" data-i18n="login.sign_up_free">S'inscrire gratuitement</a></p>
+                    <p>
+                        <span data-i18n="login.no_account">Pas encore de compte ?</span> 
+                        <a href="signup.html" class="auth-link" data-i18n="login.sign_up_free">S'inscrire gratuitement</a>
+                    </p>
                 </div>
             </div>
         </div>
@@ -466,8 +475,8 @@
                 window.location.href = 'dashboard.html';
             }
             
-            // Empêcher le lien du header de recharger la page
-            preventHeaderLoginLink();
+            // Empêcher le bouton du header de recharger la page
+            preventHeaderLoginButtons();
 
             // Connexion
             form.addEventListener('submit', async function(e) {
@@ -571,22 +580,17 @@
                 }
             }
             
-            // Empêcher le lien du header de recharger la page
-            function preventHeaderLoginLink() {
-                const loginBtn = document.querySelector('.login-btn');
-                const mobileLoginBtn = document.querySelector('.mobile-login-btn-header');
+            // Empêcher les boutons du header de recharger la page
+            function preventHeaderLoginButtons() {
+                const loginBtns = document.querySelectorAll('.login-btn, .mobile-login-btn-header');
                 
-                if (loginBtn && loginBtn.getAttribute('href') === '#') {
-                    loginBtn.addEventListener('click', (e) => {
+                loginBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
                         e.preventDefault();
+                        // Le bouton ne fait rien sur la page de connexion
+                        // car l'utilisateur est déjà sur la page de connexion
                     });
-                }
-                
-                if (mobileLoginBtn && mobileLoginBtn.getAttribute('href') === '#') {
-                    mobileLoginBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                    });
-                }
+                });
             }
         });
     </script>
