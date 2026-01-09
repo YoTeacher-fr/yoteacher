@@ -147,15 +147,15 @@
                 </div>
                 
                 <!-- Bouton Connexion Mobile (visible uniquement sur mobile) -->
-                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
                 
                 <!-- Menu Desktop -->
                 <nav class="nav-menu desktop-menu">
     <div class="nav-links-wrapper">
-        <a href="#about" class="nav-link">À propos</a>
-        <a href="#courses" class="nav-link">Cours</a>
-        <a href="#testimonials" class="nav-link">Témoignages</a>
-        <a href="#contact" class="nav-link">Contact</a>
+        <a href="#about" class="nav-link" data-i18n="nav.about">À propos</a>
+        <a href="#courses" class="nav-link" data-i18n="nav.courses">Cours</a>
+        <a href="#testimonials" class="nav-link" data-i18n="nav.testimonials">Témoignages</a>
+        <a href="#contact" class="nav-link" data-i18n="nav.contact">Contact</a>
     </div>
 </nav>
 
@@ -174,7 +174,7 @@
                             <span data-i18n="header.language">EN</span>
                         </div>
                         
-                        <a href="login.html" class="login-btn">Connexion</a>
+                        <a href="login.html" class="login-btn" data-i18n="header.login">Connexion</a>
                     </div>
                 </nav>
             </div>
@@ -185,10 +185,10 @@
             <nav class="mobile-nav">
                 <button class="close-menu" id="closeMenuBtn">×</button>
                 <!-- La section utilisateur sera ajoutée dynamiquement ici -->
-                <a href="#about" class="mobile-nav-link">À propos</a>
-                <a href="#courses" class="mobile-nav-link">Cours</a>
-                <a href="#testimonials" class="mobile-nav-link">Témoignages</a>
-                <a href="#contact" class="mobile-nav-link">Contact</a>
+                <a href="#about" class="mobile-nav-link" data-i18n="nav.about">À propos</a>
+                <a href="#courses" class="mobile-nav-link" data-i18n="nav.courses">Cours</a>
+                <a href="#testimonials" class="mobile-nav-link" data-i18n="nav.testimonials">Témoignages</a>
+                <a href="#contact" class="mobile-nav-link" data-i18n="nav.contact">Contact</a>
                 
                 <!-- Sélecteur de devise mobile -->
                 <div class="currency-selector-mobile" style="padding: 15px 20px;">
@@ -205,7 +205,7 @@
                     <span data-i18n="header.language">EN</span>
                 </div>
                 
-                <a href="login.html" class="btn btn-primary mobile-login-btn">Connexion</a>
+                <a href="login.html" class="btn btn-primary mobile-login-btn" data-i18n="header.login">Connexion</a>
             </nav>
         </div>
     </header>
@@ -426,7 +426,7 @@
                 <div class="contact-column">
                     <h3 data-i18n="footer.quick_links">Liens rapides</h3>
                     <ul class="quick-links">
-                        <li><a href="index.html" data-i18n="footer.home">Accueil</a></li>
+                        <li><a href="#" id="homeLinkFooter" data-i18n="footer.home">Accueil</a></li>
                         <li><a href="#about" data-i18n="nav.about">À propos</a></li>
                         <li><a href="#courses" data-i18n="nav.courses">Cours</a></li>
                         <li><a href="#testimonials" data-i18n="nav.testimonials">Témoignages</a></li>
@@ -560,6 +560,21 @@
                 }
             });
         }
+
+        // Gérer le lien "Accueil" dans le footer
+        function handleHomeLink() {
+            const homeLink = document.getElementById('homeLinkFooter');
+            if (homeLink) {
+                homeLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Scroller vers le haut de la page en douceur
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+            }
+        }
         
         // Appeler cette fonction après le chargement
         document.addEventListener('DOMContentLoaded', function() {
@@ -579,6 +594,9 @@
             if (window.currencyManager && !window.currencyManager.isLoading) {
                 setTimeout(updateHomePagePrices, 500);
             }
+
+            // Gérer le lien Accueil dans le footer
+            handleHomeLink();
         });
     </script>
 </body>
