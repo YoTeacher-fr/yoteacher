@@ -8,167 +8,439 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
-       /* MODIFICATIONS CSS À AJOUTER/REMPLACER dans le <style> de booking.html */
+        /* RÉDUCTION DE LA HAUTEUR DU HEADER */
+        .main-header {
+            background-color: rgba(255, 255, 255, 0.98) !important;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
+            backdrop-filter: blur(10px) !important;
+            min-height: 60px !important;
+        }
+        
+        .header-content {
+            padding: 10px 0 !important;
+        }
+        
+        .main-header .nav-link {
+            display: none !important;
+        }
+        
+        .main-header .nav-spacer {
+            display: none !important;
+        }
+        
+        .main-header .logo {
+            color: #333 !important;
+            font-weight: 700;
+            font-size: 1.5rem !important;
+        }
+        
+        .main-header .login-btn {
+            background-color: #4f9ad1 !important;
+            color: white !important;
+            padding: 8px 20px !important;
+            font-size: 0.9rem !important;
+        }
+        
+        /* Style pour le sélecteur de devise dans le header réduit */
+        .main-header .currency-selector {
+            margin-left: 5px;
+        }
+        
+        .main-header .currency-selector select {
+            border: 1px solid #ddd;
+            color: #333;
+            padding: 5px 8px;
+            font-size: 0.85rem;
+            border-radius: 15px;
+            background: white;
+            min-width: 70px;
+        }
+        
+        /* Grouper langue, devise et avatar à droite */
+        .header-right-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: auto;
+	    order: 3
+        }
+        
+        /* CORRECTION DU PADDING DU BODY */
+        body {
+            padding-top: 60px !important;
+        }
+        
+        /* FOND INITIAL DE BOOKING */
+        .booking-section {
+            padding: 40px 20px;
+            background: #f8f9fa;
+            min-height: calc(100vh - 60px);
+        }
 
-/* HEADER - MÊME POSITION QUE LOGIN */
-.main-header {
-    background-color: rgba(255, 255, 255, 0.98) !important;
-    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
-    backdrop-filter: blur(10px) !important;
-    min-height: 60px !important;
-}
+        .booking-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
 
-.header-content {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 10px 0 !important;
-}
+        .booking-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
 
-/* Logo à gauche */
-.logo-section {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    order: 1;
-}
+        .booking-title {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 15px;
+        }
 
-.main-header .logo {
-    color: #333 !important;
-    font-weight: 700;
-    font-size: 1.5rem !important;
-}
+        .booking-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
 
-/* Groupe à droite (devise, langue, dashboard/login) */
-.header-right-group {
-    display: flex !important;
-    align-items: center !important;
-    gap: 15px !important;
-    margin-left: auto !important;
-    order: 3;
-}
+        .booking-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
 
-.main-header .currency-selector {
-    margin: 0;
-}
+        .booking-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeaea;
+        }
 
-.main-header .currency-selector select {
-    border: 1px solid #ddd;
-    color: #333;
-    padding: 5px 8px;
-    font-size: 0.85rem;
-    border-radius: 15px;
-    background: white;
-    min-width: 70px;
-}
+        .card-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
 
-.language-switcher {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #333;
-    cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 20px;
-    transition: background-color 0.3s;
-}
+        .calendar-container {
+            margin-bottom: 30px;
+        }
 
-.language-switcher:hover {
-    background-color: #f5f5f5;
-}
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-/* Masquer le menu hamburger et les liens de navigation */
-.main-header .hamburger-menu {
-    display: none !important;
-}
+        .month-year {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
 
-.main-header .nav-link {
-    display: none !important;
-}
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
 
-.main-header .nav-spacer {
-    display: none !important;
-}
+        .calendar-nav button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
 
-/* BOUTONS DURÉE - COULEUR #4781db */
-.duration-option {
-    flex: 1;
-    min-width: 80px;
-    padding: 12px 15px;
-    background: #f8f9fa;
-    border: 2px solid #e0e0e0;
-    border-radius: 50px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: #555;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-align: center;
-    white-space: nowrap;
-}
+        .calendar-nav button:hover {
+            background: #f0f0f0;
+            border-color: #3c84f6;
+        }
 
-.duration-option:hover {
-    border-color: #4781db;
-    background: #f0f7ff;
-    color: #4781db;
-}
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
 
-.duration-option.selected {
-    background: #4781db;
-    border-color: #4781db;
-    color: white;
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(71, 129, 219, 0.3);
-}
+        .calendar-day-header {
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
+            color: #666;
+            font-size: 0.9rem;
+        }
 
-/* BOUTONS PACKAGE - COULEUR #3c84f6 */
-.courses-count-option {
-    flex: 1;
-    min-width: 70px;
-    padding: 12px 10px;
-    background: #f8f9fa;
-    border: 2px solid #e0e0e0;
-    border-radius: 50px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #555;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-align: center;
-    position: relative;
-}
+        .calendar-day {
+            text-align: center;
+            padding: 12px 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
 
-.courses-count-option:hover {
-    border-color: #3c84f6;
-    background: #f0f7ff;
-    color: #3c84f6;
-}
+        .calendar-day:hover {
+            background: #f0f7ff;
+        }
 
-.courses-count-option.selected {
-    background: #3c84f6;
-    border-color: #3c84f6;
-    color: white;
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
-}
+        .calendar-day.selected {
+            background: #3c84f6;
+            color: white;
+        }
 
-/* BADGE RÉDUCTION - COULEUR #f6ae3b */
-.discount-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #f6ae3b;
-    color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-weight: bold;
-}
+        .calendar-day.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
 
-/* BOUTONS OUTIL VISIO - COULEUR #3069c4 */
-.location-btn {
+        .calendar-day.today {
+            border: 2px solid #3c84f6;
+        }
+
+        .time-slots {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .time-slot {
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .time-slot:hover {
+            border-color: #3c84f6;
+            background: #f0f7ff;
+        }
+
+        .time-slot.selected {
+            background: #3c84f6;
+            color: white;
+            border-color: #3c84f6;
+        }
+
+        .time-slot.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .time-slot-time {
+            font-weight: 600;
+        }
+
+        .time-slot-duration {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3c84f6;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .booking-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-item.total {
+            font-weight: 600;
+            font-size: 1.2rem;
+            border-bottom: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #ddd;
+        }
+
+        .btn-booking {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3c84f6, #1e88e5);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-booking:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+        }
+
+        .btn-booking:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #ffeaea;
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #d32f2f;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .loading-slots {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading-slots i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #3c84f6;
+        }
+
+        .no-slots {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error-slots {
+            text-align: center;
+            padding: 30px;
+            background: #ffeaea;
+            border-radius: 10px;
+            color: #d32f2f;
+        }
+
+        .error-slots i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .error-details {
+            font-size: 0.9rem;
+            margin: 10px 0;
+            opacity: 0.8;
+        }
+
+        .retry-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #3c84f6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .retry-btn:hover {
+            background: #2c74e6;
+        }
+        
+        /* NOUVEAUX STYLES POUR LES BULLES DE DURÉE */
+        .duration-group {
+            display: none;
+        }
+        
+        .duration-group.visible {
+            display: block;
+        }
+        
+        .duration-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .duration-option {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .duration-option:hover {
+            border-color: #4781db;
+            background: #f0f7ff;
+            color: #4781db;
+        }
+        
+        .duration-option.selected {
+            background: #4781db;
+            border-color: #4781db;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(71, 129, 219, 0.3);
+        }
+        
+        /* Styles pour les boutons de moyen de communication */
+        .location-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -187,12 +459,11 @@
     text-align: center;
     white-space: nowrap;
 }
-
-.location-btn i {
-    font-size: 1.1rem;
-}
-
-.location-btn:hover {
+        
+        .location-btn i {
+            font-size: 1.1rem;
+        }
+        .location-btn:hover {
     border-color: #3069c4;
     background: #f0f7ff;
     color: #3069c4;
@@ -205,115 +476,208 @@
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(48, 105, 196, 0.3);
 }
+        .login-required {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .login-required a {
+            color: #3c84f6;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .login-required a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Nouveau style pour le sélecteur de nombre de cours */
+        .courses-count-group {
+            margin-bottom: 20px;
+        }
+        
+        .courses-count-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .courses-count-option {
+            flex: 1;
+            min-width: 70px;
+            padding: 12px 10px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            position: relative;
+        }
+        
+        .courses-count-option:hover {
+            border-color: #3c84f6;
+            background: #f0f7ff;
+            color: #3c84f6;
+        }
+        
+        .courses-count-option.selected {
+            background: #3c84f6;
+            border-color: #3c84f6;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
+        }
+        
+        .discount-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f6ae3b;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
 
-/* Ajuster l'espacement des groupes de boutons */
-.duration-options,
-.courses-count-options {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-}
-
-/* MOBILE - Header ajusté */
-@media (max-width: 768px) {
-    .main-header {
-        min-height: 55px !important;
-    }
-    
-    .header-content {
-        padding: 8px 0 !important;
-    }
-    
-    .logo {
-        font-size: 1.3rem !important;
-    }
-    
-    .mobile-login-btn-header {
-        display: block !important;
-        padding: 6px 12px !important;
-        font-size: 0.85rem !important;
-        order: 3;
-        z-index: 1001;
-        background-color: #4f9ad1;
-        color: white;
-        border-radius: 20px;
-        text-decoration: none;
-        margin-left: auto;
-    }
-    
-    /* Logo centré sur mobile */
-    .logo-section {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        order: 2;
-    }
-    
-    /* Masquer le groupe droit sur mobile */
-    .header-right-group {
-        display: none !important;
-    }
-    
-    /* Cacher le sélecteur de devise sur mobile */
-    .main-header .currency-selector {
-        display: none;
-    }
-    
-    body {
-        padding-top: 55px !important;
-    }
-    
-    .booking-section {
-        min-height: calc(100vh - 55px);
-    }
-    
-    /* Réduire les boutons sur mobile */
-    .duration-options,
-    .courses-count-options {
-        gap: 8px;
-    }
-    
-    .duration-option,
-    .courses-count-option,
-    .location-btn {
-        min-width: 70px;
-        padding: 10px 12px;
-        font-size: 0.9rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .duration-options,
-    .courses-count-options {
-        gap: 6px;
-    }
-    
-    .duration-option,
-    .courses-count-option,
-    .location-btn {
-        min-width: 60px;
-        padding: 8px 10px;
-        font-size: 0.85rem;
-    }
-}
-
-/* Masquer le bouton mobile sur desktop */
-@media (min-width: 769px) {
-    .mobile-login-btn-header {
-        display: none !important;
-    }
-    
-    .header-right-group {
-        display: flex !important;
-    }
-    
-    /* Logo à gauche sur desktop */
-    .logo-section {
-        position: static;
-        transform: none;
-    }
-}
+        @media (max-width: 768px) {
+            .booking-section {
+                padding: 30px 15px;
+                min-height: calc(100vh - 60px);
+            }
+            
+            .booking-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .booking-title {
+                font-size: 2rem;
+            }
+            
+            .calendar-grid {
+                gap: 3px;
+            }
+            
+            .calendar-day {
+                padding: 8px 3px;
+                font-size: 0.9rem;
+            }
+            
+            .booking-card {
+                padding: 25px 20px;
+            }
+            
+            .duration-options,
+            .courses-count-options {
+                gap: 8px;
+            }
+            
+            .duration-option,
+            .courses-count-option {
+                min-width: 70px;
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            
+            /* Header mobile ajusté */
+            .main-header {
+                min-height: 55px !important;
+            }
+            
+            .header-content {
+                padding: 8px 0 !important;
+            }
+            
+            .logo {
+                font-size: 1.3rem !important;
+            }
+            
+            .mobile-login-btn-header {
+                padding: 6px 12px !important;
+                font-size: 0.85rem !important;
+                order: 3;
+                z-index: 1001;
+            }
+            
+            /* Cacher le sélecteur de devise sur mobile */
+            .main-header .currency-selector {
+                display: none;
+            }
+            
+            /* Masquer le groupe droit sur mobile */
+            .header-right-group {
+                display: none;
+            }
+            
+            body {
+                padding-top: 55px !important;
+            }
+            
+            .booking-section {
+                min-height: calc(100vh - 55px);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .booking-card {
+                padding: 20px 15px;
+            }
+            
+            .booking-title {
+                font-size: 1.8rem;
+            }
+            
+            .card-title {
+                font-size: 1.3rem;
+            }
+            
+            .btn-booking {
+                padding: 14px;
+            }
+            
+            .form-input, .form-select, .form-textarea {
+                padding: 10px 12px;
+            }
+            
+            .duration-options,
+            .courses-count-options {
+                gap: 6px;
+            }
+            
+            .duration-option,
+            .courses-count-option {
+                min-width: 60px;
+                padding: 8px 10px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* Animation subtile pour les cartes */
+        .booking-card {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
