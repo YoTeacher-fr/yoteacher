@@ -164,12 +164,29 @@ let state = {
 
 // Fonction utilitaire pour obtenir une traduction
 function getTranslation(key, fallback) {
+    console.log('🔍 getTranslation appelé avec key:', key);
+    
     if (window.translationManager) {
-        const translation = window.translationManager.getTranslation(key);
-        if (translation && translation !== key) {
-            return translation;
+        console.log('✅ translationManager trouvé:', window.translationManager);
+        console.log('🔍 Type de getTranslation:', typeof window.translationManager.getTranslation);
+        
+        // Vérifier si getTranslation existe et est une fonction
+        if (typeof window.translationManager.getTranslation === 'function') {
+            const translation = window.translationManager.getTranslation(key);
+            console.log('🌍 Traduction obtenue:', translation);
+            
+            if (translation && translation !== key) {
+                return translation;
+            }
+        } else {
+            console.error('❌ translationManager.getTranslation n\'est pas une fonction');
+            console.log('🔍 translationManager:', window.translationManager);
         }
+    } else {
+        console.error('❌ translationManager non disponible');
     }
+    
+    console.log('↩️ Retour fallback:', fallback);
     return fallback;
 }
 
@@ -184,6 +201,12 @@ const coursesManager = {
         }
         
         container.innerHTML = '';
+        
+        // Vérifier si translationManager est prêt
+        if (!window.translationManager) {
+            console.warn('⚠️ translationManager non disponible, utilisation des textes par défaut');
+        }
+        
         coursesData.forEach(course => coursesManager.createCourseCard(course, container));
         
         // Ajouter les événements aux boutons
@@ -201,7 +224,7 @@ const coursesManager = {
         card.setAttribute('data-course-id', course.id);
         card.setAttribute('data-base-price', course.basePriceEUR);
         
-        // Obtenir les textes traduits
+        // Obtenir les textes traduits avec fallback
         const courseType = getTranslation(course.typeKey, course.type);
         const courseFocus = getTranslation(course.focusKey, course.focus);
         const courseButtonText = getTranslation(course.buttonTextKey, course.buttonText);
@@ -774,23 +797,25 @@ const mobileManager = {
 };
 
 // ===== GESTION DE LA TRADUCTION =====
-const translationManager = {
+const appTranslationManager = {
     init: () => {
-        // Vérifier que le gestionnaire de traduction est disponible
+        console.log('🌍 Initialisation du gestionnaire de traduction de l\'app...');
+        
+        // Vérifier que le gestionnaire de traduction principal est disponible
         if (!window.translationManager) {
-            console.warn('⚠️ TranslationManager non disponible');
+            console.warn('⚠️ TranslationManager principal non disponible');
             return;
         }
         
-        console.log('🌍 Initialisation du gestionnaire de traduction...');
+        console.log('✅ TranslationManager principal disponible');
         
         // Mettre à jour les cartes de cours avec les traductions
-        translationManager.translateCourses();
+        appTranslationManager.translateCourses();
         
         // Écouter les changements de langue
         window.addEventListener('language:changed', () => {
-            console.log('🌍 Changement de langue détecté');
-            translationManager.translateCourses();
+            console.log('🌍 Changement de langue détecté dans l\'app');
+            appTranslationManager.translateCourses();
             
             // Recharger les témoignages si nécessaire
             if (state.testimonialsLoaded) {
@@ -803,9 +828,7 @@ const translationManager = {
     },
     
     translateCourses: () => {
-        if (!window.translationManager) return;
-        
-        console.log('🌍 Traduction des cours...');
+        console.log('🌍 Traduction des cours dans l\'app...');
         
         // Recharger toutes les cartes de cours avec les nouvelles traductions
         coursesManager.reloadCourses();
@@ -846,26 +869,40 @@ const app = {
         // Ajuster le padding pour le header fixe
         document.body.style.paddingTop = '80px';
         
-        console.log('1. Initialisation des cours...');
-        coursesManager.init();
+        // Vérifier d'abord que translationManager est prêt
+        const waitForTranslationManager = () => {
+            if (window.translationManager && typeof window.translationManager.getTranslation === 'function') {
+                console.log('✅ TranslationManager prêt, initialisation des composants...');
+                
+                console.log('1. Initialisation des cours...');
+                coursesManager.init();
+                
+                console.log('2. Initialisation des témoignages...');
+                testimonialsManager.init();
+                
+                console.log('3. Initialisation de la navigation...');
+                navigationManager.init();
+                
+                console.log('4. Initialisation de l\'UI...');
+                uiManager.init();
+                
+                console.log('5. Initialisation de l\'image...');
+                imageManager.init();
+                
+                console.log('6. Initialisation du mobile...');
+                mobileManager.init();
+                
+                console.log('7. Initialisation de la traduction de l\'app...');
+                appTranslationManager.init();
+                
+                console.log('✅ Application prête !');
+            } else {
+                console.log('⏳ En attente de translationManager...');
+                setTimeout(waitForTranslationManager, 100);
+            }
+        };
         
-        console.log('2. Initialisation des témoignages...');
-        testimonialsManager.init();
-        
-        console.log('3. Initialisation de la navigation...');
-        navigationManager.init();
-        
-        console.log('4. Initialisation de l\'UI...');
-        uiManager.init();
-        
-        console.log('5. Initialisation de l\'image...');
-        imageManager.init();
-        
-        console.log('6. Initialisation du mobile...');
-        mobileManager.init();
-        
-        console.log('7. Initialisation de la traduction...');
-        translationManager.init();
+        waitForTranslationManager();
         
         // Gestion du redimensionnement
         window.addEventListener('resize', () => {
@@ -882,8 +919,6 @@ const app = {
         window.addEventListener('currency:changed', () => {
             coursesManager.updateCoursePrices();
         });
-        
-        console.log('✅ Application prête !');
     }
 };
 
@@ -893,7 +928,7 @@ const initLanguageButtons = () => {
     
     // Fonction pour basculer la langue
     const toggleLanguage = () => {
-        if (window.translationManager) {
+        if (window.translationManager && typeof window.translationManager.toggleLanguage === 'function') {
             window.translationManager.toggleLanguage();
         } else {
             // Fallback si translationManager n'est pas disponible
@@ -963,11 +998,13 @@ const initLanguageButtons = () => {
 // Attendre que tout soit chargé
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
+        console.log('📄 DOMContentLoaded - Initialisation...');
+        
         // Initialiser l'application principale
         app.init();
         
         // Initialiser les boutons de langue (double sécurité)
-        setTimeout(initLanguageButtons, 100);
+        setTimeout(initLanguageButtons, 300);
         
         // Vérifier que les conteneurs existent
         setTimeout(() => {
@@ -988,17 +1025,19 @@ if (document.readyState === 'loading') {
                 console.log('⚠️ Conteneur témoignages vide, réinitialisation...');
                 testimonialsManager.init();
             }
-        }, 500);
+        }, 1000);
     });
 } else {
     // Le DOM est déjà chargé
+    console.log('📄 DOM déjà chargé - Initialisation...');
     app.init();
-    setTimeout(initLanguageButtons, 100);
+    setTimeout(initLanguageButtons, 300);
 }
 
-// Exposer les managers pour le débogage
+// Exposer les managers pour le débogage (mais ne pas écraser translationManager !)
 window.coursesManager = coursesManager;
 window.testimonialsManager = testimonialsManager;
-window.translationManager = translationManager;
+// ⚠️ NE PAS ÉCRASER window.translationManager !
+// window.translationManager = appTranslationManager;
 
 console.log('📦 Script.js chargé avec succès');
