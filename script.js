@@ -176,8 +176,12 @@ function getTranslation(key, fallback) {
 // ===== GÉNÉRATION DES COURS =====
 const coursesManager = {
     init: () => {
+        console.log('📚 Initialisation des cours...');
         const container = document.getElementById('coursesContainer');
-        if (!container) return;
+        if (!container) {
+            console.error('❌ Conteneur des cours non trouvé');
+            return;
+        }
         
         container.innerHTML = '';
         coursesData.forEach(course => coursesManager.createCourseCard(course, container));
@@ -187,6 +191,8 @@ const coursesManager = {
         
         // Mettre à jour les prix avec la devise actuelle
         coursesManager.updateCoursePrices();
+        
+        console.log(`✅ ${coursesData.length} cartes de cours créées`);
     },
     
     createCourseCard: (course, container) => {
@@ -288,7 +294,10 @@ const coursesManager = {
     },
     
     updateCoursePrices: () => {
-        if (!window.currencyManager) return;
+        if (!window.currencyManager) {
+            console.log('⏳ Gestionnaire de devise non disponible pour mettre à jour les prix');
+            return;
+        }
         
         const currency = window.currencyManager.currentCurrency;
         
@@ -385,11 +394,12 @@ const testimonialsManager = {
     slidesPerView: 3,
     
     init: () => {
+        console.log('💬 Initialisation des témoignages...');
         const container = document.getElementById('testimonialsSlider');
         const indicatorsContainer = document.getElementById('testimonialIndicators');
         
         if (!container) {
-            console.error('Conteneur des témoignages non trouvé');
+            console.error('❌ Conteneur des témoignages non trouvé');
             return;
         }
         
@@ -418,6 +428,7 @@ const testimonialsManager = {
         testimonialsManager.setupNavigation();
         
         state.testimonialsLoaded = true;
+        console.log(`✅ ${testimonialsData.length} témoignages créés`);
     },
     
     calculateSlidesPerView: () => {
@@ -762,23 +773,23 @@ const mobileManager = {
     }
 };
 
-// ===== GESTION COMPLÈTE DE LA TRADUCTION =====
+// ===== GESTION DE LA TRADUCTION =====
 const translationManager = {
     init: () => {
         // Vérifier que le gestionnaire de traduction est disponible
         if (!window.translationManager) {
-            console.warn('TranslationManager non disponible');
+            console.warn('⚠️ TranslationManager non disponible');
             return;
         }
         
-        console.log('🌍 Initialisation du gestionnaire de traduction dans script.js...');
+        console.log('🌍 Initialisation du gestionnaire de traduction...');
         
         // Mettre à jour les cartes de cours avec les traductions
         translationManager.translateCourses();
         
         // Écouter les changements de langue
         window.addEventListener('language:changed', () => {
-            console.log('🌍 Changement de langue détecté dans script.js');
+            console.log('🌍 Changement de langue détecté');
             translationManager.translateCourses();
             
             // Recharger les témoignages si nécessaire
@@ -786,6 +797,9 @@ const translationManager = {
                 testimonialsManager.init();
             }
         });
+        
+        // Vérifier l'état initial de la langue
+        console.log(`🌍 Langue actuelle: ${window.translationManager.getCurrentLanguage()}`);
     },
     
     translateCourses: () => {
@@ -801,7 +815,7 @@ const translationManager = {
 // ===== INITIALISATION PRINCIPALE =====
 const app = {
     init: () => {
-        console.log('Initialisation de l\'application...');
+        console.log('🚀 Initialisation de l\'application...');
         
         // Empêcher le retour en haut au rafraîchissement
         window.addEventListener('beforeunload', () => {
@@ -827,18 +841,30 @@ const app = {
     },
     
     setup: () => {
-        console.log('Configuration des modules...');
+        console.log('⚙️ Configuration des modules...');
         
         // Ajuster le padding pour le header fixe
         document.body.style.paddingTop = '80px';
         
-        // Initialiser les managers
+        console.log('1. Initialisation des cours...');
         coursesManager.init();
+        
+        console.log('2. Initialisation des témoignages...');
         testimonialsManager.init();
+        
+        console.log('3. Initialisation de la navigation...');
         navigationManager.init();
+        
+        console.log('4. Initialisation de l\'UI...');
         uiManager.init();
+        
+        console.log('5. Initialisation de l\'image...');
         imageManager.init();
+        
+        console.log('6. Initialisation du mobile...');
         mobileManager.init();
+        
+        console.log('7. Initialisation de la traduction...');
         translationManager.init();
         
         // Gestion du redimensionnement
@@ -857,26 +883,11 @@ const app = {
             coursesManager.updateCoursePrices();
         });
         
-        // Écouter les changements de langue pour les cours
-        window.addEventListener('language:changed', () => {
-            // Les cours seront déjà mis à jour par translationManager
-            // Mais on peut ajouter d'autres logiques ici si besoin
-            console.log('🌍 Changement de langue - Mise à jour de l\'interface');
-        });
-        
-        // Debug
         console.log('✅ Application prête !');
-        
-        // Vérifier si translationManager est prêt
-        if (window.translationManager) {
-            console.log(`🌍 Langue actuelle: ${window.translationManager.getCurrentLanguage()}`);
-        }
     }
 };
 
-// ===== GESTION DES BOUTONS DE LANGUE (SÉCURITÉ SUPPLÉMENTAIRE) =====
-// Cette fonction assure que les boutons de langue fonctionnent même si
-// le gestionnaire de traduction a des problèmes
+// ===== GESTION DES BOUTONS DE LANGUE =====
 const initLanguageButtons = () => {
     console.log('🔧 Initialisation des boutons de langue...');
     
@@ -912,7 +923,11 @@ const initLanguageButtons = () => {
     // Attacher les événements aux boutons de langue desktop
     const desktopSwitcher = document.getElementById('languageSwitcherDesktop');
     if (desktopSwitcher) {
-        desktopSwitcher.addEventListener('click', (e) => {
+        // Supprimer les anciens écouteurs pour éviter les doublons
+        const newDesktopSwitcher = desktopSwitcher.cloneNode(true);
+        desktopSwitcher.parentNode.replaceChild(newDesktopSwitcher, desktopSwitcher);
+        
+        newDesktopSwitcher.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             console.log('🌍 Clic sur bouton de langue desktop');
@@ -923,7 +938,11 @@ const initLanguageButtons = () => {
     // Attacher les événements aux boutons de langue mobile
     const mobileSwitcher = document.getElementById('languageSwitcherMobile');
     if (mobileSwitcher) {
-        mobileSwitcher.addEventListener('click', (e) => {
+        // Supprimer les anciens écouteurs pour éviter les doublons
+        const newMobileSwitcher = mobileSwitcher.cloneNode(true);
+        mobileSwitcher.parentNode.replaceChild(newMobileSwitcher, mobileSwitcher);
+        
+        newMobileSwitcher.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             console.log('🌍 Clic sur bouton de langue mobile');
@@ -942,27 +961,40 @@ const initLanguageButtons = () => {
 
 // ===== INITIALISATION FINALE =====
 // Attendre que tout soit chargé
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialiser l'application principale
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialiser l'application principale
+        app.init();
+        
+        // Initialiser les boutons de langue (double sécurité)
+        setTimeout(initLanguageButtons, 100);
+        
+        // Vérifier que les conteneurs existent
+        setTimeout(() => {
+            const coursesContainer = document.getElementById('coursesContainer');
+            const testimonialsContainer = document.getElementById('testimonialsSlider');
+            
+            console.log('🔍 Vérification des conteneurs:');
+            console.log(`- Conteneur cours: ${coursesContainer ? 'TROUVÉ' : 'NON TROUVÉ'}`);
+            console.log(`- Conteneur témoignages: ${testimonialsContainer ? 'TROUVÉ' : 'NON TROUVÉ'}`);
+            
+            // Si les conteneurs existent mais sont vides, réinitialiser
+            if (coursesContainer && coursesContainer.children.length === 0) {
+                console.log('⚠️ Conteneur cours vide, réinitialisation...');
+                coursesManager.init();
+            }
+            
+            if (testimonialsContainer && testimonialsContainer.children.length === 0) {
+                console.log('⚠️ Conteneur témoignages vide, réinitialisation...');
+                testimonialsManager.init();
+            }
+        }, 500);
+    });
+} else {
+    // Le DOM est déjà chargé
     app.init();
-    
-    // Initialiser les boutons de langue (double sécurité)
-    setTimeout(initLanguageButtons, 500);
-    
-    // Vérifier l'état des boutons de langue
-    setTimeout(() => {
-        const desktopBtn = document.getElementById('languageSwitcherDesktop');
-        const mobileBtn = document.getElementById('languageSwitcherMobile');
-        
-        console.log('🔍 Vérification des boutons de langue:');
-        console.log(`- Bouton desktop: ${desktopBtn ? 'TROUVÉ' : 'NON TROUVÉ'}`);
-        console.log(`- Bouton mobile: ${mobileBtn ? 'TROUVÉ' : 'NON TROUVÉ'}`);
-        
-        if (desktopBtn) {
-            console.log('- Bouton desktop est cliquable:', desktopBtn.style.cursor === 'pointer');
-        }
-    }, 1000);
-});
+    setTimeout(initLanguageButtons, 100);
+}
 
 // Exposer les managers pour le débogage
 window.coursesManager = coursesManager;
