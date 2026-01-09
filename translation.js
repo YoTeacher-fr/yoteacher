@@ -1,4 +1,4 @@
-// translation.js - Version simplifiée et corrigée
+// translation.js - Version étendue avec toutes les pages
 class TranslationManager {
     constructor() {
         this.currentLanguage = 'fr';
@@ -71,6 +71,7 @@ class TranslationManager {
                 'courses.detail_forfait': 'Forfait 10 cours',
                 'courses.price_per_hour': '/h',
                 'courses.discount': '(-5%)',
+                'courses.trial': 'Cours d\'essai',
                 
                 // Testimonials
                 'testimonials.label': 'Témoignages',
@@ -101,6 +102,173 @@ class TranslationManager {
                 'footer.cancellation': 'Politique d\'annulation',
                 'footer.copyright': 'Fait avec ❤️ à Marseille',
                 'footer.email': 'contact@yoteacher.com',
+                
+                // Login page
+                'login.title': 'Connexion - YoTeacher',
+                'login.subtitle': 'Connectez-vous à votre espace étudiant',
+                'login.email': 'Adresse email',
+                'login.password': 'Mot de passe',
+                'login.forgot_password': 'Mot de passe oublié ?',
+                'login.sign_in': 'Se connecter',
+                'login.no_account': 'Pas encore de compte ?',
+                'login.sign_up_free': 'S\'inscrire gratuitement',
+                'login.loading': 'Connexion en cours...',
+                'login.success': 'Connexion réussie ! Redirection...',
+                
+                // Signup page
+                'signup.title': 'Inscription - YoTeacher',
+                'signup.subtitle': 'Créez votre compte gratuitement',
+                'signup.full_name': 'Nom complet',
+                'signup.password_hint': 'Minimum 6 caractères',
+                'signup.confirm_password': 'Confirmer le mot de passe',
+                'signup.create_account': 'Créer mon compte',
+                'signup.terms': 'En vous inscrivant, vous acceptez nos Conditions d\'utilisation et Politique de confidentialité',
+                'signup.have_account': 'Déjà un compte ?',
+                'signup.loading': 'Création du compte...',
+                'signup.success': 'Compte créé avec succès !',
+                
+                // Dashboard page
+                'dashboard.title': 'Mon Dashboard - YoTeach',
+                'dashboard.loading': 'Chargement...',
+                'dashboard.loading_message': 'Veuillez patienter pendant le chargement de votre dashboard.',
+                'dashboard.loading_data': 'Chargement de vos données...',
+                'dashboard.upcoming_lessons': 'Cours à venir',
+                'dashboard.my_credits': 'Mes crédits',
+                'dashboard.my_profile': 'Mon Profil',
+                'dashboard.no_lessons': 'Aucun cours programmé',
+                'dashboard.no_credits': 'Aucun crédit disponible',
+                'dashboard.edit_profile': 'Modifier mon profil',
+                'dashboard.book_lesson': 'Réserver un cours',
+                'dashboard.discover_method': 'Découvrez ma méthode',
+                'dashboard.practice_speaking': 'Pratiquez l\'oral',
+                'dashboard.complete_learning': 'Apprentissage complet',
+                'dashboard.welcome': 'Bienvenue sur votre dashboard YoTeacher',
+                'dashboard.email': 'Email',
+                'dashboard.member_since': 'Membre depuis',
+                'dashboard.time': 'Heure',
+                'dashboard.duration': 'Durée',
+                'dashboard.type': 'Type',
+                'dashboard.reference': 'Référence',
+                'dashboard.cancel': 'Annuler',
+                'dashboard.reschedule': 'Reporter',
+                'dashboard.cancel_confirm': 'Êtes-vous sûr de vouloir annuler ce cours ?',
+                'dashboard.cancel_function': 'Fonction d\'annulation à implémenter',
+                'dashboard.reschedule_function': 'Fonction de report à implémenter',
+                'dashboard.logout': 'Déconnexion',
+                
+                // Profile page
+                'profile.title': 'Mon profil - YoTeacher',
+                'profile.change_photo': 'Changer la photo',
+                'profile.upload_help': 'JPG, PNG - max 5MB',
+                'profile.personal_info': 'Informations',
+                'profile.french_level': 'Niveau français',
+                'profile.password': 'Mot de passe',
+                'profile.personal_subtitle': 'Mettez à jour vos informations de contact',
+                'profile.first_name': 'Prénom',
+                'profile.last_name': 'Nom',
+                'profile.description': 'Description (optionnel)',
+                'profile.description_placeholder': 'Parlez-nous un peu de vous...',
+                'profile.save_changes': 'Enregistrer les modifications',
+                'profile.level_subtitle': 'Définissez votre niveau actuel en français',
+                'profile.current_level': 'Niveau actuel (CEFR)',
+                'profile.select_level': 'Sélectionnez votre niveau',
+                'profile.learning_goals': 'Objectifs d\'apprentissage',
+                'profile.goals_placeholder': 'Ex: Préparer le DELF B2, Améliorer mon français professionnel...',
+                'profile.save_preferences': 'Enregistrer les préférences',
+                'profile.change_password': 'Changer le mot de passe',
+                'profile.password_subtitle': 'Mettez à jour votre mot de passe de connexion',
+                'profile.current_password': 'Mot de passe actuel',
+                'profile.new_password': 'Nouveau mot de passe',
+                'profile.password_min': 'Minimum 8 caractères',
+                'profile.confirm_password': 'Confirmer le nouveau mot de passe',
+                'profile.change_password_button': 'Changer le mot de passe',
+                'profile.upload_error': 'La taille de l\'image ne doit pas dépasser 5MB',
+                'profile.upload_success': 'Photo mise à jour localement. Sauvegarde cloud à configurer.',
+                'profile.upload_error_generic': 'Erreur lors du chargement de l\'image',
+                'profile.update_success': 'Profil mis à jour avec succès !',
+                'profile.update_error': 'Erreur',
+                'profile.level_update_success': 'Niveau de français mis à jour !',
+                'profile.password_length_error': 'Le mot de passe doit contenir au moins 8 caractères',
+                'profile.password_match_error': 'Les mots de passe ne correspondent pas',
+                'profile.password_success': 'Mot de passe mis à jour avec succès !',
+                'profile.load_error': 'Erreur lors du chargement du profil',
+                
+                // Payment page
+                'payment.title': 'Paiement - YoTeacher',
+                'payment.title_main': 'Finaliser votre paiement',
+                'payment.subtitle': 'Choisissez votre moyen de paiement et confirmez votre réservation',
+                'payment.currency_info': 'Prix affichés en',
+                'payment.auto_conversion': 'Conversion automatique',
+                'payment.interac_note': 'Note importante :',
+                'payment.interac_message': 'Les paiements Interac doivent être effectués en dollars canadiens (CAD). La devise a été automatiquement ajustée pour vous.',
+                'payment.choose_method': 'Choisir un moyen de paiement',
+                'payment.revolut_qr': 'Cliquez sur le QR code pour ouvrir Revolut',
+                'payment.revolut_link': 'Lien Revolut',
+                'payment.beneficiary_name': 'Nom du bénéficiaire',
+                'payment.reference': 'Référence',
+                'payment.amount': 'Montant',
+                'payment.important': 'Important :',
+                'payment.revolut_notice': 'Une fois le paiement effectué sur Revolut, cliquez sur "J\'ai payé avec Revolut" pour confirmer votre réservation.',
+                'payment.paid_revolut': 'J\'ai payé avec Revolut',
+                'payment.wise_qr': 'Cliquez sur le QR code pour ouvrir Wise',
+                'payment.wise_link': 'Lien Wise',
+                'payment.wise_email': 'Email Wise',
+                'payment.wise_notice': 'Une fois le paiement effectué sur Wise, cliquez sur "J\'ai payé avec Wise" pour confirmer votre réservation.',
+                'payment.paid_wise': 'J\'ai payé avec Wise',
+                'payment.interac_title': 'Paiement Interac',
+                'payment.interac_instructions': 'Veuillez effectuer un virement Interac aux coordonnées suivantes :',
+                'payment.interac_email': 'Email Interac',
+                'payment.security_question': 'Question de sécurité',
+                'payment.answer': 'Réponse',
+                'payment.interac_notice': 'Une fois le virement effectué, cliquez sur "J\'ai payé avec Interac" pour confirmer votre réservation.',
+                'payment.paid_interac': 'J\'ai payé avec Interac',
+                'payment.paypal_qr': 'Cliquez sur le QR code pour ouvrir PayPal',
+                'payment.paypal_link': 'Lien PayPal',
+                'payment.paypal_email': 'Email PayPal',
+                'payment.paypal_notice': 'Une fois le paiement effectué sur PayPal, cliquez sur "J\'ai payé avec PayPal" pour confirmer votre réservation.',
+                'payment.paid_paypal': 'J\'ai payé avec PayPal',
+                'payment.card_method': 'Visa/Mastercard/Amex (Stripe)',
+                'payment.secure': 'Sécurisé :',
+                'payment.secure_message': 'Votre paiement est chiffré et sécurisé par Stripe. Aucune information bancaire n\'est stockée sur nos serveurs.',
+                'payment.pay_with_card': 'Payer par carte',
+                'payment.summary': 'Récapitulatif',
+                'payment.secure_payment': 'Paiement 100% sécurisé',
+                'payment.encrypted': 'Vos données bancaires sont chiffrées',
+                'payment.no_storage': 'Aucune information stockée sur nos serveurs',
+                'payment.guaranteed': 'Réservation garantie après paiement',
+                'payment.time_slot': 'Votre créneau est réservé pendant 15 minutes. Une fois le paiement confirmé, vous recevrez un email avec le lien de la visioconférence.',
+                'payment.my_dashboard': 'Mon tableau de bord',
+                'payment.my_profile': 'Mon profil',
+                'payment.my_bookings': 'Mes réservations',
+                'payment.currency': 'Devise',
+                'payment.booking_details': 'Détails de votre réservation',
+                'payment.course_type': 'Type de cours:',
+                'payment.date': 'Date:',
+                'payment.time': 'Heure:',
+                'payment.duration': 'Durée:',
+                'payment.platform': 'Plateforme:',
+                'payment.total': 'Total à payer:',
+                'payment.processing': 'Traitement en cours...',
+                'payment.qr_code': 'QR Code',
+                
+                // Payment success page
+                'payment.success_title': 'Paiement Réussi - YoTeacher',
+                'payment.success_title_main': 'Paiement Réussi !',
+                'payment.success_message': 'Votre paiement a été accepté et votre réservation est en cours de confirmation.',
+                'payment.reservation_pending': 'Réservation en attente',
+                'payment.technical_issue': 'Votre paiement a été accepté mais nous avons rencontré un problème technique avec la réservation automatique.',
+                'payment.contact_me': 'Contactez moi',
+                'payment.view_dashboard': 'Voir mon dashboard',
+                'payment.return_home': 'Retour à l\'accueil',
+                'payment.book_another': 'Réserver un autre cours',
+                'payment.reservation_confirmed': 'Réservation confirmée',
+                'payment.reservation_error': 'Erreur lors de la réservation. Veuillez me contacter',
+                'payment.confirmation_processing': 'Confirmation de réservation en cours...',
+                'payment.course': 'Cours:',
+                'payment.amount_paid': 'Montant payé:',
+                'payment.booking_summary': 'Récapitulatif de votre réservation',
+                'payment.details_error1': 'Impossible de récupérer les détails de la réservation.',
+                'payment.details_error2': 'Veuillez contacter le support si vous avez des questions.'
             },
             en: {
                 // Navigation et Header
@@ -169,6 +337,7 @@ class TranslationManager {
                 'courses.detail_forfait': '10-course package',
                 'courses.price_per_hour': '/h',
                 'courses.discount': '(-5%)',
+                'courses.trial': 'Trial lesson',
                 
                 // Testimonials
                 'testimonials.label': 'Testimonials',
@@ -199,6 +368,173 @@ class TranslationManager {
                 'footer.cancellation': 'Cancellation Policy',
                 'footer.copyright': 'Made with ❤️ in Marseille',
                 'footer.email': 'contact@yoteacher.com',
+                
+                // Login page
+                'login.title': 'Login - YoTeacher',
+                'login.subtitle': 'Log in to your student space',
+                'login.email': 'Email address',
+                'login.password': 'Password',
+                'login.forgot_password': 'Forgot password?',
+                'login.sign_in': 'Log in',
+                'login.no_account': 'No account yet?',
+                'login.sign_up_free': 'Sign up for free',
+                'login.loading': 'Logging in...',
+                'login.success': 'Login successful! Redirecting...',
+                
+                // Signup page
+                'signup.title': 'Sign Up - YoTeacher',
+                'signup.subtitle': 'Create your account for free',
+                'signup.full_name': 'Full name',
+                'signup.password_hint': 'Minimum 6 characters',
+                'signup.confirm_password': 'Confirm password',
+                'signup.create_account': 'Create my account',
+                'signup.terms': 'By signing up, you agree to our Terms of Use and Privacy Policy',
+                'signup.have_account': 'Already have an account?',
+                'signup.loading': 'Creating account...',
+                'signup.success': 'Account created successfully!',
+                
+                // Dashboard page
+                'dashboard.title': 'My Dashboard - YoTeach',
+                'dashboard.loading': 'Loading...',
+                'dashboard.loading_message': 'Please wait while your dashboard is loading.',
+                'dashboard.loading_data': 'Loading your data...',
+                'dashboard.upcoming_lessons': 'Upcoming lessons',
+                'dashboard.my_credits': 'My credits',
+                'dashboard.my_profile': 'My Profile',
+                'dashboard.no_lessons': 'No lessons scheduled',
+                'dashboard.no_credits': 'No credits available',
+                'dashboard.edit_profile': 'Edit my profile',
+                'dashboard.book_lesson': 'Book a lesson',
+                'dashboard.discover_method': 'Discover my method',
+                'dashboard.practice_speaking': 'Practice speaking',
+                'dashboard.complete_learning': 'Complete learning',
+                'dashboard.welcome': 'Welcome to your YoTeacher dashboard',
+                'dashboard.email': 'Email',
+                'dashboard.member_since': 'Member since',
+                'dashboard.time': 'Time',
+                'dashboard.duration': 'Duration',
+                'dashboard.type': 'Type',
+                'dashboard.reference': 'Reference',
+                'dashboard.cancel': 'Cancel',
+                'dashboard.reschedule': 'Reschedule',
+                'dashboard.cancel_confirm': 'Are you sure you want to cancel this lesson?',
+                'dashboard.cancel_function': 'Cancel function to implement',
+                'dashboard.reschedule_function': 'Reschedule function to implement',
+                'dashboard.logout': 'Logout',
+                
+                // Profile page
+                'profile.title': 'My Profile - YoTeacher',
+                'profile.change_photo': 'Change photo',
+                'profile.upload_help': 'JPG, PNG - max 5MB',
+                'profile.personal_info': 'Information',
+                'profile.french_level': 'French level',
+                'profile.password': 'Password',
+                'profile.personal_subtitle': 'Update your contact information',
+                'profile.first_name': 'First name',
+                'profile.last_name': 'Last name',
+                'profile.description': 'Description (optional)',
+                'profile.description_placeholder': 'Tell us a bit about yourself...',
+                'profile.save_changes': 'Save changes',
+                'profile.level_subtitle': 'Define your current French level',
+                'profile.current_level': 'Current level (CEFR)',
+                'profile.select_level': 'Select your level',
+                'profile.learning_goals': 'Learning goals',
+                'profile.goals_placeholder': 'Ex: Prepare for DELF B2, Improve my professional French...',
+                'profile.save_preferences': 'Save preferences',
+                'profile.change_password': 'Change password',
+                'profile.password_subtitle': 'Update your login password',
+                'profile.current_password': 'Current password',
+                'profile.new_password': 'New password',
+                'profile.password_min': 'Minimum 8 characters',
+                'profile.confirm_password': 'Confirm new password',
+                'profile.change_password_button': 'Change password',
+                'profile.upload_error': 'Image size should not exceed 5MB',
+                'profile.upload_success': 'Photo updated locally. Cloud save to configure.',
+                'profile.upload_error_generic': 'Error loading image',
+                'profile.update_success': 'Profile updated successfully!',
+                'profile.update_error': 'Error',
+                'profile.level_update_success': 'French level updated!',
+                'profile.password_length_error': 'Password must be at least 8 characters long',
+                'profile.password_match_error': 'Passwords do not match',
+                'profile.password_success': 'Password updated successfully!',
+                'profile.load_error': 'Error loading profile',
+                
+                // Payment page
+                'payment.title': 'Payment - YoTeacher',
+                'payment.title_main': 'Complete your payment',
+                'payment.subtitle': 'Choose your payment method and confirm your reservation',
+                'payment.currency_info': 'Prices displayed in',
+                'payment.auto_conversion': 'Automatic conversion',
+                'payment.interac_note': 'Important note:',
+                'payment.interac_message': 'Interac payments must be made in Canadian dollars (CAD). The currency has been automatically adjusted for you.',
+                'payment.choose_method': 'Choose a payment method',
+                'payment.revolut_qr': 'Click on the QR code to open Revolut',
+                'payment.revolut_link': 'Revolut link',
+                'payment.beneficiary_name': 'Beneficiary name',
+                'payment.reference': 'Reference',
+                'payment.amount': 'Amount',
+                'payment.important': 'Important:',
+                'payment.revolut_notice': 'Once payment is made on Revolut, click "I paid with Revolut" to confirm your reservation.',
+                'payment.paid_revolut': 'I paid with Revolut',
+                'payment.wise_qr': 'Click on the QR code to open Wise',
+                'payment.wise_link': 'Wise link',
+                'payment.wise_email': 'Wise email',
+                'payment.wise_notice': 'Once payment is made on Wise, click "I paid with Wise" to confirm your reservation.',
+                'payment.paid_wise': 'I paid with Wise',
+                'payment.interac_title': 'Interac Payment',
+                'payment.interac_instructions': 'Please send an Interac transfer to the following details:',
+                'payment.interac_email': 'Interac email',
+                'payment.security_question': 'Security question',
+                'payment.answer': 'Answer',
+                'payment.interac_notice': 'Once the transfer is made, click "I paid with Interac" to confirm your reservation.',
+                'payment.paid_interac': 'I paid with Interac',
+                'payment.paypal_qr': 'Click on the QR code to open PayPal',
+                'payment.paypal_link': 'PayPal link',
+                'payment.paypal_email': 'PayPal email',
+                'payment.paypal_notice': 'Once payment is made on PayPal, click "I paid with PayPal" to confirm your reservation.',
+                'payment.paid_paypal': 'I paid with PayPal',
+                'payment.card_method': 'Visa/Mastercard/Amex (Stripe)',
+                'payment.secure': 'Secure:',
+                'payment.secure_message': 'Your payment is encrypted and secured by Stripe. No banking information is stored on our servers.',
+                'payment.pay_with_card': 'Pay with card',
+                'payment.summary': 'Summary',
+                'payment.secure_payment': '100% secure payment',
+                'payment.encrypted': 'Your banking data is encrypted',
+                'payment.no_storage': 'No information stored on our servers',
+                'payment.guaranteed': 'Reservation guaranteed after payment',
+                'payment.time_slot': 'Your time slot is reserved for 15 minutes. Once payment is confirmed, you will receive an email with the video conference link.',
+                'payment.my_dashboard': 'My dashboard',
+                'payment.my_profile': 'My profile',
+                'payment.my_bookings': 'My bookings',
+                'payment.currency': 'Currency',
+                'payment.booking_details': 'Your booking details',
+                'payment.course_type': 'Course type:',
+                'payment.date': 'Date:',
+                'payment.time': 'Time:',
+                'payment.duration': 'Duration:',
+                'payment.platform': 'Platform:',
+                'payment.total': 'Total to pay:',
+                'payment.processing': 'Processing...',
+                'payment.qr_code': 'QR Code',
+                
+                // Payment success page
+                'payment.success_title': 'Payment Successful - YoTeacher',
+                'payment.success_title_main': 'Payment Successful!',
+                'payment.success_message': 'Your payment has been accepted and your reservation is being confirmed.',
+                'payment.reservation_pending': 'Reservation pending',
+                'payment.technical_issue': 'Your payment has been accepted but we encountered a technical issue with the automatic reservation.',
+                'payment.contact_me': 'Contact me',
+                'payment.view_dashboard': 'View my dashboard',
+                'payment.return_home': 'Return to home',
+                'payment.book_another': 'Book another course',
+                'payment.reservation_confirmed': 'Reservation confirmed',
+                'payment.reservation_error': 'Reservation error. Please contact me',
+                'payment.confirmation_processing': 'Reservation confirmation in progress...',
+                'payment.course': 'Course:',
+                'payment.amount_paid': 'Amount paid:',
+                'payment.booking_summary': 'Your booking summary',
+                'payment.details_error1': 'Unable to retrieve booking details.',
+                'payment.details_error2': 'Please contact support if you have any questions.'
             }
         };
         
@@ -206,13 +542,11 @@ class TranslationManager {
     }
 
     initialize() {
-        // Récupérer la langue depuis localStorage
         const savedLanguage = localStorage.getItem('language');
         
         if (savedLanguage && this.supportedLanguages.includes(savedLanguage)) {
             this.currentLanguage = savedLanguage;
         } else {
-            // Détecter la langue du navigateur
             const browserLanguage = navigator.language.split('-')[0];
             if (this.supportedLanguages.includes(browserLanguage)) {
                 this.currentLanguage = browserLanguage;
@@ -221,7 +555,6 @@ class TranslationManager {
         
         console.log(`🌍 Langue initiale: ${this.currentLanguage}`);
         
-        // Initialiser dès que le DOM est prêt
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.init();
@@ -234,17 +567,13 @@ class TranslationManager {
     init() {
         console.log('🌍 Initialisation du gestionnaire de traduction...');
         
-        // Mettre à jour la page
         this.updatePage();
-        
-        // Ajouter les écouteurs d'événements
         this.addEventListeners();
     }
 
     addEventListeners() {
         console.log('🌍 Ajout des écouteurs d\'événements...');
         
-        // Écouteur pour le sélecteur de langue desktop
         const desktopSwitcher = document.getElementById('languageSwitcherDesktop');
         if (desktopSwitcher) {
             desktopSwitcher.addEventListener('click', (e) => {
@@ -255,7 +584,6 @@ class TranslationManager {
             });
         }
         
-        // Écouteur pour le sélecteur de langue mobile
         const mobileSwitcher = document.getElementById('languageSwitcherMobile');
         if (mobileSwitcher) {
             mobileSwitcher.addEventListener('click', (e) => {
@@ -264,7 +592,6 @@ class TranslationManager {
                 console.log('🌍 Clic sur le sélecteur de langue mobile');
                 this.toggleLanguage();
                 
-                // Fermer le menu mobile après changement
                 const mobileMenu = document.getElementById('mobileMenu');
                 if (mobileMenu && mobileMenu.classList.contains('active')) {
                     mobileMenu.classList.remove('active');
@@ -276,18 +603,13 @@ class TranslationManager {
     }
 
     toggleLanguage() {
-        // Basculer la langue
         this.currentLanguage = this.currentLanguage === 'fr' ? 'en' : 'fr';
-        
-        // Sauvegarder dans localStorage
         localStorage.setItem('language', this.currentLanguage);
         
         console.log(`🌍 Changement de langue vers: ${this.currentLanguage}`);
         
-        // Mettre à jour la page
         this.updatePage();
         
-        // Déclencher un événement pour informer les autres scripts
         window.dispatchEvent(new CustomEvent('language:changed', { 
             detail: { language: this.currentLanguage } 
         }));
@@ -296,20 +618,14 @@ class TranslationManager {
     updatePage() {
         console.log(`🌍 Mise à jour de la page en ${this.currentLanguage}`);
         
-        // Mettre à jour l'attribut lang de la page
         document.documentElement.lang = this.currentLanguage;
-        
-        // Appliquer les traductions
         this.applyTranslations();
-        
-        // Mettre à jour les sélecteurs de langue (affichage inversé)
         this.updateLanguageSwitchers();
         
         console.log('✅ Page traduite avec succès');
     }
 
     applyTranslations() {
-        // Traduire les éléments avec data-i18n
         document.querySelectorAll('[data-i18n]').forEach(element => {
             const key = element.getAttribute('data-i18n');
             const translation = this.getTranslation(key);
@@ -318,7 +634,6 @@ class TranslationManager {
             }
         });
 
-        // Traduire les placeholders
         document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
             const key = element.getAttribute('data-i18n-placeholder');
             const translation = this.getTranslation(key);
@@ -327,7 +642,6 @@ class TranslationManager {
             }
         });
 
-        // Traduire les attributs title
         document.querySelectorAll('[data-i18n-title]').forEach(element => {
             const key = element.getAttribute('data-i18n-title');
             const translation = this.getTranslation(key);
@@ -335,17 +649,24 @@ class TranslationManager {
                 element.title = translation;
             }
         });
+        
+        // Mettre à jour les titres de page
+        const titleElement = document.querySelector('title[data-i18n]');
+        if (titleElement) {
+            const key = titleElement.getAttribute('data-i18n');
+            const translation = this.getTranslation(key);
+            if (translation && translation !== key) {
+                titleElement.textContent = translation;
+            }
+        }
     }
 
     updateLanguageSwitchers() {
-        // Mettre à jour les boutons de langue (affichage inversé)
         const languageSwitchers = document.querySelectorAll('.language-switcher span:last-child, .mobile-language span:last-child');
         
         languageSwitchers.forEach(switcher => {
-            // Afficher "EN" quand le site est en français, et "FR" quand le site est en anglais
             switcher.textContent = this.currentLanguage === 'fr' ? 'EN' : 'FR';
             
-            // Ajouter un tooltip
             const parent = switcher.closest('.language-switcher, .mobile-language');
             if (parent) {
                 parent.title = this.currentLanguage === 'fr' 
@@ -356,17 +677,14 @@ class TranslationManager {
     }
 
     getTranslation(key) {
-        // Récupérer la traduction pour la langue courante
         if (this.translations[this.currentLanguage] && this.translations[this.currentLanguage][key]) {
             return this.translations[this.currentLanguage][key];
         }
         
-        // Fallback sur le français
         if (this.translations['fr'] && this.translations['fr'][key]) {
             return this.translations['fr'][key];
         }
         
-        // Retourner la clé si aucune traduction n'est trouvée
         return key;
     }
 

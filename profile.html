@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon profil - YoTeacher</title>
+    <title data-i18n="profile.title">Mon profil - YoTeacher</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -480,9 +480,9 @@
                 <!-- Groupe de droite avec seulement le sélecteur de langue -->
                 <div class="header-right-group">
                     <!-- Sélecteur de langue -->
-                    <div class="language-switcher">
+                    <div class="language-switcher" id="languageSwitcherDesktop">
                         <span class="flag">🌐</span>
-                        <span>FR</span>
+                        <span data-i18n="header.language">EN</span>
                     </div>
                 </div>
             </div>
@@ -495,27 +495,25 @@
                 <!-- Sidebar -->
                 <div class="profile-sidebar">
                     <div class="profile-avatar">
-                        <div class="avatar-large" id="userAvatar">
-                            <!-- Initials will be added by JS -->
-                        </div>
+                        <div class="avatar-large" id="userAvatar"></div>
                         <div class="avatar-upload">
                             <input type="file" id="avatarInput" accept="image/*">
                             <label for="avatarInput">
-                                <i class="fas fa-camera"></i> Changer la photo
+                                <i class="fas fa-camera"></i> <span data-i18n="profile.change_photo">Changer la photo</span>
                             </label>
                         </div>
-                        <div class="upload-help">JPG, PNG - max 5MB</div>
+                        <div class="upload-help" data-i18n="profile.upload_help">JPG, PNG - max 5MB</div>
                     </div>
 
                     <nav class="profile-nav">
                         <a href="#" class="nav-item active" data-tab="personal">
-                            <i class="fas fa-user"></i> Informations
+                            <i class="fas fa-user"></i> <span data-i18n="profile.personal_info">Informations</span>
                         </a>
                         <a href="#" class="nav-item" data-tab="language">
-                            <i class="fas fa-language"></i> Niveau français
+                            <i class="fas fa-language"></i> <span data-i18n="profile.french_level">Niveau français</span>
                         </a>
                         <a href="#" class="nav-item" data-tab="password">
-                            <i class="fas fa-key"></i> Mot de passe
+                            <i class="fas fa-key"></i> <span data-i18n="profile.password">Mot de passe</span>
                         </a>
                     </nav>
                 </div>
@@ -536,34 +534,34 @@
                     <!-- Onglet: Informations personnelles -->
                     <div class="tab-content active" id="personalTab">
                         <div class="tab-header">
-                            <h2>Informations personnelles</h2>
-                            <p>Mettez à jour vos informations de contact</p>
+                            <h2 data-i18n="profile.personal_info">Informations personnelles</h2>
+                            <p data-i18n="profile.personal_subtitle">Mettez à jour vos informations de contact</p>
                         </div>
 
                         <form id="personalForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="firstName" class="form-label">Prénom</label>
+                                    <label for="firstName" class="form-label" data-i18n="profile.first_name">Prénom</label>
                                     <input type="text" id="firstName" class="form-input" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="lastName" class="form-label">Nom</label>
+                                    <label for="lastName" class="form-label" data-i18n="profile.last_name">Nom</label>
                                     <input type="text" id="lastName" class="form-input" required>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label for="email" class="form-label">Adresse email</label>
+                                <label for="email" class="form-label" data-i18n="login.email">Adresse email</label>
                                 <input type="email" id="email" class="form-input" required>
                             </div>
 
                             <div class="form-group">
-                                <label for="description" class="form-label">Description (optionnel)</label>
-                                <textarea id="description" class="form-textarea" placeholder="Parlez-nous un peu de vous..."></textarea>
+                                <label for="description" class="form-label" data-i18n="profile.description">Description (optionnel)</label>
+                                <textarea id="description" class="form-textarea" data-i18n-placeholder="profile.description_placeholder" placeholder="Parlez-nous un peu de vous..."></textarea>
                             </div>
 
                             <button type="submit" class="btn-save">
-                                <i class="fas fa-save"></i> Enregistrer les modifications
+                                <i class="fas fa-save"></i> <span data-i18n="profile.save_changes">Enregistrer les modifications</span>
                             </button>
                         </form>
                     </div>
@@ -571,15 +569,15 @@
                     <!-- Onglet: Niveau de français -->
                     <div class="tab-content" id="languageTab">
                         <div class="tab-header">
-                            <h2>Niveau de français</h2>
-                            <p>Définissez votre niveau actuel en français</p>
+                            <h2 data-i18n="profile.french_level">Niveau de français</h2>
+                            <p data-i18n="profile.level_subtitle">Définissez votre niveau actuel en français</p>
                         </div>
 
                         <form id="languageForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-group">
-                                <label for="currentLevel" class="form-label">Niveau actuel (CEFR)</label>
+                                <label for="currentLevel" class="form-label" data-i18n="profile.current_level">Niveau actuel (CEFR)</label>
                                 <select id="currentLevel" class="form-select">
-                                    <option value="">Sélectionnez votre niveau</option>
+                                    <option value="" data-i18n="profile.select_level">Sélectionnez votre niveau</option>
                                     <option value="A1">A1 - Débutant</option>
                                     <option value="A2">A2 - Élémentaire</option>
                                     <option value="B1">B1 - Intermédiaire</option>
@@ -590,12 +588,12 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="learningGoals" class="form-label">Objectifs d'apprentissage</label>
-                                <textarea id="learningGoals" class="form-textarea" placeholder="Ex: Préparer le DELF B2, Améliorer mon français professionnel..."></textarea>
+                                <label for="learningGoals" class="form-label" data-i18n="profile.learning_goals">Objectifs d'apprentissage</label>
+                                <textarea id="learningGoals" class="form-textarea" data-i18n-placeholder="profile.goals_placeholder" placeholder="Ex: Préparer le DELF B2, Améliorer mon français professionnel..."></textarea>
                             </div>
 
                             <button type="submit" class="btn-save">
-                                <i class="fas fa-save"></i> Enregistrer les préférences
+                                <i class="fas fa-save"></i> <span data-i18n="profile.save_preferences">Enregistrer les préférences</span>
                             </button>
                         </form>
                     </div>
@@ -603,29 +601,29 @@
                     <!-- Onglet: Mot de passe -->
                     <div class="tab-content" id="passwordTab">
                         <div class="tab-header">
-                            <h2>Changer le mot de passe</h2>
-                            <p>Mettez à jour votre mot de passe de connexion</p>
+                            <h2 data-i18n="profile.change_password">Changer le mot de passe</h2>
+                            <p data-i18n="profile.password_subtitle">Mettez à jour votre mot de passe de connexion</p>
                         </div>
 
                         <form id="passwordForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-group">
-                                <label for="currentPassword" class="form-label">Mot de passe actuel</label>
+                                <label for="currentPassword" class="form-label" data-i18n="profile.current_password">Mot de passe actuel</label>
                                 <input type="password" id="currentPassword" class="form-input" required>
                             </div>
 
                             <div class="form-group">
-                                <label for="newPassword" class="form-label">Nouveau mot de passe</label>
+                                <label for="newPassword" class="form-label" data-i18n="profile.new_password">Nouveau mot de passe</label>
                                 <input type="password" id="newPassword" class="form-input" required>
-                                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">Minimum 8 caractères</small>
+                                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;" data-i18n="profile.password_min">Minimum 8 caractères</small>
                             </div>
 
                             <div class="form-group">
-                                <label for="confirmPassword" class="form-label">Confirmer le nouveau mot de passe</label>
+                                <label for="confirmPassword" class="form-label" data-i18n="profile.confirm_password">Confirmer le nouveau mot de passe</label>
                                 <input type="password" id="confirmPassword" class="form-input" required>
                             </div>
 
                             <button type="submit" class="btn-save">
-                                <i class="fas fa-key"></i> Changer le mot de passe
+                                <i class="fas fa-key"></i> <span data-i18n="profile.change_password_button">Changer le mot de passe</span>
                             </button>
                         </form>
                     </div>
@@ -641,6 +639,7 @@
     <script src="booking.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
+    <script src="translation.js"></script>
     
     <script>
         function waitForAuthManager() {
@@ -700,12 +699,11 @@
                     if (!file) return;
                     
                     if (file.size > 5 * 1024 * 1024) {
-                        showError('La taille de l\'image ne doit pas dépasser 5MB');
+                        showError(window.translationManager?.getTranslation('profile.upload_error') || 'La taille de l\'image ne doit pas dépasser 5MB');
                         return;
                     }
                     
                     try {
-                        // Créer un aperçu local
                         const reader = new FileReader();
                         reader.onload = function(event) {
                             const avatar = document.getElementById('userAvatar');
@@ -713,11 +711,10 @@
                         };
                         reader.readAsDataURL(file);
                         
-                        // Upload vers Supabase Storage (à adapter selon votre configuration)
-                        showSuccess('Photo mise à jour localement. Sauvegarde cloud à configurer.');
+                        showSuccess(window.translationManager?.getTranslation('profile.upload_success') || 'Photo mise à jour localement. Sauvegarde cloud à configurer.');
                         
                     } catch (error) {
-                        showError('Erreur lors du chargement de l\'image: ' + error.message);
+                        showError(window.translationManager?.getTranslation('profile.upload_error_generic') || 'Erreur lors du chargement de l\'image: ' + error.message);
                     }
                 });
                 
@@ -739,10 +736,10 @@
                         
                         if (error) throw error;
                         
-                        showSuccess('Profil mis à jour avec succès !');
+                        showSuccess(window.translationManager?.getTranslation('profile.update_success') || 'Profil mis à jour avec succès !');
                         
                     } catch (error) {
-                        showError('Erreur: ' + error.message);
+                        showError(window.translationManager?.getTranslation('profile.update_error') || 'Erreur: ' + error.message);
                     }
                 });
                 
@@ -760,10 +757,10 @@
                         
                         if (error) throw error;
                         
-                        showSuccess('Niveau de français mis à jour !');
+                        showSuccess(window.translationManager?.getTranslation('profile.level_update_success') || 'Niveau de français mis à jour !');
                         
                     } catch (error) {
-                        showError('Erreur: ' + error.message);
+                        showError(window.translationManager?.getTranslation('profile.update_error') || 'Erreur: ' + error.message);
                     }
                 });
                 
@@ -776,35 +773,33 @@
                     const confirmPassword = document.getElementById('confirmPassword').value;
                     
                     if (newPassword.length < 8) {
-                        showError('Le mot de passe doit contenir au moins 8 caractères');
+                        showError(window.translationManager?.getTranslation('profile.password_length_error') || 'Le mot de passe doit contenir au moins 8 caractères');
                         return;
                     }
                     
                     if (newPassword !== confirmPassword) {
-                        showError('Les mots de passe ne correspondent pas');
+                        showError(window.translationManager?.getTranslation('profile.password_match_error') || 'Les mots de passe ne correspondent pas');
                         return;
                     }
                     
                     try {
-                        // Note: Supabase ne permet pas de vérifier l'ancien mot de passe directement
-                        // Vous devrez implémenter une logique de vérification appropriée
                         const { error } = await supabase.auth.updateUser({
                             password: newPassword
                         });
                         
                         if (error) throw error;
                         
-                        showSuccess('Mot de passe mis à jour avec succès !');
+                        showSuccess(window.translationManager?.getTranslation('profile.password_success') || 'Mot de passe mis à jour avec succès !');
                         document.getElementById('passwordForm').reset();
                         
                     } catch (error) {
-                        showError('Erreur: ' + error.message);
+                        showError(window.translationManager?.getTranslation('profile.update_error') || 'Erreur: ' + error.message);
                     }
                 });
                 
             } catch (error) {
                 console.error('Erreur:', error);
-                showError('Erreur lors du chargement du profil');
+                showError(window.translationManager?.getTranslation('profile.load_error') || 'Erreur lors du chargement du profil');
             }
         }
         

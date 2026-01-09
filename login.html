@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - YoTeacher</title>
+    <title data-i18n="login.title">Connexion - YoTeacher</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +16,7 @@
             background-color: rgba(255, 255, 255, 0.98) !important;
             box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
             backdrop-filter: blur(10px) !important;
-            min-height: 60px !important; /* Réduit la hauteur */
+            min-height: 60px !important;
         }
         
         .header-content {
@@ -379,17 +379,17 @@
                 </div>
                 
                 <!-- Bouton Connexion Mobile -->
-                <a href="#" class="mobile-login-btn-header">Connexion</a>
+                <a href="#" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
                 
                 <!-- Groupe des boutons de droite - FORCÉ À DROITE -->
                 <div class="header-right-group">
                     <!-- Sélecteur de langue uniquement -->
-                    <div class="language-switcher">
+                    <div class="language-switcher" id="languageSwitcherDesktop">
                         <span class="flag">🌐</span>
-                        <span>FR</span>
+                        <span data-i18n="header.language">EN</span>
                     </div>
                     
-                    <a href="#" class="login-btn">Connexion</a>
+                    <a href="#" class="login-btn" data-i18n="header.login">Connexion</a>
                 </div>
             </div>
         </div>
@@ -401,7 +401,7 @@
             <div class="auth-card">
                 <div class="auth-header">
                     <div class="auth-logo">YoTeacher</div>
-                    <p class="auth-subtitle">Connectez-vous à votre espace étudiant</p>
+                    <p class="auth-subtitle" data-i18n="login.subtitle">Connectez-vous à votre espace étudiant</p>
                 </div>
 
                 <div class="error-message" id="errorMessage">
@@ -414,26 +414,26 @@
 
                 <form id="loginForm">
                     <div class="form-group">
-                        <label class="form-label" for="email">Adresse email</label>
+                        <label class="form-label" for="email" data-i18n="login.email">Adresse email</label>
                         <input type="email" id="email" class="form-input" placeholder="votre@email.com" required>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="password">Mot de passe</label>
+                        <label class="form-label" for="password" data-i18n="login.password">Mot de passe</label>
                         <input type="password" id="password" class="form-input" placeholder="Votre mot de passe" required>
                     </div>
 
                     <div class="forgot-password">
-                        <a href="#" id="forgotPasswordLink">Mot de passe oublié ?</a>
+                        <a href="#" id="forgotPasswordLink" data-i18n="login.forgot_password">Mot de passe oublié ?</a>
                     </div>
 
                     <button type="submit" class="btn-auth">
-                        <i class="fas fa-sign-in-alt"></i> Se connecter
+                        <i class="fas fa-sign-in-alt"></i> <span data-i18n="login.sign_in">Se connecter</span>
                     </button>
                 </form>
 
                 <div class="auth-footer">
-                    <p>Pas encore de compte ? <a href="signup.html" class="auth-link">S'inscrire gratuitement</a></p>
+                    <p data-i18n="login.no_account">Pas encore de compte ? <a href="signup.html" class="auth-link" data-i18n="login.sign_up_free">S'inscrire gratuitement</a></p>
                 </div>
             </div>
         </div>
@@ -447,6 +447,7 @@
     <script src="booking.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
+    <script src="translation.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('loginForm');
@@ -483,14 +484,14 @@
                 // Afficher chargement
                 const button = form.querySelector('button');
                 const originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connexion en cours...';
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (window.translationManager?.getTranslation('login.loading') || 'Connexion en cours...');
                 button.disabled = true;
 
                 try {
                     const result = await window.authManager.signIn(email, password);
                     
                     if (result.success) {
-                        showSuccess('Connexion réussie ! Redirection...');
+                        showSuccess(window.translationManager?.getTranslation('login.success') || 'Connexion réussie ! Redirection...');
                         
                         // Utiliser le redirectUrl de la réponse
                         const redirectUrl = result.redirectUrl || 'dashboard.html';

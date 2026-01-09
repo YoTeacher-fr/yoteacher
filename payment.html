@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paiement - YoTeacher</title>
+    <title data-i18n="payment.title">Paiement - YoTeacher</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
@@ -919,7 +919,7 @@
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
                 
                 <!-- Groupe droit pour langue, devise et avatar -->
                 <div class="header-right-group">
@@ -927,29 +927,27 @@
                     <div class="user-avatar" id="userAvatar" style="display: none;">
                         <div class="avatar-img" id="avatarInitials">Y</div>
                         <div class="user-menu">
-                            <a href="dashboard.html">Mon tableau de bord</a>
-                            <a href="profile.html">Mon profil</a>
-                            <a href="bookings.html">Mes réservations</a>
-                            <a href="#" class="logout-btn" id="logoutBtn">Déconnexion</a>
+                            <a href="dashboard.html" data-i18n="payment.my_dashboard">Mon tableau de bord</a>
+                            <a href="profile.html" data-i18n="payment.my_profile">Mon profil</a>
+                            <a href="bookings.html" data-i18n="payment.my_bookings">Mes réservations</a>
+                            <a href="#" class="logout-btn" id="logoutBtn" data-i18n="dashboard.logout">Déconnexion</a>
                         </div>
                     </div>
                     
                     <!-- Sélecteur de devise -->
                     <div class="currency-selector">
                         <i class="fas fa-money-bill-wave"></i>
-                        <select id="currencySelector">
-                            <!-- Rempli dynamiquement par currency.js -->
-                        </select>
+                        <select id="currencySelector"></select>
                     </div>
                     
                     <!-- Sélecteur de langue -->
-                    <div class="language-switcher">
+                    <div class="language-switcher" id="languageSwitcherDesktop">
                         <span class="flag">🌐</span>
-                        <span>FR</span>
+                        <span data-i18n="header.language">EN</span>
                     </div>
                     
                     <!-- Bouton de connexion (visible si non connecté) -->
-                    <a href="login.html" class="login-btn" id="loginBtn">Connexion</a>
+                    <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
                 </div>
             </div>
         </div>
@@ -958,26 +956,23 @@
         <div class="mobile-menu-overlay" id="mobileMenu">
             <nav class="mobile-nav">
                 <button class="close-menu" id="closeMenuBtn">×</button>
-                <!-- La section utilisateur sera ajoutée dynamiquement ici -->
-                <a href="index.html#about" class="mobile-nav-link">À propos</a>
-                <a href="index.html#courses" class="mobile-nav-link">Cours</a>
-                <a href="index.html#testimonials" class="mobile-nav-link">Témoignages</a>
-                <a href="index.html#contact" class="mobile-nav-link">Contact</a>
+                <a href="index.html#about" class="mobile-nav-link" data-i18n="nav.about">À propos</a>
+                <a href="index.html#courses" class="mobile-nav-link" data-i18n="nav.courses">Cours</a>
+                <a href="index.html#testimonials" class="mobile-nav-link" data-i18n="nav.testimonials">Témoignages</a>
+                <a href="index.html#contact" class="mobile-nav-link" data-i18n="nav.contact">Contact</a>
                 
                 <!-- Sélecteur de devise mobile -->
                 <div class="currency-selector-mobile">
-                    <label><i class="fas fa-money-bill-wave"></i> Devise</label>
-                    <select id="currencySelectorMobile">
-                        <!-- Rempli dynamiquement -->
-                    </select>
+                    <label><i class="fas fa-money-bill-wave"></i> <span data-i18n="payment.currency">Devise</span></label>
+                    <select id="currencySelectorMobile"></select>
                 </div>
                 
-                <div class="mobile-language">
+                <div class="mobile-language" id="languageSwitcherMobile">
                     <span class="flag">🌐</span>
-                    <span>Français (FR)</span>
+                    <span data-i18n="header.language">EN</span>
                 </div>
                 
-                <a href="login.html" class="mobile-login-btn">Connexion</a>
+                <a href="login.html" class="mobile-login-btn" data-i18n="header.login">Connexion</a>
             </nav>
         </div>
     </header>
@@ -985,18 +980,17 @@
     <section class="payment-section">
         <div class="payment-container">
             <div class="payment-header">
-                <h1 class="payment-title">Finaliser votre paiement</h1>
-                <p class="payment-subtitle">Choisissez votre moyen de paiement et confirmez votre réservation</p>
+                <h1 class="payment-title" data-i18n="payment.title_main">Finaliser votre paiement</h1>
+                <p class="payment-subtitle" data-i18n="payment.subtitle">Choisissez votre moyen de paiement et confirmez votre réservation</p>
                 <div class="currency-info-payment" id="currencyInfoPayment">
-                    <i class="fas fa-sync-alt"></i> Prix affichés en <span id="currentCurrency">EUR</span> - Conversion automatique
+                    <i class="fas fa-sync-alt"></i> <span data-i18n="payment.currency_info">Prix affichés en</span> <span id="currentCurrency">EUR</span> - <span data-i18n="payment.auto_conversion">Conversion automatique</span>
                 </div>
             </div>
             
             <!-- Notification pour Interac -->
             <div class="interac-currency-notice" id="interacCurrencyNotice">
                 <i class="fas fa-info-circle"></i>
-                <strong>Note importante :</strong> Les paiements Interac doivent être effectués en dollars canadiens (CAD). 
-                La devise a été automatiquement ajustée pour vous.
+                <strong data-i18n="payment.interac_note">Note importante :</strong> <span data-i18n="payment.interac_message">Les paiements Interac doivent être effectués en dollars canadiens (CAD). La devise a été automatiquement ajustée pour vous.</span>
             </div>
 
             <div class="error-message" id="paymentError">
@@ -1006,7 +1000,7 @@
             <div class="payment-grid">
                 <!-- Colonne gauche : Moyens de paiement -->
                 <div class="payment-card">
-                    <h2 class="card-title">Choisir un moyen de paiement</h2>
+                    <h2 class="card-title" data-i18n="payment.choose_method">Choisir un moyen de paiement</h2>
                     
                     <div class="payment-methods">
                         <!-- Revolut -->
@@ -1023,25 +1017,25 @@
                         <div class="payment-method-details" id="revolutDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
-                                    <span class="qr-code-label">Cliquez sur le QR code pour ouvrir Revolut</span>
+                                    <span class="qr-code-label" data-i18n="payment.revolut_qr">Cliquez sur le QR code pour ouvrir Revolut</span>
                                     <img src="assets/images/revolut.jpeg" alt="QR Code Revolut" id="revolutQrCode" class="qr-code-img" title="Cliquez pour ouvrir Revolut">
                                 </div>
                                 
                                 <div class="payment-info">
                                     <div class="info-item clickable" id="revolutLinkItem">
-                                        <div class="info-label">Lien Revolut</div>
+                                        <div class="info-label" data-i18n="payment.revolut_link">Lien Revolut</div>
                                         <div class="info-value" id="revolutLinkDisplay">revolut.me/yoann</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Nom du bénéficiaire</div>
+                                        <div class="info-label" data-i18n="payment.beneficiary_name">Nom du bénéficiaire</div>
                                         <div class="info-value" id="revolutName">Yoann Bourbia</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Référence</div>
+                                        <div class="info-label" data-i18n="payment.reference">Référence</div>
                                         <div class="info-value" id="revolutRef">COURS-<span id="revolutRefNum"></span></div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Montant</div>
+                                        <div class="info-label" data-i18n="payment.amount">Montant</div>
                                         <div class="info-value" id="revolutAmount">-</div>
                                     </div>
                                 </div>
@@ -1049,13 +1043,13 @@
                                 <div class="payment-notice">
                                     <p>
                                         <i class="fas fa-info-circle"></i>
-                                        <strong>Important :</strong> Une fois le paiement effectué sur Revolut, cliquez sur "J'ai payé avec Revolut" pour confirmer votre réservation.
+                                        <strong data-i18n="payment.important">Important :</strong> <span data-i18n="payment.revolut_notice">Une fois le paiement effectué sur Revolut, cliquez sur "J'ai payé avec Revolut" pour confirmer votre réservation.</span>
                                     </p>
                                 </div>
                                 
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" data-method="revolut">
-                                        <i class="fas fa-check"></i> J'ai payé avec Revolut
+                                        <i class="fas fa-check"></i> <span data-i18n="payment.paid_revolut">J'ai payé avec Revolut</span>
                                     </button>
                                 </div>
                             </div>
@@ -1075,25 +1069,25 @@
                         <div class="payment-method-details" id="wiseDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
-                                    <span class="qr-code-label">Cliquez sur le QR code pour ouvrir Wise</span>
+                                    <span class="qr-code-label" data-i18n="payment.wise_qr">Cliquez sur le QR code pour ouvrir Wise</span>
                                     <img src="assets/images/wise.jpeg" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img" title="Cliquez pour ouvrir Wise">
                                 </div>
                                 
                                 <div class="payment-info">
                                     <div class="info-item clickable" id="wiseLinkItem">
-                                        <div class="info-label">Lien Wise</div>
+                                        <div class="info-label" data-i18n="payment.wise_link">Lien Wise</div>
                                         <div class="info-value" id="wiseLinkDisplay">wise.com/pay/yoann</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Nom du bénéficiaire</div>
+                                        <div class="info-label" data-i18n="payment.beneficiary_name">Nom du bénéficiaire</div>
                                         <div class="info-value" id="wiseName">Yoann Bourbia</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Email Wise</div>
+                                        <div class="info-label" data-i18n="payment.wise_email">Email Wise</div>
                                         <div class="info-value" id="wiseEmail">yoann@yoteacher.com</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Montant</div>
+                                        <div class="info-label" data-i18n="payment.amount">Montant</div>
                                         <div class="info-value" id="wiseAmount">-</div>
                                     </div>
                                 </div>
@@ -1101,13 +1095,13 @@
                                 <div class="payment-notice">
                                     <p>
                                         <i class="fas fa-info-circle"></i>
-                                        <strong>Important :</strong> Une fois le paiement effectué sur Wise, cliquez sur "J'ai payé avec Wise" pour confirmer votre réservation.
+                                        <strong data-i18n="payment.important">Important :</strong> <span data-i18n="payment.wise_notice">Une fois le paiement effectué sur Wise, cliquez sur "J'ai payé avec Wise" pour confirmer votre réservation.</span>
                                     </p>
                                 </div>
                                 
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" data-method="wise">
-                                        <i class="fas fa-check"></i> J'ai payé avec Wise
+                                        <i class="fas fa-check"></i> <span data-i18n="payment.paid_wise">J'ai payé avec Wise</span>
                                     </button>
                                 </div>
                             </div>
@@ -1127,35 +1121,35 @@
                         <div class="payment-method-details" id="interacDetails">
                             <div class="interac-details">
                                 <h3 style="margin-bottom: 20px; color: #333; display: flex; align-items: center; gap: 10px;">
-                                    <i class="fas fa-university" style="color: #E41E26;"></i> Paiement Interac
+                                    <i class="fas fa-university" style="color: #E41E26;"></i> <span data-i18n="payment.interac_title">Paiement Interac</span>
                                 </h3>
-                                <p style="margin-bottom: 20px; color: #555;">
+                                <p style="margin-bottom: 20px; color: #555;" data-i18n="payment.interac_instructions">
                                     Veuillez effectuer un virement Interac aux coordonnées suivantes :
                                 </p>
                                 
                                 <div class="bank-details">
                                     <div class="detail-item">
-                                        <span class="label">Nom du bénéficiaire:</span>
+                                        <span class="label" data-i18n="payment.beneficiary_name">Nom du bénéficiaire:</span>
                                         <span class="value" id="interacName">Yoann Bourbia</span>
                                     </div>
                                     <div class="detail-item">
-                                        <span class="label">Email Interac:</span>
+                                        <span class="label" data-i18n="payment.interac_email">Email Interac:</span>
                                         <span class="value" id="interacEmail">yoann@yoteacher.com</span>
                                     </div>
                                     <div class="detail-item">
-                                        <span class="label">Montant:</span>
+                                        <span class="label" data-i18n="payment.amount">Montant:</span>
                                         <span class="value" id="interacAmount">-</span>
                                     </div>
                                     <div class="detail-item">
-                                        <span class="label">Référence:</span>
+                                        <span class="label" data-i18n="payment.reference">Référence:</span>
                                         <span class="value" id="interacRef">COURS-<span id="interacRefNum"></span></span>
                                     </div>
                                     <div class="detail-item">
-                                        <span class="label">Question de sécurité:</span>
+                                        <span class="label" data-i18n="payment.security_question">Question de sécurité:</span>
                                         <span class="value">YoTeacher</span>
                                     </div>
                                     <div class="detail-item">
-                                        <span class="label">Réponse:</span>
+                                        <span class="label" data-i18n="payment.answer">Réponse:</span>
                                         <span class="value">francais</span>
                                     </div>
                                 </div>
@@ -1163,13 +1157,13 @@
                                 <div class="payment-notice">
                                     <p>
                                         <i class="fas fa-info-circle"></i>
-                                        <strong>Important :</strong> Une fois le virement effectué, cliquez sur "J'ai payé avec Interac" pour confirmer votre réservation.
+                                        <strong data-i18n="payment.important">Important :</strong> <span data-i18n="payment.interac_notice">Une fois le virement effectué, cliquez sur "J'ai payé avec Interac" pour confirmer votre réservation.</span>
                                     </p>
                                 </div>
                                 
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" data-method="interac">
-                                        <i class="fas fa-check"></i> J'ai payé avec Interac
+                                        <i class="fas fa-check"></i> <span data-i18n="payment.paid_interac">J'ai payé avec Interac</span>
                                     </button>
                                 </div>
                             </div>
@@ -1189,25 +1183,25 @@
                         <div class="payment-method-details" id="paypalDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
-                                    <span class="qr-code-label">Cliquez sur le QR code pour ouvrir PayPal</span>
+                                    <span class="qr-code-label" data-i18n="payment.paypal_qr">Cliquez sur le QR code pour ouvrir PayPal</span>
                                     <img src="assets/images/paypal.jpeg" alt="QR Code PayPal" id="paypalQrCode" class="qr-code-img" title="Cliquez pour ouvrir PayPal">
                                 </div>
                                 
                                 <div class="payment-info">
                                     <div class="info-item clickable" id="paypalLinkItem">
-                                        <div class="info-label">Lien PayPal</div>
+                                        <div class="info-label" data-i18n="payment.paypal_link">Lien PayPal</div>
                                         <div class="info-value" id="paypalLinkDisplay">paypal.me/yoann</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Nom du bénéficiaire</div>
+                                        <div class="info-label" data-i18n="payment.beneficiary_name">Nom du bénéficiaire</div>
                                         <div class="info-value" id="paypalName">Yoann Bourbia</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Email PayPal</div>
+                                        <div class="info-label" data-i18n="payment.paypal_email">Email PayPal</div>
                                         <div class="info-value" id="paypalEmail">yoann@yoteacher.com</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Montant</div>
+                                        <div class="info-label" data-i18n="payment.amount">Montant</div>
                                         <div class="info-value" id="paypalAmount">-</div>
                                     </div>
                                 </div>
@@ -1215,13 +1209,13 @@
                                 <div class="payment-notice">
                                     <p>
                                         <i class="fas fa-info-circle"></i>
-                                        <strong>Important :</strong> Une fois le paiement effectué sur PayPal, cliquez sur "J'ai payé avec PayPal" pour confirmer votre réservation.
+                                        <strong data-i18n="payment.important">Important :</strong> <span data-i18n="payment.paypal_notice">Une fois le paiement effectué sur PayPal, cliquez sur "J'ai payé avec PayPal" pour confirmer votre réservation.</span>
                                     </p>
                                 </div>
                                 
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" data-method="paypal">
-                                        <i class="fas fa-check"></i> J'ai payé avec PayPal
+                                        <i class="fas fa-check"></i> <span data-i18n="payment.paid_paypal">J'ai payé avec PayPal</span>
                                     </button>
                                 </div>
                             </div>
@@ -1232,7 +1226,7 @@
                             <div class="payment-method-icon" style="color: #635BFF;">
                                 <i class="fas fa-credit-card"></i>
                             </div>
-                            <div class="payment-method-name">Visa/Mastercard/Amex (Stripe)</div>
+                            <div class="payment-method-name" data-i18n="payment.card_method">Visa/Mastercard/Amex (Stripe)</div>
                             <div class="payment-method-arrow">
                                 <i class="fas fa-chevron-down"></i>
                             </div>
@@ -1246,13 +1240,13 @@
                                 <div class="payment-notice">
                                     <p>
                                         <i class="fas fa-lock"></i>
-                                        <strong>Sécurisé :</strong> Votre paiement est chiffré et sécurisé par Stripe. Aucune information bancaire n'est stockée sur nos serveurs.
+                                        <strong data-i18n="payment.secure">Sécurisé :</strong> <span data-i18n="payment.secure_message">Votre paiement est chiffré et sécurisé par Stripe. Aucune information bancaire n'est stockée sur nos serveurs.</span>
                                     </p>
                                 </div>
                                 
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" id="processCardPayment" data-method="card" disabled>
-                                        <i class="fas fa-lock"></i> Payer par carte
+                                        <i class="fas fa-lock"></i> <span data-i18n="payment.pay_with_card">Payer par carte</span>
                                     </button>
                                 </div>
                             </div>
@@ -1262,25 +1256,22 @@
 
                 <!-- Colonne droite : Récapitulatif -->
                 <div class="payment-card">
-                    <h2 class="card-title">Récapitulatif</h2>
+                    <h2 class="card-title" data-i18n="payment.summary">Récapitulatif</h2>
                     
-                    <div id="paymentSummary">
-                        <!-- Le récapitulatif sera injecté par JavaScript -->
-                    </div>
+                    <div id="paymentSummary"></div>
                     
                     <div class="payment-security">
-                        <h4><i class="fas fa-shield-alt"></i> Paiement 100% sécurisé</h4>
+                        <h4><i class="fas fa-shield-alt"></i> <span data-i18n="payment.secure_payment">Paiement 100% sécurisé</span></h4>
                         <p style="font-size: 0.95rem; color: #2e7d32;">
-                            <i class="fas fa-lock"></i> Vos données bancaires sont chiffrées<br>
-                            <i class="fas fa-check-circle"></i> Aucune information stockée sur nos serveurs<br>
-                            <i class="fas fa-clock"></i> Réservation garantie après paiement
+                            <i class="fas fa-lock"></i> <span data-i18n="payment.encrypted">Vos données bancaires sont chiffrées</span><br>
+                            <i class="fas fa-check-circle"></i> <span data-i18n="payment.no_storage">Aucune information stockée sur nos serveurs</span><br>
+                            <i class="fas fa-clock"></i> <span data-i18n="payment.guaranteed">Réservation garantie après paiement</span>
                         </p>
                     </div>
                     
                     <div style="margin-top: 25px; padding: 15px; background: #fff3cd; border-radius: 10px; border: 1px solid #ffeaa7;">
                         <p style="color: #856404; margin: 0; font-size: 0.95rem;">
-                            <i class="fas fa-info-circle"></i> Votre créneau est réservé pendant 15 minutes. 
-                            Une fois le paiement confirmé, vous recevrez un email avec le lien de la visioconférence.
+                            <i class="fas fa-info-circle"></i> <span data-i18n="payment.time_slot">Votre créneau est réservé pendant 15 minutes. Une fois le paiement confirmé, vous recevrez un email avec le lien de la visioconférence.</span>
                         </p>
                     </div>
                 </div>
@@ -1301,6 +1292,7 @@
     <script src="payment.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
+    <script src="translation.js"></script>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -1324,7 +1316,6 @@
                 });
             }
             
-            // Fermer le menu en cliquant en dehors
             if (mobileMenu) {
                 mobileMenu.addEventListener('click', (e) => {
                     if (e.target === mobileMenu) {
@@ -1339,10 +1330,8 @@
             const mobileSelector = document.getElementById('currencySelectorMobile');
             if (!mobileSelector || !window.currencyManager) return;
             
-            // Vider les options existantes
             mobileSelector.innerHTML = '';
             
-            // Remplir les options
             window.currencyManager.supportedCurrencies.forEach(currency => {
                 const option = document.createElement('option');
                 option.value = currency;
@@ -1355,11 +1344,9 @@
                 mobileSelector.appendChild(option);
             });
             
-            // Écouter les changements
             mobileSelector.addEventListener('change', (e) => {
                 const newCurrency = e.target.value;
                 if (window.currencyManager.setCurrency(newCurrency)) {
-                    // Fermer le menu mobile après changement
                     const mobileMenu = document.getElementById('mobileMenu');
                     if (mobileMenu) {
                         mobileMenu.classList.remove('active');
@@ -1378,11 +1365,9 @@
             const avatarInitials = document.getElementById('avatarInitials');
             
             if (isLoggedIn && user) {
-                // Afficher l'avatar et masquer le bouton de connexion
                 if (userAvatar) userAvatar.style.display = 'block';
                 if (loginBtn) loginBtn.style.display = 'none';
                 
-                // Mettre à jour les initiales
                 if (avatarInitials && user.user_metadata?.full_name) {
                     const name = user.user_metadata.full_name;
                     avatarInitials.textContent = name.charAt(0).toUpperCase();
@@ -1390,7 +1375,6 @@
                     avatarInitials.textContent = user.email.charAt(0).toUpperCase();
                 }
                 
-                // Ajouter un gestionnaire pour le bouton de déconnexion
                 const logoutBtn = document.getElementById('logoutBtn');
                 if (logoutBtn) {
                     logoutBtn.addEventListener('click', async (e) => {
@@ -1404,7 +1388,6 @@
                     });
                 }
             } else {
-                // Afficher le bouton de connexion et masquer l'avatar
                 if (userAvatar) userAvatar.style.display = 'none';
                 if (loginBtn) loginBtn.style.display = 'block';
             }
@@ -1441,7 +1424,6 @@
                 return;
             }
         } else {
-            // Essayer depuis localStorage
             const storedBooking = localStorage.getItem('pendingBooking');
             if (storedBooking) {
                 try {
@@ -1469,10 +1451,8 @@
             button.addEventListener('click', async function() {
                 const method = this.getAttribute('data-method');
                 
-                // Mettre à jour l'interface pour la méthode sélectionnée
                 togglePaymentMethod(method);
                 
-                // Si Interac est sélectionné, forcer la devise CAD
                 if (method === 'interac' && window.currencyManager) {
                     const interacNotice = document.getElementById('interacCurrencyNotice');
                     const currentCurrency = window.currencyManager.currentCurrency;
@@ -1480,29 +1460,20 @@
                     console.log(`💱 Sélection Interac détectée. Devise actuelle: ${currentCurrency}`);
                     
                     if (currentCurrency !== 'CAD') {
-                        // Afficher la notification
                         if (interacNotice) {
                             interacNotice.style.display = 'block';
-                            interacNotice.innerHTML = `
-                                <i class="fas fa-info-circle"></i>
-                                <strong>Note importante :</strong> Les paiements Interac doivent être effectués en dollars canadiens (CAD). 
-                                La devise a été automatiquement ajustée de ${currentCurrency} à CAD.
-                            `;
                         }
                         
                         try {
                             console.log('💱 Forçage de la devise CAD pour Interac...');
                             
-                            // Forcer la conversion en CAD IMMÉDIATEMENT
                             const success = await window.currencyManager.forceCADForInterac();
                             
                             if (success) {
                                 console.log('✅ Devise changée en CAD avec succès');
                                 
-                                // Mettre à jour le sélecteur de devise dans le header
                                 updateCurrencySelectorDisplay();
                                 
-                                // Mettre à jour les prix après changement de devise
                                 if (currentBooking) {
                                     updatePaymentDetails(currentBooking);
                                     updatePaymentSummary(currentBooking);
@@ -1512,23 +1483,14 @@
                             }
                         } catch (error) {
                             console.error('❌ Erreur lors du forçage CAD:', error);
-                            if (interacNotice) {
-                                interacNotice.innerHTML = `
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    <strong>Erreur :</strong> Impossible de changer la devise en CAD. 
-                                    Veuillez sélectionner manuellement CAD dans le sélecteur de devise.
-                                `;
-                            }
                         }
                     } else {
-                        // Cacher la notification si déjà en CAD
                         if (interacNotice) {
                             interacNotice.style.display = 'none';
                         }
                         console.log('✅ Déjà en CAD, pas de changement nécessaire');
                     }
                 } else {
-                    // Cacher la notification pour les autres méthodes
                     const interacNotice = document.getElementById('interacCurrencyNotice');
                     if (interacNotice) {
                         interacNotice.style.display = 'none';
@@ -1548,24 +1510,19 @@
                 const method = this.getAttribute('data-method');
                 console.log('💳 Confirmation paiement:', method);
                 
-                // Vérifier spécialement pour Interac
                 if (method === 'interac' && window.currencyManager && !window.currencyManager.isInteracCurrency()) {
                     showPaymentError('Les paiements Interac doivent être effectués en dollars canadiens (CAD). Veuillez sélectionner CAD comme devise.');
                     return;
                 }
                 
-                // Afficher un indicateur de chargement
                 const originalText = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement en cours...';
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (window.translationManager?.getTranslation('payment.processing') || 'Traitement en cours...');
                 this.disabled = true;
                 
-                // Cacher les erreurs précédentes
                 hidePaymentError();
                 
                 try {
-                    // Initialiser le gestionnaire de paiement si nécessaire
                     if (window.paymentManager) {
-                        // Passer la réservation actuelle au gestionnaire
                         window.paymentManager.currentBooking = currentBooking;
                         await window.paymentManager.handlePaymentMethod(method);
                     } else {
@@ -1575,7 +1532,6 @@
                     console.error('❌ Erreur paiement:', error);
                     showPaymentError('Erreur lors du traitement : ' + error.message);
                     
-                    // Restaurer le bouton
                     this.innerHTML = originalText;
                     this.disabled = false;
                 }
@@ -1598,7 +1554,6 @@
                 updatePaymentSummary(currentBooking);
             }
             
-            // Vérifier si Interac est sélectionné
             const interacBtn = document.querySelector('.payment-method-btn[data-method="interac"]');
             if (interacBtn && interacBtn.classList.contains('active')) {
                 const interacNotice = document.getElementById('interacCurrencyNotice');
@@ -1617,12 +1572,10 @@
         // Fonctions
         function updatePaymentDetails(booking) {
             const refNumber = Date.now().toString().slice(-6);
-            const amountEUR = booking.priceEUR || booking.price; // Prix en EUR
+            const amountEUR = booking.priceEUR || booking.price;
             
-            // Configuration depuis config.js
             const config = window.YOTEACHER_CONFIG || {};
             
-            // Récupérer les valeurs de configuration ou utiliser des valeurs par défaut
             const contactName = config.CONTACT_NAME || "Yoann Bourbia";
             const contactEmail = config.CONTACT_EMAIL || "yoann@yoteacher.com";
             const revolutLink = config.REVOLUT_PAYMENT_LINK || "https://revolut.me/yoann";
@@ -1630,11 +1583,9 @@
             const paypalEmail = config.PAYPAL_BUSINESS_EMAIL || "yoann@yoteacher.com";
             const interacEmail = config.INTERAC_EMAIL || contactEmail;
             
-            // Mettre à jour les références
             document.getElementById('revolutRefNum').textContent = refNumber;
             document.getElementById('interacRefNum').textContent = refNumber;
             
-            // Calculer les montants dans la devise actuelle
             let currentAmount = booking.price;
             let currentCurrency = booking.currency || 'EUR';
             
@@ -1643,27 +1594,22 @@
                 currentAmount = window.currencyManager.convert(amountEUR, 'EUR', currentCurrency);
             }
             
-            // Formater les montants
             const formattedAmount = window.currencyManager ? 
                 window.currencyManager.formatPrice(amountEUR) : 
                 `${currentAmount.toFixed(2)}${currentCurrency === 'EUR' ? '€' : ''}`;
             
-            // Mettre à jour les montants affichés
             document.querySelectorAll('#revolutAmount, #wiseAmount, #paypalAmount, #interacAmount').forEach(el => {
                 el.textContent = formattedAmount;
             });
             
-            // Mettre à jour les noms
             document.querySelectorAll('#revolutName, #wiseName, #paypalName, #interacName').forEach(el => {
                 el.textContent = contactName;
             });
             
-            // Mettre à jour les emails
             document.getElementById('wiseEmail').textContent = contactEmail;
             document.getElementById('paypalEmail').textContent = paypalEmail;
             document.getElementById('interacEmail').textContent = interacEmail;
             
-            // Mettre à jour les liens d'affichage
             const revolutDisplay = revolutLink.replace('https://', '');
             const wiseDisplay = wiseLink.replace('https://', '');
             const paypalUsername = paypalEmail.split('@')[0];
@@ -1673,7 +1619,6 @@
             document.getElementById('wiseLinkDisplay').textContent = wiseDisplay;
             document.getElementById('paypalLinkDisplay').textContent = paypalDisplay;
             
-            // Générer les liens de paiement avec les montants convertis
             generatePaymentLinks(booking, revolutLink, wiseLink, paypalUsername, currentAmount, currentCurrency);
         }
         
@@ -1685,18 +1630,15 @@
             let amount = booking.price;
             let currency = booking.currency || 'EUR';
             
-            // Utiliser le CurrencyManager pour convertir et formater
             if (window.currencyManager) {
                 currency = window.currencyManager.currentCurrency;
                 amount = window.currencyManager.convert(amountEUR, 'EUR', currency);
             }
             
-            // Formater le prix
             const formattedPrice = window.currencyManager ? 
                 window.currencyManager.formatPrice(amountEUR) : 
                 `${amount.toFixed(2)} ${currency}`;
             
-            // Formater la date
             const startDate = new Date(booking.startTime);
             const formattedDate = startDate.toLocaleDateString('fr-FR', {
                 weekday: 'long',
@@ -1710,23 +1652,21 @@
                 minute: '2-digit'
             });
             
-            // Déterminer le nom du type de cours
             let courseName = '';
             switch(booking.courseType) {
                 case 'essai':
-                    courseName = 'Cours d\'essai';
+                    courseName = window.translationManager?.getTranslation('courses.trial') || 'Cours d\'essai';
                     break;
                 case 'conversation':
-                    courseName = 'Conversation';
+                    courseName = window.translationManager?.getTranslation('courses.conversation') || 'Conversation';
                     break;
                 case 'curriculum':
-                    courseName = 'Curriculum complet';
+                    courseName = window.translationManager?.getTranslation('courses.curriculum') || 'Curriculum complet';
                     break;
                 default:
                     courseName = booking.courseType;
             }
             
-            // Déterminer la plateforme
             let platform = 'Zoom';
             if (booking.location && booking.location.includes('google')) {
                 platform = 'Google Meet';
@@ -1734,32 +1674,39 @@
                 platform = 'Microsoft Teams';
             }
             
+            const courseLabel = window.translationManager?.getTranslation('payment.course_type') || 'Type de cours:';
+            const dateLabel = window.translationManager?.getTranslation('payment.date') || 'Date:';
+            const timeLabel = window.translationManager?.getTranslation('payment.time') || 'Heure:';
+            const durationLabel = window.translationManager?.getTranslation('payment.duration') || 'Durée:';
+            const platformLabel = window.translationManager?.getTranslation('payment.platform') || 'Plateforme:';
+            const totalLabel = window.translationManager?.getTranslation('payment.total') || 'Total à payer:';
+            
             summaryContainer.innerHTML = `
                 <div class="booking-summary-card">
-                    <h3 style="margin-bottom: 20px; color: #333;">Détails de votre réservation</h3>
+                    <h3 style="margin-bottom: 20px; color: #333;" data-i18n="payment.booking_details">Détails de votre réservation</h3>
                     <div class="summary-details">
                         <div class="summary-item">
-                            <span class="label">Type de cours:</span>
+                            <span class="label">${courseLabel}</span>
                             <span class="value">${courseName}</span>
                         </div>
                         <div class="summary-item">
-                            <span class="label">Date:</span>
+                            <span class="label">${dateLabel}</span>
                             <span class="value">${formattedDate}</span>
                         </div>
                         <div class="summary-item">
-                            <span class="label">Heure:</span>
+                            <span class="label">${timeLabel}</span>
                             <span class="value">${formattedTime}</span>
                         </div>
                         <div class="summary-item">
-                            <span class="label">Durée:</span>
+                            <span class="label">${durationLabel}</span>
                             <span class="value">${booking.duration || '15'} min</span>
                         </div>
                         <div class="summary-item">
-                            <span class="label">Plateforme:</span>
+                            <span class="label">${platformLabel}</span>
                             <span class="value">${platform}</span>
                         </div>
                         <div class="summary-item total">
-                            <span class="label">Total à payer:</span>
+                            <span class="label">${totalLabel}</span>
                             <span class="value">${formattedPrice}</span>
                         </div>
                     </div>
@@ -1768,16 +1715,10 @@
         }
         
         function generatePaymentLinks(booking, revolutLink, wiseLink, paypalUsername, amount, currency) {
-            // Lien Revolut
             const revolutFullLink = `${revolutLink}?amount=${amount}&currency=${currency}&reference=COURS-${Date.now().toString().slice(-6)}`;
-            
-            // Lien Wise
             const wiseFullLink = `${wiseLink}?amount=${amount}&currency=${currency}`;
-            
-            // Lien PayPal
             const paypalFullLink = `https://www.paypal.com/paypalme/${paypalUsername}/${amount}${currency}`;
             
-            // Stocker les liens pour les clics
             document.getElementById('revolutQrCode').dataset.link = revolutFullLink;
             document.getElementById('revolutLinkItem').dataset.link = revolutFullLink;
             
@@ -1789,14 +1730,12 @@
         }
         
         function setupClickableElements() {
-            // QR codes cliquables
             document.querySelectorAll('.qr-code-img').forEach(img => {
                 img.addEventListener('click', function() {
                     const link = this.dataset.link;
                     if (link) {
                         window.open(link, '_blank');
                     } else {
-                        // Si pas de lien dans dataset, utiliser le lien de base
                         const method = this.id.replace('QrCode', '').toLowerCase();
                         if (method === 'revolut') {
                             window.open('https://revolut.me/yoann', '_blank');
@@ -1808,16 +1747,14 @@
                     }
                 });
                 
-                // Gestion des erreurs de chargement d'images
                 img.addEventListener('error', function() {
                     console.warn(`⚠️ Image non trouvée: ${this.src}`);
-                    // Remplacer par une icône
                     this.style.display = 'none';
                     const placeholder = document.createElement('div');
                     placeholder.className = 'qr-code-placeholder';
                     placeholder.innerHTML = `
                         <i class="fas fa-qrcode"></i>
-                        <p style="font-size: 0.8rem; margin-top: 5px;">QR Code</p>
+                        <p style="font-size: 0.8rem; margin-top: 5px;" data-i18n="payment.qr_code">QR Code</p>
                     `;
                     placeholder.dataset.link = this.dataset.link;
                     placeholder.addEventListener('click', function() {
@@ -1828,7 +1765,6 @@
                 });
             });
             
-            // Liens textuels cliquables
             document.querySelectorAll('.info-item.clickable').forEach(item => {
                 item.addEventListener('click', function() {
                     const link = this.dataset.link;
@@ -1840,35 +1776,29 @@
         }
         
         function togglePaymentMethod(method) {
-            // Fermer tous les autres menus
             document.querySelectorAll('.payment-method-details').forEach(details => {
                 details.style.display = 'none';
             });
             
-            // Retirer la classe active de tous les boutons
             document.querySelectorAll('.payment-method-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             
-            // Ouvrir le menu correspondant
             const detailsId = method + 'Details';
             const detailsElement = document.getElementById(detailsId);
             const buttonElement = document.querySelector(`[data-method="${method}"]`);
             
             if (detailsElement && buttonElement) {
-                // Vérifier si le menu est déjà ouvert
                 const isAlreadyOpen = detailsElement.style.display === 'block';
                 
                 if (!isAlreadyOpen) {
                     detailsElement.style.display = 'block';
                     buttonElement.classList.add('active');
                     
-                    // Si c'est la carte, initialiser Stripe
                     if (method === 'card' && window.paymentManager && typeof window.paymentManager.setupStripeForm === 'function') {
                         window.paymentManager.setupStripeForm();
                     }
                     
-                    // Scroller vers le menu si sur mobile
                     if (window.innerWidth <= 768) {
                         setTimeout(() => {
                             detailsElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1886,7 +1816,6 @@
             
             const currentCurrency = window.currencyManager.currentCurrency;
             
-            // Mettre à jour TOUS les sélecteurs de devise sur la page
             document.querySelectorAll('select[id^="currencySelector"]').forEach(selector => {
                 if (selector.value !== currentCurrency) {
                     selector.value = currentCurrency;
@@ -1894,14 +1823,12 @@
                 }
             });
             
-            // Mettre à jour également le sélecteur mobile s'il existe
             const mobileSelector = document.getElementById('currencySelectorMobile');
             if (mobileSelector && mobileSelector.value !== currentCurrency) {
                 mobileSelector.value = currentCurrency;
                 console.log(`💱 Sélecteur mobile mis à jour: ${mobileSelector.value} → ${currentCurrency}`);
             }
             
-            // Mettre à jour l'affichage textuel
             updateCurrencyDisplay();
         }
         
@@ -1913,7 +1840,6 @@
                 errorText.textContent = message;
                 errorDiv.style.display = 'block';
                 
-                // Scroller vers l'erreur
                 errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
                 alert('Erreur: ' + message);

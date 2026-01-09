@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription - YoTeacher</title>
+    <title data-i18n="signup.title">Inscription - YoTeacher</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +16,7 @@
             background-color: rgba(255, 255, 255, 0.98) !important;
             box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
             backdrop-filter: blur(10px) !important;
-            min-height: 60px !important; /* Réduit la hauteur */
+            min-height: 60px !important;
         }
         
         .header-content {
@@ -396,17 +396,17 @@
                 </div>
                 
                 <!-- Bouton Connexion Mobile -->
-                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
                 
                 <!-- Groupe des boutons de droite - FORCÉ À DROITE -->
                 <div class="header-right-group">
                     <!-- Sélecteur de langue uniquement -->
-                    <div class="language-switcher">
+                    <div class="language-switcher" id="languageSwitcherDesktop">
                         <span class="flag">🌐</span>
-                        <span>FR</span>
+                        <span data-i18n="header.language">EN</span>
                     </div>
                     
-                    <a href="login.html" class="login-btn">Connexion</a>
+                    <a href="login.html" class="login-btn" data-i18n="header.login">Connexion</a>
                 </div>
             </div>
         </div>
@@ -417,7 +417,7 @@
             <div class="auth-card">
                 <div class="auth-header">
                     <div class="auth-logo">YoTeacher</div>
-                    <p class="auth-subtitle">Créez votre compte gratuitement</p>
+                    <p class="auth-subtitle" data-i18n="signup.subtitle">Créez votre compte gratuitement</p>
                 </div>
 
                 <div class="error-message" id="errorMessage">
@@ -430,31 +430,31 @@
 
                 <form id="signupForm">
                     <div class="form-group">
-                        <label class="form-label" for="fullName">Nom complet</label>
+                        <label class="form-label" for="fullName" data-i18n="signup.full_name">Nom complet</label>
                         <input type="text" id="fullName" class="form-input" placeholder="Votre nom et prénom" required>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="email">Adresse email</label>
+                        <label class="form-label" for="email" data-i18n="login.email">Adresse email</label>
                         <input type="email" id="email" class="form-input" placeholder="votre@email.com" required>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="password">Mot de passe</label>
+                        <label class="form-label" for="password" data-i18n="login.password">Mot de passe</label>
                         <input type="password" id="password" class="form-input" placeholder="Au moins 6 caractères" required minlength="6">
-                        <div class="password-hint">Minimum 6 caractères</div>
+                        <div class="password-hint" data-i18n="signup.password_hint">Minimum 6 caractères</div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="confirmPassword">Confirmer le mot de passe</label>
+                        <label class="form-label" for="confirmPassword" data-i18n="signup.confirm_password">Confirmer le mot de passe</label>
                         <input type="password" id="confirmPassword" class="form-input" placeholder="Retapez votre mot de passe" required>
                     </div>
 
                     <button type="submit" class="btn-auth">
-                        <i class="fas fa-user-plus"></i> Créer mon compte
+                        <i class="fas fa-user-plus"></i> <span data-i18n="signup.create_account">Créer mon compte</span>
                     </button>
 
-                    <div class="terms">
+                    <div class="terms" data-i18n="signup.terms">
                         En vous inscrivant, vous acceptez nos 
                         <a href="terms.html">Conditions d'utilisation</a> et 
                         <a href="privacy.html">Politique de confidentialité</a>
@@ -462,7 +462,7 @@
                 </form>
 
                 <div class="auth-footer">
-                    <p>Déjà un compte ? <a href="login.html" class="auth-link">Se connecter</a></p>
+                    <p data-i18n="signup.have_account">Déjà un compte ? <a href="login.html" class="auth-link" data-i18n="login.sign_in">Se connecter</a></p>
                 </div>
             </div>
         </div>
@@ -476,6 +476,7 @@
     <script src="booking.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
+    <script src="translation.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('signupForm');
@@ -520,26 +521,23 @@
                 // Afficher chargement
                 const button = form.querySelector('button');
                 const originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création du compte...';
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (window.translationManager?.getTranslation('signup.loading') || 'Création du compte...');
                 button.disabled = true;
 
                 try {
                     const result = await window.authManager.signUp(email, password, fullName);
                     
                     if (result.success) {
-                        // MODIFICATION ICI : On ne demande plus de vérifier les emails
-    showSuccess("Compte créé avec succès !");
-    
-    // On attend 1.5 seconde pour que l'utilisateur voit le message de succès
-    setTimeout(() => {
-        // Redirection vers le dashboard
-        window.location.href = 'dashboard.html';
-    }, 1000);
-} else {
-    showError(result.error);
-    button.innerHTML = originalText;
-    button.disabled = false;
-}
+                        showSuccess(window.translationManager?.getTranslation('signup.success') || "Compte créé avec succès !");
+                        
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1000);
+                    } else {
+                        showError(result.error);
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
                 } catch (error) {
                     showError('Une erreur est survenue : ' + error.message);
                     button.innerHTML = originalText;

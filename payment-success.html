@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paiement Réussi - YoTeacher</title>
+    <title data-i18n="payment.success_title">Paiement Réussi - YoTeacher</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -234,9 +234,9 @@
                 <i class="fas fa-check"></i>
             </div>
             
-            <h1 class="success-title">Paiement Réussi !</h1>
+            <h1 class="success-title" data-i18n="payment.success_title_main">Paiement Réussi !</h1>
             
-            <div class="success-message">
+            <div class="success-message" data-i18n="payment.success_message">
                 Votre paiement a été accepté et votre réservation est en cours de confirmation.
             </div>
             
@@ -245,32 +245,30 @@
             
             <!-- Message d'avertissement si problème -->
             <div id="warningNotice" class="warning-notice" style="display: none;">
-                <h4><i class="fas fa-exclamation-triangle"></i> Réservation en attente</h4>
-                <p>Votre paiement a été accepté mais nous avons rencontré un problème technique avec la réservation automatique.</p>
-                <p><strong>Contactez moi</strong> 
+                <h4><i class="fas fa-exclamation-triangle"></i> <span data-i18n="payment.reservation_pending">Réservation en attente</span></h4>
+                <p data-i18n="payment.technical_issue">Votre paiement a été accepté mais nous avons rencontré un problème technique avec la réservation automatique.</p>
+                <p><strong data-i18n="payment.contact_me">Contactez moi</strong> 
             </div>
             
-            <div class="success-details" id="bookingDetails">
-                <!-- Détails de la réservation -->
-            </div>
+            <div class="success-details" id="bookingDetails"></div>
             
             <div class="success-actions">
                 <a href="dashboard.html" class="btn-success">
-                    <i class="fas fa-tachometer-alt"></i> Voir mon dashboard
+                    <i class="fas fa-tachometer-alt"></i> <span data-i18n="payment.view_dashboard">Voir mon dashboard</span>
                 </a>
                 <a href="index.html" class="btn-outline-white">
-                    <i class="fas fa-home"></i> Retour à l'accueil
+                    <i class="fas fa-home"></i> <span data-i18n="payment.return_home">Retour à l'accueil</span>
                 </a>
                 <a href="booking.html" class="btn-outline-blue">
-                    <i class="fas fa-calendar-plus"></i> Réserver un autre cours
+                    <i class="fas fa-calendar-plus"></i> <span data-i18n="payment.book_another">Réserver un autre cours</span>
                 </a>
             </div>
         </div>
     </section>
 
+    <script src="translation.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Récupérer les détails de la réservation
             const urlParams = new URLSearchParams(window.location.search);
             const bookingParam = urlParams.get('booking');
             const warning = urlParams.get('warning');
@@ -288,7 +286,6 @@
                 showErrorMessage();
             }
             
-            // Vider le localStorage
             localStorage.removeItem('pendingBooking');
         });
         
@@ -309,27 +306,48 @@
                 minute: '2-digit'
             });
             
+            const courseLabel = window.translationManager?.getTranslation('payment.course') || 'Cours:';
+            const dateLabel = window.translationManager?.getTranslation('payment.date') || 'Date:';
+            const timeLabel = window.translationManager?.getTranslation('payment.time') || 'Heure:';
+            const durationLabel = window.translationManager?.getTranslation('payment.duration') || 'Durée:';
+            const amountLabel = window.translationManager?.getTranslation('payment.amount_paid') || 'Montant payé:';
+            const summaryLabel = window.translationManager?.getTranslation('payment.booking_summary') || 'Récapitulatif de votre réservation';
+            
+            let courseType;
+            switch(booking.courseType) {
+                case 'essai':
+                    courseType = window.translationManager?.getTranslation('courses.trial') || 'Cours d\'essai';
+                    break;
+                case 'conversation':
+                    courseType = window.translationManager?.getTranslation('courses.conversation') || 'Conversation';
+                    break;
+                case 'curriculum':
+                    courseType = window.translationManager?.getTranslation('courses.curriculum') || 'Curriculum complet';
+                    break;
+                default:
+                    courseType = booking.courseType;
+            }
+            
             detailsDiv.innerHTML = `
-                <h3>Récapitulatif de votre réservation</h3>
+                <h3>${summaryLabel}</h3>
                 <div class="detail-item">
-                    <span>Cours:</span>
-                    <span>${booking.courseType === 'essai' ? 'Cours d\'essai' : 
-                            booking.courseType === 'conversation' ? 'Conversation' : 'Curriculum complet'}</span>
+                    <span>${courseLabel}</span>
+                    <span>${courseType}</span>
                 </div>
                 <div class="detail-item">
-                    <span>Date:</span>
+                    <span>${dateLabel}</span>
                     <span>${formattedDate}</span>
                 </div>
                 <div class="detail-item">
-                    <span>Heure:</span>
+                    <span>${timeLabel}</span>
                     <span>${formattedTime}</span>
                 </div>
                 <div class="detail-item">
-                    <span>Durée:</span>
+                    <span>${durationLabel}</span>
                     <span>${booking.duration} minutes</span>
                 </div>
                 <div class="detail-item">
-                    <span>Montant payé:</span>
+                    <span>${amountLabel}</span>
                     <span>${booking.price}€</span>
                 </div>
             `;
@@ -339,27 +357,28 @@
             const statusDiv = document.getElementById('reservationStatus');
             const warningDiv = document.getElementById('warningNotice');
             
+            const confirmedText = window.translationManager?.getTranslation('payment.reservation_confirmed') || 'Réservation confirmée';
+            const pendingText = window.translationManager?.getTranslation('payment.reservation_error') || 'Erreur lors de la réservation. Veuillez me contacter';
+            const processingText = window.translationManager?.getTranslation('payment.confirmation_processing') || 'Confirmation de réservation en cours...';
+            
             if (hasWarning || booking.status === 'payment_ok_reservation_failed') {
-                // Réservation Cal.com échouée
                 statusDiv.innerHTML = `
                     <div class="reservation-status status-pending">
-                        <i class="fas fa-clock"></i> Erreur lors de la réservation. Veuillez me contacter
+                        <i class="fas fa-clock"></i> ${pendingText}
                     </div>
                 `;
                 warningDiv.style.display = 'block';
             } else if (booking.calcomId) {
-                // Réservation réussie
                 statusDiv.innerHTML = `
                     <div class="reservation-status status-confirmed">
-                        <i class="fas fa-check-circle"></i> Réservation confirmée
+                        <i class="fas fa-check-circle"></i> ${confirmedText}
                     </div>
                 `;
                 warningDiv.style.display = 'none';
             } else {
-                // Statut inconnu
                 statusDiv.innerHTML = `
                     <div class="reservation-status status-pending">
-                        <i class="fas fa-spinner fa-spin"></i> Confirmation de réservation en cours...
+                        <i class="fas fa-spinner fa-spin"></i> ${processingText}
                     </div>
                 `;
                 warningDiv.style.display = 'none';
@@ -369,11 +388,14 @@
         function showErrorMessage() {
             const detailsDiv = document.getElementById('bookingDetails');
             if (detailsDiv) {
+                const errorText1 = window.translationManager?.getTranslation('payment.details_error1') || 'Impossible de récupérer les détails de la réservation.';
+                const errorText2 = window.translationManager?.getTranslation('payment.details_error2') || 'Veuillez contacter le support si vous avez des questions.';
+                
                 detailsDiv.innerHTML = `
                     <div style="text-align: center; padding: 20px;">
                         <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #FFC107; margin-bottom: 15px;"></i>
-                        <p>Impossible de récupérer les détails de la réservation.</p>
-                        <p>Veuillez contacter le support si vous avez des questions.</p>
+                        <p>${errorText1}</p>
+                        <p>${errorText2}</p>
                     </div>
                 `;
             }
