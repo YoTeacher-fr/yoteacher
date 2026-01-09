@@ -9,62 +9,74 @@ const coursesData = [
     {
         id: 1,
         type: "Conversation",
+        typeKey: "courses.conversation",  // Clé de traduction
         focus: "Discussion uniquement",
+        focusKey: "courses.conversation_focus",  // Clé de traduction
         price: 20,
-        basePriceEUR: 20, // Prix de base en EUR
+        basePriceEUR: 20,
         duration: "60 minutes",
+        durationKey: "courses.duration_60",  // Clé de traduction
         features: [
-            "Fluidité à l'oral",
-            "Vocabulaire quotidien",
-            "Correction en temps réel",
-            "Sujets variés d'actualité"
+            { text: "Fluidité à l'oral", key: "courses.feature1" },
+            { text: "Vocabulaire quotidien", key: "courses.feature2" },
+            { text: "Correction en temps réel", key: "courses.feature3" },
+            { text: "Sujets variés d'actualité", key: "courses.feature4" }
         ],
         details: [
-            { duration: "30min", price: 10, basePriceEUR: 10 },
-            { duration: "45min", price: 15, basePriceEUR: 15 },
-            { duration: "Forfait 10 cours", price: 190, basePriceEUR: 190, discount: "(-5%)" }
+            { duration: "30min", durationKey: "courses.detail_30min", price: 10, basePriceEUR: 10 },
+            { duration: "45min", durationKey: "courses.detail_45min", price: 15, basePriceEUR: 15 },
+            { duration: "Forfait 10 cours", durationKey: "courses.detail_forfait", price: 190, basePriceEUR: 190, discount: "(-5%)", discountKey: "courses.discount" }
         ],
         buttonText: "Réserver",
+        buttonTextKey: "courses.button_reserve",  // Clé de traduction
         featured: false
     },
     {
         id: 2,
         type: "Curriculum Complet",
+        typeKey: "courses.curriculum",
         focus: "Grammaire, exercices, structure",
+        focusKey: "courses.curriculum_focus",
         price: 35,
         basePriceEUR: 35,
         duration: "60 minutes",
+        durationKey: "courses.duration_60",
         features: [
-            "Grammaire approfondie",
-            "Exercices personnalisés",
-            "Structure complète",
-            "Programme sur mesure"
+            { text: "Grammaire approfondie", key: "courses.feature5" },
+            { text: "Exercices personnalisés", key: "courses.feature6" },
+            { text: "Structure complète", key: "courses.feature7" },
+            { text: "Programme sur mesure", key: "courses.feature8" }
         ],
         details: [
-            { duration: "Forfait 10 cours", price: 332.50, basePriceEUR: 332.50, discount: "(-5%)" }
+            { duration: "Forfait 10 cours", durationKey: "courses.detail_forfait", price: 332.50, basePriceEUR: 332.50, discount: "(-5%)", discountKey: "courses.discount" }
         ],
         buttonText: "Choisir ce cours",
+        buttonTextKey: "courses.button_choose",
         featured: true
     },
     {
         id: 3,
         type: "Préparation d'examen",
+        typeKey: "courses.exam",
         focus: "DELF, DALF, TCF",
+        focusKey: "courses.exam_focus",
         price: 30,
         basePriceEUR: 30,
         duration: "60 minutes",
+        durationKey: "courses.duration_60",
         features: [
-            "Simulations d'examen",
-            "Correction détaillée",
-            "Stratégies de réussite",
-            "Feedbacks personnalisés"
+            { text: "Simulations d'examen", key: "courses.feature9" },
+            { text: "Correction détaillée", key: "courses.feature10" },
+            { text: "Stratégies de réussite", key: "courses.feature11" },
+            { text: "Feedbacks personnalisés", key: "courses.feature12" }
         ],
         details: [
-            { duration: "30min", price: 15, basePriceEUR: 15 },
-            { duration: "45min", price: 22.5, basePriceEUR: 22.5 },
-            { duration: "Forfait 10 cours", price: 285, basePriceEUR: 285, discount: "(-5%)" }
+            { duration: "30min", durationKey: "courses.detail_30min", price: 15, basePriceEUR: 15 },
+            { duration: "45min", durationKey: "courses.detail_45min", price: 22.5, basePriceEUR: 22.5 },
+            { duration: "Forfait 10 cours", durationKey: "courses.detail_forfait", price: 285, basePriceEUR: 285, discount: "(-5%)", discountKey: "courses.discount" }
         ],
         buttonText: "Choisir ce cours",
+        buttonTextKey: "courses.button_choose",
         featured: false
     }
 ];
@@ -170,80 +182,113 @@ const coursesManager = {
     },
     
     createCourseCard: (course, container) => {
-        const card = document.createElement('div');
-        card.className = `course-card ${course.featured ? 'featured' : ''}`;
-        card.setAttribute('data-course-id', course.id);
-        card.setAttribute('data-base-price', course.basePriceEUR);
-        
-        // Générer les détails de prix
-        let priceDetailsHTML = '';
-        
-        if (course.id === 1) {
-            priceDetailsHTML = `
-                <div class="price-detail-item" data-base-price-30="10" data-base-price-45="15">
-                    30min : <span class="price-30">10€</span> │ 45min : <span class="price-45">15€</span>
-                </div>
-            `;
-        }
-        
-        // Ajouter les détails supplémentaires (forfaits)
-        course.details.forEach(detail => {
-            if (detail.discount) {
-                priceDetailsHTML += `
-                    <div class="price-detail-item" data-base-price-forfait="${detail.basePriceEUR || detail.price}">
-                        ${detail.duration}: <span class="price-forfait">${detail.price}€</span> ${detail.discount}
-                    </div>
-                `;
-            } else if (detail.price && course.id !== 1) {
-                priceDetailsHTML += `
-                    <div class="price-detail-item" data-base-price="${detail.basePriceEUR || detail.price}">
-                        ${detail.duration}: <span class="price-detail">${detail.price}€</span>
-                    </div>
-                `;
+    const card = document.createElement('div');
+    card.className = `course-card ${course.featured ? 'featured' : ''}`;
+    card.setAttribute('data-course-id', course.id);
+    card.setAttribute('data-base-price', course.basePriceEUR);
+    
+    // Fonction pour obtenir la traduction
+    const getTranslation = (key, fallback) => {
+        if (window.translationManager) {
+            const translation = window.translationManager.getTranslation(key);
+            if (translation && translation !== key) {
+                return translation;
             }
-        });
-        
-        // Générer les features
-        const featuresHTML = course.features.map(feature => `
-            <div class="course-feature">
-                <i class="fas fa-check"></i>
-                <span>${feature}</span>
-            </div>
-        `).join('');
-        
-        // HTML pour le prix avec "/h" en plus petit
-        let priceHTML = '';
-        if (course.id === 3) {
-            priceHTML = `<span class="price-main">${course.price}€<span class="price-per-hour">/h</span></span>`;
-        } else {
-            priceHTML = `
-                <span class="price-main">${course.price}€<span class="price-per-hour">/h</span></span>
-            `;
         }
+        return fallback;
+    };
+    
+    // Obtenir les textes traduits
+    const courseType = getTranslation(course.typeKey, course.type);
+    const courseFocus = getTranslation(course.focusKey, course.focus);
+    const courseButtonText = getTranslation(course.buttonTextKey, course.buttonText);
+    const pricePerHour = getTranslation('courses.price_per_hour', '/h');
+    
+    // Générer les détails de prix
+    let priceDetailsHTML = '';
+    
+    if (course.id === 1) {
+        const duration30 = getTranslation('courses.detail_30min', '30min');
+        const duration45 = getTranslation('courses.detail_45min', '45min');
         
-        card.innerHTML = `
-            <div class="course-header">
-                <div class="course-type">${course.type}</div>
-                <div class="course-focus">${course.focus}</div>
-            </div>
-            <div class="course-body">
-                <div class="course-price">
-                    ${priceHTML}
-                    <div class="price-details">${priceDetailsHTML}</div>
-                </div>
-                
-                <div class="course-features">
-                    ${featuresHTML}
-                </div>
-                
-                <button class="btn btn-primary course-book-btn" data-course="${course.id}">
-                    ${course.buttonText}
-                </button>
+        priceDetailsHTML = `
+            <div class="price-detail-item" data-base-price-30="10" data-base-price-45="15">
+                ${duration30} : <span class="price-30">10€</span> │ ${duration45} : <span class="price-45">15€</span>
             </div>
         `;
+    }
+    
+    // Ajouter les détails supplémentaires (forfaits)
+    course.details.forEach(detail => {
+        const durationText = detail.durationKey ? 
+            getTranslation(detail.durationKey, detail.duration) : 
+            detail.duration;
         
-        container.appendChild(card);
-    },
+        const discountText = detail.discountKey ? 
+            getTranslation(detail.discountKey, detail.discount) : 
+            detail.discount;
+        
+        if (detail.discount) {
+            priceDetailsHTML += `
+                <div class="price-detail-item" data-base-price-forfait="${detail.basePriceEUR || detail.price}">
+                    ${durationText}: <span class="price-forfait">${detail.price}€</span> ${discountText}
+                </div>
+            `;
+        } else if (detail.price && course.id !== 1) {
+            priceDetailsHTML += `
+                <div class="price-detail-item" data-base-price="${detail.basePriceEUR || detail.price}">
+                    ${durationText}: <span class="price-detail">${detail.price}€</span>
+                </div>
+            `;
+        }
+    });
+    
+    // Générer les features avec traductions
+    const featuresHTML = course.features.map(feature => {
+        const featureText = feature.key ? 
+            getTranslation(feature.key, feature.text) : 
+            feature.text;
+        return `
+            <div class="course-feature">
+                <i class="fas fa-check"></i>
+                <span>${featureText}</span>
+            </div>
+        `;
+    }).join('');
+    
+    // HTML pour le prix
+    let priceHTML = '';
+    if (course.id === 3) {
+        priceHTML = `<span class="price-main">${course.price}€<span class="price-per-hour">${pricePerHour}</span></span>`;
+    } else {
+        priceHTML = `
+            <span class="price-main">${course.price}€<span class="price-per-hour">${pricePerHour}</span></span>
+        `;
+    }
+    
+    card.innerHTML = `
+        <div class="course-header">
+            <div class="course-type">${courseType}</div>
+            <div class="course-focus">${courseFocus}</div>
+        </div>
+        <div class="course-body">
+            <div class="course-price">
+                ${priceHTML}
+                <div class="price-details">${priceDetailsHTML}</div>
+            </div>
+            
+            <div class="course-features">
+                ${featuresHTML}
+            </div>
+            
+            <button class="btn btn-primary course-book-btn" data-course="${course.id}">
+                ${courseButtonText}
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(card);
+},
     
     updateCoursePrices: () => {
         if (!window.currencyManager) return;
@@ -330,7 +375,11 @@ const coursesManager = {
                 this.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             });
         });
-    }
+    },
+reloadCourses: () => {
+    console.log('🔄 Rechargement des cours avec les nouvelles traductions...');
+    coursesManager.init();
+}
 };
 
 // ===== GÉNÉRATION DES TÉMOIGNAGES =====
@@ -618,14 +667,7 @@ const navigationManager = {
 // ===== INTERACTIONS UTILISATEUR =====
 const uiManager = {
     init: () => {
-        // Changement de langue
-        const languageSwitcher = document.querySelector('.language-switcher');
-        if (languageSwitcher) {
-            languageSwitcher.addEventListener('click', () => {
-                alert('Fonctionnalité de changement de langue à venir');
-            });
-        }
-        
+   
         // Gestion du scroll pour le header
         window.addEventListener('scroll', uiManager.handleScroll);
         
@@ -759,13 +801,24 @@ const app = {
         document.body.style.paddingTop = '80px';
         
         // Initialiser les managers
+const initApp = () => {
+        if (window.translationManager) {
         coursesManager.init();
         testimonialsManager.init();
         navigationManager.init();
         uiManager.init();
         imageManager.init();
         mobileManager.init();
-        
+        translationManager.init();
+
+console.log('Application prête !');
+        } else {
+            // Réessayer dans 100ms
+            setTimeout(initApp, 100);
+        }
+    };
+    
+    initApp();
         // Gestion du redimensionnement
         window.addEventListener('resize', () => {
             testimonialsManager.calculateSlidesPerView();
@@ -786,6 +839,138 @@ const app = {
         console.log('Application prête !');
     }
 };
-
+// ===== GESTION DE LA TRADUCTION DES COURS =====
+const translationManager = {
+    init: () => {
+        // Vérifier que le gestionnaire de traduction est disponible
+        if (!window.translationManager) {
+            console.warn('TranslationManager non disponible');
+            return;
+        }
+        
+        // Mettre à jour les cartes de cours avec les traductions
+        translationManager.translateCourses();
+        
+        // Écouter les changements de langue
+        window.addEventListener('language:changed', () => {
+            translationManager.translateCourses();
+        });
+    },
+    
+    translateCourses: () => {
+    if (!window.translationManager) return;
+    
+    // Recharger toutes les cartes de cours avec les nouvelles traductions
+    coursesManager.reloadCourses();
+    
+    // Mettre à jour les prix (si nécessaire)
+    coursesManager.updateCoursePrices();
+},
+        
+        // Traduire les boutons des cartes de cours
+        document.querySelectorAll('.course-book-btn').forEach(btn => {
+            const originalText = btn.textContent.trim();
+            let translationKey = '';
+            
+            if (originalText === 'Réserver' || originalText === 'Book') {
+                translationKey = 'courses.button';
+            } else if (originalText === 'Choisir ce cours' || originalText === 'Choose this course') {
+                translationKey = 'courses.button';
+            }
+            
+            if (translationKey) {
+                const translation = window.translationManager.getTranslation(translationKey);
+                if (translation && translation !== translationKey) {
+                    btn.textContent = translation;
+                }
+            }
+        });
+        
+        // Traduire les titres des cours (si générés dynamiquement)
+        document.querySelectorAll('.course-type').forEach(element => {
+            const originalText = element.textContent.trim();
+            let translationKey = '';
+            
+            if (originalText === 'Conversation') {
+                translationKey = 'courses.conversation';
+            } else if (originalText === 'Curriculum Complet') {
+                translationKey = 'courses.curriculum';
+            } else if (originalText === 'Préparation d\'examen') {
+                translationKey = 'courses.exam';
+            }
+            
+            if (translationKey) {
+                const translation = window.translationManager.getTranslation(translationKey);
+                if (translation && translation !== translationKey) {
+                    element.textContent = translation;
+                }
+            }
+        });
+        
+        // Traduire les focus des cours
+        document.querySelectorAll('.course-focus').forEach(element => {
+            const originalText = element.textContent.trim();
+            let translationKey = '';
+            
+            if (originalText === 'Discussion uniquement') {
+                translationKey = 'courses.conversation_focus';
+            } else if (originalText === 'Grammaire, exercices, structure') {
+                translationKey = 'courses.curriculum_focus';
+            } else if (originalText === 'DELF, DALF, TCF') {
+                translationKey = 'courses.exam_focus';
+            }
+            
+            if (translationKey) {
+                const translation = window.translationManager.getTranslation(translationKey);
+                if (translation && translation !== translationKey) {
+                    element.textContent = translation;
+                }
+            }
+        });
+        
+        // Traduire les features des cours
+        document.querySelectorAll('.course-feature span').forEach(element => {
+            const originalText = element.textContent.trim();
+            let translationKey = '';
+            
+            // Mappage des features
+            const featureMap = {
+                'Fluidité à l\'oral': 'courses.feature1',
+                'Vocabulaire quotidien': 'courses.feature2',
+                'Correction en temps réel': 'courses.feature3',
+                'Sujets variés d\'actualité': 'courses.feature4',
+                'Grammaire approfondie': 'courses.feature5',
+                'Exercices personnalisés': 'courses.feature6',
+                'Structure complète': 'courses.feature7',
+                'Programme sur mesure': 'courses.feature8',
+                'Simulations d\'examen': 'courses.feature9',
+                'Correction détaillée': 'courses.feature10',
+                'Stratégies de réussite': 'courses.feature11',
+                'Feedbacks personnalisés': 'courses.feature12'
+            };
+            
+            translationKey = featureMap[originalText];
+            
+            if (translationKey) {
+                const translation = window.translationManager.getTranslation(translationKey);
+                if (translation && translation !== translationKey) {
+                    element.textContent = translation;
+                }
+            }
+        });
+        
+        // Traduire les forfaits
+        document.querySelectorAll('.price-detail-item').forEach(element => {
+            const originalText = element.textContent.trim();
+            
+            if (originalText.includes('Forfait 10 cours')) {
+                const translation = window.translationManager.getTranslation('courses.detail_forfait');
+                if (translation && translation !== 'courses.detail_forfait') {
+                    element.innerHTML = element.innerHTML.replace('Forfait 10 cours', translation);
+                }
+            }
+        });
+    }
+};
 // ===== DÉMARRAGE DE L'APPLICATION =====
 app.init();
