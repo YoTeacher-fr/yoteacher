@@ -63,6 +63,9 @@
             font-size: 0.9rem;
             transition: all 0.3s;
             text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
         }
         
         .login-btn:hover {
@@ -311,6 +314,9 @@
                 text-decoration: none;
                 margin-left: auto;
                 z-index: 1001;
+                border: none;
+                cursor: pointer;
+                font-family: 'Inter', sans-serif;
             }
             
             .auth-section {
@@ -470,7 +476,10 @@
                 </form>
 
                 <div class="auth-footer">
-                    <p data-i18n="signup.have_account">Déjà un compte ? <a href="login.html" class="auth-link" data-i18n="login.sign_in">Se connecter</a></p>
+                    <p>
+                        <span data-i18n="signup.have_account">Déjà un compte ?</span> 
+                        <a href="login.html" class="auth-link" data-i18n="login.sign_in">Se connecter</a>
+                    </p>
                 </div>
             </div>
         </div>
