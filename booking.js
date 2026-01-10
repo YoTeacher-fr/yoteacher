@@ -382,7 +382,7 @@ class BookingManager {
             console.log('packageQuantity:', bookingData.packageQuantity || 1);
             
             // CORRECTION : TOUJOURS définir priceEUR, même si pas VIP
-            if (isVIP && window.packagesManager) {
+            if (isVIP) {
                 // Utiliser prix VIP
                 const vipPrice = await window.authManager.getVipPrice(bookingData.courseType, duration);
                 console.log('vipPrice:', vipPrice);
