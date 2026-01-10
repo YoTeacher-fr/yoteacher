@@ -76,6 +76,9 @@ class AuthManager {
                 // Fusionner les données du profil avec l'utilisateur
                 this.user.profile = profile;
                 this.saveUserToStorage();
+		if (profile.is_vip) {
+    await this.loadVipPrices();
+}
             }
         } catch (error) {
             console.warn('Exception chargement profil:', error);
@@ -371,6 +374,9 @@ class AuthManager {
             
             this.user = data.user;
             await this.loadUserProfile();
+	if (this.user.profile?.is_vip) {
+    await this.loadVipPrices();
+}
             this.updateUI();
             
             // Événement : connexion réussie
@@ -680,31 +686,81 @@ class AuthManager {
 
     // MÉTHODE : Obtenir le prix VIP pour un type de cours et une durée
     async getVipPrice(courseType, duration) {
-        try {
-            if (!this.supabaseReady || !window.supabase || !this.user) {
-                return null;
-            }
-
-            const durationInt = parseInt(duration);
-            const { data, error } = await supabase
-                .from('vip_pricing')
-                .select('price, currency')
-                .eq('user_id', this.user.id)
-                .eq('course_type', courseType)
-                .eq('duration_minutes', durationInt)
-                .single();
-
-            if (error) {
-                console.warn('Aucun prix VIP trouvé pour', courseType, duration, error);
-                return null;
-            }
-
-            return data;
-        } catch (error) {
-            console.warn('Exception lors de la récupération du prix VIP:', error);
+    try {
+        if (!this.supabaseReady || !window.supabase || !this.user) {
+            console.log('❌ Conditions VIP non remplies:', {
+                supabaseReady: this.supabaseReady,
+                hasSupabase: !!window.supabase,
+                hasUser: !!this.user
+            });
             return null;
         }
+
+        const durationInt = parseInt(duration);
+        console.log(`🔍 Recherche prix VIP pour ${courseType} - ${durationInt}min, user: ${this.user.id}`);
+        
+        const { data, error } = await supabase
+            .from('vip_pricing')
+            .select('price, currency, duration_minutes')
+            .eq('user_id', this.user.id)
+            .eq('course_type', courseType)
+            .eq('duration_minutes', durationInt)
+            .maybeSingle();
+
+        if (error) {
+            console.warn('⚠️ Erreur requête prix VIP:', error);
+            return null;
+        }
+
+        if (!data) {
+            console.log(`ℹ️ Aucun prix VIP trouvé pour ${courseType} ${durationInt}min`);
+            return null;
+        }
+
+        console.log('✅ Prix VIP trouvé:', data);
+        return data;
+    } catch (error) {
+        console.warn('Exception lors de la récupération du prix VIP:', error);
+        return null;
     }
+}
+
+// AJOUTER après la méthode getVipPrice :
+async loadVipPrices() {
+    if (!this.supabaseReady || !window.supabase || !this.user) {
+        return;
+    }
+
+    try {
+        console.log('👑 Chargement des prix VIP pour l\'utilisateur:', this.user.id);
+        
+        const { data, error } = await supabase
+            .from('vip_pricing')
+            .select('*')
+            .eq('user_id', this.user.id);
+
+        if (error) {
+            console.warn('⚠️ Erreur chargement prix VIP:', error);
+            return;
+        }
+
+        if (data && data.length > 0) {
+            console.log(`✅ ${data.length} prix VIP chargés:`, data);
+            
+            // Stocker les prix VIP dans l'objet user
+            this.user.vipPrices = data;
+            
+            // Émettre un événement pour informer que les prix VIP sont chargés
+            window.dispatchEvent(new CustomEvent('vip:loaded', { 
+                detail: { prices: data } 
+            }));
+        } else {
+            console.log('ℹ️ Aucun prix VIP configuré pour cet utilisateur');
+        }
+    } catch (error) {
+        console.error('Exception chargement prix VIP:', error);
+    }
+}
 
     async resetPassword(email) {
         try {
@@ -1010,3 +1066,40 @@ document.addEventListener('DOMContentLoaded', function() {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { AuthManager };
 }
+window.debugVipPrices = async function() {
+    const authMgr = window.authManager;
+    
+    if (!authMgr || !authMgr.user) {
+        console.error('❌ Utilisateur non connecté');
+        return;
+    }
+    
+    console.group('🔍 Debug Prix VIP');
+    console.log('User ID:', authMgr.user.id);
+    console.log('Est VIP:', authMgr.isUserVip());
+    console.log('Profile:', authMgr.user.profile);
+    
+    if (authMgr.user.vipPrices) {
+        console.log('Prix VIP chargés:', authMgr.user.vipPrices);
+    } else {
+        console.log('⚠️ Aucun prix VIP chargé dans user.vipPrices');
+    }
+    
+    // Tester la récupération des prix
+    const courseTypes = ['conversation', 'curriculum', 'examen'];
+    const durations = [30, 45, 60];
+    
+    for (const courseType of courseTypes) {
+        console.log(`\n📚 ${courseType}:`);
+        for (const duration of durations) {
+            const price = await authMgr.getVipPrice(courseType, duration);
+            if (price) {
+                console.log(`  ✅ ${duration}min: ${price.price}${price.currency}`);
+            } else {
+                console.log(`  ❌ ${duration}min: non trouvé`);
+            }
+        }
+    }
+    
+    console.groupEnd();
+};
