@@ -139,7 +139,7 @@ class TranslationManager {
                 'footer.privacy': 'Politique de confidentialité',
                 'footer.cancellation': 'Politique d\'annulation',
                 'footer.copyright': 'Fait avec ❤️ à Marseille',
-                'footer.email': 'contact@yoteacher.com',
+                'footer.email': 'yoteachfr@gmail.com',
                 
                 // Booking page
                 'booking.page_title': 'Réserver un cours - YoTeacher',
@@ -496,7 +496,7 @@ class TranslationManager {
                 'footer.privacy': 'Privacy Policy',
                 'footer.cancellation': 'Cancellation Policy',
                 'footer.copyright': 'Made with ❤️ in Marseille',
-                'footer.email': 'contact@yoteacher.com',
+                'footer.email': 'yoteachfr@gmail.com',
                 
                 // Booking page
                 'booking.page_title': 'Book a Course - YoTeacher',
