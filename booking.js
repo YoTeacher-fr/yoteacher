@@ -352,15 +352,16 @@ class BookingManager {
         try {
             const user = window.authManager?.getCurrentUser();
             if (!bookingData) {
-            throw new Error('Données de réservation manquantes');
-        }
-        
-        const requiredFields = ['startTime', 'courseType'];
-        for (const field of requiredFields) {
-            if (!bookingData[field]) {
-                throw new Error(`Champ requis manquant: ${field}`);
+                throw new Error('Données de réservation manquantes');
             }
-        }
+            
+            const requiredFields = ['startTime', 'courseType'];
+            for (const field of requiredFields) {
+                if (!bookingData[field]) {
+                    throw new Error(`Champ requis manquant: ${field}`);
+                }
+            }
+            
             // Vérifier si c'est un forfait (packageQuantity > 1)
             const isPackage = bookingData.packageQuantity && bookingData.packageQuantity > 1;
             
@@ -369,20 +370,25 @@ class BookingManager {
             
             // Calculer le prix selon le forfait ou cours unique
             let priceEUR, finalPrice;
-            const user = window.authManager?.getCurrentUser();
-const isVIP = window.authManager?.isUserVip();
-
-if (isPackage && window.packagesManager) {
-    if (isVIP) {
-        // Utiliser prix VIP
-        const vipPrice = await window.authManager.getVipPrice(courseType, duration);
-        priceEUR = vipPrice ? vipPrice.price : window.packagesManager.calculatePrice(...);
-    } else {
-        priceEUR = window.packagesManager.calculatePrice(...);
-    }
-}
+            const isVIP = window.authManager?.isUserVip();
+            
+            if (isPackage && window.packagesManager) {
+                if (isVIP) {
+                    // Utiliser prix VIP
+                    const vipPrice = await window.authManager.getVipPrice(bookingData.courseType, bookingData.duration || 60);
+                    priceEUR = vipPrice ? vipPrice.price : window.packagesManager.calculatePrice(bookingData.courseType, bookingData.packageQuantity, bookingData.duration);
+                } else {
+                    priceEUR = window.packagesManager.calculatePrice(bookingData.courseType, bookingData.packageQuantity, bookingData.duration);
+                }
                 
-                console.log(`📦 Forfait VIP ${bookingData.packageQuantity} cours: ${priceEUR}€ → ${finalPrice}${currentCurrency}`);
+                // Convertir le prix si nécessaire
+                if (window.currencyManager && currentCurrency !== 'EUR') {
+                    finalPrice = window.currencyManager.convert(priceEUR, 'EUR', currentCurrency);
+                } else {
+                    finalPrice = priceEUR;
+                }
+                
+                console.log(`📦 Forfait ${bookingData.packageQuantity} cours: ${priceEUR}€ → ${finalPrice}${currentCurrency}`);
             } else {
                 // Cours unique
                 priceEUR = bookingData.priceEUR || bookingData.price;
