@@ -1408,7 +1408,10 @@
             // Soumission du formulaire
             bookingForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
+                if (!window.currencyManager) {
+        showError('Système de devise non disponible. Veuillez rafraîchir la page.');
+        return;
+    }
                 if (!selectedDate || !selectedTime) {
                     showError('Veuillez sélectionner une date et une heure');
                     return;
