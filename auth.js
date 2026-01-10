@@ -683,15 +683,37 @@ class AuthManager {
     }
 
     // MÉTHODE : Obtenir le prix VIP pour un type de cours et une durée
-    async getVipPrice(courseType, duration) {
+   async getVipPrice(courseType, duration) {
     try {
-        if (!this.supabaseReady || !window.supabase || !this.user) {
-            console.log('❌ Conditions VIP non remplies');
+        console.group(`🔍 DEBUG getVipPrice pour ${courseType} - ${duration}min`);
+        
+        if (!this.supabaseReady) {
+            console.error('❌ supabaseReady = false');
+            console.groupEnd();
             return null;
         }
+        
+        if (!window.supabase) {
+            console.error('❌ window.supabase non disponible');
+            console.groupEnd();
+            return null;
+        }
+        
+        if (!this.user) {
+            console.error('❌ Utilisateur non connecté');
+            console.groupEnd();
+            return null;
+        }
+        
+        console.log('✅ Conditions remplies:', {
+            supabaseReady: this.supabaseReady,
+            hasSupabase: !!window.supabase,
+            user: this.user?.email,
+            userId: this.user?.id
+        });
 
         const durationInt = parseInt(duration);
-        console.log(`🔍 Recherche prix VIP pour ${courseType} - ${durationInt}min, user: ${this.user.id}`);
+        console.log(`📝 Paramètres: courseType="${courseType}", duration=${durationInt}min`);
         
         const { data, error } = await supabase
             .from('vip_pricing')
@@ -701,24 +723,51 @@ class AuthManager {
             .eq('duration_minutes', durationInt)
             .maybeSingle();
 
+        console.log('📦 Réponse Supabase:', { data, error });
+
         if (error) {
-            console.warn('⚠️ Erreur requête prix VIP:', error);
+            console.error('❌ Erreur Supabase:', error);
+            console.groupEnd();
             return null;
         }
 
         if (!data) {
-            console.log(`ℹ️ Aucun prix VIP trouvé pour ${courseType} ${durationInt}min`);
+            console.warn(`⚠️ Aucune donnée retournée pour ${courseType} ${durationInt}min`);
+            console.groupEnd();
             return null;
         }
 
-        console.log('✅ Prix VIP trouvé:', data);
+        console.log('✅ Données reçues:', data);
+        
+        // Debug du prix
+        console.log('🔢 Analyse du prix:', {
+            rawPrice: data.price,
+            type: typeof data.price,
+            isNumber: typeof data.price === 'number',
+            isString: typeof data.price === 'string',
+            parseFloat: parseFloat(data.price),
+            isNaN: isNaN(parseFloat(data.price))
+        });
+
+        const priceNumber = parseFloat(data.price);
+        
+        if (isNaN(priceNumber)) {
+            console.error('❌ ERREUR: Le prix n\'est pas un nombre valide:', data.price);
+            console.groupEnd();
+            return null;
+        }
+
+        console.log(`✅ Prix final: ${priceNumber} ${data.currency || 'EUR'}`);
+        console.groupEnd();
+        
         return {
-            price: parseFloat(data.price), // Convertir en nombre
+            price: priceNumber,
             currency: data.currency || 'EUR',
             duration: data.duration_minutes
         };
     } catch (error) {
-        console.warn('Exception lors de la récupération du prix VIP:', error);
+        console.error('💥 Exception dans getVipPrice:', error);
+        console.groupEnd();
         return null;
     }
 }
