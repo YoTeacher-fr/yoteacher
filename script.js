@@ -926,6 +926,7 @@ const appTranslationManager = {
 };
 
 // ===== GESTION DES PRIX VIP =====
+// ===== GESTION DES PRIX VIP =====
 const vipPriceManager = {
     init: () => {
         console.log('👑 Initialisation du gestionnaire de prix VIP...');
@@ -933,7 +934,6 @@ const vipPriceManager = {
         // Écouter les événements VIP
         window.addEventListener('vip:loaded', (e) => {
             console.log('🎁 Prix VIP chargés, mise à jour de l\'interface');
-            console.log('Détails:', e.detail);
             vipPriceManager.updateVIPPrices();
         });
         
@@ -945,7 +945,7 @@ const vipPriceManager = {
             }
         });
         
-        // Écouter les connexions/déconnexions
+        // Écouter les connexions
         window.addEventListener('auth:login', () => {
             console.log('🔐 Connexion détectée');
             setTimeout(() => {
@@ -960,6 +960,8 @@ const vipPriceManager = {
             console.log('🔓 Déconnexion, réinitialisation des prix');
             // Réinitialiser les prix à la normale
             coursesManager.updateCoursePrices();
+            // Retirer les styles VIP
+            vipPriceManager.removeVIPStyles();
         });
         
         console.log('✅ Gestionnaire de prix VIP initialisé');
@@ -1011,9 +1013,6 @@ const vipPriceManager = {
             
             console.log(`✅ Prix VIP trouvé pour ${courseType}:`, priceInfo);
             
-            // Ajouter une classe VIP à la carte
-            card.classList.add('vip-highlight');
-            
             // Mettre à jour le prix principal
             const priceMain = card.querySelector('.price-main');
             if (priceMain && window.currencyManager) {
@@ -1033,7 +1032,6 @@ const vipPriceManager = {
                 } else {
                     priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
                 }
-                priceMain.classList.add('vip-price');
                 console.log(`  ✅ Prix principal ${courseType}: ${displayPrice}`);
             }
             
@@ -1054,7 +1052,6 @@ const vipPriceManager = {
                             )
                         );
                         price30Element.textContent = display30;
-                        price30Element.classList.add('vip-price');
                         console.log(`  ✅ Prix 30min ${courseType}: ${display30}`);
                     }
                 }
@@ -1072,15 +1069,14 @@ const vipPriceManager = {
                             )
                         );
                         price45Element.textContent = display45;
-                        price45Element.classList.add('vip-price');
                         console.log(`  ✅ Prix 45min ${courseType}: ${display45}`);
                     }
                 }
                 
-                // Prix forfait (10 cours avec 5% de réduction)
+                // Prix forfait (10 cours)
                 const priceForfaitElement = item.querySelector('.price-forfait');
-                if (priceForfaitElement && priceInfo) {
-                    // Forfait = prix 60min × 10 × 0.95
+                if (priceForfaitElement) {
+                    // Pour le forfait, utiliser le prix 60min × 10 × 0.95 (5% de réduction)
                     const forfaitPrice = priceInfo.price * 10 * 0.95;
                     if (window.currencyManager) {
                         const displayForfait = window.currencyManager.formatPrice(
@@ -1091,109 +1087,29 @@ const vipPriceManager = {
                             )
                         );
                         priceForfaitElement.textContent = displayForfait;
-                        priceForfaitElement.classList.add('vip-price');
                         console.log(`  ✅ Prix forfait ${courseType}: ${displayForfait}`);
                     }
                 }
-            }
-            
-            // Ajouter un badge VIP à la carte
-            const cardHeader = card.querySelector('.course-header');
-            if (cardHeader && !cardHeader.querySelector('.vip-badge')) {
-                const vipBadge = document.createElement('span');
-                vipBadge.className = 'vip-badge';
-                vipBadge.innerHTML = '<i class="fas fa-crown"></i> VIP';
-                vipBadge.style.cssText = `
-                    display: inline-block;
-                    background: linear-gradient(135deg, #FFD700, #FFA500);
-                    color: #000;
-                    padding: 4px 12px;
-                    border-radius: 15px;
-                    font-size: 11px;
-                    font-weight: bold;
-                    margin-left: 10px;
-                    border: 1px solid #FFA500;
-                    box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
-                `;
-                cardHeader.appendChild(vipBadge);
             }
             
             coursesUpdated.push(courseType);
         }
         
         console.log('✅ Prix VIP mis à jour pour:', coursesUpdated);
-        
-        // Ajouter un message VIP visible
-        vipPriceManager.showVipNotification();
     },
     
-    showVipNotification: () => {
-        // Vérifier si la notification existe déjà
-        if (document.getElementById('vip-notification')) return;
-        
-        const notification = document.createElement('div');
-        notification.id = 'vip-notification';
-        notification.style.cssText = `
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            color: #000;
-            padding: 15px 20px;
-            border-radius: 12px;
-            z-index: 9999;
-            font-size: 14px;
-            font-weight: bold;
-            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-            animation: slideInRight 0.5s ease;
-            max-width: 300px;
-        `;
-        
-        notification.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <i class="fas fa-crown" style="font-size: 20px;"></i>
-                <div>
-                    <div style="font-size: 16px; margin-bottom: 5px;">Prix VIP activés ! 🎉</div>
-                    <div style="font-size: 12px; font-weight: normal; opacity: 0.9;">
-                        Profitez de vos tarifs préférentiels
-                    </div>
-                </div>
-                <button onclick="this.parentElement.parentElement.remove()" 
-                        style="background: none; border: none; color: #000; 
-                               cursor: pointer; font-size: 20px; margin-left: auto;">×</button>
-            </div>
-        `;
-        
-        // Ajouter l'animation CSS si elle n'existe pas
-        if (!document.getElementById('vip-notification-styles')) {
-            const style = document.createElement('style');
-            style.id = 'vip-notification-styles';
-            style.textContent = `
-                @keyframes slideInRight {
-                    from { transform: translateX(400px); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                .vip-price {
-                    color: #FFD700 !important;
-                    font-weight: bold;
-                }
-                .vip-highlight {
-                    border: 2px solid #FFD700;
-                    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        document.body.appendChild(notification);
-        
-        // Supprimer après 8 secondes
-        setTimeout(() => {
-            if (notification.parentElement) {
-                notification.style.animation = 'slideInRight 0.5s ease reverse';
-                setTimeout(() => notification.remove(), 500);
+    removeVIPStyles: () => {
+        // Retirer toutes les classes VIP
+        document.querySelectorAll('.vip-highlight, .vip-price, .vip-badge').forEach(el => {
+            el.classList.remove('vip-highlight', 'vip-price');
+            if (el.classList.contains('vip-badge')) {
+                el.remove();
             }
-        }, 8000);
+        });
+        
+        // Retirer la notification VIP
+        const notification = document.getElementById('vip-notification');
+        if (notification) notification.remove();
     }
 };
 // ===== GESTION DES BOUTONS DE LANGUE =====
