@@ -1309,3 +1309,79 @@ window.appTranslationManager = appTranslationManager;
 window.vipPriceManager = vipPriceManager;
 
 console.log('📦 Script.js chargé avec succès');
+// À la fin de script.js, ajouter :
+window.debugVIP = async function() {
+    console.clear();
+    console.group('🛠️ DEBUG VIP COMPLET');
+    
+    // 1. Vérifier authManager
+    console.log('1. ✅ authManager:', {
+        exists: !!window.authManager,
+        user: window.authManager?.user,
+        isVip: window.authManager?.isUserVip(),
+        profile: window.authManager?.user?.profile
+    });
+    
+    // 2. Vérifier currencyManager
+    console.log('2. 💰 currencyManager:', {
+        exists: !!window.currencyManager,
+        currentCurrency: window.currencyManager?.currentCurrency,
+        rates: window.currencyManager?.rates
+    });
+    
+    // 3. Tester getVipPrice pour chaque type de cours
+    const courses = [
+        { id: 1, type: 'conversation' },
+        { id: 2, type: 'curriculum' },
+        { id: 3, type: 'examen' }
+    ];
+    
+    for (const course of courses) {
+        console.group(`3. 🧪 Test ${course.type}`);
+        
+        const priceInfo = await window.authManager.getVipPrice(course.type, 60);
+        console.log('Résultat:', priceInfo);
+        
+        if (priceInfo) {
+            // Tester la conversion
+            const converted = window.currencyManager.convert(
+                priceInfo.price,
+                priceInfo.currency,
+                window.currencyManager.currentCurrency
+            );
+            console.log(`Conversion: ${priceInfo.price}${priceInfo.currency} → ${converted}${window.currencyManager.currentCurrency}`);
+            console.log('isNaN?', isNaN(converted));
+        }
+        
+        console.groupEnd();
+    }
+    
+    // 4. Vérifier les données stockées
+    console.log('4. 📦 Données utilisateur dans localStorage:');
+    const storedUser = localStorage.getItem('yoteacher_user');
+    if (storedUser) {
+        try {
+            const user = JSON.parse(storedUser);
+            console.log('Utilisateur:', {
+                id: user.id,
+                email: user.email,
+                is_vip: user.profile?.is_vip,
+                vipPrices: user.vipPrices
+            });
+        } catch (e) {
+            console.error('Erreur parsing JSON:', e);
+        }
+    }
+    
+    // 5. Vérifier les prix VIP chargés
+    console.log('5. 👑 Prix VIP dans authManager.user:');
+    console.log(window.authManager.user?.vipPrices);
+    
+    console.groupEnd();
+    
+    // Lancer la mise à jour
+    console.log('🔄 Lancement de updateVIPPrices...');
+    await vipPriceManager.updateVIPPrices();
+};
+
+// Pour lancer le debug, exécutez dans la console : debugVIP()
