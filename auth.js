@@ -166,10 +166,16 @@ class AuthManager {
                 throw error;
             }
             
-            console.log(`✅ Données VIP récupérées:`, data);
+            console.log(`✅ Données VIP récupérées (${data.length} entrées):`, data);
+            
+            // DEBUG: Afficher chaque entrée
+            data.forEach(item => {
+                console.log(`   - ${item.course_type} ${item.duration_minutes}min: ${item.price} ${item.currency}`, 
+                           `(type durée: ${typeof item.duration_minutes})`);
+            });
             
             if (data && data.length > 0) {
-                // Organiser les prix par type de cours
+                // Organiser les prix
                 this.vipPrices = {};
                 let userCurrency = null;
                 
@@ -177,8 +183,13 @@ class AuthManager {
                     if (!this.vipPrices[item.course_type]) {
                         this.vipPrices[item.course_type] = {};
                     }
-                    this.vipPrices[item.course_type][item.duration_minutes] = {
-                        price: item.price,
+                    
+                    // Convertir duration_minutes en nombre si nécessaire
+                    const duration = parseInt(item.duration_minutes);
+                    console.log(`   Ajout: ${item.course_type}[${duration}] = ${item.price} ${item.currency}`);
+                    
+                    this.vipPrices[item.course_type][duration] = {
+                        price: parseFloat(item.price),
                         currency: item.currency
                     };
                     
@@ -200,22 +211,24 @@ class AuthManager {
                     window.currencyManager.setCurrency(userCurrency, true);
                 }
                 
-                console.log('💰 Prix VIP chargés pour l\'utilisateur:', this.vipPrices);
+                console.log('💰 Structure finale vipPrices:', this.vipPrices);
+                console.log('💰 Accès test: this.vipPrices["conversation"][60] =', 
+                           this.vipPrices["conversation"] ? this.vipPrices["conversation"][60] : 'undefined');
                 
                 // Mettre à jour les prix sur la page
                 this.updateVipPricesOnPage();
                 
                 // Émettre un événement pour informer les autres composants
                 window.dispatchEvent(new CustomEvent('vip:loaded', {
-                    detail: { vipPrices: this.vipPrices, currency: userCurrency }
+                    detail: { 
+                        vipPrices: this.vipPrices, 
+                        currency: userCurrency,
+                        userId: userId 
+                    }
                 }));
                 
-                // Forcer la mise à jour de l'interface sur la page de réservation
-                if (window.location.pathname.includes('booking.html')) {
-                    setTimeout(() => {
-                        window.dispatchEvent(new Event('vip:loaded'));
-                    }, 500);
-                }
+                console.log('🎉 Prix VIP chargés avec succès!');
+                
             } else {
                 console.log('ℹ️ Aucun prix VIP trouvé pour cet utilisateur.');
                 this.vipPrices = null;
@@ -227,7 +240,10 @@ class AuthManager {
     }
 
     getVipPrice(courseType, duration = 60) {
-        console.log(`🔍 Recherche prix VIP pour ${courseType} (${duration}min)...`, this.vipPrices);
+        // Convertir duration en nombre
+        const durationNum = parseInt(duration);
+        
+        console.log(`🔍 Recherche prix VIP pour ${courseType} (${durationNum}min)...`, this.vipPrices);
         
         if (!this.vipPrices || !this.vipPrices[courseType]) {
             console.log(`❌ Aucun prix VIP pour le type de cours ${courseType}`);
@@ -235,17 +251,24 @@ class AuthManager {
         }
         
         // Chercher la durée exacte
-        if (this.vipPrices[courseType][duration]) {
-            const price = this.vipPrices[courseType][duration];
-            console.log(`✅ Prix VIP trouvé (durée exacte):`, price);
+        if (this.vipPrices[courseType][durationNum]) {
+            const price = this.vipPrices[courseType][durationNum];
+            console.log(`✅ Prix VIP trouvé (durée exacte ${durationNum}min):`, price);
             return price;
         }
         
         // Sinon, chercher la première durée disponible
-        const availableDurations = Object.keys(this.vipPrices[courseType]);
+        const availableDurations = Object.keys(this.vipPrices[courseType]).map(d => parseInt(d));
+        console.log(`   Durées disponibles pour ${courseType}:`, availableDurations);
+        
         if (availableDurations.length > 0) {
-            const price = this.vipPrices[courseType][availableDurations[0]];
-            console.log(`✅ Prix VIP trouvé (première durée disponible):`, price);
+            // Trouver la durée la plus proche
+            const closestDuration = availableDurations.reduce((prev, curr) => {
+                return (Math.abs(curr - durationNum) < Math.abs(prev - durationNum) ? curr : prev);
+            });
+            
+            const price = this.vipPrices[courseType][closestDuration];
+            console.log(`✅ Prix VIP trouvé (durée la plus proche ${closestDuration}min):`, price);
             return price;
         }
         
@@ -276,7 +299,9 @@ class AuthManager {
         if (path.includes('booking.html')) {
             // Émettre un événement pour informer booking.js
             setTimeout(() => {
-                window.dispatchEvent(new Event('vip:loaded'));
+                window.dispatchEvent(new CustomEvent('vip:loaded', {
+                    detail: { vipPrices: this.vipPrices }
+                }));
             }, 100);
         }
     }
@@ -579,7 +604,9 @@ class AuthManager {
             id: this.user.id,
             email: this.user.email,
             user_metadata: this.user.user_metadata,
-            created_at: this.user.created_at
+            created_at: this.user.created_at,
+            vipPrices: this.vipPrices,
+            isVip: this.isUserVip()
         };
         
         localStorage.setItem('yoteacher_user', JSON.stringify(userData));
@@ -587,6 +614,7 @@ class AuthManager {
 
     removeUserFromStorage() {
         localStorage.removeItem('yoteacher_user');
+        localStorage.removeItem('invitation_code');
     }
 
     async signUp(email, password, fullName) {
@@ -954,6 +982,25 @@ class AuthManager {
             </a>
         `;
         
+        // Ajouter un badge VIP si l'utilisateur est VIP
+        if (this.isUserVip()) {
+            const vipBadge = document.createElement('span');
+            vipBadge.className = 'vip-badge-header';
+            vipBadge.textContent = 'VIP';
+            vipBadge.style.cssText = `
+                display: inline-block;
+                background: linear-gradient(135deg, #FFD700, #FFA500);
+                color: #000;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 10px;
+                font-weight: bold;
+                margin-left: 5px;
+                border: 1px solid #FFA500;
+            `;
+            avatar.querySelector('.dashboard-btn').appendChild(vipBadge);
+        }
+        
         // Ajouter l'avatar à la fin du container
         container.appendChild(avatar);
         
@@ -1199,6 +1246,28 @@ class AuthManager {
             return { success: false, error: error.message };
         }
     }
+
+    // Méthode utilitaire pour déboguer les prix VIP
+    debugVipPrices() {
+        console.log('=== DEBUG VIP PRICES ===');
+        console.log('Utilisateur:', this.user?.email);
+        console.log('VIP Status:', this.isUserVip());
+        console.log('VIP Prices:', this.vipPrices);
+        console.log('Currency:', this.userCurrency);
+        
+        if (this.vipPrices) {
+            Object.keys(this.vipPrices).forEach(courseType => {
+                console.log(`  ${courseType}:`, this.vipPrices[courseType]);
+            });
+        }
+        
+        return {
+            user: this.user?.email,
+            isVip: this.isUserVip(),
+            vipPrices: this.vipPrices,
+            currency: this.userCurrency
+        };
+    }
 }
 
 // Ajout d'écouteurs globaux pour le débogage des événements
@@ -1208,6 +1277,10 @@ window.addEventListener('auth:login', function(e) {
 
 window.addEventListener('auth:logout', function() {
     console.log('Événement global auth:logout reçu');
+});
+
+window.addEventListener('vip:loaded', function(e) {
+    console.log('Événement global vip:loaded reçu', e.detail);
 });
 
 document.addEventListener('DOMContentLoaded', function() {
