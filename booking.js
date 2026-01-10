@@ -28,6 +28,8 @@ class BookingManager {
             remaining: 120,
             reset: null
         };
+        
+        console.log('📅 BookingManager initialisé avec API v2');
     }
 
     checkCalcomConfig() {
@@ -84,9 +86,14 @@ class BookingManager {
     // ===== GESTION DES PRIX VIP =====
     async getPriceForBooking(eventType, duration = 60) {
         try {
+            console.log(`🔍 Recherche du prix pour ${eventType} (${duration}min)...`);
+            
             // Vérifier d'abord les prix VIP
             if (window.authManager?.isUserVip()) {
+                console.log(`💰 L'utilisateur est VIP, recherche des prix VIP...`);
                 const vipPrice = window.authManager.getVipPrice(eventType, duration);
+                console.log(`💰 Prix VIP trouvé:`, vipPrice);
+                
                 if (vipPrice) {
                     console.log(`💰 Utilisation du prix VIP: ${vipPrice.price} ${vipPrice.currency}`);
                     
@@ -110,7 +117,11 @@ class BookingManager {
                         currency: currency,
                         isVip: true
                     };
+                } else {
+                    console.log(`💰 Aucun prix VIP spécifique trouvé pour ${eventType} ${duration}min`);
                 }
+            } else {
+                console.log(`💰 L'utilisateur n'est pas VIP ou authManager non disponible.`);
             }
             
             // Prix normaux
@@ -137,6 +148,8 @@ class BookingManager {
                 finalPrice = window.currencyManager.convert(price, 'EUR', window.currencyManager.currentCurrency);
                 currency = window.currencyManager.currentCurrency;
             }
+            
+            console.log(`💰 Prix normal: ${finalPrice} ${currency}`);
             
             return {
                 price: finalPrice,
@@ -209,7 +222,7 @@ class BookingManager {
                     console.error('Détails erreur:', errorData);
                     
                     if (errorData.message && errorData.message.includes('invalid_type')) {
-                        throw new Error('Paramètres invalides pour l'API Cal.com');
+                        throw new Error('Paramètres invalides pour l\'API Cal.com');
                     }
                     
                     if (errorData.message && (errorData.message.includes('Unauthorized') || errorData.message.includes('unauthorized'))) {
@@ -448,6 +461,8 @@ class BookingManager {
             
             // Sauvegarder dans localStorage
             localStorage.setItem('pendingBooking', JSON.stringify(completeBookingData));
+            
+            console.log('✅ Réservation préparée:', completeBookingData);
             
             return {
                 success: true,
