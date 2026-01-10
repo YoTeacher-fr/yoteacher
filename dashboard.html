@@ -88,7 +88,7 @@
             height: 100%;
         }
 
-        /* DASHBOARD COMPACT */
+        /* DASHBOARD COMPLET */
         body {
             opacity: 0;
             visibility: hidden;
@@ -101,124 +101,202 @@
         }
 
         .dashboard {
-            padding: 15px 20px 30px;
+            padding: 20px 25px 40px;
             background: #f8f9fa;
             min-height: calc(100vh - 80px);
         }
 
         .dashboard-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
         .dashboard-header {
             background: linear-gradient(135deg, #3c84f6, #1e88e5);
             color: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(60, 132, 246, 0.2);
-            margin-bottom: 15px;
+            padding: 25px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(60, 132, 246, 0.25);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .welcome-message {
+            flex: 1;
+            min-width: 300px;
         }
 
         .welcome-message h1 {
-            font-size: 1.6rem;
-            margin-bottom: 5px;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
         }
 
         .welcome-message p {
             opacity: 0.9;
-            font-size: 0.95rem;
+            font-size: 1rem;
+            margin-bottom: 0;
         }
 
-        /* Première ligne - 3 cartes égales */
-        .top-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        /* Deuxième section - AJOUT D'ESPACE SUPPLÉMENTAIRE */
-        .bottom-section {
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 2px solid #f0f0f0;
-        }
-
-        .section-title {
-            font-size: 1.4rem;
+        .vip-badge {
+            background: linear-gradient(135deg, #ffd700, #ff9800);
             color: #333;
-            margin-bottom: 20px !important;
-            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+            margin-top: 10px;
         }
 
-        .dashboard-card {
+        .dashboard-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-action-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .dashboard-action-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Grille principale */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 25px;
+        }
+
+        /* Carte large (12 colonnes) */
+        .card-wide {
+            grid-column: span 12;
             background: white;
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card-wide:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Carte moyenne (6 colonnes) */
+        .card-medium {
+            grid-column: span 6;
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
             height: 100%;
             display: flex;
             flex-direction: column;
         }
 
-        .dashboard-card:hover {
+        .card-medium:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Carte petite (4 colonnes) */
+        .card-small {
+            grid-column: span 4;
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-small:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
         }
 
         .card-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #f0f0f0;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
         }
 
         .card-header i {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             color: #3c84f6;
             background: rgba(60, 132, 246, 0.1);
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .card-header h2 {
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             color: #333;
             margin: 0;
         }
 
-        /* Carte Cours à venir */
-        .next-lesson-card {
+        /* Section Cours à venir */
+        .upcoming-lesson-card {
             background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
             border: 2px solid #4caf50;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
         }
 
         .lesson-date {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             font-weight: 700;
             color: #2e7d32;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .lesson-info {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
 
         .lesson-info-item {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
-            font-size: 0.9rem;
+            padding: 8px 0;
+            font-size: 0.95rem;
             border-bottom: 1px solid rgba(0,0,0,0.1);
         }
 
@@ -238,22 +316,24 @@
 
         .lesson-actions {
             display: flex;
-            gap: 8px;
-            margin-top: 12px;
+            gap: 10px;
+            margin-top: 15px;
         }
 
         .btn-small {
-            padding: 8px 16px;
+            padding: 10px 18px;
             border-radius: 50px;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            font-size: 0.85rem;
+            gap: 8px;
+            font-size: 0.9rem;
             flex: 1;
             justify-content: center;
+            cursor: pointer;
+            border: none;
         }
 
         .btn-cancel {
@@ -278,75 +358,103 @@
             color: white;
         }
 
-        /* Carte Forfaits */
-        .credits-list {
-            margin-top: 12px;
+        /* Section Crédits et Forfaits */
+        .credits-list, .packages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
         }
 
-        .credit-item {
+        .credit-item, .package-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
+            padding: 15px;
             background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 8px;
+            border-radius: 10px;
             border: 1px solid #e9ecef;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
 
-        .credit-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .credit-type {
+        .credit-type, .package-name {
             font-weight: 600;
             color: #333;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
-        .credit-count {
-            font-size: 1.3rem;
+        .credit-count, .package-credits {
+            font-size: 1.5rem;
             font-weight: 700;
             color: #3c84f6;
         }
 
-        /* Message aucun crédit */
-        .no-credits {
-            text-align: center;
-            padding: 25px 20px;
+        .package-details {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .package-expiry {
+            font-size: 0.85rem;
             color: #666;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .no-credits i {
-            font-size: 2rem;
-            color: #ddd;
-            margin-bottom: 10px;
+        /* Section Profil */
+        .profile-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        .no-credits p {
+        .profile-field {
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .profile-field:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .profile-label {
+            font-weight: 600;
+            color: #333;
             font-size: 0.9rem;
-            margin: 0;
+            margin-bottom: 5px;
+            display: block;
         }
 
-        /* Bouton Mon Profil */
+        .profile-value {
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
         .btn-profile {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: #3c84f6;
             color: white;
             border: none;
             border-radius: 50px;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
             text-decoration: none;
             margin-top: auto;
         }
@@ -354,41 +462,72 @@
         .btn-profile:hover {
             background: #2c74e6;
             transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(60, 132, 246, 0.3);
         }
 
-        /* Boutons de réservation de cours - REDUITS */
+        /* Section Statistiques */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3c84f6;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Section Réserver un cours */
         .course-buttons-row {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-top: 15px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-top: 20px;
         }
 
         .course-button {
             display: block;
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
             text-align: center;
             text-decoration: none;
             color: inherit;
-            height: 80px;
+            height: 100px;
             cursor: pointer;
             border: none;
             width: 100%;
+            overflow: hidden;
         }
 
         .course-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
         }
 
         .course-button-content {
             color: white;
-            padding: 20px 15px;
-            border-radius: 12px;
+            padding: 25px 20px;
+            border-radius: 16px;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -398,110 +537,211 @@
         }
 
         .course-button-title {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
 
         .course-button-subtitle {
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             opacity: 0.9;
         }
 
-        .no-upcoming {
+        /* Messages vides */
+        .no-upcoming, .no-credits, .no-packages, .no-statistics {
             text-align: center;
-            padding: 25px 20px;
+            padding: 40px 30px;
             color: #666;
         }
 
-        .no-upcoming i {
-            font-size: 2.5rem;
+        .no-upcoming i, .no-credits i, .no-packages i, .no-statistics i {
+            font-size: 3rem;
             color: #ddd;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
 
         .loading {
             text-align: center;
-            padding: 50px 20px;
+            padding: 60px 20px;
             color: #666;
         }
 
         .loading i {
-            font-size: 1.8rem;
-            margin-bottom: 20px;
+            font-size: 2.5rem;
+            margin-bottom: 25px;
             color: #3c84f6;
         }
 
-        /* Info profil plus compact - AMÉLIORÉ */
-        #profileInfo {
-            flex-grow: 1;
+        /* Bouton Acheter des crédits */
+        .btn-buy-credits {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
             display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+            margin-top: 20px;
         }
 
-        .profile-field {
-            margin-bottom: 12px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #f0f0f0;
+        .btn-buy-credits:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
         }
 
-        .profile-field:last-child {
+        /* Section Historique des réservations */
+        .bookings-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .booking-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .booking-item:last-child {
             border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
         }
 
-        .profile-label {
+        .booking-date {
             font-weight: 600;
             color: #333;
-            font-size: 0.85rem;
-            margin-bottom: 3px;
-            display: block;
         }
 
-        .profile-value {
+        .booking-type {
             color: #666;
             font-size: 0.9rem;
-            line-height: 1.4;
-            word-break: break-word;
         }
 
+        .booking-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-confirmed {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-completed {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-cancelled {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        /* Responsive */
         @media (max-width: 1200px) {
-            .top-row,
             .course-buttons-row {
-                grid-template-columns: 1fr;
-                gap: 25px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+            
+            .card-medium {
+                grid-column: span 12;
+                margin-bottom: 25px;
+            }
+            
+            .card-small {
+                grid-column: span 6;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 20px;
+            }
+            
+            .card-wide, .card-medium, .card-small {
+                grid-column: span 6;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+            
+            .dashboard-actions {
+                justify-content: center;
+            }
+            
+            .welcome-message {
+                min-width: 100%;
             }
         }
 
         @media (max-width: 768px) {
             .dashboard {
-                padding: 20px 15px 30px;
+                padding: 15px 15px 30px;
+            }
+            
+            .card-wide, .card-medium, .card-small {
+                grid-column: span 12;
+            }
+            
+            .course-buttons-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .dashboard-header {
+                padding: 20px 15px;
             }
             
             .welcome-message h1 {
-                font-size: 1.6rem;
+                font-size: 1.5rem;
             }
-
+            
+            .dashboard-action-btn {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .card-header i {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .card-header h2 {
+                font-size: 1.2rem;
+            }
+            
             .lesson-actions {
                 flex-direction: column;
             }
             
-            .course-button {
-                height: 70px;
-            }
-            
-            .course-button-title {
-                font-size: 1.1rem;
-            }
-            
-            .course-button-content {
-                padding: 15px 12px;
-            }
-            
-            .course-button-subtitle {
-                font-size: 0.75rem;
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
             
             .mobile-login-btn-header {
@@ -549,33 +789,45 @@
             .dashboard {
                 min-height: calc(100vh - 65px);
             }
+            
+            .course-button {
+                height: 90px;
+            }
+            
+            .course-button-content {
+                padding: 20px 15px;
+            }
         }
         
         @media (max-width: 480px) {
+            .dashboard-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .dashboard-action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
             .course-button {
-                height: 65px;
+                height: 85px;
             }
             
             .course-button-title {
-                font-size: 1rem;
+                font-size: 1.1rem;
             }
             
             .course-button-subtitle {
-                font-size: 0.7rem;
+                font-size: 0.8rem;
             }
             
-            .dashboard-card {
-                padding: 15px;
-            }
-            
-            .card-header i {
-                width: 40px;
-                height: 40px;
-                font-size: 1.1rem;
-            }
-            
-            .card-header h2 {
-                font-size: 1.1rem;
+            .card-wide, .card-medium, .card-small {
+                padding: 20px 15px;
             }
         }
         
@@ -593,6 +845,35 @@
             .header-right-group {
                 display: flex !important;
             }
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        /* Scrollbar personnalisée */
+        .bookings-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .bookings-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .bookings-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        
+        .bookings-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
     </style>
 </head>
@@ -663,68 +944,128 @@
         </div>
     </header>
 
-    <!-- Dashboard compact -->
+    <!-- Dashboard complet -->
     <section class="dashboard">
         <div class="dashboard-container">
-            <div class="dashboard-header welcome-message" id="welcomeMessage">
-                <h1 data-i18n="dashboard.loading">Chargement...</h1>
-                <p data-i18n="dashboard.loading_message">Veuillez patienter pendant le chargement de votre dashboard.</p>
+            <!-- En-tête du dashboard -->
+            <div class="dashboard-header" id="welcomeMessage">
+                <div class="welcome-message">
+                    <h1 data-i18n="dashboard.loading">Chargement...</h1>
+                    <p data-i18n="dashboard.loading_message">Veuillez patienter pendant le chargement de votre dashboard.</p>
+                    <div id="vipBadge" style="display: none;" class="vip-badge">
+                        <i class="fas fa-crown"></i>
+                        <span data-i18n="dashboard.vip_member">Membre VIP</span>
+                    </div>
+                </div>
+                
+                <div class="dashboard-actions" id="dashboardActions" style="display: none;">
+                    <a href="booking.html?type=essai" class="dashboard-action-btn">
+                        <i class="fas fa-plus-circle"></i>
+                        <span data-i18n="dashboard.book_trial">Réserver un essai</span>
+                    </a>
+                    <a href="profile.html" class="dashboard-action-btn">
+                        <i class="fas fa-user-edit"></i>
+                        <span data-i18n="dashboard.edit_profile">Modifier mon profil</span>
+                    </a>
+                    <button class="dashboard-action-btn" id="refreshDashboardBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span data-i18n="dashboard.refresh">Actualiser</span>
+                    </button>
+                </div>
             </div>
 
+            <!-- Section de chargement -->
             <div class="loading" id="loadingSection">
                 <i class="fas fa-spinner fa-spin"></i>
                 <p data-i18n="dashboard.loading_data">Chargement de vos données...</p>
             </div>
 
+            <!-- Contenu principal du dashboard -->
             <div id="dashboardContent" style="display: none;">
-                <!-- Première ligne : 3 cartes -->
-                <div class="top-row">
-                    <!-- Carte 1 : Cours à venir -->
-                    <div class="dashboard-card">
+                <!-- Première ligne : 3 cartes principales -->
+                <div class="dashboard-grid">
+                    <!-- Carte 1 : Cours à venir (large) -->
+                    <div class="card-wide fade-in">
                         <div class="card-header">
                             <i class="fas fa-calendar-check"></i>
                             <h2 data-i18n="dashboard.upcoming_lessons">Cours à venir</h2>
                         </div>
                         <div id="nextLessonContent">
-                            <div class="no-upcoming">
-                                <i class="far fa-calendar"></i>
-                                <p data-i18n="dashboard.no_lessons">Aucun cours programmé</p>
-                            </div>
+                            <!-- Le contenu sera chargé dynamiquement -->
                         </div>
+                        <div id="upcomingBookings" style="display: none;"></div>
                     </div>
 
-                    <!-- Carte 2 : Forfaits -->
-                    <div class="dashboard-card">
+                    <!-- Carte 2 : Mes crédits (moyenne) -->
+                    <div class="card-medium fade-in">
                         <div class="card-header">
                             <i class="fas fa-ticket-alt"></i>
                             <h2 data-i18n="dashboard.my_credits">Mes crédits</h2>
                         </div>
                         <div id="creditsContainer">
-                            <div class="no-credits">
-                                <i class="fas fa-ticket-alt"></i>
-                                <p data-i18n="dashboard.no_credits">Aucun crédit disponible</p>
-                            </div>
+                            <!-- Le contenu sera chargé dynamiquement -->
+                        </div>
+                        <a href="booking.html?type=conversation&package=5" class="btn-buy-credits">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span data-i18n="dashboard.buy_credits">Acheter des crédits</span>
+                        </a>
+                    </div>
+
+                    <!-- Carte 3 : Mes forfaits (moyenne) -->
+                    <div class="card-medium fade-in">
+                        <div class="card-header">
+                            <i class="fas fa-gift"></i>
+                            <h2 data-i18n="dashboard.my_packages">Mes forfaits</h2>
+                        </div>
+                        <div id="packagesContainer">
+                            <!-- Le contenu sera chargé dynamiquement -->
                         </div>
                     </div>
 
-                    <!-- Carte 3 : Mon Profil -->
-                    <div class="dashboard-card">
+                    <!-- Carte 4 : Mon profil (petite) -->
+                    <div class="card-small fade-in">
                         <div class="card-header">
                             <i class="fas fa-user-circle"></i>
                             <h2 data-i18n="dashboard.my_profile">Mon Profil</h2>
                         </div>
-                        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
-                            <div id="profileInfo"></div>
-                            <a href="profile.html" class="btn-profile">
-                                <i class="fas fa-edit"></i> <span data-i18n="dashboard.edit_profile">Modifier mon profil</span>
-                            </a>
+                        <div class="profile-info" id="profileInfo">
+                            <!-- Le contenu sera chargé dynamiquement -->
+                        </div>
+                        <a href="profile.html" class="btn-profile">
+                            <i class="fas fa-edit"></i>
+                            <span data-i18n="dashboard.edit_profile">Modifier mon profil</span>
+                        </a>
+                    </div>
+
+                    <!-- Carte 5 : Mes statistiques (petite) -->
+                    <div class="card-small fade-in">
+                        <div class="card-header">
+                            <i class="fas fa-chart-line"></i>
+                            <h2 data-i18n="dashboard.my_statistics">Mes Statistiques</h2>
+                        </div>
+                        <div id="userStatistics">
+                            <!-- Le contenu sera chargé dynamiquement -->
+                        </div>
+                    </div>
+
+                    <!-- Carte 6 : Historique des réservations (large) -->
+                    <div class="card-wide fade-in">
+                        <div class="card-header">
+                            <i class="fas fa-history"></i>
+                            <h2 data-i18n="dashboard.booking_history">Historique des réservations</h2>
+                        </div>
+                        <div id="bookingHistory" class="bookings-list">
+                            <!-- Le contenu sera chargé dynamiquement -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Deuxième section : Réserver un cours (3 boutons uniquement) -->
-                <div class="bottom-section">
-                    <h2 class="section-title" data-i18n="dashboard.book_lesson">Réserver un cours</h2>
+                <!-- Section : Réserver un cours -->
+                <div class="card-wide fade-in" style="margin-top: 25px;">
+                    <div class="card-header">
+                        <i class="fas fa-clock"></i>
+                        <h2 data-i18n="dashboard.book_lesson">Réserver un cours</h2>
+                    </div>
                     <div class="course-buttons-row">
                         <!-- Cours d'essai -->
                         <a href="booking.html?type=essai" class="course-button">
@@ -749,6 +1090,14 @@
                                 <div class="course-button-subtitle" data-i18n="dashboard.complete_learning">Apprentissage complet</div>
                             </div>
                         </a>
+
+                        <!-- Examen -->
+                        <a href="booking.html?type=examen" class="course-button">
+                            <div class="course-button-content" style="background: linear-gradient(135deg, #9c27b0, #7b1fa2);">
+                                <div class="course-button-title" data-i18n="courses.exam">Préparation d'examen</div>
+                                <div class="course-button-subtitle" data-i18n="dashboard.exam_prep">DELF, DALF, TCF</div>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -760,6 +1109,7 @@
     <script src="supabase.js"></script>
     <script src="auth.js"></script>
     <script src="booking.js"></script>
+    <script src="packages.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
     <script src="translation.js"></script>
@@ -778,15 +1128,25 @@
                 
                 document.getElementById('loadingSection').style.display = 'none';
                 document.getElementById('dashboardContent').style.display = 'block';
+                document.getElementById('dashboardActions').style.display = 'flex';
                 
             } catch (error) {
                 console.error('Erreur chargement dashboard:', error);
+                document.getElementById('loadingSection').innerHTML = `
+                    <div style="color: #e74c3c;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Erreur lors du chargement du dashboard. Veuillez rafraîchir la page.</p>
+                        <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: #3c84f6; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            Rafraîchir
+                        </button>
+                    </div>
+                `;
             }
         }
         
         async function loadUserData(user) {
             const welcomeDiv = document.getElementById('welcomeMessage');
-            const userName = user.user_metadata?.full_name || user.email.split('@')[0];
+            const userName = user.profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0];
             const now = new Date();
             const hour = now.getHours();
             
@@ -800,26 +1160,44 @@
             const welcomeTitle = window.translationManager?.getTranslation('dashboard.welcome') || 'Bienvenue sur votre dashboard YoTeacher';
             
             welcomeDiv.innerHTML = `
-                <h1>${greeting} ${userName} ! 👋</h1>
-                <p>${welcomeTitle}</p>
+                <div class="welcome-message">
+                    <h1>${greeting} ${userName} ! 👋</h1>
+                    <p>${welcomeTitle}</p>
+                    <div id="vipBadge" style="display: none;" class="vip-badge">
+                        <i class="fas fa-crown"></i>
+                        <span data-i18n="dashboard.vip_member">Membre VIP</span>
+                    </div>
+                </div>
             `;
             
-            // Mettre à jour les informations du profil avec un meilleur formatage
+            // Mettre à jour les informations du profil
             updateProfileInfo(user);
+            
+            // Afficher le badge VIP si l'utilisateur est VIP
+            if (user.profile?.is_vip) {
+                document.getElementById('vipBadge').style.display = 'inline-flex';
+            }
             
             if (window.supabase) {
                 try {
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', user.id)
-                        .single();
-                        
-                    if (profile) {
-                        updateCreditsDisplay(profile);
-                    }
+                    // Charger les crédits de l'utilisateur
+                    await loadUserCredits(user.id);
                     
+                    // Charger les forfaits actifs
+                    await loadUserActivePackages(user.id);
+                    
+                    // Charger la prochaine réservation
                     await loadNextLesson(user.id);
+                    
+                    // Charger les statistiques
+                    await loadUserStatistics(user.id);
+                    
+                    // Charger l'historique des réservations
+                    await loadBookingHistory(user.id);
+                    
+                    // Charger les réservations à venir
+                    await loadUpcomingBookings(user.id);
+                    
                 } catch (error) {
                     console.error('Erreur chargement données:', error);
                 }
@@ -836,6 +1214,11 @@
             
             const emailLabel = window.translationManager?.getTranslation('dashboard.email') || 'Email';
             const memberSinceLabel = window.translationManager?.getTranslation('dashboard.member_since') || 'Membre depuis';
+            const timezoneLabel = window.translationManager?.getTranslation('dashboard.timezone') || 'Fuseau horaire';
+            const levelLabel = window.translationManager?.getTranslation('dashboard.french_level') || 'Niveau de français';
+            
+            const timezone = user.profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const frenchLevel = user.profile?.french_level || 'Non spécifié';
             
             profileInfo.innerHTML = `
                 <div class="profile-field">
@@ -846,58 +1229,176 @@
                     <span class="profile-label">${memberSinceLabel}</span>
                     <span class="profile-value">${joinDate}</span>
                 </div>
+                <div class="profile-field">
+                    <span class="profile-label">${timezoneLabel}</span>
+                    <span class="profile-value">${timezone}</span>
+                </div>
+                <div class="profile-field">
+                    <span class="profile-label">${levelLabel}</span>
+                    <span class="profile-value">${frenchLevel}</span>
+                </div>
             `;
         }
         
-        function updateCreditsDisplay(profile) {
+        async function loadUserCredits(userId) {
             const creditsContainer = document.getElementById('creditsContainer');
-            const essai = profile.credits_essai || 0;
-            const conversation = profile.credits_conversation || 0;
-            const curriculum = profile.credits_curriculum || 0;
             
-            if (essai === 0 && conversation === 0 && curriculum === 0) {
+            if (!window.packagesManager) {
                 creditsContainer.innerHTML = `
                     <div class="no-credits">
                         <i class="fas fa-ticket-alt"></i>
                         <p data-i18n="dashboard.no_credits">Aucun crédit disponible</p>
                     </div>
                 `;
-            } else {
-                const trialLabel = window.translationManager?.getTranslation('courses.trial') || 'Cours d\'essai';
+                return;
+            }
+            
+            try {
+                const credits = await window.packagesManager.getUserCredits(userId);
+                
+                if (!credits || (credits.conversation === 0 && credits.curriculum === 0 && credits.examen === 0)) {
+                    creditsContainer.innerHTML = `
+                        <div class="no-credits">
+                            <i class="fas fa-ticket-alt"></i>
+                            <p data-i18n="dashboard.no_credits">Aucun crédit disponible</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
                 const conversationLabel = window.translationManager?.getTranslation('courses.conversation') || 'Conversation';
                 const curriculumLabel = window.translationManager?.getTranslation('courses.curriculum') || 'Curriculum';
+                const examLabel = window.translationManager?.getTranslation('courses.exam') || 'Préparation d\'examen';
                 
-                creditsContainer.innerHTML = `
-                    <div class="credits-list">
-                        ${essai > 0 ? `
-                        <div class="credit-item">
-                            <div class="credit-type">
-                                <i class="fas fa-play-circle" style="color: #3c84f6;"></i>
-                                ${trialLabel}
-                            </div>
-                            <div class="credit-count">${essai}</div>
-                        </div>
-                        ` : ''}
-                        
-                        ${conversation > 0 ? `
+                let html = '<div class="credits-list">';
+                
+                if (credits.conversation > 0) {
+                    html += `
                         <div class="credit-item">
                             <div class="credit-type">
                                 <i class="fas fa-comments" style="color: #ff9800;"></i>
                                 ${conversationLabel}
                             </div>
-                            <div class="credit-count">${conversation}</div>
+                            <div class="credit-count">${credits.conversation}</div>
                         </div>
-                        ` : ''}
-                        
-                        ${curriculum > 0 ? `
+                    `;
+                }
+                
+                if (credits.curriculum > 0) {
+                    html += `
                         <div class="credit-item">
                             <div class="credit-type">
                                 <i class="fas fa-book" style="color: #4caf50;"></i>
                                 ${curriculumLabel}
                             </div>
-                            <div class="credit-count">${curriculum}</div>
+                            <div class="credit-count">${credits.curriculum}</div>
                         </div>
-                        ` : ''}
+                    `;
+                }
+                
+                if (credits.examen > 0) {
+                    html += `
+                        <div class="credit-item">
+                            <div class="credit-type">
+                                <i class="fas fa-graduation-cap" style="color: #9c27b0;"></i>
+                                ${examLabel}
+                            </div>
+                            <div class="credit-count">${credits.examen}</div>
+                        </div>
+                    `;
+                }
+                
+                html += '</div>';
+                creditsContainer.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erreur chargement crédits:', error);
+                creditsContainer.innerHTML = `
+                    <div class="no-credits">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Erreur de chargement des crédits</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function loadUserActivePackages(userId) {
+            const packagesContainer = document.getElementById('packagesContainer');
+            
+            if (!window.packagesManager) {
+                packagesContainer.innerHTML = `
+                    <div class="no-packages">
+                        <i class="fas fa-box-open"></i>
+                        <p data-i18n="dashboard.no_packages">Aucun forfait actif</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            try {
+                const packages = await window.packagesManager.getUserActivePackages(userId);
+                
+                if (!packages || packages.length === 0) {
+                    packagesContainer.innerHTML = `
+                        <div class="no-packages">
+                            <i class="fas fa-box-open"></i>
+                            <p data-i18n="dashboard.no_packages">Aucun forfait actif</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '<div class="packages-list">';
+                
+                packages.forEach(pkg => {
+                    const courseTypeName = {
+                        'conversation': window.translationManager?.getTranslation('courses.conversation') || 'Conversation',
+                        'curriculum': window.translationManager?.getTranslation('courses.curriculum') || 'Curriculum',
+                        'examen': window.translationManager?.getTranslation('courses.exam') || 'Préparation d\'examen'
+                    }[pkg.course_type] || pkg.course_type;
+                    
+                    const expiresDate = new Date(pkg.expires_at);
+                    const daysUntilExpiration = pkg.days_until_expiration || 
+                        Math.ceil((expiresDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                    
+                    const formattedExpiryDate = expiresDate.toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                    });
+                    
+                    html += `
+                        <div class="package-item">
+                            <div style="width: 100%;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div class="package-name">
+                                        <i class="fas fa-gift" style="color: #e91e63;"></i>
+                                        ${courseTypeName}
+                                    </div>
+                                    <div class="package-credits">
+                                        ${pkg.remaining_credits}/${pkg.total_credits || pkg.remaining_credits}
+                                    </div>
+                                </div>
+                                <div class="package-details">
+                                    <span class="package-expiry">
+                                        <i class="far fa-calendar-alt"></i>
+                                        Expire le ${formattedExpiryDate} (dans ${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''})
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                packagesContainer.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erreur chargement forfaits:', error);
+                packagesContainer.innerHTML = `
+                    <div class="no-packages">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Erreur de chargement des forfaits</p>
                     </div>
                 `;
             }
@@ -907,66 +1408,316 @@
             if (!window.supabase) return;
             
             try {
-                const { data: bookings } = await supabase
-                    .from('bookings')
+                const { data: bookings, error } = await supabase
+                    .from('upcoming_bookings')
                     .select('*')
                     .eq('user_id', userId)
-                    .eq('status', 'confirmed')
-                    .gte('start_time', new Date().toISOString())
                     .order('start_time', { ascending: true })
                     .limit(1);
                     
-                if (bookings && bookings.length > 0) {
-                    const lesson = bookings[0];
-                    const lessonDate = new Date(lesson.start_time);
-                    
-                    const timeLabel = window.translationManager?.getTranslation('dashboard.time') || 'Heure';
-                    const durationLabel = window.translationManager?.getTranslation('dashboard.duration') || 'Durée';
-                    const typeLabel = window.translationManager?.getTranslation('dashboard.type') || 'Type';
-                    const referenceLabel = window.translationManager?.getTranslation('dashboard.reference') || 'Référence';
-                    const cancelLabel = window.translationManager?.getTranslation('dashboard.cancel') || 'Annuler';
-                    const rescheduleLabel = window.translationManager?.getTranslation('dashboard.reschedule') || 'Reporter';
-                    
-                    document.getElementById('nextLessonContent').innerHTML = `
-                        <div class="next-lesson-card">
-                            <div class="lesson-date">
-                                ${lessonDate.toLocaleDateString('fr-FR', { 
-                                    weekday: 'long', 
-                                    day: 'numeric', 
-                                    month: 'long'
-                                })}
+                if (error) throw error;
+                
+                const nextLessonContent = document.getElementById('nextLessonContent');
+                
+                if (!bookings || bookings.length === 0) {
+                    nextLessonContent.innerHTML = `
+                        <div class="no-upcoming">
+                            <i class="far fa-calendar"></i>
+                            <p data-i18n="dashboard.no_lessons">Aucun cours programmé</p>
+                            <a href="booking.html?type=conversation" class="btn-buy-credits" style="margin-top: 20px; width: auto; display: inline-block;">
+                                <i class="fas fa-plus-circle"></i>
+                                <span data-i18n="dashboard.book_now">Réserver maintenant</span>
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const lesson = bookings[0];
+                const lessonDate = new Date(lesson.start_time);
+                
+                const timeLabel = window.translationManager?.getTranslation('dashboard.time') || 'Heure';
+                const durationLabel = window.translationManager?.getTranslation('dashboard.duration') || 'Durée';
+                const typeLabel = window.translationManager?.getTranslation('dashboard.type') || 'Type';
+                const referenceLabel = window.translationManager?.getTranslation('dashboard.reference') || 'Référence';
+                const platformLabel = window.translationManager?.getTranslation('dashboard.platform') || 'Plateforme';
+                const cancelLabel = window.translationManager?.getTranslation('dashboard.cancel') || 'Annuler';
+                const rescheduleLabel = window.translationManager?.getTranslation('dashboard.reschedule') || 'Reporter';
+                
+                const platformNames = {
+                    'zoom': 'Zoom',
+                    'google_meet': 'Google Meet',
+                    'microsoft_teams': 'Microsoft Teams'
+                };
+                
+                const platformName = platformNames[lesson.platform] || lesson.platform || 'Zoom';
+                
+                nextLessonContent.innerHTML = `
+                    <div class="upcoming-lesson-card">
+                        <div class="lesson-date">
+                            <i class="fas fa-calendar-alt"></i>
+                            ${lessonDate.toLocaleDateString('fr-FR', { 
+                                weekday: 'long', 
+                                day: 'numeric', 
+                                month: 'long',
+                                year: 'numeric'
+                            })}
+                        </div>
+                        <div class="lesson-info">
+                            <div class="lesson-info-item">
+                                <span class="lesson-info-label">${timeLabel}</span>
+                                <span class="lesson-info-value">${lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
-                            <div class="lesson-info">
-                                <div class="lesson-info-item">
-                                    <span class="lesson-info-label">${timeLabel}</span>
-                                    <span class="lesson-info-value">${lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-                                </div>
-                                <div class="lesson-info-item">
-                                    <span class="lesson-info-label">${durationLabel}</span>
-                                    <span class="lesson-info-value">${lesson.duration || 60} min</span>
-                                </div>
-                                <div class="lesson-info-item">
-                                    <span class="lesson-info-label">${typeLabel}</span>
-                                    <span class="lesson-info-value">${lesson.event_type || 'Cours'}</span>
-                                </div>
-                                <div class="lesson-info-item">
-                                    <span class="lesson-info-label">${referenceLabel}</span>
-                                    <span class="lesson-info-value">#${lesson.id.substring(0, 8)}</span>
-                                </div>
+                            <div class="lesson-info-item">
+                                <span class="lesson-info-label">${durationLabel}</span>
+                                <span class="lesson-info-value">${lesson.duration_minutes || 60} min</span>
                             </div>
-                            <div class="lesson-actions">
-                                <button class="btn-small btn-cancel" onclick="cancelLesson('${lesson.id}')">
-                                    <i class="fas fa-times"></i> ${cancelLabel}
-                                </button>
-                                <button class="btn-small btn-reschedule" onclick="rescheduleLesson('${lesson.id}')">
-                                    <i class="fas fa-calendar-alt"></i> ${rescheduleLabel}
-                                </button>
+                            <div class="lesson-info-item">
+                                <span class="lesson-info-label">${typeLabel}</span>
+                                <span class="lesson-info-value">${lesson.course_type || 'Cours'}</span>
+                            </div>
+                            <div class="lesson-info-item">
+                                <span class="lesson-info-label">${platformLabel}</span>
+                                <span class="lesson-info-value">${platformName}</span>
+                            </div>
+                            <div class="lesson-info-item">
+                                <span class="lesson-info-label">${referenceLabel}</span>
+                                <span class="lesson-info-value">${lesson.booking_number || '#' + (lesson.id ? lesson.id.substring(0, 8) : '')}</span>
+                            </div>
+                        </div>
+                        <div class="lesson-actions">
+                            <button class="btn-small btn-cancel" onclick="cancelLesson('${lesson.id}')">
+                                <i class="fas fa-times"></i> ${cancelLabel}
+                            </button>
+                            <button class="btn-small btn-reschedule" onclick="rescheduleLesson('${lesson.id}')">
+                                <i class="fas fa-calendar-alt"></i> ${rescheduleLabel}
+                            </button>
+                            ${lesson.meeting_link ? `
+                            <a href="${lesson.meeting_link}" target="_blank" class="btn-small" style="background: #4CAF50; color: white; border: none; text-decoration: none;">
+                                <i class="fas fa-video"></i> Rejoindre
+                            </a>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Erreur chargement cours:', error);
+                document.getElementById('nextLessonContent').innerHTML = `
+                    <div class="no-upcoming">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Erreur de chargement des cours</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function loadUpcomingBookings(userId) {
+            if (!window.supabase) return;
+            
+            try {
+                const { data: bookings, error } = await supabase
+                    .from('upcoming_bookings')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('start_time', { ascending: true })
+                    .limit(5);
+                    
+                if (error) throw error;
+                
+                const upcomingBookings = document.getElementById('upcomingBookings');
+                
+                if (!bookings || bookings.length <= 1) {
+                    upcomingBookings.style.display = 'none';
+                    return;
+                }
+                
+                upcomingBookings.style.display = 'block';
+                let html = '<h3 style="margin-top: 25px; margin-bottom: 15px; color: #333; font-size: 1.1rem;">Autres cours à venir :</h3><div class="bookings-list">';
+                
+                bookings.slice(1).forEach(booking => {
+                    const bookingDate = new Date(booking.start_time);
+                    const formattedDate = bookingDate.toLocaleDateString('fr-FR', { 
+                        day: 'numeric',
+                        month: 'short'
+                    });
+                    const formattedTime = bookingDate.toLocaleTimeString('fr-FR', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                    
+                    html += `
+                        <div class="booking-item">
+                            <div>
+                                <div class="booking-date">${formattedDate} à ${formattedTime}</div>
+                                <div class="booking-type">${booking.course_type} - ${booking.duration_minutes || 60} min</div>
+                            </div>
+                            <div class="booking-status status-${booking.status}">${booking.status}</div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                upcomingBookings.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erreur chargement cours à venir:', error);
+            }
+        }
+        
+        async function loadUserStatistics(userId) {
+            const statsContainer = document.getElementById('userStatistics');
+            
+            if (!window.supabase) {
+                statsContainer.innerHTML = `
+                    <div class="no-statistics">
+                        <i class="fas fa-chart-line"></i>
+                        <p data-i18n="dashboard.no_statistics">Aucune statistique disponible</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            try {
+                const { data: stats, error } = await supabase
+                    .from('user_statistics')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .single();
+                    
+                if (error) throw error;
+                
+                if (!stats) {
+                    statsContainer.innerHTML = `
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label" data-i18n="dashboard.total_bookings">Cours</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label" data-i18n="dashboard.completed_bookings">Terminés</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">0h</div>
+                                <div class="stat-label" data-i18n="dashboard.hours_learned">Heures</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label" data-i18n="dashboard.credits_remaining">Crédits</div>
                             </div>
                         </div>
                     `;
+                    return;
                 }
+                
+                const totalBookings = stats.total_bookings || 0;
+                const completedBookings = stats.completed_bookings || 0;
+                const hoursLearned = Math.round((stats.total_minutes_learned || 0) / 60);
+                const creditsRemaining = stats.total_credits_remaining || 0;
+                
+                statsContainer.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">${totalBookings}</div>
+                            <div class="stat-label" data-i18n="dashboard.total_bookings">Cours</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${completedBookings}</div>
+                            <div class="stat-label" data-i18n="dashboard.completed_bookings">Terminés</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${hoursLearned}h</div>
+                            <div class="stat-label" data-i18n="dashboard.hours_learned">Heures</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${creditsRemaining}</div>
+                            <div class="stat-label" data-i18n="dashboard.credits_remaining">Crédits</div>
+                        </div>
+                    </div>
+                `;
+                
             } catch (error) {
-                console.error('Erreur chargement cours:', error);
+                console.error('Erreur chargement statistiques:', error);
+                statsContainer.innerHTML = `
+                    <div class="no-statistics">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Erreur de chargement des statistiques</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function loadBookingHistory(userId) {
+            const historyContainer = document.getElementById('bookingHistory');
+            
+            if (!window.supabase) {
+                historyContainer.innerHTML = `
+                    <div class="no-upcoming" style="padding: 30px;">
+                        <i class="fas fa-history"></i>
+                        <p data-i18n="dashboard.no_history">Aucun historique disponible</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            try {
+                const { data: bookings, error } = await supabase
+                    .from('bookings')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                    
+                if (error) throw error;
+                
+                if (!bookings || bookings.length === 0) {
+                    historyContainer.innerHTML = `
+                        <div class="no-upcoming" style="padding: 30px;">
+                            <i class="fas fa-history"></i>
+                            <p data-i18n="dashboard.no_history">Aucun historique disponible</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                
+                bookings.forEach(booking => {
+                    const bookingDate = new Date(booking.created_at);
+                    const formattedDate = bookingDate.toLocaleDateString('fr-FR', { 
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                    });
+                    const formattedTime = bookingDate.toLocaleTimeString('fr-FR', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                    
+                    const statusClass = `status-${booking.status || 'pending'}`;
+                    const statusText = booking.status || 'En attente';
+                    
+                    html += `
+                        <div class="booking-item">
+                            <div>
+                                <div class="booking-date">${formattedDate} à ${formattedTime}</div>
+                                <div class="booking-type">${booking.course_type} - ${booking.duration_minutes || 60} min</div>
+                            </div>
+                            <div class="booking-status ${statusClass}">${statusText}</div>
+                        </div>
+                    `;
+                });
+                
+                historyContainer.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erreur chargement historique:', error);
+                historyContainer.innerHTML = `
+                    <div class="no-upcoming" style="padding: 30px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Erreur de chargement de l'historique</p>
+                    </div>
+                `;
             }
         }
         
@@ -974,17 +1725,20 @@
             const confirmMessage = window.translationManager?.getTranslation('dashboard.cancel_confirm') || 'Êtes-vous sûr de vouloir annuler ce cours ?';
             if (confirm(confirmMessage)) {
                 alert(window.translationManager?.getTranslation('dashboard.cancel_function') || 'Fonction d\'annulation à implémenter');
+                // Ici, vous ajouteriez l'appel à l'API pour annuler le cours
             }
         }
         
         function rescheduleLesson(lessonId) {
             alert(window.translationManager?.getTranslation('dashboard.reschedule_function') || 'Fonction de report à implémenter');
+            // Ici, vous ajouteriez l'appel à l'API pour reporter le cours
         }
         
         // Gestion de la déconnexion
         document.addEventListener('DOMContentLoaded', function() {
             const logoutBtn = document.getElementById('logoutBtn');
             const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+            const refreshBtn = document.getElementById('refreshDashboardBtn');
             
             async function handleLogout() {
                 try {
@@ -1008,9 +1762,35 @@
                     await handleLogout();
                 });
             }
+            
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', async function() {
+                    const user = window.authManager?.getCurrentUser();
+                    if (user) {
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualisation...';
+                        await loadUserData(user);
+                        this.innerHTML = '<i class="fas fa-sync-alt"></i> Actualiser';
+                        
+                        // Animation de fade in pour les nouvelles cartes
+                        document.querySelectorAll('.fade-in').forEach(card => {
+                            card.style.animation = 'none';
+                            setTimeout(() => {
+                                card.style.animation = 'fadeIn 0.5s ease forwards';
+                            }, 10);
+                        });
+                    }
+                });
+            }
         });
         
         window.loadDashboard = loadDashboard;
+        
+        // Initialiser les traductions après le chargement
+        setTimeout(() => {
+            if (window.translationManager) {
+                window.translationManager.translatePage();
+            }
+        }, 1000);
     </script>
 </body>
 </html>
