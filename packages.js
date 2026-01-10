@@ -4,18 +4,18 @@ class PackagesManager {
         this.packages = {
             'conversation': {
                 single: { price: 20, duration: 60 },
-                package5: { price: 95, discount_percent: 5, total_credits: 5 },
-                package10: { price: 180, discount_percent: 10, total_credits: 10 }
+                package5: { price: 98, discount_percent: 2, total_credits: 5 },
+                package10: { price: 190, discount_percent: 10, total_credits: 10 }
             },
             'curriculum': {
                 single: { price: 35, duration: 60 },
-                package5: { price: 166.25, discount_percent: 5, total_credits: 5 },
-                package10: { price: 315, discount_percent: 10, total_credits: 10 }
+                package5: { price: 171.50, discount_percent: 2, total_credits: 5 },
+                package10: { price: 332.50, discount_percent: 5, total_credits: 10 }
             },
             'examen': {
                 single: { price: 30, duration: 60 },
-                package5: { price: 142.5, discount_percent: 5, total_credits: 5 },
-                package10: { price: 270, discount_percent: 10, total_credits: 10 }
+                package5: { price: 147, discount_percent: 2, total_credits: 5 },
+                package10: { price: 285, discount_percent: 5, total_credits: 10 }
             },
             'essai': {
                 single: { price: 5, duration: 15 }
