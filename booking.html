@@ -2020,171 +2020,211 @@
                 updateSummary();
             }
 
-            function updateSummary() {
-                const courseType = document.getElementById('courseType').value;
-                const user = window.authManager?.getCurrentUser();
-                let courseName = '-';
-                let price = '-';
-                let duration = '-';
-                let platform = 'Google Meet'; // Défaut changé à Google Meet
-                const coursesCount = parseInt(coursesCountInput.value);
-                const discountPercent = parseFloat(discountPercentInput.value);
-                
-                // NOUVEAU: Vérifier si l'utilisateur est VIP
-                const isVip = window.authManager?.isUserVip();
-                console.log(`💰 Statut VIP dans updateSummary: ${isVip}`);
-                
-                // Déterminer la plateforme
-                const locationValue = selectedLocationInput.value;
-                if (locationValue.includes('zoom')) platform = window.translationManager ? window.translationManager.getTranslation('booking.zoom') : 'Zoom';
-                else if (locationValue.includes('google')) platform = window.translationManager ? window.translationManager.getTranslation('booking.meet') : 'Google Meet';
-                else if (locationValue.includes('teams')) platform = window.translationManager ? window.translationManager.getTranslation('booking.teams') : 'Microsoft Teams';
+            async function updateSummary() {
+    const courseType = document.getElementById('courseType').value;
+    const user = window.authManager?.getCurrentUser();
+    let courseName = '-';
+    let price = '-';
+    let duration = '-';
+    let platform = 'Google Meet';
+    const coursesCount = parseInt(coursesCountInput.value);
+    const discountPercent = parseFloat(discountPercentInput.value);
+    
+    const isVip = window.authManager?.isUserVip();
+    console.log(`💰 [updateSummary] Statut VIP: ${isVip}, Type: ${courseType}`);
+    
+    // Déterminer la plateforme
+    const locationValue = selectedLocationInput.value;
+    if (locationValue.includes('zoom')) platform = window.translationManager ? window.translationManager.getTranslation('booking.zoom') : 'Zoom';
+    else if (locationValue.includes('google')) platform = window.translationManager ? window.translationManager.getTranslation('booking.meet') : 'Google Meet';
+    else if (locationValue.includes('teams')) platform = window.translationManager ? window.translationManager.getTranslation('booking.teams') : 'Microsoft Teams';
 
-                // Calculer en fonction du type de cours
-                if (courseType === 'essai') {
-                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
-                    let unitPriceEUR = 5;
-                    let totalPriceEUR = unitPriceEUR * coursesCount;
+    // COURS D'ESSAI
+    if (courseType === 'essai') {
+        console.log('🎫 Cours d\'essai détecté');
+        courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
+        duration = '15 min';
+        
+        let unitPriceEUR = 5;
+        let totalPriceEUR = unitPriceEUR;
+        
+        if (window.currencyManager) {
+            price = window.currencyManager.formatPrice(totalPriceEUR);
+        } else {
+            price = totalPriceEUR + '€';
+        }
+        
+        console.log(`✅ Prix essai: ${price}`);
+    } 
+    // COURS PAYANTS
+    else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
+        if (courseType === 'conversation') {
+            courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
+        } else if (courseType === 'curriculum') {
+            courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
+        } else if (courseType === 'examen') {
+            courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
+        }
+        
+        if (user && durationGroup.classList.contains('visible')) {
+            const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
+            duration = selectedDuration + ' min';
+            
+            let unitPriceEUR = 0;
+            
+            console.log(`📊 Calcul prix pour ${courseType} ${selectedDuration}min`);
+            
+            // PRIX VIP
+            if (isVip) {
+                console.log(`👑 Utilisateur VIP, recherche prix personnalisé...`);
+                
+                try {
+                    const vipPriceInfo = await window.authManager.getVipPrice(courseType, selectedDuration);
                     
-                    if (window.currencyManager) {
-                        price = window.currencyManager.formatPrice(totalPriceEUR);
+                    if (vipPriceInfo && typeof vipPriceInfo.price === 'number' && !isNaN(vipPriceInfo.price)) {
+                        console.log(`✅ Prix VIP trouvé:`, vipPriceInfo);
+                        
+                        if (window.currencyManager && vipPriceInfo.currency !== 'EUR') {
+                            unitPriceEUR = window.currencyManager.convert(
+                                vipPriceInfo.price, 
+                                vipPriceInfo.currency, 
+                                'EUR'
+                            );
+                        } else {
+                            unitPriceEUR = vipPriceInfo.price;
+                        }
+                        
+                        console.log(`💎 Prix VIP unitaire en EUR: ${unitPriceEUR}€`);
                     } else {
-                        price = totalPriceEUR + '€';
+                        console.log(`⚠️ Aucun prix VIP valide, utilisation prix normal`);
+                        unitPriceEUR = getNormalPrice(courseType, selectedDuration);
                     }
-                    duration = '15 min';
-                } 
-                else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
-                    // Obtenir le nom du cours
-                    if (courseType === 'conversation') {
-                        courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
-                    } else if (courseType === 'curriculum') {
-                        courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
-                    } else if (courseType === 'examen') {
-                        courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
-                    }
-                    
-                    if (user && durationGroup.classList.contains('visible')) {
-                        const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
-                        duration = selectedDuration + ' min';
-                        
-                        let unitPriceEUR = 0;
-                        let unitPrice = 0;
-                        let currency = 'EUR';
-                        
-                        // NOUVELLE LOGIQUE: PRIX VIP D'ABORD
-                        if (isVip) {
-                            console.log(`💰 Recherche prix VIP pour ${courseType} ${selectedDuration}min`);
-                            const vipPriceInfo = window.authManager.getVipPrice(courseType, selectedDuration);
-                            
-                            if (vipPriceInfo) {
-                                console.log(`✅ Prix VIP trouvé: ${vipPriceInfo.price} ${vipPriceInfo.currency}`);
-                                unitPrice = vipPriceInfo.price;
-                                currency = vipPriceInfo.currency;
-                                
-                                // Convertir en EUR pour les calculs
-                                if (window.currencyManager && currency !== 'EUR') {
-                                    unitPriceEUR = window.currencyManager.convert(unitPrice, currency, 'EUR');
-                                } else {
-                                    unitPriceEUR = unitPrice;
-                                }
-                            } else {
-                                console.log(`❌ Aucun prix VIP spécifique, utilisation des prix normaux`);
-                                // Prix normaux si pas de prix VIP spécifique
-                                unitPriceEUR = getNormalPrice(courseType, selectedDuration);
-                                unitPrice = unitPriceEUR;
-                            }
-                        } else {
-                            // Prix normaux
-                            unitPriceEUR = getNormalPrice(courseType, selectedDuration);
-                            unitPrice = unitPriceEUR;
-                        }
-                        
-                        let totalPrice = unitPrice * coursesCount;
-                        let totalPriceEUR = unitPriceEUR * coursesCount;
-                        
-                        // Appliquer la réduction
-                        if (discountPercent > 0) {
-                            totalPrice = totalPrice * (1 - discountPercent / 100);
-                            totalPriceEUR = totalPriceEUR * (1 - discountPercent / 100);
-                        }
-                        
-                        // Formater le prix pour l'affichage
-                        if (window.currencyManager) {
-                            // Si on a un prix VIP dans une devise différente, convertir dans la devise courante
-                            if (isVip && currency !== window.currencyManager.currentCurrency) {
-                                const convertedPrice = window.currencyManager.convert(totalPrice, currency, window.currencyManager.currentCurrency);
-                                price = window.currencyManager.formatPrice(convertedPrice);
-                            } else {
-                                price = window.currencyManager.formatPrice(totalPrice);
-                            }
-                            
-                            // Ajouter un indicateur VIP si applicable
-                            if (isVip) {
-                                price += ' <span class="vip-indicator">VIP</span>';
-                            }
-                        } else {
-                            price = totalPrice.toFixed(2) + ' ' + currency;
-                            if (isVip) {
-                                price += ' <span class="vip-indicator">VIP</span>';
-                            }
-                        }
-                        
-                        console.log(`💰 Prix final: ${price} (VIP: ${isVip})`);
-                        
-                    } else {
-                        // Utilisateur non connecté ou durée non visible
-                        duration = '60 min';
-                        let unitPriceEUR = getNormalPrice(courseType, 60);
-                        let totalPriceEUR = unitPriceEUR * coursesCount;
-                        
-                        if (window.currencyManager) {
-                            price = window.currencyManager.formatPrice(totalPriceEUR);
-                        } else {
-                            price = totalPriceEUR + '€';
-                        }
-                    }
+                } catch (error) {
+                    console.error('❌ Erreur récupération prix VIP:', error);
+                    unitPriceEUR = getNormalPrice(courseType, selectedDuration);
                 }
-
-                // Mettre à jour les éléments du récapitulatif
-                document.getElementById('summaryType').textContent = courseName;
-                document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-                document.getElementById('summaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
-                
-                // Formater la date selon la langue
-                if (selectedDate) {
-                    const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
-                    const dateObj = new Date(selectedDate);
-                    const formattedDate = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
-                        weekday: 'short',
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                    });
-                    document.getElementById('summaryDate').textContent = formattedDate;
-                } else {
-                    document.getElementById('summaryDate').textContent = '-';
-                }
-                
-                document.getElementById('summaryTime').textContent = selectedTime || '-';
-                document.getElementById('summaryDuration').textContent = duration;
-                document.getElementById('summaryPlatform').textContent = platform;
-                
-                // Mettre à jour le prix (avec parsing HTML pour le badge VIP)
-                const summaryPriceElement = document.getElementById('summaryPrice');
-                summaryPriceElement.innerHTML = price;
-                
-                // Ajouter une classe VIP si applicable
-                if (isVip && window.authManager?.getVipPrice(courseType, parseInt(durationInput.value) || 60)) {
-                    summaryPriceElement.classList.add('vip-price-display');
-                } else {
-                    summaryPriceElement.classList.remove('vip-price-display');
-                }
-
-                const canSubmit = selectedDate && selectedTime && courseType && 
-                    (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
-                
-                submitButton.disabled = !canSubmit;
+            } 
+            // PRIX NORMAL
+            else {
+                console.log(`👤 Utilisateur standard, prix normal`);
+                unitPriceEUR = getNormalPrice(courseType, selectedDuration);
             }
+            
+            if (isNaN(unitPriceEUR) || unitPriceEUR <= 0) {
+                console.error(`❌ Prix invalide: ${unitPriceEUR}, utilisation prix par défaut`);
+                unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+            }
+            
+            console.log(`📦 Prix unitaire final: ${unitPriceEUR}€ × ${coursesCount} cours`);
+            
+            let totalPriceEUR = unitPriceEUR * coursesCount;
+            
+            if (discountPercent > 0) {
+                totalPriceEUR = totalPriceEUR * (1 - discountPercent / 100);
+                console.log(`🎁 Réduction ${discountPercent}% appliquée: ${totalPriceEUR}€`);
+            }
+            
+            if (window.currencyManager) {
+                const convertedPrice = window.currencyManager.convert(
+                    totalPriceEUR, 
+                    'EUR', 
+                    window.currencyManager.currentCurrency
+                );
+                price = window.currencyManager.formatPrice(convertedPrice);
+                
+                if (isVip && vipPriceInfo) {
+                    price += ' <span class="vip-indicator">VIP</span>';
+                }
+            } else {
+                price = totalPriceEUR.toFixed(2) + ' EUR';
+                if (isVip && vipPriceInfo) {
+                    price += ' <span class="vip-indicator">VIP</span>';
+                }
+            }
+            
+            console.log(`✅ Prix final affiché: ${price}`);
+            
+        } else {
+            duration = '60 min';
+            let unitPriceEUR = getNormalPrice(courseType, 60);
+            let totalPriceEUR = unitPriceEUR * coursesCount;
+            
+            if (window.currencyManager) {
+                price = window.currencyManager.formatPrice(totalPriceEUR);
+            } else {
+                price = totalPriceEUR + '€';
+            }
+        }
+    }
+
+    // MISE À JOUR INTERFACE
+    document.getElementById('summaryType').textContent = courseName;
+    
+    if (courseType === 'essai') {
+        document.getElementById('summaryCoursesCount').textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+        document.getElementById('summaryDiscount').textContent = '0%';
+    } else {
+        document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+        document.getElementById('summaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
+    }
+    
+    if (selectedDate) {
+        const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+        const dateObj = new Date(selectedDate);
+        const formattedDate = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+        document.getElementById('summaryDate').textContent = formattedDate;
+    } else {
+        document.getElementById('summaryDate').textContent = '-';
+    }
+    
+    document.getElementById('summaryTime').textContent = selectedTime || '-';
+    document.getElementById('summaryDuration').textContent = duration;
+    document.getElementById('summaryPlatform').textContent = platform;
+    
+    const summaryPriceElement = document.getElementById('summaryPrice');
+    summaryPriceElement.innerHTML = price;
+    
+    if (isVip && courseType !== 'essai') {
+        summaryPriceElement.classList.add('vip-price-display');
+    } else {
+        summaryPriceElement.classList.remove('vip-price-display');
+    }
+
+    const canSubmit = selectedDate && selectedTime && courseType && 
+        (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
+    
+    submitButton.disabled = !canSubmit;
+}
+
+// NOUVELLE FONCTION À AJOUTER APRÈS updateSummary()
+function getNormalPrice(courseType, duration) {
+    console.log(`📋 Calcul prix normal pour ${courseType} ${duration}min`);
+    
+    switch(courseType) {
+        case 'conversation':
+            if (duration === 30) return 10;
+            else if (duration === 45) return 15;
+            else return 20;
+        case 'curriculum':
+            if (duration === 30) return 17.5;
+            else if (duration === 45) return 26.25;
+            else return 35;
+        case 'examen':
+            if (duration === 30) return 15;
+            else if (duration === 45) return 22.5;
+            else return 30;
+        case 'essai':
+            return 5;
+        default:
+            console.warn(`⚠️ Type de cours inconnu: ${courseType}`);
+            return 20;
+    }
+}
 
             // NOUVELLE FONCTION: Obtenir les prix normaux
             function getNormalPrice(courseType, duration) {
