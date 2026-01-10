@@ -372,34 +372,38 @@ class BookingManager {
             let priceEUR, finalPrice;
             const isVIP = window.authManager?.isUserVip();
             
-            if (isPackage && window.packagesManager) {
-                if (isVIP) {
-                    // Utiliser prix VIP
-                    const vipPrice = await window.authManager.getVipPrice(bookingData.courseType, bookingData.duration || 60);
-                    priceEUR = vipPrice ? vipPrice.price : window.packagesManager.calculatePrice(bookingData.courseType, bookingData.packageQuantity, bookingData.duration);
-                } else {
-                    priceEUR = window.packagesManager.calculatePrice(bookingData.courseType, bookingData.packageQuantity, bookingData.duration);
-                }
-                
-                // Convertir le prix si nécessaire
-                if (window.currencyManager && currentCurrency !== 'EUR') {
-                    finalPrice = window.currencyManager.convert(priceEUR, 'EUR', currentCurrency);
-                } else {
-                    finalPrice = priceEUR;
-                }
-                
-                console.log(`📦 Forfait ${bookingData.packageQuantity} cours: ${priceEUR}€ → ${finalPrice}${currentCurrency}`);
-            } else {
-                // Cours unique
-                priceEUR = bookingData.priceEUR || bookingData.price;
-                
-                // Convertir le prix si nécessaire
-                if (window.currencyManager && currentCurrency !== 'EUR') {
-                    finalPrice = window.currencyManager.convert(priceEUR, 'EUR', currentCurrency);
-                } else {
-                    finalPrice = bookingData.price;
-                }
-            }
+if (isVIP && window.packagesManager) {
+    // Utiliser prix VIP
+    const vipPrice = await window.authManager.getVipPrice(bookingData.courseType, bookingData.duration || 60);
+    if (vipPrice) {
+        // Convertir le prix VIP dans la devise actuelle
+        const vipPriceEUR = vipPrice.price;
+        const vipCurrency = vipPrice.currency || 'EUR';
+        
+        if (window.currencyManager && vipCurrency !== 'EUR') {
+            priceEUR = window.currencyManager.convert(vipPriceEUR, vipCurrency, 'EUR');
+        } else {
+            priceEUR = vipPriceEUR;
+        }
+        
+        // Convertir vers la devise actuelle
+        if (window.currencyManager && currentCurrency !== 'EUR') {
+            finalPrice = window.currencyManager.convert(priceEUR, 'EUR', currentCurrency);
+        } else {
+            finalPrice = priceEUR;
+        }
+        
+        console.log(`👑 Prix VIP appliqué: ${vipPriceEUR}${vipCurrency} → ${finalPrice}${currentCurrency}`);
+    } else {
+        // Pas de prix VIP, utiliser prix normal
+        priceEUR = window.packagesManager.calculatePrice(bookingData.courseType, bookingData.packageQuantity, bookingData.duration);
+        if (window.currencyManager && currentCurrency !== 'EUR') {
+            finalPrice = window.currencyManager.convert(priceEUR, 'EUR', currentCurrency);
+        } else {
+            finalPrice = priceEUR;
+        }
+    }
+}
             
             // Préparer les données pour le paiement
             const completeBookingData = {
