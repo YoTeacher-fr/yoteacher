@@ -128,22 +128,9 @@ class AuthManager {
 
     async waitForSupabase() {
         return new Promise((resolve) => {
-            if (window.supabase && window.supabase.auth) {
-                this.supabaseReady = true;
-                resolve();
-                return;
-            }
-
-            if (window.supabaseInitialized) {
-                window.supabaseInitialized.then((initialized) => {
-                    this.supabaseReady = initialized && window.supabase && window.supabase.auth;
-                    resolve();
-                }).catch(() => {
-                    this.supabaseReady = false;
-                    resolve();
-                });
-                return;
-            }
+            const initialized = await window.supabaseInitialized;
+    this.supabaseReady = initialized;
+}
 
             let attempts = 0;
             const maxAttempts = 100;
