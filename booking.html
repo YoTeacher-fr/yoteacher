@@ -1,1157 +1,2265 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Réserver un cours - YoTeacher</title>
-    
-    <!-- Meta tags -->
-    <meta name="description" content="Réservez votre cours de français avec YoTeacher. Choisissez l'horaire qui vous convient.">
-    
-    <!-- Favicon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="img/favicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="img/favicon/favicon-16x16.png">
-    <link rel="manifest" href="img/favicon/site.webmanifest">
-    
-    <!-- Font Awesome -->
+    <title data-i18n="booking.page_title">Réserver un cours - YoTeacher</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/header.css">
-    <link rel="stylesheet" href="css/booking.css">
-    <link rel="stylesheet" href="css/footer.css">
-    
-    <!-- JavaScript -->
-    <script src="js/config.js" defer></script>
-    <script src="js/supabase.js" defer></script>
-    <script src="js/auth.js" defer></script>
-    <script src="js/translation.js" defer></script>
-    <script src="js/currency.js" defer></script>
-    <script src="js/booking.js" defer></script>
-    <script src="js/common.js" defer></script>
-    
-    <!-- Stripe -->
-    <script src="https://js.stripe.com/v3/"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* RÉDUCTION DE LA HAUTEUR DU HEADER */
+        .main-header {
+            background-color: rgba(255, 255, 255, 0.98) !important;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
+            backdrop-filter: blur(10px) !important;
+            min-height: 60px !important;
+        }
+        
+        /* CORRECTION COMPLÈTE DU HEADER POUR ALIGNEMENT À DROITE */
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 !important;
+            width: 100%;
+        }
+        
+        .logo-section {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .main-header .nav-link {
+            display: none !important;
+        }
+        
+        .main-header .nav-spacer {
+            display: none !important;
+        }
+        
+        .main-header .logo {
+            color: #333 !important;
+            font-weight: 700;
+            font-size: 1.5rem !important;
+        }
+        
+        /* Grouper langue, devise et avatar à droite */
+        .header-right-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+            flex: 0 0 auto;
+        }
+        
+        /* Devise dans le header réduit */
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .currency-selector select {
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            padding: 4px 8px;
+            color: #333;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            width: auto;
+            min-width: 70px;
+            text-align: center;
+            text-align-last: center;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: all 0.3s ease;
+        }
+        
+        .currency-selector i {
+            font-size: 0.9rem;
+            color: #333;
+        }
+        
+        /* Langue dans le header réduit */
+        .language-switcher {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #333;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .language-switcher:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Bouton Connexion dans le header réduit */
+        .main-header .login-btn {
+            padding: 8px 20px !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            border-radius: 50px;
+            background: #4f9ad1 !important;
+            color: white !important;
+            border: none;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        
+        .main-header .login-btn:hover {
+            background: #3c84f6 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
+        }
+        
+        /* Avatar utilisateur */
+        .user-avatar {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .avatar-img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f9ad1, #3c84f6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .user-menu {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            min-width: 180px;
+            padding: 10px 0;
+            display: none;
+            z-index: 1000;
+            border: 1px solid #eee;
+        }
+        
+        .user-avatar:hover .user-menu {
+            display: block;
+        }
+        
+        .user-menu a {
+            display: block;
+            padding: 10px 15px;
+            color: #333;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+        
+        .user-menu a:hover {
+            background: #f5f5f5;
+            color: #3c84f6;
+        }
+        
+        .user-menu .logout-btn {
+            border-top: 1px solid #eee;
+            color: #d32f2f;
+            margin-top: 5px;
+        }
+        
+        .user-menu .logout-btn:hover {
+            background: #ffeaea;
+        }
+        
+        /* Menu hamburger */
+        .hamburger-menu {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 10px;
+        }
+        
+        .hamburger-menu span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background: #333;
+            margin: 4px 0;
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+        
+        /* Menu mobile */
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .mobile-menu-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background: white;
+            padding: 20px;
+            overflow-y: auto;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+        }
+        
+        .mobile-menu-overlay.active .mobile-nav {
+            transform: translateX(0);
+        }
+        
+        .close-menu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: #333;
+            cursor: pointer;
+        }
+        
+        .mobile-nav-link {
+            display: block;
+            padding: 15px 0;
+            color: #333;
+            text-decoration: none;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* CORRECTION DU PADDING DU BODY */
+        body {
+            padding-top: 60px !important;
+        }
+        
+        /* Bouton connexion mobile */
+        .mobile-login-btn-header {
+            display: none !important;
+        }
+        
+        /* FOND INITIAL DE BOOKING */
+        .booking-section {
+            padding: 40px 20px;
+            background: #f8f9fa;
+            min-height: calc(100vh - 60px);
+        }
+
+        .booking-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .booking-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .booking-title {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .booking-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .booking-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .booking-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeaea;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .calendar-container {
+            margin-bottom: 30px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .month-year {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+
+        .calendar-nav button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .calendar-nav button:hover {
+            background: #f0f0f0;
+            border-color: #3c84f6;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .calendar-day {
+            text-align: center;
+            padding: 12px 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background: #f0f7ff;
+        }
+
+        .calendar-day.selected {
+            background: #3c84f6;
+            color: white;
+        }
+
+        .calendar-day.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .calendar-day.today {
+            border: 2px solid #3c84f6;
+        }
+
+        .time-slots {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .time-slot {
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .time-slot:hover {
+            border-color: #3c84f6;
+            background: #f0f7ff;
+        }
+
+        .time-slot.selected {
+            background: #3c84f6;
+            color: white;
+            border-color: #3c84f6;
+        }
+
+        .time-slot.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .time-slot-time {
+            font-weight: 600;
+        }
+
+        .time-slot-duration {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3c84f6;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .booking-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-item.total {
+            font-weight: 600;
+            font-size: 1.2rem;
+            border-bottom: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #ddd;
+        }
+
+        .btn-booking {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3c84f6, #1e88e5);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-booking:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+        }
+
+        .btn-booking:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #ffeaea;
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #d32f2f;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .loading-slots {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading-slots i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #3c84f6;
+        }
+
+        .no-slots {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error-slots {
+            text-align: center;
+            padding: 30px;
+            background: #ffeaea;
+            border-radius: 10px;
+            color: #d32f2f;
+        }
+
+        .error-slots i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .error-details {
+            font-size: 0.9rem;
+            margin: 10px 0;
+            opacity: 0.8;
+        }
+
+        .retry-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #3c84f6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .retry-btn:hover {
+            background: #2c74e6;
+        }
+        
+        /* NOUVEAUX STYLES POUR LES BULLES DE DURÉE */
+        .duration-group {
+            display: none;
+        }
+        
+        .duration-group.visible {
+            display: block;
+        }
+        
+        .duration-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .duration-option {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .duration-option:hover {
+            border-color: #4781db;
+            background: #f0f7ff;
+            color: #4781db;
+        }
+        
+        .duration-option.selected {
+            background: #4781db;
+            border-color: #4781db;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(71, 129, 219, 0.3);
+        }
+        
+        /* Styles pour les boutons de moyen de communication */
+        .location-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .location-btn i {
+            font-size: 1.1rem;
+        }
+        
+        .location-btn:hover {
+            border-color: #3069c4;
+            background: #f0f7ff;
+            color: #3069c4;
+        }
+
+        .location-btn.selected {
+            background: #3069c4;
+            border-color: #3069c4;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(48, 105, 196, 0.3);
+        }
+        
+        .login-required {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .login-required a {
+            color: #3c84f6;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .login-required a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Nouveau style pour le sélecteur de nombre de cours */
+        .courses-count-group {
+            margin-bottom: 20px;
+        }
+        
+        .courses-count-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .courses-count-option {
+            flex: 1;
+            min-width: 70px;
+            padding: 12px 10px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            position: relative;
+        }
+        
+        .courses-count-option:hover {
+            border-color: #3c84f6;
+            background: #f0f7ff;
+            color: #3c84f6;
+        }
+        
+        .courses-count-option.selected {
+            background: #3c84f6;
+            border-color: #3c84f6;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
+        }
+        
+        .discount-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f6ae3b;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        /* Styles pour le menu mobile */
+        .currency-selector-mobile {
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+            margin-top: 15px;
+        }
+        
+        .currency-selector-mobile label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .currency-selector-mobile select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 0.9rem;
+        }
+        
+        .mobile-language {
+            padding: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #333;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .mobile-language:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        .mobile-login-btn {
+            margin: 20px 0 10px;
+            padding: 12px;
+            text-align: center;
+            background: #3c84f6;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            display: block;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .mobile-login-btn:hover {
+            background: #2c74e6;
+        }
+
+        /* Styles responsives */
+        @media (max-width: 768px) {
+            .booking-section {
+                padding: 30px 15px;
+                min-height: calc(100vh - 60px);
+            }
+            
+            .booking-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .booking-title {
+                font-size: 2rem;
+            }
+            
+            .calendar-grid {
+                gap: 3px;
+            }
+            
+            .calendar-day {
+                padding: 8px 3px;
+                font-size: 0.9rem;
+            }
+            
+            .booking-card {
+                padding: 25px 20px;
+            }
+            
+            .duration-options,
+            .courses-count-options {
+                gap: 8px;
+            }
+            
+            .duration-option,
+            .courses-count-option {
+                min-width: 70px;
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            
+            /* Header mobile */
+            .hamburger-menu {
+                display: block;
+            }
+            
+            .mobile-login-btn-header {
+                display: block !important;
+                padding: 6px 12px;
+                font-size: 0.85rem;
+                background: #4f9ad1;
+                color: white;
+                border-radius: 20px;
+                text-decoration: none;
+            }
+            
+            /* Cacher les éléments du groupe droit sur mobile */
+            .header-right-group {
+                display: none;
+            }
+            
+            .main-header .login-btn {
+                display: none !important;
+            }
+            
+            .language-switcher {
+                display: none;
+            }
+            
+            .currency-selector {
+                display: none;
+            }
+            
+            .user-avatar {
+                display: none;
+            }
+            
+            .logo-section {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            
+            .header-content {
+                justify-content: space-between;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .booking-card {
+                padding: 20px 15px;
+            }
+            
+            .booking-title {
+                font-size: 1.8rem;
+            }
+            
+            .card-title {
+                font-size: 1.3rem;
+            }
+            
+            .btn-booking {
+                padding: 14px;
+            }
+            
+            .form-input, .form-select, .form-textarea {
+                padding: 10px 12px;
+            }
+            
+            .duration-options,
+            .courses-count-options {
+                gap: 6px;
+            }
+            
+            .duration-option,
+            .courses-count-option {
+                min-width: 60px;
+                padding: 8px 10px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* Animation subtile pour les cartes */
+        .booking-card {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* ===== STYLES VIP AJOUTÉS ===== */
+        /* Style pour les prix VIP */
+        .vip-price-display {
+            color: #D4AF37 !important;
+            font-weight: bold !important;
+            position: relative;
+        }
+        
+        .vip-price-display::before {
+            content: '💰 ';
+        }
+        
+        .vip-badge-booking {
+            animation: pulseVIP 2s infinite;
+        }
+        
+        @keyframes pulseVIP {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Style pour le récapitulatif VIP */
+        .summary-item.vip-highlight {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.1));
+            border-left: 4px solid #FFD700;
+            padding-left: 10px;
+        }
+        
+        /* Indicateur VIP dans le récapitulatif */
+        .vip-indicator {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 5px;
+            border: 1px solid #FFA500;
+            vertical-align: middle;
+        }
+    </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="main-header">
+    <!-- Header réduit -->
+    <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
-                <!-- Logo -->
-                <div class="logo">
-                    <a href="index.html">
-                        <span class="logo-text">Yo<span class="logo-accent">Teacher</span></span>
-                    </a>
-                </div>
-
-                <!-- Desktop Navigation -->
-                <nav class="desktop-nav">
-                    <ul class="nav-links">
-                        <li><a href="index.html#about">À propos</a></li>
-                        <li><a href="index.html#courses">Cours</a></li>
-                        <li><a href="index.html#testimonials">Témoignages</a></li>
-                        <li><a href="dashboard.html">Dashboard</a></li>
-                    </ul>
-                </nav>
-
-                <!-- Right side (Desktop) -->
-                <div class="header-right-group">
-                    <!-- Language Switcher (Desktop) -->
-                    <div class="language-switcher" id="languageSwitcherDesktop">
-                        <i class="fas fa-globe"></i>
-                        <span>FR</span>
-                    </div>
-
-                    <!-- Login/Register (Desktop) -->
-                    <div class="desktop-auth-buttons">
-                        <a href="login.html" class="login-btn btn btn-outline">
-                            <i class="fas fa-sign-in-alt"></i>
-                            Connexion
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Mobile Menu Button -->
-                <button class="mobile-menu-btn" id="mobileMenuBtn">
-                    <i class="fas fa-bars"></i>
+                <button class="hamburger-menu" id="hamburgerBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </button>
+                
+                <div class="logo-section">
+                    <a href="index.html" class="logo">Yoann</a>
+                    <div class="flag">🇫🇷</div>
+                </div>
+                
+                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                
+                <!-- Groupe droit pour langue, devise et avatar -->
+                <div class="header-right-group">
+                    <!-- Avatar utilisateur -->
+                    <div class="user-avatar" id="userAvatar" style="display: none;">
+                        <div class="avatar-img" id="avatarInitials">Y</div>
+                        <div class="user-menu">
+                            <a href="dashboard.html" data-i18n="dashboard.my_dashboard">Mon tableau de bord</a>
+                            <a href="profile.html" data-i18n="dashboard.my_profile">Mon profil</a>
+                            <a href="bookings.html" data-i18n="payment.my_bookings">Mes réservations</a>
+                            <a href="#" class="logout-btn" id="logoutBtn" data-i18n="dashboard.logout">Déconnexion</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Sélecteur de devise -->
+                    <div class="currency-selector">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <select id="currencySelector">
+                            <!-- Rempli dynamiquement par currency.js -->
+                        </select>
+                    </div>
+                    
+                    <!-- Sélecteur de langue -->
+                    <div class="language-switcher" id="languageSwitcherDesktop">
+                        <span class="flag">🌐</span>
+                        <span data-i18n="header.language">EN</span>
+                    </div>
+                    
+                    <!-- Bouton de connexion (visible si non connecté) -->
+                    <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
+                </div>
             </div>
+        </div>
+        
+        <!-- Menu Mobile -->
+        <div class="mobile-menu-overlay" id="mobileMenu">
+            <nav class="mobile-nav">
+                <button class="close-menu" id="closeMenuBtn">×</button>
+                <!-- La section utilisateur sera ajoutée dynamiquement ici -->
+                <a href="index.html#about" class="mobile-nav-link" data-i18n="nav.about">À propos</a>
+                <a href="index.html#courses" class="mobile-nav-link" data-i18n="nav.courses">Cours</a>
+                <a href="index.html#testimonials" class="mobile-nav-link" data-i18n="nav.testimonials">Témoignages</a>
+                <a href="index.html#contact" class="mobile-nav-link" data-i18n="nav.contact">Contact</a>
+                
+                <!-- Sélecteur de devise mobile -->
+                <div class="currency-selector-mobile">
+                    <label><i class="fas fa-money-bill-wave"></i> Devise</label>
+                    <select id="currencySelectorMobile">
+                        <!-- Rempli dynamiquement -->
+                    </select>
+                </div>
+                
+                <div class="mobile-language" id="languageSwitcherMobile">
+                    <span class="flag">🌐</span>
+                    <span data-i18n="header.language">EN</span>
+                </div>
+                
+                <a href="login.html" class="mobile-login-btn" data-i18n="header.login">Connexion</a>
+            </nav>
         </div>
     </header>
 
-    <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobileMenu">
-        <div class="mobile-menu-header">
-            <div class="logo">
-                <a href="index.html">
-                    <span class="logo-text">Yo<span class="logo-accent">Teacher</span></span>
-                </a>
-            </div>
-            <button class="mobile-menu-close" id="mobileMenuClose">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <nav class="mobile-nav">
-            <ul class="mobile-nav-links">
-                <li><a href="index.html#about">À propos</a></li>
-                <li><a href="index.html#courses">Cours</a></li>
-                <li><a href="index.html#testimonials">Témoignages</a></li>
-                <li><a href="dashboard.html">Dashboard</a></li>
-            </ul>
-        </nav>
-        
-        <div class="mobile-menu-footer">
-            <!-- Language Switcher (Mobile) -->
-            <div class="mobile-language" id="languageSwitcherMobile">
-                <i class="fas fa-globe"></i>
-                <span>FR</span>
-            </div>
-            
-            <!-- Login/Register (Mobile) -->
-            <a href="login.html" class="mobile-login-btn-header btn btn-primary">
-                <i class="fas fa-sign-in-alt"></i>
-                Connexion
-            </a>
-        </div>
-    </div>
-
-    <!-- Overlay for Mobile Menu -->
-    <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
-
-    <!-- Main Content -->
-    <main class="booking-main">
-        <div class="container">
-            <!-- Progress Steps -->
-            <div class="booking-progress" id="bookingProgress">
-                <div class="progress-step active" data-step="1">
-                    <div class="step-number">1</div>
-                    <div class="step-label">Choisir un créneau</div>
-                </div>
-                <div class="progress-step" data-step="2">
-                    <div class="step-number">2</div>
-                    <div class="step-label">Informations personnelles</div>
-                </div>
-                <div class="progress-step" data-step="3">
-                    <div class="step-number">3</div>
-                    <div class="step-label">Paiement</div>
-                </div>
-                <div class="progress-step" data-step="4">
-                    <div class="step-number">4</div>
-                    <div class="step-label">Confirmation</div>
-                </div>
-            </div>
-
-            <!-- Course Selection Header -->
+    <section class="booking-section">
+        <div class="booking-container">
             <div class="booking-header">
-                <div class="course-type-header">
-                    <h1 id="courseTypeTitle">Cours de Conversation</h1>
-                    <p class="course-description" id="courseDescription">
-                        Améliorez votre fluidité à l'oral avec des conversations guidées sur des sujets variés d'actualité.
-                    </p>
-                </div>
-                
-                <!-- Duration Selector (Visible only for non-essai) -->
-                <div class="duration-selector" id="durationSelector" style="display: none;">
-                    <label for="durationSelect">
-                        <i class="far fa-clock"></i>
-                        <span id="durationLabel">Durée du cours:</span>
-                    </label>
-                    <select id="durationSelect" class="form-select">
-                        <option value="30">30 minutes</option>
-                        <option value="45" selected>45 minutes</option>
-                        <option value="60">60 minutes</option>
-                    </select>
-                </div>
+                <h1 class="booking-title" data-i18n="booking.title">Réserver un cours</h1>
+                <p class="booking-subtitle" data-i18n="booking.subtitle">Choisissez la date, l'heure et le type de cours qui vous convient</p>
             </div>
 
-            <div class="booking-container">
-                <!-- Left Column: Calendar & Time Slots -->
-                <div class="booking-left">
-                    <!-- Date Navigation -->
-                    <div class="date-navigation">
-                        <button class="btn-date-nav" id="prevDate">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        
-                        <div class="current-date-display" id="currentDateDisplay">
-                            Aujourd'hui, <span id="currentDate">10 janvier 2026</span>
-                        </div>
-                        
-                        <button class="btn-date-nav" id="nextDate">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-circle"></i> <span id="errorText"></span>
+            </div>
 
-                    <!-- Time Slots Container -->
-                    <div class="time-slots-container" id="timeSlotsContainer">
-                        <div class="loading-slots" id="loadingSlots">
-                            <div class="loading-spinner"></div>
-                            <p>Chargement des créneaux disponibles...</p>
+            <div class="success-message" id="successMessage">
+                <i class="fas fa-check-circle"></i> <span id="successText"></span>
+            </div>
+
+            <div class="booking-grid">
+                <!-- Colonne gauche : Calendrier et créneaux -->
+                <div class="booking-card">
+                    <h2 class="card-title" data-i18n="booking.choose_slot">Choisir un créneau</h2>
+                    
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <div class="month-year" id="currentMonth">Janvier 2024</div>
+                            <div class="calendar-nav">
+                                <button id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                                <button id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                            </div>
                         </div>
                         
-                        <!-- Time slots will be inserted here -->
-                        <div class="time-slots-grid" id="timeSlotsGrid"></div>
-                        
-                        <!-- No slots message -->
-                        <div class="no-slots-message" id="noSlotsMessage" style="display: none;">
-                            <i class="far fa-calendar-times"></i>
-                            <h3>Aucun créneau disponible</h3>
-                            <p>Il n'y a pas de créneau disponible pour cette date. Veuillez sélectionner une autre date.</p>
+                        <div class="calendar-grid" id="calendarDays">
+                            <!-- Les jours seront générés par JavaScript -->
                         </div>
                     </div>
 
-                    <!-- Debug Info (only in development) -->
-                    <div class="debug-info" id="debugInfo" style="display: none;">
-                        <h4><i class="fas fa-bug"></i> Informations de débogage</h4>
-                        <div class="debug-content" id="debugContent"></div>
+                    <h3 style="margin-bottom: 15px;" data-i18n="booking.available_slots">Créneaux disponibles</h3>
+                    <div class="time-slots" id="timeSlots">
+                        <!-- Les créneaux seront générés par JavaScript -->
                     </div>
                 </div>
 
-                <!-- Right Column: Booking Summary -->
-                <div class="booking-right">
-                    <div class="booking-summary" id="bookingSummary">
-                        <h3><i class="fas fa-clipboard-check"></i> Récapitulatif</h3>
-                        
-                        <div class="summary-content">
-                            <!-- Course Type & Duration -->
-                            <div class="summary-item">
-                                <span class="summary-label">Type de cours:</span>
-                                <span class="summary-value" id="summaryCourseType">-</span>
-                            </div>
-                            
-                            <div class="summary-item">
-                                <span class="summary-label">Durée:</span>
-                                <span class="summary-value" id="summaryDuration">-</span>
-                            </div>
-                            
-                            <!-- Selected Date & Time -->
-                            <div class="summary-item">
-                                <span class="summary-label">Date:</span>
-                                <span class="summary-value" id="summaryDate">Non sélectionnée</span>
-                            </div>
-                            
-                            <div class="summary-item">
-                                <span class="summary-label">Horaire:</span>
-                                <span class="summary-value" id="summaryTime">-</span>
-                            </div>
-                            
-                            <!-- Price -->
-                            <div class="summary-item price-item">
-                                <span class="summary-label">Prix:</span>
-                                <span class="summary-value price-value" id="summaryPrice">-</span>
-                                <span class="vip-indicator" id="vipIndicator" style="display: none;">VIP</span>
-                            </div>
-                            
-                            <!-- Login Prompt for Guests -->
-                            <div class="login-prompt" id="loginPrompt">
-                                <div class="login-prompt-content">
-                                    <i class="fas fa-user-circle"></i>
-                                    <div>
-                                        <h4>Connectez-vous pour réserver</h4>
-                                        <p>Vous devez être connecté pour réserver un cours.</p>
-                                    </div>
-                                </div>
-                                <a href="login.html?redirect=booking.html%3Ftype%3Dconversation" class="btn btn-primary btn-sm">
-                                    Se connecter
-                                </a>
-                            </div>
-                            
-                            <!-- Forfait Selection -->
-                            <div class="package-selector" id="packageSelector" style="display: none;">
-                                <label for="packageSelect">
-                                    <i class="fas fa-box"></i>
-                                    <span>Souhaitez-vous un forfait?</span>
-                                </label>
-                                <select id="packageSelect" class="form-select">
-                                    <option value="1" selected>Cours unique (1 crédit)</option>
-                                    <option value="10">Forfait 10 cours (-5%)</option>
-                                </select>
-                                <div class="package-info" id="packageInfo">
-                                    <i class="fas fa-info-circle"></i>
-                                    <span>Le forfait 10 cours vous offre une réduction de 5% et les crédits restent valables 6 mois.</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Total Price (for packages) -->
-                            <div class="summary-item total-price" id="totalPriceContainer" style="display: none;">
-                                <span class="summary-label">Total:</span>
-                                <span class="summary-value total-price-value" id="totalPrice">-</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Booking Actions -->
-                        <div class="booking-actions" id="bookingActions" style="display: none;">
-                            <button class="btn btn-primary btn-book" id="bookButton" disabled>
-                                <i class="far fa-calendar-check"></i>
-                                <span>Confirmer la réservation</span>
-                            </button>
-                            
-                            <div class="booking-notice">
-                                <i class="fas fa-info-circle"></i>
-                                <p>Vous serez redirigé vers le paiement pour confirmer votre réservation.</p>
-                            </div>
-                        </div>
-                        
-                        <!-- User Info Form (Step 2) -->
-                        <div class="user-info-form" id="userInfoForm" style="display: none;">
-                            <h4><i class="fas fa-user-edit"></i> Vos informations</h4>
-                            
-                            <div class="form-group">
-                                <label for="userName">Nom complet</label>
-                                <input type="text" id="userName" class="form-input" placeholder="Votre nom complet">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="userEmail">Email</label>
-                                <input type="email" id="userEmail" class="form-input" placeholder="votre@email.com">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="userNotes">Notes supplémentaires (optionnel)</label>
-                                <textarea id="userNotes" class="form-textarea" rows="3" placeholder="Précisez votre niveau, vos objectifs, ou toute autre information utile..."></textarea>
-                            </div>
-                            
-                            <div class="form-actions">
-                                <button class="btn btn-secondary" id="backToStep1">
-                                    <i class="fas fa-arrow-left"></i>
-                                    Retour
-                                </button>
-                                <button class="btn btn-primary" id="continueToPayment">
-                                    <i class="fas fa-credit-card"></i>
-                                    Procéder au paiement
-                                </button>
-                            </div>
-                        </div>
+                <!-- Colonne droite : Formulaire et récapitulatif -->
+                <div class="booking-card">
+                    <h2 class="card-title" data-i18n="booking.details">Détails de la réservation</h2>
+                    
+                    <!-- Message de connexion requise -->
+                    <div class="login-required" id="loginRequired" style="display: none;">
+                        <i class="fas fa-info-circle"></i> <span data-i18n="booking.login_required">Pour réserver un cours</span> <span id="courseTypeName"></span>, 
+                        <a href="login.html" id="loginLink" data-i18n="booking.connect">connectez-vous</a> <span data-i18n="booking.or">ou</span> 
+                        <a href="signup.html" id="signupLink" data-i18n="booking.create_account">créez un compte</a>.
                     </div>
                     
-                    <!-- Help Section -->
-                    <div class="help-section">
-                        <div class="help-item">
-                            <i class="fas fa-video"></i>
-                            <div>
-                                <h4>Cours en visioconférence</h4>
-                                <p>Les cours se déroulent sur Zoom. Un lien vous sera envoyé par email après confirmation.</p>
+                    <form id="bookingForm">
+                        <div class="form-group">
+                            <label class="form-label" for="courseType" data-i18n="booking.course_type">Type de cours</label>
+                            <select id="courseType" class="form-select" required>
+                                <option value="" data-i18n="booking.select_course">Sélectionnez un type de cours</option>
+                                <option value="essai" data-i18n="courses.trial">Cours d'essai (15 min)</option>
+                                <option value="conversation" data-i18n="courses.conversation">Conversation</option>
+                                <option value="curriculum" data-i18n="courses.curriculum">Curriculum complet</option>
+                                <option value="examen" data-i18n="courses.exam">Préparation d'examen</option>
+                            </select>
+                        </div>
+
+                        <!-- Sélecteur de durée en bulles cliquables -->
+                        <div class="form-group duration-group" id="durationGroup">
+                            <label class="form-label" data-i18n="booking.duration">Durée du cours</label>
+                            <div class="duration-options">
+                                <button type="button" class="duration-option" data-duration="30" data-price-eur="10" data-i18n="courses.detail_30min">30 min</button>
+                                <button type="button" class="duration-option" data-duration="45" data-price-eur="15" data-i18n="courses.detail_45min">45 min</button>
+                                <button type="button" class="duration-option" data-duration="60" data-price-eur="20" data-selected="true" data-i18n="courses.duration_60">60 min</button>
+                            </div>
+                            <input type="hidden" id="duration" value="60">
+                            <input type="hidden" id="basePriceEUR" value="20">
+                        </div>
+
+                        <!-- Nouveau: Sélecteur du nombre de cours -->
+                        <div class="form-group courses-count-group" id="coursesCountGroup">
+                            <label class="form-label" data-i18n="booking.courses_count">Nombre de cours</label>
+                            <div class="courses-count-options">
+                                <button type="button" class="courses-count-option selected" data-count="1" data-discount="0" data-i18n="booking.one_course">
+                                    1 cours
+                                </button>
+                                <button type="button" class="courses-count-option" data-count="5" data-discount="2" data-i18n="booking.five_courses">
+                                    5 cours
+                                    <span class="discount-badge" data-i18n="booking.discount_badge">-2%</span>
+                                </button>
+                                <button type="button" class="courses-count-option" data-count="10" data-discount="5" data-i18n="booking.ten_courses">
+                                    10 cours
+                                    <span class="discount-badge" data-i18n="booking.discount_badge_5">-5%</span>
+                                </button>
+                            </div>
+                            <input type="hidden" id="coursesCount" value="10">
+                            <input type="hidden" id="discountPercent" value="5">
+                        </div>
+
+                        <!-- Sélecteur de moyen de communication -->
+                        <div class="form-group" id="locationGroup">
+                            <label class="form-label" data-i18n="booking.communication">Moyen de communication</label>
+                            <div class="duration-options">
+                                <button type="button" class="duration-option location-btn" data-location="integrations:zoom">
+                                    <i class="fab fa-zoom"></i> <span data-i18n="booking.zoom">Zoom</span>
+                                </button>
+                                <button type="button" class="duration-option location-btn" data-location="https://teams.live.com/l/invite/FEAJFWoKc8mbrQCGwM?v=g1">
+                                    <i class="fab fa-microsoft"></i> <span data-i18n="booking.teams">Teams</span>
+                                </button>
+                                <button type="button" class="duration-option location-btn selected" data-location="integrations:google:meet">
+                                    <i class="fab fa-google"></i> <span data-i18n="booking.meet">Meet</span>
+                                </button>
+                            </div>
+                            <input type="hidden" id="selectedLocation" value="integrations:google:meet">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="name" data-i18n="booking.full_name">Nom complet</label>
+                            <input type="text" id="name" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="email" data-i18n="booking.email">Email</label>
+                            <input type="email" id="email" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="notes" data-i18n="booking.notes">Notes pour le professeur (optionnel)</label>
+                            <textarea id="notes" class="form-textarea" placeholder="Votre niveau, objectifs, sujets de discussion préférés..." data-i18n-placeholder="booking.notes_placeholder"></textarea>
+                        </div>
+
+                        <div class="booking-summary">
+                            <h3 style="margin-bottom: 15px;" data-i18n="booking.summary">Récapitulatif</h3>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_type">Type de cours:</span>
+                                <span id="summaryType">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_courses">Nombre de cours:</span>
+                                <span id="summaryCoursesCount">1 cours</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_discount">Réduction:</span>
+                                <span id="summaryDiscount">0%</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_date">Date:</span>
+                                <span id="summaryDate">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_time">Heure:</span>
+                                <span id="summaryTime">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_duration">Durée:</span>
+                                <span id="summaryDuration">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_platform">Plateforme:</span>
+                                <span id="summaryPlatform">Google Meet</span>
+                            </div>
+                            <div class="summary-item total">
+                                <span data-i18n="booking.summary_total">Total:</span>
+                                <span id="summaryPrice">-</span>
                             </div>
                         </div>
+
+                        <button type="submit" class="btn-booking" id="submitBooking" disabled>
+                            <i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>
+                        </button>
                         
-                        <div class="help-item">
-                            <i class="fas fa-clock"></i>
-                            <div>
-                                <h4>Annulation flexible</h4>
-                                <p>Annulez ou reportez gratuitement jusqu'à 24h avant le cours.</p>
-                            </div>
+                        <div style="margin-top: 15px; text-align: center; font-size: 0.9rem; color: #666;">
+                            <i class="fas fa-lock"></i> <span data-i18n="booking.payment_redirect">Vous serez redirigé vers la page de paiement après confirmation</span>
                         </div>
-                        
-                        <div class="help-item">
-                            <i class="fas fa-headset"></i>
-                            <div>
-                                <h4>Besoin d'aide?</h4>
-                                <p>Contactez-nous à <a href="mailto:contact@yoteacher.com">contact@yoteacher.com</a></p>
-                            </div>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="container">
-            <div class="footer-content">
-                <!-- Brand -->
-                <div class="footer-brand">
-                    <div class="logo">
-                        <span class="logo-text">Yo<span class="logo-accent">Teacher</span></span>
-                    </div>
-                    <p class="footer-tagline">Apprenez le français avec un professeur passionné et expérimenté.</p>
-                    
-                    <div class="social-links">
-                        <a href="#" class="social-link"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
-                    </div>
-                </div>
-                
-                <!-- Quick Links -->
-                <div class="footer-links">
-                    <h4>Navigation</h4>
-                    <ul>
-                        <li><a href="index.html">Accueil</a></li>
-                        <li><a href="index.html#about">À propos</a></li>
-                        <li><a href="index.html#courses">Cours</a></li>
-                        <li><a href="index.html#testimonials">Témoignages</a></li>
-                        <li><a href="dashboard.html">Dashboard</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Legal -->
-                <div class="footer-links">
-                    <h4>Légal</h4>
-                    <ul>
-                        <li><a href="privacy.html">Confidentialité</a></li>
-                        <li><a href="terms.html">Conditions d'utilisation</a></li>
-                        <li><a href="cookies.html">Cookies</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Contact -->
-                <div class="footer-contact">
-                    <h4>Contact</h4>
-                    <div class="contact-info">
-                        <p><i class="fas fa-envelope"></i> contact@yoteacher.com</p>
-                        <p><i class="fas fa-globe"></i> 75 pays visités</p>
-                        <p><i class="fas fa-star"></i> 100% de satisfaction</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Copyright -->
-            <div class="footer-bottom">
-                <p>&copy; 2025 YoTeacher. Tous droits réservés.</p>
-                <p>Apprendre le français n'a jamais été aussi accessible.</p>
-            </div>
-        </div>
-    </footer>
+    </section>
 
     <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="currency.js"></script>
+    <script src="translation.js"></script>
+    <script src="auth.js"></script>
+    <script src="booking.js"></script>
+    <script src="common.js"></script>
+
     <script>
-        // ===== GESTION DE LA PAGE BOOKING =====
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('📅 Initialisation de la page booking...');
+        // SCRIPT JAVASCRIPT POUR BOOKING.HTML
+        document.addEventListener('DOMContentLoaded', function() {
+            let selectedDate = null;
+            let selectedTime = null;
+            let selectedSlot = null;
+            let currentMonth = new Date().getMonth();
+            let currentYear = new Date().getFullYear();
             
-            // Configuration initiale
-            let currentState = {
-                courseType: null,
-                duration: null,
-                selectedDate: null,
-                selectedSlot: null,
-                user: null,
-                isVIP: false,
-                packageQuantity: 1
-            };
-            
-            // Récupérer les paramètres d'URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const courseTypeParam = urlParams.get('type') || 'essai';
-            
-            // Initialiser l'état
-            currentState.courseType = courseTypeParam;
-            currentState.duration = courseTypeParam === 'essai' ? 15 : 60;
-            
-            // Initialiser l'interface
-            await initializePage();
-            
-            // ===== FONCTIONS D'INITIALISATION =====
-            async function initializePage() {
-                console.log('🔧 Initialisation de la page...');
-                
-                // Afficher le type de cours
-                updateCourseTypeDisplay(currentState.courseType);
-                
-                // Initialiser les écouteurs d'événements
-                setupEventListeners();
-                
-                // Mettre à jour l'interface utilisateur
-                await updateUserInterface();
-                
-                // Charger les créneaux pour aujourd'hui
-                await loadAvailableSlots(getTodayDateString());
-                
-                // Mettre à jour le résumé
+            // NOUVELLE VARIABLE: Suivre si c'est la première initialisation
+            let isFirstLoad = true;
+
+            // Éléments DOM
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            const errorText = document.getElementById('errorText');
+            const successText = document.getElementById('successText');
+            const calendarDays = document.getElementById('calendarDays');
+            const timeSlots = document.getElementById('timeSlots');
+            const currentMonthElement = document.getElementById('currentMonth');
+            const bookingForm = document.getElementById('bookingForm');
+            const submitButton = document.getElementById('submitBooking');
+            const durationGroup = document.getElementById('durationGroup');
+            const durationInput = document.getElementById('duration');
+            const basePriceInput = document.getElementById('basePriceEUR');
+            const loginRequired = document.getElementById('loginRequired');
+            const courseTypeName = document.getElementById('courseTypeName');
+            const loginLink = document.getElementById('loginLink');
+            const signupLink = document.getElementById('signupLink');
+            const selectedLocationInput = document.getElementById('selectedLocation');
+            const coursesCountGroup = document.getElementById('coursesCountGroup');
+            const coursesCountInput = document.getElementById('coursesCount');
+            const discountPercentInput = document.getElementById('discountPercent');
+
+            // Stocker le type de cours avant redirection
+            let preLoginCourseType = null;
+
+            // Initialiser la page
+            initializePage();
+
+            // Navigation du calendrier
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                initCalendar();
+            });
+
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                initCalendar();
+            });
+
+            // Changement de type de cours
+            document.getElementById('courseType').addEventListener('change', function() {
+                const courseType = this.value;
+                preLoginCourseType = courseType;
+                updateUIForCourseType(courseType, true);
+                if (selectedDate) {
+                    loadAvailableSlots(selectedDate);
+                }
                 updateSummary();
-                
-                console.log('✅ Page booking initialisée');
-            }
-            
-            function updateCourseTypeDisplay(courseType) {
-                const titles = {
-                    'essai': 'Cours d\'essai gratuit',
-                    'conversation': 'Cours de Conversation',
-                    'curriculum': 'Curriculum Complet',
-                    'examen': 'Préparation d\'examen'
-                };
-                
-                const descriptions = {
-                    'essai': 'Découvrez ma méthode d\'enseignement avec un cours d\'essai gratuit de 15 minutes.',
-                    'conversation': 'Améliorez votre fluidité à l\'oral avec des conversations guidées sur des sujets variés d\'actualité.',
-                    'curriculum': 'Approfondissez votre maîtrise du français avec un programme structuré de grammaire et d\'exercices.',
-                    'examen': 'Préparez-vous efficacement aux examens DELF, DALF ou TCF avec des simulations et corrections.'
-                };
-                
-                // Mettre à jour le titre et la description
-                document.getElementById('courseTypeTitle').textContent = titles[courseType] || 'Cours de français';
-                document.getElementById('courseDescription').textContent = descriptions[courseType] || '';
-                
-                // Afficher/masquer le sélecteur de durée
-                const durationSelector = document.getElementById('durationSelector');
-                if (courseType === 'essai') {
-                    durationSelector.style.display = 'none';
-                    currentState.duration = 15;
-                } else {
-                    durationSelector.style.display = 'flex';
-                    
-                    // Configurer les options de durée
-                    const durationSelect = document.getElementById('durationSelect');
-                    durationSelect.innerHTML = '';
-                    
-                    const durationOptions = window.bookingManager?.getDurationOptions(courseType) || [30, 45, 60];
-                    durationOptions.forEach(duration => {
-                        const option = document.createElement('option');
-                        option.value = duration;
-                        option.textContent = `${duration} minutes`;
-                        if (duration === currentState.duration) {
-                            option.selected = true;
-                        }
-                        durationSelect.appendChild(option);
-                    });
-                }
-            }
-            
-            function setupEventListeners() {
-                console.log('🔧 Configuration des écouteurs d\'événements...');
-                
-                // Navigation des dates
-                document.getElementById('prevDate').addEventListener('click', () => navigateDate(-1));
-                document.getElementById('nextDate').addEventListener('click', () => navigateDate(1));
-                
-                // Sélection de durée
-                const durationSelect = document.getElementById('durationSelect');
-                if (durationSelect) {
-                    durationSelect.addEventListener('change', async function() {
-                        currentState.duration = parseInt(this.value);
-                        console.log(`🕐 Durée changée: ${currentState.duration} min`);
+            });
+
+            // Gestion des boutons de durée
+            document.querySelectorAll('.duration-option').forEach(button => {
+                if (button.hasAttribute('data-duration')) {
+                    button.addEventListener('click', function(e) {
+                        e.preventDefault(); // Empêcher tout comportement par défaut
                         
-                        // Recharger les créneaux pour la durée sélectionnée
-                        if (currentState.selectedDate) {
-                            await loadAvailableSlots(currentState.selectedDate);
+                        // Retirer la sélection précédente
+                        document.querySelectorAll('.duration-option[data-duration]').forEach(btn => {
+                            btn.classList.remove('selected');
+                        });
+                        
+                        // Ajouter la nouvelle sélection
+                        this.classList.add('selected');
+                        
+                        // Mettre à jour la valeur
+                        const duration = this.getAttribute('data-duration');
+                        durationInput.value = duration;
+                        
+                        // Mettre à jour le prix de base
+                        const basePrice = this.getAttribute('data-price-eur') || '20';
+                        basePriceInput.value = basePrice;
+                        
+                        // Recharger les créneaux si une date est sélectionnée
+                        if (selectedDate) {
+                            loadAvailableSlots(selectedDate);
                         }
                         
-                        // Mettre à jour le résumé
-                        updateSummary();
-                        await updateUserInterface();
-                    });
-                }
-                
-                // Sélection de forfait
-                const packageSelect = document.getElementById('packageSelect');
-                if (packageSelect) {
-                    packageSelect.addEventListener('change', function() {
-                        currentState.packageQuantity = parseInt(this.value);
-                        console.log(`📦 Quantité de forfait changée: ${currentState.packageQuantity}`);
                         updateSummary();
                     });
                 }
-                
-                // Bouton de réservation
-                const bookButton = document.getElementById('bookButton');
-                if (bookButton) {
-                    bookButton.addEventListener('click', async function() {
-                        await proceedToBooking();
+            });
+
+            // Gestion des boutons de nombre de cours
+            document.querySelectorAll('.courses-count-option').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault(); // Empêcher tout comportement par défaut
+                    
+                    // Retirer la sélection précédente
+                    document.querySelectorAll('.courses-count-option').forEach(btn => {
+                        btn.classList.remove('selected');
                     });
-                }
-                
-                // Navigation dans les étapes
-                const backToStep1 = document.getElementById('backToStep1');
-                if (backToStep1) {
-                    backToStep1.addEventListener('click', () => goToStep(1));
-                }
-                
-                const continueToPayment = document.getElementById('continueToPayment');
-                if (continueToPayment) {
-                    continueToPayment.addEventListener('click', async () => {
-                        await proceedToPayment();
-                    });
-                }
-                
-                // Menu mobile
-                const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-                const mobileMenuClose = document.getElementById('mobileMenuClose');
-                const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
-                const mobileMenu = document.getElementById('mobileMenu');
-                
-                if (mobileMenuBtn) {
-                    mobileMenuBtn.addEventListener('click', () => {
-                        mobileMenu.classList.add('active');
-                        mobileMenuOverlay.classList.add('active');
-                    });
-                }
-                
-                if (mobileMenuClose) {
-                    mobileMenuClose.addEventListener('click', () => {
-                        mobileMenu.classList.remove('active');
-                        mobileMenuOverlay.classList.remove('active');
-                    });
-                }
-                
-                if (mobileMenuOverlay) {
-                    mobileMenuOverlay.addEventListener('click', () => {
-                        mobileMenu.classList.remove('active');
-                        mobileMenuOverlay.classList.remove('active');
-                    });
-                }
-                
-                // Écouter les événements d'authentification
-                window.addEventListener('auth:login', async function(e) {
-                    console.log('🔐 Connexion détectée, mise à jour de l\'interface');
-                    currentState.user = e.detail?.user;
-                    currentState.isVIP = currentState.user?.profile?.is_vip === true;
-                    await updateUserInterface();
-                });
-                
-                window.addEventListener('auth:logout', async function() {
-                    console.log('🔓 Déconnexion détectée');
-                    currentState.user = null;
-                    currentState.isVIP = false;
-                    await updateUserInterface();
-                });
-                
-                // Écouter les événements de prix VIP
-                window.addEventListener('vip:loaded', async function() {
-                    console.log('🎁 Prix VIP chargés dans booking.html, mise à jour des prix');
-                    await updateUserInterface();
+                    
+                    // Ajouter la nouvelle sélection
+                    this.classList.add('selected');
+                    
+                    // Mettre à jour les valeurs
+                    const count = this.getAttribute('data-count');
+                    const discount = this.getAttribute('data-discount');
+                    coursesCountInput.value = count;
+                    discountPercentInput.value = discount;
+                    
                     updateSummary();
                 });
-                
-                console.log('✅ Écouteurs d\'événements configurés');
-            }
-            
-            async function updateUserInterface() {
-                console.log('🔄 Mise à jour de l\'interface utilisateur...');
-                
-                // Vérifier l'utilisateur
-                if (!currentState.user && window.authManager) {
-                    currentState.user = window.authManager.getCurrentUser();
-                    currentState.isVIP = window.authManager.isUserVip();
-                }
-                
-                console.log('👤 Utilisateur connecté:', !!currentState.user, 'VIP:', currentState.isVIP);
-                
-                // Afficher/masquer les éléments en fonction de l'état
-                const loginPrompt = document.getElementById('loginPrompt');
-                const bookingActions = document.getElementById('bookingActions');
-                const userInfoForm = document.getElementById('userInfoForm');
-                const packageSelector = document.getElementById('packageSelector');
-                
-                if (currentState.user) {
-                    // Utilisateur connecté
-                    loginPrompt.style.display = 'none';
+            });
+
+            // Gestion des boutons de moyen de communication
+            document.querySelectorAll('.location-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault(); // Empêcher tout comportement par défaut
                     
-                    // Afficher le sélecteur de forfait pour les cours payants
-                    if (currentState.courseType !== 'essai') {
-                        packageSelector.style.display = 'block';
-                    } else {
-                        packageSelector.style.display = 'none';
-                    }
+                    // Retirer la sélection précédente
+                    document.querySelectorAll('.location-btn').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
                     
-                    // Afficher les actions de réservation si un créneau est sélectionné
-                    if (currentState.selectedSlot) {
-                        bookingActions.style.display = 'block';
-                        userInfoForm.style.display = 'none';
-                    } else {
-                        bookingActions.style.display = 'none';
-                        userInfoForm.style.display = 'none';
-                    }
-                } else {
-                    // Utilisateur non connecté
-                    loginPrompt.style.display = 'flex';
-                    bookingActions.style.display = 'none';
-                    userInfoForm.style.display = 'none';
-                    packageSelector.style.display = 'none';
-                }
+                    // Ajouter la nouvelle sélection
+                    this.classList.add('selected');
+                    
+                    // Mettre à jour la valeur
+                    const location = this.getAttribute('data-location');
+                    selectedLocationInput.value = location;
+                    
+                    updateSummary();
+                });
+            });
+
+            // Soumission du formulaire
+            bookingForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
                 
-                // Mettre à jour l'indicateur VIP
-                const vipIndicator = document.getElementById('vipIndicator');
-                if (currentState.isVIP) {
-                    vipIndicator.style.display = 'inline-block';
-                } else {
-                    vipIndicator.style.display = 'none';
-                }
-                
-                // Mettre à jour l'affichage des prix
-                await updatePriceDisplay();
-                
-                console.log('✅ Interface utilisateur mise à jour');
-            }
-            
-            async function updatePriceDisplay() {
-                const priceElement = document.getElementById('summaryPrice');
-                const totalPriceElement = document.getElementById('totalPrice');
-                const totalPriceContainer = document.getElementById('totalPriceContainer');
-                
-                if (!currentState.duration || !currentState.courseType) {
-                    priceElement.textContent = '-';
+                if (!window.currencyManager) {
+                    showError('Système de devise non disponible. Veuillez rafraîchir la page.');
                     return;
                 }
                 
+                if (!selectedDate || !selectedTime) {
+                    showError('Veuillez sélectionner une date et une heure');
+                    return;
+                }
+
+                const courseType = document.getElementById('courseType').value;
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const notes = document.getElementById('notes').value;
+                const location = selectedLocationInput.value;
+                const coursesCount = parseInt(coursesCountInput.value);
+                const discountPercent = parseFloat(discountPercentInput.value);
+
+                // Validation
+                if (!courseType || !name || !email) {
+                    showError('Veuillez remplir tous les champs obligatoires');
+                    return;
+                }
+
+                // Vérifier si l'utilisateur doit être connecté
+                if ((courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') && !window.authManager?.getCurrentUser()) {
+                    showError('Veuillez vous connecter pour réserver ce type de cours');
+                    return;
+                }
+
+                hideMessages();
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+
                 try {
-                    let price = 0;
-                    let isVIPPrice = false;
+                    // Utiliser les données du créneau sélectionné
+                    if (!selectedSlot) {
+                        throw new Error('Aucun créneau sélectionné');
+                    }
+
+                    // Déterminer la durée et le prix EN EUR (prix de base)
+                    let duration = selectedSlot.durationInMinutes || 15;
+                    let priceEUR = 5;
                     
-                    // Récupérer le prix selon le type d'utilisateur
-                    if (currentState.isVIP && currentState.courseType !== 'essai') {
-                        // Prix VIP
-                        const vipPrice = await window.authManager?.getVipPrice(currentState.courseType, currentState.duration);
-                        
-                        if (vipPrice && vipPrice.price !== undefined && !isNaN(vipPrice.price)) {
-                            price = vipPrice.price;
-                            isVIPPrice = true;
-                            console.log('💰 Prix VIP trouvé:', price, vipPrice.currency);
+                    // CORRECTION: Utiliser la durée du créneau pour calculer le prix
+                    const user = window.authManager?.getCurrentUser();
+                    const isVIP = window.authManager?.isUserVip();
+
+                    if (isVIP) {
+                        const vipPrice = await window.authManager.getVipPrice(courseType, duration);
+                        if (vipPrice) {
+                            priceEUR = vipPrice.price;
                         } else {
-                            // Fallback au prix normal si pas de prix VIP
-                            price = getDefaultPrice(currentState.courseType, currentState.duration);
-                            console.log('⚠️ Prix VIP non trouvé, utilisation prix normal:', price);
+                            // Fallback prix normal
+                            if (courseType === 'conversation') {
+                                priceEUR = duration === 30 ? 10 : duration === 45 ? 15 : 20;
+                            }
                         }
                     } else {
-                        // Prix normal
-                        price = getDefaultPrice(currentState.courseType, currentState.duration);
+                        if (courseType === 'conversation') {
+                            priceEUR = duration === 30 ? 10 : duration === 45 ? 15 : 20;
+                        } else if (courseType === 'curriculum') {
+                            priceEUR = duration === 30 ? 17.5 : duration === 45 ? 26.25 : 35;
+                        } else if (courseType === 'examen') {
+                            priceEUR = duration === 30 ? 15 : duration === 45 ? 22.5 : 30;
+                        }
                     }
+
+                    // Appliquer le nombre de cours
+                    let totalPriceEUR = priceEUR * coursesCount;
                     
-                    // Appliquer la quantité de forfait
-                    const totalPrice = price * currentState.packageQuantity;
-                    
-                    // Appliquer la réduction de forfait
-                    let finalPrice = totalPrice;
-                    if (currentState.packageQuantity > 1) {
-                        finalPrice = totalPrice * 0.95; // 5% de réduction
+                    // Appliquer la réduction
+                    if (discountPercent > 0) {
+                        totalPriceEUR = totalPriceEUR * (1 - discountPercent / 100);
                     }
+
+                    // Convertir le prix dans la devise actuelle pour l'affichage
+                    const currentCurrency = window.currencyManager?.currentCurrency || 'EUR';
+                    const convertedPrice = window.currencyManager?.convert(totalPriceEUR, 'EUR', currentCurrency) || totalPriceEUR;
                     
-                    // Formater le prix
-                    let displayPrice, displayTotalPrice;
-                    
-                    if (window.currencyManager) {
-                        displayPrice = window.currencyManager.formatPrice(price);
-                        displayTotalPrice = window.currencyManager.formatPrice(finalPrice);
-                    } else {
-                        displayPrice = `${price.toFixed(2)} €`;
-                        displayTotalPrice = `${finalPrice.toFixed(2)} €`;
-                    }
-                    
-                    // Mettre à jour l'affichage
-                    priceElement.innerHTML = displayPrice;
-                    
-                    if (isVIPPrice) {
-                        priceElement.innerHTML += ' <span class="vip-badge">VIP</span>';
-                    }
-                    
-                    // Afficher le total pour les forfaits
-                    if (currentState.packageQuantity > 1) {
-                        totalPriceElement.textContent = displayTotalPrice;
-                        totalPriceContainer.style.display = 'flex';
-                    } else {
-                        totalPriceContainer.style.display = 'none';
-                    }
-                    
-                    console.log(`💰 Prix affiché: ${displayPrice} (VIP: ${isVIPPrice})`);
-                    
-                } catch (error) {
-                    console.error('❌ Erreur lors de l\'affichage du prix:', error);
-                    priceElement.textContent = 'Erreur';
-                }
-            }
-            
-            function getDefaultPrice(courseType, duration) {
-                // Prix par défaut si tout échoue
-                const basePrices = {
-                    'essai': 0,
-                    'conversation': 20,
-                    'curriculum': 35,
-                    'examen': 30
-                };
-                
-                let price = basePrices[courseType] || 20;
-                
-                // Ajuster selon la durée (sauf pour l'essai)
-                if (courseType !== 'essai') {
-                    const ratio = duration / 60;
-                    price = price * ratio;
-                }
-                
-                return price;
-            }
-            
-            function updateSummary() {
-                console.log('📋 Mise à jour du résumé...');
-                
-                // Type de cours
-                const courseTypeNames = {
-                    'essai': 'Cours d\'essai',
-                    'conversation': 'Conversation',
-                    'curriculum': 'Curriculum Complet',
-                    'examen': 'Préparation d\'examen'
-                };
-                
-                document.getElementById('summaryCourseType').textContent = 
-                    courseTypeNames[currentState.courseType] || 'Cours de français';
-                
-                // Durée
-                document.getElementById('summaryDuration').textContent = 
-                    currentState.duration ? `${currentState.duration} minutes` : '-';
-                
-                // Date et heure
-                const dateElement = document.getElementById('summaryDate');
-                const timeElement = document.getElementById('summaryTime');
-                
-                if (currentState.selectedSlot) {
-                    try {
-                        const date = new Date(currentState.selectedSlot.start);
-                        const formattedDate = date.toLocaleDateString('fr-FR', {
-                            weekday: 'long',
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric'
-                        });
-                        const formattedTime = date.toLocaleTimeString('fr-FR', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        
-                        dateElement.textContent = formattedDate;
-                        timeElement.textContent = formattedTime;
-                    } catch (error) {
-                        dateElement.textContent = 'Erreur de date';
-                        timeElement.textContent = '-';
-                    }
-                } else {
-                    dateElement.textContent = 'Non sélectionnée';
-                    timeElement.textContent = '-';
-                }
-                
-                // Mettre à jour l'affichage du prix
-                updatePriceDisplay();
-                
-                console.log('✅ Résumé mis à jour');
-            }
-            
-            async function loadAvailableSlots(date) {
-                console.log(`📅 Chargement des créneaux pour le ${date}...`);
-                
-                const loadingElement = document.getElementById('loadingSlots');
-                const slotsGrid = document.getElementById('timeSlotsGrid');
-                const noSlotsMessage = document.getElementById('noSlotsMessage');
-                
-                // Afficher le loader
-                loadingElement.style.display = 'flex';
-                slotsGrid.innerHTML = '';
-                noSlotsMessage.style.display = 'none';
-                
-                // Mettre à jour la date affichée
-                currentState.selectedDate = date;
-                updateDateDisplay(date);
-                
-                try {
-                    // Récupérer les créneaux via BookingManager
-                    const slots = await window.bookingManager.getAvailableSlots(
-                        currentState.courseType, 
-                        date, 
-                        currentState.duration
-                    );
-                    
-                    // Cacher le loader
-                    loadingElement.style.display = 'none';
-                    
-                    if (slots.length === 0) {
-                        // Aucun créneau disponible
-                        noSlotsMessage.style.display = 'block';
-                        return;
-                    }
-                    
-                    // Afficher les créneaux
-                    slots.forEach(slot => {
-                        const slotElement = createTimeSlotElement(slot);
-                        slotsGrid.appendChild(slotElement);
-                    });
-                    
-                    console.log(`✅ ${slots.length} créneau(x) affiché(s)`);
-                    
-                } catch (error) {
-                    console.error('❌ Erreur lors du chargement des créneaux:', error);
-                    loadingElement.style.display = 'none';
-                    noSlotsMessage.style.display = 'block';
-                    
-                    // Afficher un message d'erreur
-                    noSlotsMessage.innerHTML = `
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h3>Erreur de chargement</h3>
-                        <p>Impossible de charger les créneaux: ${error.message}</p>
-                    `;
-                }
-            }
-            
-            function createTimeSlotElement(slot) {
-                const element = document.createElement('div');
-                element.className = 'time-slot';
-                element.setAttribute('data-slot-id', slot.id);
-                element.setAttribute('data-start', slot.start);
-                element.setAttribute('data-end', slot.end);
-                
-                // Formater l'heure
-                const startTime = new Date(slot.start);
-                const formattedTime = startTime.toLocaleTimeString('fr-FR', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                
-                element.innerHTML = `
-                    <div class="time-slot-content">
-                        <div class="time-display">
-                            <i class="far fa-clock"></i>
-                            <span class="time-value">${formattedTime}</span>
-                        </div>
-                        <div class="duration-display">
-                            <span class="duration-value">${slot.duration}</span>
-                        </div>
-                    </div>
-                `;
-                
-                // Ajouter l'écouteur d'événement
-                element.addEventListener('click', () => selectTimeSlot(element, slot));
-                
-                // Vérifier si ce créneau est déjà sélectionné
-                if (currentState.selectedSlot && currentState.selectedSlot.id === slot.id) {
-                    element.classList.add('selected');
-                }
-                
-                return element;
-            }
-            
-            function selectTimeSlot(element, slot) {
-                console.log('🎯 Créneau sélectionné:', slot);
-                
-                // Retirer la sélection précédente
-                document.querySelectorAll('.time-slot.selected').forEach(el => {
-                    el.classList.remove('selected');
-                });
-                
-                // Ajouter la sélection
-                element.classList.add('selected');
-                
-                // Mettre à jour l'état
-                currentState.selectedSlot = slot;
-                
-                // Mettre à jour l'interface
-                updateUserInterface();
-                updateSummary();
-                
-                // Activer le bouton de réservation
-                const bookButton = document.getElementById('bookButton');
-                if (bookButton) {
-                    bookButton.disabled = false;
-                }
-            }
-            
-            function updateDateDisplay(dateString) {
-                const date = new Date(dateString);
-                const today = new Date();
-                const tomorrow = new Date(today);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                
-                let displayText = '';
-                
-                // Vérifier si c'est aujourd'hui, demain, ou une autre date
-                if (date.toDateString() === today.toDateString()) {
-                    displayText = `Aujourd'hui, ${date.toLocaleDateString('fr-FR', { 
-                        day: 'numeric', 
-                        month: 'long',
-                        year: 'numeric'
-                    })}`;
-                } else if (date.toDateString() === tomorrow.toDateString()) {
-                    displayText = `Demain, ${date.toLocaleDateString('fr-FR', { 
-                        day: 'numeric', 
-                        month: 'long',
-                        year: 'numeric'
-                    })}`;
-                } else {
-                    displayText = date.toLocaleDateString('fr-FR', { 
-                        weekday: 'long',
-                        day: 'numeric', 
-                        month: 'long',
-                        year: 'numeric'
-                    });
-                }
-                
-                document.getElementById('currentDate').textContent = displayText;
-            }
-            
-            function navigateDate(days) {
-                const currentDate = currentState.selectedDate ? 
-                    new Date(currentState.selectedDate) : 
-                    new Date();
-                
-                currentDate.setDate(currentDate.getDate() + days);
-                const newDateString = currentDate.toISOString().split('T')[0];
-                
-                // Recharger les créneaux pour la nouvelle date
-                loadAvailableSlots(newDateString);
-            }
-            
-            function getTodayDateString() {
-                const today = new Date();
-                return today.toISOString().split('T')[0];
-            }
-            
-            function goToStep(stepNumber) {
-                console.log(`➡️ Passage à l'étape ${stepNumber}`);
-                
-                // Mettre à jour les indicateurs de progression
-                document.querySelectorAll('.progress-step').forEach((step, index) => {
-                    if (index + 1 <= stepNumber) {
-                        step.classList.add('active');
-                    } else {
-                        step.classList.remove('active');
-                    }
-                });
-                
-                // Gérer l'affichage selon l'étape
-                const bookingActions = document.getElementById('bookingActions');
-                const userInfoForm = document.getElementById('userInfoForm');
-                
-                if (stepNumber === 1) {
-                    bookingActions.style.display = 'block';
-                    userInfoForm.style.display = 'none';
-                } else if (stepNumber === 2) {
-                    bookingActions.style.display = 'none';
-                    userInfoForm.style.display = 'block';
-                    
-                    // Pré-remplir les informations utilisateur si connecté
-                    if (currentState.user) {
-                        document.getElementById('userName').value = 
-                            currentState.user.profile?.full_name || 
-                            currentState.user.user_metadata?.full_name || 
-                            '';
-                        document.getElementById('userEmail').value = 
-                            currentState.user.email || '';
-                    }
-                }
-            }
-            
-            async function proceedToBooking() {
-                console.log('🚀 Début du processus de réservation...');
-                
-                // Vérifier qu'un créneau est sélectionné
-                if (!currentState.selectedSlot) {
-                    alert('Veuillez sélectionner un créneau horaire.');
-                    return;
-                }
-                
-                // Vérifier que l'utilisateur est connecté
-                if (!currentState.user) {
-                    alert('Veuillez vous connecter pour réserver un cours.');
-                    return;
-                }
-                
-                // Passer à l'étape 2 (informations personnelles)
-                goToStep(2);
-            }
-            
-            async function proceedToPayment() {
-                console.log('💳 Passage au paiement...');
-                
-                // Valider les informations
-                const userName = document.getElementById('userName').value.trim();
-                const userEmail = document.getElementById('userEmail').value.trim();
-                
-                if (!userName || !userEmail) {
-                    alert('Veuillez remplir votre nom et votre adresse email.');
-                    return;
-                }
-                
-                // Préparer les données de réservation
-                const bookingData = {
-                    startTime: currentState.selectedSlot.start,
-                    endTime: currentState.selectedSlot.end,
-                    eventType: currentState.courseType,
-                    courseType: currentState.courseType,
-                    duration: currentState.duration,
-                    name: userName,
-                    email: userEmail,
-                    notes: document.getElementById('userNotes').value.trim(),
-                    location: 'integrations:zoom',
-                    packageQuantity: currentState.packageQuantity
-                };
-                
-                // Ajouter l'ID de l'event type Cal.com
-                bookingData.eventTypeId = window.bookingManager?.eventTypeMap[currentState.courseType];
-                
-                console.log('📦 Données de réservation:', bookingData);
-                
-                try {
-                    // Utiliser BookingManager pour créer la réservation
+                    const bookingData = {
+                        eventType: courseType,
+                        startTime: selectedSlot.start,
+                        endTime: selectedSlot.end,
+                        name: name,
+                        email: email,
+                        notes: notes,
+                        courseType: courseType,
+                        priceEUR: totalPriceEUR,
+                        basePriceEUR: priceEUR,
+                        price: convertedPrice,
+                        duration: duration,
+                        packageQuantity: coursesCount,
+                        coursesCount: coursesCount,
+                        discountPercent: discountPercent,
+                        location: location,
+                        lengthInMinutes: courseType !== 'essai' ? duration : undefined,
+                        currency: currentCurrency
+                    };
+
+                    // Appeler la méthode qui prépare les données SANS créer sur Cal.com
                     const result = await window.bookingManager.createBooking(bookingData);
                     
                     if (result.success) {
-                        console.log('✅ Réservation préparée, redirection vers le paiement');
+                        showSuccess('Redirection vers le paiement...');
                         
-                        // Passer à l'étape 3
-                        goToStep(3);
-                        
-                        // Rediriger vers la page de paiement
+                        // Redirection vers la page de paiement
                         setTimeout(() => {
                             window.location.href = result.redirectTo;
-                        }, 500);
+                        }, 1000);
                     } else {
-                        console.error('❌ Erreur lors de la création de la réservation:', result.error);
-                        alert(`Erreur: ${result.error}`);
+                        throw new Error(result.error || 'Erreur inconnue');
                     }
+
                 } catch (error) {
-                    console.error('❌ Exception lors de la réservation:', error);
-                    alert(`Une erreur est survenue: ${error.message}`);
+                    showError('Erreur lors de la préparation : ' + error.message);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-calendar-check"></i> Réserver et payer';
+                }
+            });
+
+            // Écouter les événements d'authentification
+            window.addEventListener('auth:login', function() {
+                console.log('Utilisateur connecté, mise à jour de l\'interface');
+                updateUserInterface();
+            });
+
+            window.addEventListener('auth:logout', function() {
+                console.log('Utilisateur déconnecté, mise à jour de l\'interface');
+                updateUserInterface();
+            });
+            
+            // Écouter les changements de devise
+            window.addEventListener('currency:ready', function() {
+                updateSummary();
+            });
+            
+            window.addEventListener('currency:changed', function() {
+                updateSummary();
+            });
+            
+            // Écouter les changements de langue
+            window.addEventListener('language:changed', function() {
+                // Mettre à jour le calendrier avec les noms de mois dans la bonne langue
+                initCalendar();
+                updateSummary();
+            });
+            
+            // ===== NOUVEAU: Écouter les événements VIP =====
+            window.addEventListener('vip:loaded', function() {
+                console.log('🎁 Prix VIP chargés dans booking.html, mise à jour des prix');
+                updateUserInterface();
+                updateSummary();
+            });
+
+            // Fonction pour initialiser le sélecteur de devise mobile
+            function initMobileCurrencySelector() {
+                const mobileSelector = document.getElementById('currencySelectorMobile');
+                if (!mobileSelector || !window.currencyManager) return;
+                
+                // Vider les options existantes
+                mobileSelector.innerHTML = '';
+                
+                // Remplir les options
+                window.currencyManager.supportedCurrencies.forEach(currency => {
+                    const option = document.createElement('option');
+                    option.value = currency;
+                    option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
+                    
+                    if (currency === window.currencyManager.currentCurrency) {
+                        option.selected = true;
+                    }
+                    
+                    mobileSelector.appendChild(option);
+                });
+                
+                // Écouter les changements
+                mobileSelector.addEventListener('change', (e) => {
+                    const newCurrency = e.target.value;
+                    if (window.currencyManager.setCurrency(newCurrency)) {
+                        // Fermer le menu mobile après changement
+                        const mobileMenu = document.getElementById('mobileMenu');
+                        if (mobileMenu) {
+                            mobileMenu.classList.remove('active');
+                        }
+                    }
+                });
+            }
+
+            // Fonctions
+            function initializePage() {
+                // Récupérer le type de cours depuis l'URL
+                const urlParams = new URLSearchParams(window.location.search);
+                let courseTypeParam = urlParams.get('type');
+                
+                // Si pas de paramètre "type", vérifier dans localStorage
+                if (!courseTypeParam || !['essai', 'conversation', 'curriculum', 'examen'].includes(courseTypeParam)) {
+                    const storedCourseType = localStorage.getItem('preLoginCourseType');
+                    
+                    if (storedCourseType && ['essai', 'conversation', 'curriculum', 'examen'].includes(storedCourseType)) {
+                        courseTypeParam = storedCourseType;
+                        localStorage.removeItem('preLoginCourseType');
+                    } else {
+                        courseTypeParam = 'essai';
+                    }
+                }
+                
+                // Forcer la sélection dans le dropdown
+                document.getElementById('courseType').value = courseTypeParam;
+                preLoginCourseType = courseTypeParam;
+                
+                // Stocker aussi dans l'URL si ce n'est pas déjà fait
+                if (!urlParams.has('type')) {
+                    const newUrl = new URL(window.location);
+                    newUrl.searchParams.set('type', courseTypeParam);
+                    window.history.replaceState({}, '', newUrl);
+                }
+                
+                // NOUVELLE LOGIQUE: Pré-sélectionner 60min, 10 cours, Google Meet
+                preselectDefaults();
+                
+                // Initialiser le calendrier
+                initCalendar();
+                
+                // Charger les créneaux pour aujourd'hui par défaut
+                const today = new Date().toISOString().split('T')[0];
+                selectToday(today);
+                
+                // Mettre à jour l'interface
+                updateUIForCourseType(document.getElementById('courseType').value, false);
+                
+                // Mettre à jour l'interface utilisateur
+                updateUserInterface();
+                
+                // Marquer que le premier chargement est terminé
+                setTimeout(() => {
+                    isFirstLoad = false;
+                }, 1000);
+                
+                // Initialiser le sélecteur de devise mobile
+                window.addEventListener('currency:ready', function() {
+                    initMobileCurrencySelector();
+                });
+                
+                // Gestion du menu mobile
+                initMobileMenu();
+            }
+            
+            // Initialiser le menu mobile
+            function initMobileMenu() {
+                const hamburgerBtn = document.getElementById('hamburgerBtn');
+                const closeMenuBtn = document.getElementById('closeMenuBtn');
+                const mobileMenu = document.getElementById('mobileMenu');
+                
+                if (hamburgerBtn && mobileMenu) {
+                    hamburgerBtn.addEventListener('click', () => {
+                        mobileMenu.classList.add('active');
+                    });
+                }
+                
+                if (closeMenuBtn && mobileMenu) {
+                    closeMenuBtn.addEventListener('click', () => {
+                        mobileMenu.classList.remove('active');
+                    });
+                }
+                
+                // Fermer le menu en cliquant en dehors
+                if (mobileMenu) {
+                    mobileMenu.addEventListener('click', (e) => {
+                        if (e.target === mobileMenu) {
+                            mobileMenu.classList.remove('active');
+                        }
+                    });
+                }
+                
+                // Gestion du changement de langue mobile
+                const mobileLanguageSwitcher = document.getElementById('languageSwitcherMobile');
+                if (mobileLanguageSwitcher) {
+                    mobileLanguageSwitcher.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (window.translationManager) {
+                            window.translationManager.toggleLanguage();
+                        }
+                        
+                        // Fermer le menu mobile après changement
+                        if (mobileMenu) {
+                            mobileMenu.classList.remove('active');
+                        }
+                    });
+                }
+                
+                // Gestion du changement de langue desktop
+                const desktopLanguageSwitcher = document.getElementById('languageSwitcherDesktop');
+                if (desktopLanguageSwitcher) {
+                    desktopLanguageSwitcher.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (window.translationManager) {
+                            window.translationManager.toggleLanguage();
+                        }
+                    });
                 }
             }
             
-            // Initialiser la date d'aujourd'hui
-            function selectToday() {
-                const today = getTodayDateString();
-                loadAvailableSlots(today);
+            // NOUVELLE FONCTION: Pré-sélectionner les valeurs par défaut
+            function preselectDefaults() {
+                // Pré-sélectionner 60 min
+                const duration60Btn = document.querySelector('.duration-option[data-duration="60"]');
+                if (duration60Btn) {
+                    document.querySelectorAll('.duration-option[data-duration]').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    duration60Btn.classList.add('selected');
+                    durationInput.value = '60';
+                    basePriceInput.value = duration60Btn.getAttribute('data-price-eur') || '20';
+                }
+                
+                // Pré-sélectionner 10 cours
+                const courses10Btn = document.querySelector('.courses-count-option[data-count="10"]');
+                if (courses10Btn) {
+                    document.querySelectorAll('.courses-count-option').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    courses10Btn.classList.add('selected');
+                    coursesCountInput.value = '10';
+                    discountPercentInput.value = courses10Btn.getAttribute('data-discount') || '5';
+                }
+                
+                // Pré-sélectionner Google Meet
+                const meetBtn = document.querySelector('.location-btn[data-location*="google"]');
+                if (meetBtn) {
+                    document.querySelectorAll('.location-btn').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    meetBtn.classList.add('selected');
+                    selectedLocationInput.value = meetBtn.getAttribute('data-location');
+                }
+            }
+
+            function initCalendar() {
+                // Déterminer la langue actuelle
+                const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                
+                const monthNamesFr = [
+                    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+                ];
+                
+                const monthNamesEn = [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                ];
+                
+                const monthNames = isFrench ? monthNamesFr : monthNamesEn;
+                currentMonthElement.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+                const firstDay = new Date(currentYear, currentMonth, 1);
+                const lastDay = new Date(currentYear, currentMonth + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startingDay = firstDay.getDay();
+
+                const dayHeadersFr = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+                const dayHeadersEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const dayHeaders = isFrench ? dayHeadersFr : dayHeadersEn;
+                
+                calendarDays.innerHTML = '';
+
+                dayHeaders.forEach(day => {
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'calendar-day-header';
+                    dayElement.textContent = day;
+                    calendarDays.appendChild(dayElement);
+                });
+
+                for (let i = 0; i < startingDay; i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'calendar-day disabled';
+                    calendarDays.appendChild(emptyDay);
+                }
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(currentYear, currentMonth, day);
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'calendar-day';
+                    dayElement.textContent = day;
+                    dayElement.setAttribute('data-date', 
+                        `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                    );
+                    
+                    if (date.getDate() === today.getDate() && 
+                        date.getMonth() === today.getMonth() && 
+                        date.getFullYear() === today.getFullYear()) {
+                        dayElement.classList.add('today');
+                    }
+
+                    if (date < today) {
+                        dayElement.classList.add('disabled');
+                    } else {
+                        dayElement.addEventListener('click', () => selectDate(
+                            `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                        ));
+                    }
+
+                    calendarDays.appendChild(dayElement);
+                }
+            }
+
+            function selectToday(today) {
+                const todayElement = document.querySelector(`.calendar-day[data-date="${today}"]`);
+                if (todayElement && !todayElement.classList.contains('disabled')) {
+                    selectDate(today);
+                } else {
+                    const firstAvailable = document.querySelector('.calendar-day:not(.disabled)');
+                    if (firstAvailable) {
+                        selectDate(firstAvailable.getAttribute('data-date'));
+                    }
+                }
+            }
+
+            function updateUIForCourseType(courseType, forceUpdate = false) {
+                console.log('updateUIForCourseType appelé avec:', courseType, 'forceUpdate:', forceUpdate);
+                
+                preLoginCourseType = courseType;
+                
+                const user = window.authManager?.getCurrentUser();
+                const isLoggedIn = !!user;
+                
+                console.log('Utilisateur connecté:', isLoggedIn, 'User:', user);
+                
+                if (courseType && courseType !== 'essai') {
+                    const redirectUrl = `booking.html?type=${courseType}`;
+                    loginLink.href = `login.html?redirect=${encodeURIComponent(redirectUrl)}`;
+                    signupLink.href = `signup.html?redirect=${encodeURIComponent(redirectUrl)}`;
+                    localStorage.setItem('preLoginCourseType', courseType);
+                }
+                
+                if (courseType === 'essai') {
+                    durationGroup.classList.remove('visible');
+                    coursesCountGroup.style.display = 'none';
+                    loginRequired.style.display = 'none';
+                } else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
+                    if (isLoggedIn) {
+                        durationGroup.classList.add('visible');
+                        coursesCountGroup.style.display = 'block';
+                        loginRequired.style.display = 'none';
+                        console.log('Sélecteur de durée affiché pour', courseType);
+                    } else {
+                        durationGroup.classList.remove('visible');
+                        coursesCountGroup.style.display = 'none';
+                        loginRequired.style.display = 'block';
+                        // Mettre à jour le nom du type de cours dans le message
+                        if (window.translationManager) {
+                            if (courseType === 'conversation') courseTypeName.textContent = window.translationManager.getTranslation('courses.conversation');
+                            else if (courseType === 'curriculum') courseTypeName.textContent = window.translationManager.getTranslation('courses.curriculum');
+                            else if (courseType === 'examen') courseTypeName.textContent = window.translationManager.getTranslation('courses.exam');
+                        } else {
+                            if (courseType === 'conversation') courseTypeName.textContent = 'Conversation';
+                            else if (courseType === 'curriculum') courseTypeName.textContent = 'Curriculum complet';
+                            else if (courseType === 'examen') courseTypeName.textContent = 'Préparation d\'examen';
+                        }
+                        console.log('Message connexion affiché pour', courseType);
+                    }
+                } else {
+                    durationGroup.classList.remove('visible');
+                    coursesCountGroup.style.display = 'none';
+                    loginRequired.style.display = 'none';
+                }
+                
+                if (isLoggedIn && user) {
+                    document.getElementById('name').value = user.user_metadata?.full_name || user.email?.split('@')[0] || '';
+                    document.getElementById('email').value = user.email || '';
+                }
+                
+                if (forceUpdate && selectedDate) {
+                    loadAvailableSlots(selectedDate);
+                }
+                
+                updateSummary();
+            }
+
+            async function loadAvailableSlots(date = null) {
+                try {
+                    const loadingText = window.translationManager ? 
+                        window.translationManager.getTranslation('booking.loading_slots') : 
+                        'Chargement des créneaux...';
+                    
+                    timeSlots.innerHTML = `<div class="loading-slots"><i class="fas fa-spinner fa-spin"></i> ${loadingText}</div>`;
+                    
+                    const courseType = document.getElementById('courseType').value || 'essai';
+                    
+                    let duration = null;
+                    if (courseType !== 'essai' && durationGroup.classList.contains('visible')) {
+                        duration = parseInt(durationInput.value) || 60;
+                    }
+                    
+                    const slots = await window.bookingManager.getAvailableSlots(courseType, date, duration);
+                    
+                    timeSlots.innerHTML = '';
+                    
+                    if (slots.length === 0) {
+                        const noSlotsText = window.translationManager ?
+                            window.translationManager.getTranslation('booking.no_slots') :
+                            'Aucun créneau disponible pour cette date.';
+                        timeSlots.innerHTML = `<p class="no-slots">${noSlotsText}</p>`;
+                        return;
+                    }
+
+                    let hasFutureSlots = false;
+                    
+                    slots.forEach(slot => {
+                        const slotDate = new Date(slot.start);
+                        const now = new Date();
+                        
+                        if (slotDate > now) {
+                            hasFutureSlots = true;
+                            const slotElement = document.createElement('div');
+                            slotElement.className = 'time-slot';
+                            
+                            // Déterminer la langue pour le format d'heure
+                            const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                            const timeOptions = { hour: '2-digit', minute: '2-digit' };
+                            
+                            slotElement.innerHTML = `
+                                <div class="time-slot-time">
+                                    <i class="far fa-clock"></i>
+                                    ${slotDate.toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions)}
+                                </div>
+                                <div class="time-slot-duration">
+                                    ${window.bookingManager.formatTime(slot.start)} - ${slot.duration}
+                                </div>
+                            `;
+                            
+                            slotElement.addEventListener('click', () => selectTimeSlot(slot, slotElement));
+                            timeSlots.appendChild(slotElement);
+                        }
+                    });
+
+                    if (!hasFutureSlots) {
+                        const noFutureSlotsText = window.translationManager ?
+                            window.translationManager.getTranslation('booking.no_future_slots') :
+                            'Tous les créneaux sont complets pour aujourd\'hui.';
+                        timeSlots.innerHTML = `<p class="no-slots">${noFutureSlotsText}</p>`;
+                    }
+
+                } catch (error) {
+                    console.error('Erreur chargement créneaux:', error);
+                    
+                    const errorTitle = window.translationManager ?
+                        window.translationManager.getTranslation('booking.error_loading') :
+                        'Erreur lors du chargement des créneaux';
+                    
+                    const retryText = window.translationManager ?
+                        window.translationManager.getTranslation('booking.retry') :
+                        'Réessayer';
+                    
+                    timeSlots.innerHTML = `
+                        <div class="error-slots">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>${errorTitle}</p>
+                            <p class="error-details">${error.message || 'Veuillez réessayer'}</p>
+                            <button onclick="loadAvailableSlots('${date}')" class="retry-btn">
+                                <i class="fas fa-redo"></i> ${retryText}
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            function selectDate(date) {
+                selectedDate = date;
+                
+                document.querySelectorAll('.calendar-day').forEach(dayEl => {
+                    dayEl.classList.remove('selected');
+                });
+                
+                const selectedDayElement = document.querySelector(`.calendar-day[data-date="${date}"]`);
+                if (selectedDayElement) {
+                    selectedDayElement.classList.add('selected');
+                }
+                
+                loadAvailableSlots(selectedDate);
+                updateSummary();
+            }
+
+            function selectTimeSlot(slot, element) {
+                // Retirer la sélection précédente
+                document.querySelectorAll('.time-slot').forEach(slotEl => {
+                    slotEl.classList.remove('selected');
+                });
+
+                // Ajouter la nouvelle sélection
+                element.classList.add('selected');
+                
+                selectedSlot = slot;
+                
+                // Déterminer la langue pour le format d'heure
+                const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                const timeOptions = { hour: '2-digit', minute: '2-digit' };
+                
+                selectedTime = new Date(slot.start).toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions);
+                
+                // NE PLUS changer automatiquement la durée sélectionnée
+                // L'utilisateur garde sa sélection
+                
+                updateSummary();
+            }
+
+            function updateSummary() {
+                const courseType = document.getElementById('courseType').value;
+                const user = window.authManager?.getCurrentUser();
+                let courseName = '-';
+                let price = '-';
+                let duration = '-';
+                let platform = 'Google Meet'; // Défaut changé à Google Meet
+                const coursesCount = parseInt(coursesCountInput.value);
+                const discountPercent = parseFloat(discountPercentInput.value);
+                
+                // NOUVEAU: Vérifier si l'utilisateur est VIP
+                const isVip = window.authManager?.isUserVip();
+                console.log(`💰 Statut VIP dans updateSummary: ${isVip}`);
+                
+                // Déterminer la plateforme
+                const locationValue = selectedLocationInput.value;
+                if (locationValue.includes('zoom')) platform = window.translationManager ? window.translationManager.getTranslation('booking.zoom') : 'Zoom';
+                else if (locationValue.includes('google')) platform = window.translationManager ? window.translationManager.getTranslation('booking.meet') : 'Google Meet';
+                else if (locationValue.includes('teams')) platform = window.translationManager ? window.translationManager.getTranslation('booking.teams') : 'Microsoft Teams';
+
+                // Calculer en fonction du type de cours
+                if (courseType === 'essai') {
+                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
+                    let unitPriceEUR = 5;
+                    let totalPriceEUR = unitPriceEUR * coursesCount;
+                    
+                    if (window.currencyManager) {
+                        price = window.currencyManager.formatPrice(totalPriceEUR);
+                    } else {
+                        price = totalPriceEUR + '€';
+                    }
+                    duration = '15 min';
+                } 
+                else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
+                    // Obtenir le nom du cours
+                    if (courseType === 'conversation') {
+                        courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
+                    } else if (courseType === 'curriculum') {
+                        courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
+                    } else if (courseType === 'examen') {
+                        courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
+                    }
+                    
+                    if (user && durationGroup.classList.contains('visible')) {
+                        const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
+                        duration = selectedDuration + ' min';
+                        
+                        let unitPriceEUR = 0;
+                        let unitPrice = 0;
+                        let currency = 'EUR';
+                        
+                        // NOUVELLE LOGIQUE: PRIX VIP D'ABORD
+                        if (isVip) {
+                            console.log(`💰 Recherche prix VIP pour ${courseType} ${selectedDuration}min`);
+                            const vipPriceInfo = window.authManager.getVipPrice(courseType, selectedDuration);
+                            
+                            if (vipPriceInfo) {
+                                console.log(`✅ Prix VIP trouvé: ${vipPriceInfo.price} ${vipPriceInfo.currency}`);
+                                unitPrice = vipPriceInfo.price;
+                                currency = vipPriceInfo.currency;
+                                
+                                // Convertir en EUR pour les calculs
+                                if (window.currencyManager && currency !== 'EUR') {
+                                    unitPriceEUR = window.currencyManager.convert(unitPrice, currency, 'EUR');
+                                } else {
+                                    unitPriceEUR = unitPrice;
+                                }
+                            } else {
+                                console.log(`❌ Aucun prix VIP spécifique, utilisation des prix normaux`);
+                                // Prix normaux si pas de prix VIP spécifique
+                                unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+                                unitPrice = unitPriceEUR;
+                            }
+                        } else {
+                            // Prix normaux
+                            unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+                            unitPrice = unitPriceEUR;
+                        }
+                        
+                        let totalPrice = unitPrice * coursesCount;
+                        let totalPriceEUR = unitPriceEUR * coursesCount;
+                        
+                        // Appliquer la réduction
+                        if (discountPercent > 0) {
+                            totalPrice = totalPrice * (1 - discountPercent / 100);
+                            totalPriceEUR = totalPriceEUR * (1 - discountPercent / 100);
+                        }
+                        
+                        // Formater le prix pour l'affichage
+                        if (window.currencyManager) {
+                            // Si on a un prix VIP dans une devise différente, convertir dans la devise courante
+                            if (isVip && currency !== window.currencyManager.currentCurrency) {
+                                const convertedPrice = window.currencyManager.convert(totalPrice, currency, window.currencyManager.currentCurrency);
+                                price = window.currencyManager.formatPrice(convertedPrice);
+                            } else {
+                                price = window.currencyManager.formatPrice(totalPrice);
+                            }
+                            
+                            // Ajouter un indicateur VIP si applicable
+                            if (isVip) {
+                                price += ' <span class="vip-indicator">VIP</span>';
+                            }
+                        } else {
+                            price = totalPrice.toFixed(2) + ' ' + currency;
+                            if (isVip) {
+                                price += ' <span class="vip-indicator">VIP</span>';
+                            }
+                        }
+                        
+                        console.log(`💰 Prix final: ${price} (VIP: ${isVip})`);
+                        
+                    } else {
+                        // Utilisateur non connecté ou durée non visible
+                        duration = '60 min';
+                        let unitPriceEUR = getNormalPrice(courseType, 60);
+                        let totalPriceEUR = unitPriceEUR * coursesCount;
+                        
+                        if (window.currencyManager) {
+                            price = window.currencyManager.formatPrice(totalPriceEUR);
+                        } else {
+                            price = totalPriceEUR + '€';
+                        }
+                    }
+                }
+
+                // Mettre à jour les éléments du récapitulatif
+                document.getElementById('summaryType').textContent = courseName;
+                document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+                document.getElementById('summaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
+                
+                // Formater la date selon la langue
+                if (selectedDate) {
+                    const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                    const dateObj = new Date(selectedDate);
+                    const formattedDate = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    document.getElementById('summaryDate').textContent = formattedDate;
+                } else {
+                    document.getElementById('summaryDate').textContent = '-';
+                }
+                
+                document.getElementById('summaryTime').textContent = selectedTime || '-';
+                document.getElementById('summaryDuration').textContent = duration;
+                document.getElementById('summaryPlatform').textContent = platform;
+                
+                // Mettre à jour le prix (avec parsing HTML pour le badge VIP)
+                const summaryPriceElement = document.getElementById('summaryPrice');
+                summaryPriceElement.innerHTML = price;
+                
+                // Ajouter une classe VIP si applicable
+                if (isVip && window.authManager?.getVipPrice(courseType, parseInt(durationInput.value) || 60)) {
+                    summaryPriceElement.classList.add('vip-price-display');
+                } else {
+                    summaryPriceElement.classList.remove('vip-price-display');
+                }
+
+                const canSubmit = selectedDate && selectedTime && courseType && 
+                    (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
+                
+                submitButton.disabled = !canSubmit;
+            }
+
+            // NOUVELLE FONCTION: Obtenir les prix normaux
+            function getNormalPrice(courseType, duration) {
+                switch(courseType) {
+                    case 'conversation':
+                        if (duration === 30) return 10;
+                        else if (duration === 45) return 15;
+                        else return 20;
+                    case 'curriculum':
+                        if (duration === 30) return 17.5;
+                        else if (duration === 45) return 26.25;
+                        else return 35;
+                    case 'examen':
+                        if (duration === 30) return 15;
+                        else if (duration === 45) return 22.5;
+                        else return 30;
+                    default:
+                        return 20;
+                }
+            }
+
+            function showError(message) {
+                errorText.textContent = message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            }
+
+            function showSuccess(message) {
+                successText.textContent = message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+            }
+
+            function hideMessages() {
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
             }
             
-            // Initialisation automatique
-            selectToday();
-            
-            // Debug functions
-            window.debugBookingState = function() {
-                console.group('🔍 État de booking.html');
-                console.log('currentState:', currentState);
-                console.log('Utilisateur:', currentState.user);
-                console.log('Est VIP:', currentState.isVIP);
-                console.log('Type de cours:', currentState.courseType);
-                console.log('Durée:', currentState.duration);
-                console.log('Créneau sélectionné:', currentState.selectedSlot);
-                console.log('Quantité forfait:', currentState.packageQuantity);
-                console.groupEnd();
-            };
-            
-            window.testVipPriceInBooking = async function() {
-                console.group('🧪 Test prix VIP dans booking.html');
+            function updateUserInterface() {
+                const user = window.authManager?.getCurrentUser();
+                const isLoggedIn = !!user;
+                const isVip = window.authManager?.isUserVip();
                 
-                if (!currentState.user) {
-                    console.error('❌ Utilisateur non connecté');
-                    console.groupEnd();
-                    return;
+                if (isLoggedIn && user) {
+                    // Mettre à jour les informations du formulaire
+                    document.getElementById('name').value = user.user_metadata?.full_name || user.email?.split('@')[0] || '';
+                    document.getElementById('email').value = user.email || '';
+                    
+                    // Ajouter un badge VIP si l'utilisateur est VIP
+                    if (isVip) {
+                        const bookingTitle = document.querySelector('.booking-title');
+                        if (bookingTitle && !bookingTitle.querySelector('.vip-badge-booking')) {
+                            const vipBadge = document.createElement('span');
+                            vipBadge.className = 'vip-badge-booking';
+                            vipBadge.textContent = 'VIP';
+                            vipBadge.style.cssText = `
+                                display: inline-block;
+                                background: linear-gradient(135deg, #FFD700, #FFA500);
+                                color: #000;
+                                padding: 4px 12px;
+                                border-radius: 20px;
+                                font-size: 14px;
+                                font-weight: bold;
+                                margin-left: 15px;
+                                border: 1px solid #FFA500;
+                                vertical-align: middle;
+                            `;
+                            bookingTitle.appendChild(vipBadge);
+                        }
+                    }
                 }
                 
-                console.log('Utilisateur:', currentState.user.email);
-                console.log('Est VIP?', currentState.isVIP);
-                
-                const vipPrice = await window.authManager.getVipPrice(currentState.courseType, currentState.duration);
-                console.log('Prix VIP retourné:', vipPrice);
-                
-                if (vipPrice) {
-                    console.log(`💰 Prix: ${vipPrice.price} ${vipPrice.currency}`);
-                    console.log(`⏱️ Durée: ${vipPrice.duration} min`);
-                }
-                
-                console.groupEnd();
-            };
+                // Mettre à jour l'interface en fonction du type de cours
+                const currentCourseType = document.getElementById('courseType').value;
+                updateUIForCourseType(currentCourseType, true);
+            }
         });
     </script>
 </body>
