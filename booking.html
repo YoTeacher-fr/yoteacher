@@ -1252,11 +1252,12 @@
     <script src="config.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
+    <script src="currency.js"></script>
+    <script src="translation.js"></script>
     <script src="auth.js"></script>
     <script src="booking.js"></script>
     <script src="common.js"></script>
-    <script src="currency.js"></script>
-    <script src="translation.js"></script>
+
  
     <script>
         // SCRIPT JAVASCRIPT POUR BOOKING.HTML
@@ -1448,6 +1449,20 @@
                     let priceEUR = 5;
                     
                     // CORRECTION: Utiliser la durée du créneau pour calculer le prix
+const user = window.authManager?.getCurrentUser();
+const isVIP = window.authManager?.isUserVip();
+
+if (isVIP) {
+    const vipPrice = await window.authManager.getVipPrice(courseType, duration);
+    if (vipPrice) {
+        priceEUR = vipPrice.price;
+    } else {
+        // Fallback prix normal
+        if (courseType === 'conversation') {
+            priceEUR = duration === 30 ? 10 : duration === 45 ? 15 : 20;
+        }
+    }
+} else {
                     if (courseType === 'conversation') {
                         priceEUR = duration === 30 ? 10 : duration === 45 ? 15 : 20;
                     } else if (courseType === 'curriculum') {
