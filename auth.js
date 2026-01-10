@@ -127,28 +127,33 @@ class AuthManager {
     }
 
     async waitForSupabase() {
-        return new Promise((resolve) => {
-            const initialized = await window.supabaseInitialized;
-    this.supabaseReady = initialized;
-}
+        return new Promise(async (resolve) => {
+            try {
+                const initialized = await window.supabaseInitialized;
+                this.supabaseReady = initialized;
+            } catch (error) {
+                console.warn('Erreur initialisation Supabase:', error);
+                this.supabaseReady = false;
+            }
 
             let attempts = 0;
             const maxAttempts = 100;
             
-            const checkSupabase = () => {
+            const checkSupabase = async () => {
                 attempts++;
                 
                 if (window.supabase?.auth?.getSession) {
-    try {
-        await window.supabase.auth.getSession();
-        this.supabaseReady = true;
-        resolve();
-    } catch (err) {
-        this.supabaseReady = false;
-        resolve();
-    }
-    return;
-}
+                    try {
+                        await window.supabase.auth.getSession();
+                        this.supabaseReady = true;
+                        resolve();
+                        return;
+                    } catch (err) {
+                        this.supabaseReady = false;
+                        resolve();
+                        return;
+                    }
+                }
                 
                 if (attempts >= maxAttempts) {
                     console.warn('Supabase non initialisé après 10 secondes - mode dégradé');
