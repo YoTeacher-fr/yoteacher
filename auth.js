@@ -6,11 +6,13 @@ class AuthManager {
         this.pendingPayment = null;
         this.vipPrices = null;
         this.userCurrency = null;
+        console.log('🔐 AuthManager initialisé');
         this.init();
     }
 
     async init() {
         try {
+            console.log('🔐 Initialisation de l\'authentification...');
             // Attendre que Supabase soit prêt
             await this.waitForSupabase();
             
@@ -23,6 +25,7 @@ class AuthManager {
             // Vérifier la session existante
             try {
                 const { data: { session } } = await supabase.auth.getSession();
+                console.log('🔐 Session existante:', session ? 'Oui' : 'Non');
                 if (session) {
                     this.user = session.user;
                     this.saveUserToStorage();
@@ -142,15 +145,28 @@ class AuthManager {
     }
 
     async loadVipPrices(userId) {
-        if (!userId || !this.supabaseReady) return;
+        if (!userId || !this.supabaseReady) {
+            console.log('❌ Impossible de charger les prix VIP : userId ou supabaseReady manquant', { 
+                userId, 
+                supabaseReady: this.supabaseReady 
+            });
+            return;
+        }
         
         try {
+            console.log(`🔍 Chargement des prix VIP pour l'utilisateur ${userId}...`);
+            
             const { data, error } = await supabase
                 .from('vip_pricing')
                 .select('*')
                 .eq('user_id', userId);
             
-            if (error) throw error;
+            if (error) {
+                console.error('❌ Erreur Supabase lors du chargement des prix VIP:', error);
+                throw error;
+            }
+            
+            console.log(`✅ Données VIP récupérées:`, data);
             
             if (data && data.length > 0) {
                 // Organiser les prix par type de cours
@@ -184,7 +200,7 @@ class AuthManager {
                     window.currencyManager.setCurrency(userCurrency, true);
                 }
                 
-                console.log('💰 Prix VIP chargés pour l\'utilisateur');
+                console.log('💰 Prix VIP chargés pour l\'utilisateur:', this.vipPrices);
                 
                 // Mettre à jour les prix sur la page
                 this.updateVipPricesOnPage();
@@ -193,43 +209,75 @@ class AuthManager {
                 window.dispatchEvent(new CustomEvent('vip:loaded', {
                     detail: { vipPrices: this.vipPrices, currency: userCurrency }
                 }));
+                
+                // Forcer la mise à jour de l'interface sur la page de réservation
+                if (window.location.pathname.includes('booking.html')) {
+                    setTimeout(() => {
+                        window.dispatchEvent(new Event('vip:loaded'));
+                    }, 500);
+                }
+            } else {
+                console.log('ℹ️ Aucun prix VIP trouvé pour cet utilisateur.');
+                this.vipPrices = null;
+                this.userCurrency = null;
             }
         } catch (error) {
-            console.warn('⚠️ Erreur chargement prix VIP:', error);
+            console.error('❌ Erreur chargement prix VIP:', error);
         }
     }
 
     getVipPrice(courseType, duration = 60) {
+        console.log(`🔍 Recherche prix VIP pour ${courseType} (${duration}min)...`, this.vipPrices);
+        
         if (!this.vipPrices || !this.vipPrices[courseType]) {
+            console.log(`❌ Aucun prix VIP pour le type de cours ${courseType}`);
             return null;
         }
         
         // Chercher la durée exacte
         if (this.vipPrices[courseType][duration]) {
-            return this.vipPrices[courseType][duration];
+            const price = this.vipPrices[courseType][duration];
+            console.log(`✅ Prix VIP trouvé (durée exacte):`, price);
+            return price;
         }
         
         // Sinon, chercher la première durée disponible
         const availableDurations = Object.keys(this.vipPrices[courseType]);
         if (availableDurations.length > 0) {
-            return this.vipPrices[courseType][availableDurations[0]];
+            const price = this.vipPrices[courseType][availableDurations[0]];
+            console.log(`✅ Prix VIP trouvé (première durée disponible):`, price);
+            return price;
         }
         
+        console.log(`❌ Aucun prix VIP disponible pour ${courseType}`);
         return null;
     }
 
     isUserVip() {
-        return !!this.vipPrices && Object.keys(this.vipPrices).length > 0;
+        const isVip = !!this.vipPrices && Object.keys(this.vipPrices).length > 0;
+        console.log(`👑 Vérification statut VIP: ${isVip}`, this.vipPrices);
+        return isVip;
     }
 
     updateVipPricesOnPage() {
-        if (!this.isUserVip()) return;
+        if (!this.isUserVip()) {
+            console.log('👑 Utilisateur non VIP, pas de mise à jour des prix');
+            return;
+        }
         
+        console.log('👑 Mise à jour des prix VIP sur la page');
         // Selon la page actuelle, mettre à jour les prix
         const path = window.location.pathname;
         
         if (path.includes('index.html') || path === '/' || path === '') {
             this.updateIndexPageVipPrices();
+        }
+        
+        if (path.includes('booking.html')) {
+            // Émettre un événement pour informer booking.js
+            setTimeout(() => {
+                window.dispatchEvent(new Event('vip:loaded'));
+            }, 100);
         }
     }
 
@@ -260,6 +308,9 @@ class AuthManager {
             const priceInfo = this.getVipPrice(courseType, 60);
             if (!priceInfo) return;
             
+            // Ajouter une classe VIP à la carte
+            card.classList.add('vip-highlight');
+            
             // Mettre à jour le prix principal
             const priceMain = card.querySelector('.price-main');
             if (priceMain && window.currencyManager) {
@@ -272,6 +323,7 @@ class AuthManager {
                 const perHourSpan = priceMain.querySelector('.price-per-hour');
                 if (perHourSpan) {
                     priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">/h</span>`;
+                    priceMain.classList.add('vip-price');
                 }
             }
             
@@ -307,10 +359,33 @@ class AuthManager {
                             window.currencyManager.currentCurrency
                         );
                         priceElement.textContent = displayPrice;
+                        priceElement.classList.add('vip-price');
                     }
                 }
             });
+            
+            // Ajouter un badge VIP à la carte
+            const cardHeader = card.querySelector('.course-header');
+            if (cardHeader && !cardHeader.querySelector('.vip-badge')) {
+                const vipBadge = document.createElement('span');
+                vipBadge.className = 'vip-badge';
+                vipBadge.textContent = 'VIP';
+                vipBadge.style.cssText = `
+                    display: inline-block;
+                    background: linear-gradient(135deg, #FFD700, #FFA500);
+                    color: #000;
+                    padding: 3px 10px;
+                    border-radius: 15px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    margin-left: 10px;
+                    border: 1px solid #FFA500;
+                `;
+                cardHeader.appendChild(vipBadge);
+            }
         });
+        
+        console.log('✅ Prix VIP mis à jour sur index.html');
     }
 
     showInvitationNotification(code) {
