@@ -926,8 +926,6 @@ const appTranslationManager = {
 };
 
 // ===== GESTION DES PRIX VIP =====
-// REMPLACER complètement le vipPriceManager dans script.js (ligne ~1950)
-
 const vipPriceManager = {
     init: () => {
         console.log('👑 Initialisation du gestionnaire de prix VIP...');
@@ -1019,10 +1017,12 @@ const vipPriceManager = {
             // Mettre à jour le prix principal
             const priceMain = card.querySelector('.price-main');
             if (priceMain && window.currencyManager) {
-                const displayPrice = window.currencyManager.convertAndFormat(
-                    priceInfo.price,
-                    priceInfo.currency,
-                    window.currencyManager.currentCurrency
+                const displayPrice = window.currencyManager.formatPrice(
+                    window.currencyManager.convert(
+                        priceInfo.price, 
+                        priceInfo.currency, 
+                        window.currencyManager.currentCurrency
+                    )
                 );
                 
                 const perHourSpan = priceMain.querySelector('.price-per-hour');
@@ -1046,10 +1046,12 @@ const vipPriceManager = {
                 if (price30Element) {
                     const price30Info = await window.authManager.getVipPrice(courseType, 30);
                     if (price30Info && window.currencyManager) {
-                        const display30 = window.currencyManager.convertAndFormat(
-                            price30Info.price,
-                            price30Info.currency,
-                            window.currencyManager.currentCurrency
+                        const display30 = window.currencyManager.formatPrice(
+                            window.currencyManager.convert(
+                                price30Info.price,
+                                price30Info.currency,
+                                window.currencyManager.currentCurrency
+                            )
                         );
                         price30Element.textContent = display30;
                         price30Element.classList.add('vip-price');
@@ -1062,10 +1064,12 @@ const vipPriceManager = {
                 if (price45Element) {
                     const price45Info = await window.authManager.getVipPrice(courseType, 45);
                     if (price45Info && window.currencyManager) {
-                        const display45 = window.currencyManager.convertAndFormat(
-                            price45Info.price,
-                            price45Info.currency,
-                            window.currencyManager.currentCurrency
+                        const display45 = window.currencyManager.formatPrice(
+                            window.currencyManager.convert(
+                                price45Info.price,
+                                price45Info.currency,
+                                window.currencyManager.currentCurrency
+                            )
                         );
                         price45Element.textContent = display45;
                         price45Element.classList.add('vip-price');
@@ -1079,10 +1083,12 @@ const vipPriceManager = {
                     // Forfait = prix 60min × 10 × 0.95
                     const forfaitPrice = priceInfo.price * 10 * 0.95;
                     if (window.currencyManager) {
-                        const displayForfait = window.currencyManager.convertAndFormat(
-                            forfaitPrice,
-                            priceInfo.currency,
-                            window.currencyManager.currentCurrency
+                        const displayForfait = window.currencyManager.formatPrice(
+                            window.currencyManager.convert(
+                                forfaitPrice,
+                                priceInfo.currency,
+                                window.currencyManager.currentCurrency
+                            )
                         );
                         priceForfaitElement.textContent = displayForfait;
                         priceForfaitElement.classList.add('vip-price');
@@ -1190,7 +1196,6 @@ const vipPriceManager = {
         }, 8000);
     }
 };
-
 // ===== GESTION DES BOUTONS DE LANGUE =====
 const initLanguageButtons = () => {
     console.log('🔧 Initialisation des boutons de langue...');
