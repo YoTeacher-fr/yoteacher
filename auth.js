@@ -151,11 +151,17 @@ class AuthManager {
             const checkSupabase = () => {
                 attempts++;
                 
-                if (window.supabase && window.supabase.auth) {
-                    this.supabaseReady = true;
-                    resolve();
-                    return;
-                }
+                if (window.supabase?.auth?.getSession) {
+    try {
+        await window.supabase.auth.getSession();
+        this.supabaseReady = true;
+        resolve();
+    } catch (err) {
+        this.supabaseReady = false;
+        resolve();
+    }
+    return;
+}
                 
                 if (attempts >= maxAttempts) {
                     console.warn('Supabase non initialisé après 10 secondes - mode dégradé');
