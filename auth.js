@@ -75,6 +75,9 @@ class AuthManager {
             } else if (profile) {
                 // Fusionner les données du profil avec l'utilisateur
                 this.user.profile = profile;
+		if (profile.is_vip) {
+                await this.loadVipPrices();
+            }
                 this.saveUserToStorage();
 		if (profile.is_vip) {
     await this.loadVipPrices();
@@ -250,6 +253,7 @@ class AuthManager {
             email: this.user.email,
             user_metadata: this.user.user_metadata,
             profile: this.user.profile,
+vipPrices: this.user.vipPrices,
             created_at: this.user.created_at
         };
         
@@ -683,37 +687,15 @@ class AuthManager {
     }
 
     // MÉTHODE : Obtenir le prix VIP pour un type de cours et une durée
-   async getVipPrice(courseType, duration) {
+    async getVipPrice(courseType, duration) {
     try {
-        console.group(`🔍 DEBUG getVipPrice pour ${courseType} - ${duration}min`);
-        
-        if (!this.supabaseReady) {
-            console.error('❌ supabaseReady = false');
-            console.groupEnd();
+        if (!this.supabaseReady || !window.supabase || !this.user) {
+            console.log('❌ Conditions VIP non remplies');
             return null;
         }
-        
-        if (!window.supabase) {
-            console.error('❌ window.supabase non disponible');
-            console.groupEnd();
-            return null;
-        }
-        
-        if (!this.user) {
-            console.error('❌ Utilisateur non connecté');
-            console.groupEnd();
-            return null;
-        }
-        
-        console.log('✅ Conditions remplies:', {
-            supabaseReady: this.supabaseReady,
-            hasSupabase: !!window.supabase,
-            user: this.user?.email,
-            userId: this.user?.id
-        });
 
         const durationInt = parseInt(duration);
-        console.log(`📝 Paramètres: courseType="${courseType}", duration=${durationInt}min`);
+        console.log(`🔍 Recherche prix VIP pour ${courseType} - ${durationInt}min, user: ${this.user.id}`);
         
         const { data, error } = await supabase
             .from('vip_pricing')
@@ -723,51 +705,24 @@ class AuthManager {
             .eq('duration_minutes', durationInt)
             .maybeSingle();
 
-        console.log('📦 Réponse Supabase:', { data, error });
-
         if (error) {
-            console.error('❌ Erreur Supabase:', error);
-            console.groupEnd();
+            console.warn('⚠️ Erreur requête prix VIP:', error);
             return null;
         }
 
         if (!data) {
-            console.warn(`⚠️ Aucune donnée retournée pour ${courseType} ${durationInt}min`);
-            console.groupEnd();
+            console.log(`ℹ️ Aucun prix VIP trouvé pour ${courseType} ${durationInt}min`);
             return null;
         }
 
-        console.log('✅ Données reçues:', data);
-        
-        // Debug du prix
-        console.log('🔢 Analyse du prix:', {
-            rawPrice: data.price,
-            type: typeof data.price,
-            isNumber: typeof data.price === 'number',
-            isString: typeof data.price === 'string',
-            parseFloat: parseFloat(data.price),
-            isNaN: isNaN(parseFloat(data.price))
-        });
-
-        const priceNumber = parseFloat(data.price);
-        
-        if (isNaN(priceNumber)) {
-            console.error('❌ ERREUR: Le prix n\'est pas un nombre valide:', data.price);
-            console.groupEnd();
-            return null;
-        }
-
-        console.log(`✅ Prix final: ${priceNumber} ${data.currency || 'EUR'}`);
-        console.groupEnd();
-        
+        console.log('✅ Prix VIP trouvé:', data);
         return {
-            price: priceNumber,
+            price: parseFloat(data.price), // Convertir en nombre
             currency: data.currency || 'EUR',
             duration: data.duration_minutes
         };
     } catch (error) {
-        console.error('💥 Exception dans getVipPrice:', error);
-        console.groupEnd();
+        console.warn('Exception lors de la récupération du prix VIP:', error);
         return null;
     }
 }
