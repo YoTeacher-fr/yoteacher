@@ -673,6 +673,39 @@ class AuthManager {
         return this.user;
     }
 
+    // MÉTHODE : Vérifier si l'utilisateur est VIP
+    isUserVip() {
+        return this.user && this.user.profile && this.user.profile.is_vip === true;
+    }
+
+    // MÉTHODE : Obtenir le prix VIP pour un type de cours et une durée
+    async getVipPrice(courseType, duration) {
+        try {
+            if (!this.supabaseReady || !window.supabase || !this.user) {
+                return null;
+            }
+
+            const durationInt = parseInt(duration);
+            const { data, error } = await supabase
+                .from('vip_pricing')
+                .select('price, currency')
+                .eq('user_id', this.user.id)
+                .eq('course_type', courseType)
+                .eq('duration_minutes', durationInt)
+                .single();
+
+            if (error) {
+                console.warn('Aucun prix VIP trouvé pour', courseType, duration, error);
+                return null;
+            }
+
+            return data;
+        } catch (error) {
+            console.warn('Exception lors de la récupération du prix VIP:', error);
+            return null;
+        }
+    }
+
     async resetPassword(email) {
         try {
             if (!this.supabaseReady) {
