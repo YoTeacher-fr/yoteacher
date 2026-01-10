@@ -1,4 +1,4 @@
-// payment.js - Gestionnaire de paiement production avec Stripe
+// payment.js - Gestionnaire de paiement adapté à votre schéma Supabase
 class PaymentManager {
     constructor() {
         this.config = window.YOTEACHER_CONFIG || {};
@@ -7,7 +7,7 @@ class PaymentManager {
         this.elements = null;
         this.cardElement = null;
         
-        console.log('💳 PaymentManager initialisé pour production');
+        console.log('💳 PaymentManager initialisé pour schéma Supabase');
     }
     
     async initStripe() {
@@ -112,31 +112,43 @@ class PaymentManager {
             minute: '2-digit'
         });
         
-        // Badge VIP si applicable
-        let vipBadge = '';
-        if (booking.isVip) {
-            vipBadge = '<span class="vip-badge" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; padding: 3px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; margin-left: 8px; border: 1px solid #FFA500;">VIP</span>';
-        }
-        
-        // Formater le prix selon la devise actuelle
-        let formattedPrice = `${booking.price}€`;
-        if (window.currencyManager) {
-            formattedPrice = window.currencyManager.formatPrice(booking.price);
-        }
-        
         // Obtenir le nom de la plateforme
         const platformName = this.getPlatformName(booking.location);
         
+        // Formater le prix selon la devise actuelle
+        let formattedPrice = `${booking.price}€`; // Par défaut
+        if (window.currencyManager) {
+            // Le prix dans la réservation est en EUR, on le convertit dans la devise actuelle
+            const amountEUR = booking.priceEUR || booking.price;
+            formattedPrice = window.currencyManager.formatPrice(amountEUR);
+        }
+        
+        let packageInfo = '';
+        if (booking.isPackage && booking.packageQuantity > 1) {
+            packageInfo = `
+                <div class="summary-item">
+                    <span class="label">Type d'achat:</span>
+                    <span class="value">Forfait VIP (${booking.packageQuantity} crédits)</span>
+                </div>
+            `;
+        } else {
+            packageInfo = `
+                <div class="summary-item">
+                    <span class="label">Type d'achat:</span>
+                    <span class="value">Cours unique</span>
+                </div>
+            `;
+        }
+        
         summaryElement.innerHTML = `
             <div class="booking-summary-card">
-                <h3 style="margin-bottom: 20px;">
-                    <i class="fas fa-calendar-check"></i> Récapitulatif ${vipBadge}
-                </h3>
+                <h3 style="margin-bottom: 20px;"><i class="fas fa-calendar-check"></i> Récapitulatif</h3>
                 <div class="summary-details">
                     <div class="summary-item">
                         <span class="label">Type de cours:</span>
                         <span class="value">${this.getCourseName(booking.courseType)}</span>
                     </div>
+                    ${packageInfo}
                     <div class="summary-item">
                         <span class="label">Date:</span>
                         <span class="value">${formattedDate}</span>
@@ -145,17 +157,19 @@ class PaymentManager {
                         <span class="label">Heure:</span>
                         <span class="value">${formattedTime}</span>
                     </div>
+                    ${booking.isPackage ? '' : `
                     <div class="summary-item">
                         <span class="label">Durée:</span>
                         <span class="value">${booking.duration} min</span>
                     </div>
                     <div class="summary-item">
-                        <span class="label">Élève:</span>
-                        <span class="value">${booking.name}</span>
-                    </div>
-                    <div class="summary-item">
                         <span class="label">Plateforme:</span>
                         <span class="value">${platformName}</span>
+                    </div>
+                    `}
+                    <div class="summary-item">
+                        <span class="label">Élève:</span>
+                        <span class="value">${booking.name}</span>
                     </div>
                     <div class="summary-item total">
                         <span class="label">Total:</span>
@@ -320,6 +334,77 @@ class PaymentManager {
         }
     }
     
+    // Méthode pour traiter l'achat de forfait
+    async processPackagePurchase(paymentData) {
+        try {
+            console.log('📦 Traitement achat forfait...');
+            
+            const booking = this.currentBooking;
+            
+            if (!booking.isPackage) {
+                return { success: false, error: 'Ce n\'est pas un forfait' };
+            }
+            
+            console.log('📦 Détails du forfait:', {
+                courseType: booking.courseType,
+                quantity: booking.packageQuantity,
+                price: booking.price,
+                currency: booking.currency,
+                userId: booking.userId
+            });
+            
+            // Ajouter les crédits à l'utilisateur via PackagesManager
+            if (window.packagesManager && booking.userId) {
+                const packageResult = await window.packagesManager.addCredits(
+                    booking.userId,
+                    booking.courseType,
+                    booking.packageQuantity,
+                    booking.price,
+                    booking.currency,
+                    paymentData.method,
+                    paymentData.transactionId
+                );
+                
+                if (!packageResult.success) {
+                    throw new Error(packageResult.error || 'Échec de l\'ajout des crédits');
+                }
+                
+                console.log('✅ Forfait acheté avec succès:', packageResult.package);
+                
+                // Créer une réservation pour enregistrer l'achat
+                if (window.supabase && booking.userId) {
+                    const bookingNumber = `PKG-${Date.now().toString().slice(-8)}`;
+                    
+                    const { error } = await supabase
+                        .from('bookings')
+                        .insert({
+                            user_id: booking.userId,
+                            course_type: booking.courseType,
+                            status: 'package_purchased',
+                            price_paid: booking.price,
+                            currency: booking.currency,
+                            payment_method: paymentData.method,
+                            payment_reference: paymentData.transactionId,
+                            booking_number: bookingNumber,
+                            package_id: packageResult.package?.id,
+                            created_at: new Date().toISOString()
+                        });
+                    
+                    if (error) {
+                        console.warn('⚠️ Erreur enregistrement achat forfait:', error);
+                    }
+                }
+                
+                return { success: true, package: packageResult.package };
+            } else {
+                throw new Error('PackagesManager non disponible');
+            }
+        } catch (error) {
+            console.error('❌ Erreur traitement forfait:', error);
+            return { success: false, error: error.message };
+        }
+    }
+    
     async completePayment(method, transactionId = null) {
         console.log('✅ Finalisation paiement:', method);
         
@@ -334,51 +419,113 @@ class PaymentManager {
                 booking: this.currentBooking
             };
             
-            // Sauvegarder dans Supabase
+            // Sauvegarder le paiement via AuthManager
             if (window.authManager && this.currentBooking.userId) {
                 try {
-                    await window.authManager.savePayment(paymentData);
+                    const paymentResult = await window.authManager.savePayment(paymentData);
+                    console.log('✅ Paiement enregistré:', paymentResult);
                 } catch (saveError) {
                     console.warn('⚠️ Erreur sauvegarde paiement:', saveError);
                 }
             }
             
-            // Créer la réservation Cal.com
             let hasWarning = false;
+            let resultMessage = '';
             
-            try {
-                const bookingResult = await window.bookingManager.createBookingAfterPayment(this.currentBooking);
-                
-                if (bookingResult && bookingResult.success) {
-                    console.log('✅ Réservation Cal.com créée');
-                    this.currentBooking.calcomId = bookingResult.data.id;
-                    this.currentBooking.status = 'confirmed';
+            // Traiter différemment selon le type d'achat
+            if (this.currentBooking.isPackage) {
+                // ACHAT DE FORFAIT VIP
+                console.log('📦 Traitement achat forfait VIP');
+                try {
+                    const packageResult = await this.processPackagePurchase(paymentData);
                     
-                    // Sauvegarder la réservation dans Supabase
-                    if (window.authManager?.saveBookingData) {
-                        await window.authManager.saveBookingData(this.currentBooking);
+                    if (packageResult.success) {
+                        console.log('✅ Forfait VIP acheté avec succès');
+                        this.currentBooking.status = 'package_purchased';
+                        resultMessage = 'Votre forfait a été acheté avec succès. Les crédits ont été ajoutés à votre compte.';
+                        
+                        // Envoyer un email de confirmation de forfait
+                        this.sendPackageConfirmationEmail();
+                    } else {
+                        throw new Error(packageResult.error || 'Échec achat forfait');
                     }
-                } else {
-                    throw new Error(bookingResult?.error || 'Échec Cal.com');
+                } catch (packageError) {
+                    console.error('⚠️ Erreur achat forfait:', packageError);
+                    hasWarning = true;
+                    this.currentBooking.status = 'payment_ok_package_failed';
+                    resultMessage = 'Paiement réussi mais erreur lors de l\'ajout des crédits. Contactez le support.';
                 }
-            } catch (calcomError) {
-                console.error('⚠️ Erreur Cal.com:', calcomError);
-                hasWarning = true;
-                this.currentBooking.status = 'payment_ok_reservation_failed';
+            } else {
+                // RÉSERVATION DE COURS UNIQUE
+                console.log('🎫 Traitement réservation cours unique');
+                try {
+                    const bookingResult = await window.bookingManager.createBookingAfterPayment(this.currentBooking);
+                    
+                    if (bookingResult && bookingResult.success) {
+                        console.log('✅ Réservation Cal.com créée');
+                        this.currentBooking.calcomId = bookingResult.data.id;
+                        this.currentBooking.status = 'confirmed';
+                        resultMessage = 'Votre réservation a été confirmée. Vous recevrez un email avec le lien de la visioconférence.';
+                        
+                        // Mettre à jour la réservation avec les infos de paiement
+                        if (window.authManager?.saveBookingData) {
+                            await window.authManager.saveBookingData({
+                                ...this.currentBooking,
+                                paymentMethod: method,
+                                transactionId: transactionId
+                            });
+                        }
+                    } else {
+                        throw new Error(bookingResult?.error || 'Échec Cal.com');
+                    }
+                } catch (calcomError) {
+                    console.error('⚠️ Erreur Cal.com:', calcomError);
+                    hasWarning = true;
+                    this.currentBooking.status = 'payment_ok_reservation_failed';
+                    resultMessage = 'Paiement réussi mais erreur lors de la création de la réservation. Contactez le support.';
+                }
             }
             
             // Nettoyer et rediriger
             localStorage.removeItem('pendingBooking');
             
-            const redirectUrl = `payment-success.html?booking=${encodeURIComponent(JSON.stringify(this.currentBooking))}`;
+            // Stocker le message de résultat
+            sessionStorage.setItem('paymentResult', JSON.stringify({
+                success: true,
+                warning: hasWarning,
+                message: resultMessage,
+                booking: this.currentBooking
+            }));
+            
+            const redirectUrl = `payment-success.html`;
             
             setTimeout(() => {
-                window.location.href = hasWarning ? redirectUrl + '&warning=true' : redirectUrl;
+                window.location.href = redirectUrl;
             }, 1000);
             
         } catch (error) {
             console.error('❌ Erreur finalisation:', error);
-            throw error;
+            this.showPaymentError('Erreur lors de la finalisation du paiement: ' + error.message);
+        }
+    }
+
+    // Méthode pour envoyer un email de confirmation de forfait
+    async sendPackageConfirmationEmail() {
+        try {
+            if (!window.supabase || !this.currentBooking) return;
+            
+            const { error } = await supabase.functions.invoke('send-package-confirmation', {
+                body: {
+                    booking: this.currentBooking,
+                    timestamp: new Date().toISOString()
+                }
+            });
+            
+            if (!error) {
+                console.log('📧 Email de confirmation de forfait envoyé');
+            }
+        } catch (error) {
+            console.warn('⚠️ Erreur envoi email:', error);
         }
     }
     
@@ -405,21 +552,4 @@ class PaymentManager {
 
 // Initialiser
 window.paymentManager = new PaymentManager();
-
-// Écouter les événements VIP pour mettre à jour les prix
-window.addEventListener('vip:loaded', function() {
-    console.log('🎁 Prix VIP chargés, PaymentManager prêt');
-    // Si nous avons une réservation en cours, mettre à jour l'affichage
-    if (window.paymentManager && window.paymentManager.currentBooking) {
-        window.paymentManager.displayBookingSummary(window.paymentManager.currentBooking);
-    }
-});
-
-// Écouter les changements de devise
-window.addEventListener('currency:changed', function() {
-    if (window.paymentManager && window.paymentManager.currentBooking) {
-        window.paymentManager.displayBookingSummary(window.paymentManager.currentBooking);
-    }
-});
-
-console.log('💳 PaymentManager prêt pour production');
+console.log('💳 PaymentManager prêt pour schéma Supabase');

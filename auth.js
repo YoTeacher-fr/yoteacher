@@ -1,18 +1,14 @@
-// Gestion de l'authentification avec gestion des paiements ET invitations VIP
+// Gestion de l'authentification avec gestion des paiements - ADAPTÉ AU SCHÉMA SUPABASE
 class AuthManager {
     constructor() {
         this.user = null;
         this.supabaseReady = false;
         this.pendingPayment = null;
-        this.vipPrices = null;
-        this.userCurrency = null;
-        console.log('🔐 AuthManager initialisé');
         this.init();
     }
 
     async init() {
         try {
-            console.log('🔐 Initialisation de l\'authentification...');
             // Attendre que Supabase soit prêt
             await this.waitForSupabase();
             
@@ -25,35 +21,25 @@ class AuthManager {
             // Vérifier la session existante
             try {
                 const { data: { session } } = await supabase.auth.getSession();
-                console.log('🔐 Session existante:', session ? 'Oui' : 'Non');
                 if (session) {
                     this.user = session.user;
-                    this.saveUserToStorage();
+                    await this.loadUserProfile();
                     this.updateUI();
                     // Événement : utilisateur déjà connecté
                     this.emitAuthEvent('login', this.user);
-                    
-                    // Charger les prix VIP si l'utilisateur est VIP
-                    await this.loadVipPrices(session.user.id);
                 }
 
                 // Écouter les changements d'authentification
-                supabase.auth.onAuthStateChange((event, session) => {
+                supabase.auth.onAuthStateChange(async (event, session) => {
                     console.log('Auth state changed:', event, session);
                     if (session) {
                         this.user = session.user;
-                        this.saveUserToStorage();
+                        await this.loadUserProfile();
                         this.updateUI();
                         // Événement : connexion
                         this.emitAuthEvent('login', this.user);
-                        
-                        // Charger les prix VIP si l'utilisateur est VIP
-                        setTimeout(() => {
-                            this.loadVipPrices(session.user.id);
-                        }, 500);
                     } else {
                         this.user = null;
-                        this.vipPrices = null;
                         this.removeUserFromStorage();
                         this.updateUI();
                         // Événement : déconnexion
@@ -64,406 +50,64 @@ class AuthManager {
                 console.warn('Erreur lors de la vérification de session:', error);
                 this.setupDegradedMode();
             }
-            
-            // Gérer le code d'invitation si présent dans l'URL
-            this.handleInvitationCode();
-            
         } catch (error) {
             console.error('Erreur lors de l\'initialisation de l\'auth:', error);
             this.setupDegradedMode();
         }
     }
 
-    // ===== GESTION DES INVITATIONS VIP =====
-    handleInvitationCode() {
-        // Vérifier le code dans l'URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        
-        if (code) {
-            // Sauvegarder le code pour plus tard
-            localStorage.setItem('invitation_code', code);
-            console.log(`🎁 Code d'invitation détecté: ${code}`);
-            
-            // Afficher une notification
-            this.showInvitationNotification(code);
-        }
-    }
-
-    async applyInvitationCode(userId) {
-        const code = localStorage.getItem('invitation_code');
-        if (!code || !userId) return false;
+    async loadUserProfile() {
+        if (!this.user || !this.supabaseReady) return;
         
         try {
-            console.log(`🔗 Application du code ${code} pour l'utilisateur ${userId}`);
-            
-            // Vérifier si le code existe et n'est pas utilisé
-            const { data: existing, error: checkError } = await supabase
-                .from('vip_pricing')
-                .select('user_id')
-                .eq('invitation_code', code)
-                .maybeSingle();
-            
-            if (checkError) throw checkError;
-            
-            // Si le code est déjà utilisé par quelqu'un d'autre
-            if (existing && existing.user_id && existing.user_id !== userId) {
-                console.warn('⚠️ Code déjà utilisé par un autre utilisateur');
-                localStorage.removeItem('invitation_code');
-                return false;
-            }
-            
-            // Mettre à jour le user_id pour toutes les entrées avec ce code
-            const { error: updateError } = await supabase
-                .from('vip_pricing')
-                .update({ user_id: userId })
-                .eq('invitation_code', code)
-                .is('user_id', null);
-            
-            if (updateError) throw updateError;
-            
-            // Marquer l'utilisateur comme VIP dans profiles
-            const { error: profileError } = await supabase
+            const { data: profile, error } = await supabase
                 .from('profiles')
-                .update({ is_vip: true })
-                .eq('id', userId);
-            
-            if (profileError) throw profileError;
-            
-            console.log('✅ Code d\'invitation appliqué avec succès');
-            localStorage.removeItem('invitation_code');
-            
-            // Charger les prix VIP
-            await this.loadVipPrices(userId);
-            
-            return true;
-            
+                .select('*')
+                .eq('id', this.user.id)
+                .single();
+
+            if (error && error.code !== 'PGRST116') { // PGRST116 = aucun résultat
+                console.warn('Erreur chargement profil:', error);
+                // Créer le profil s'il n'existe pas
+                if (error.code === 'PGRST116') {
+                    await this.createUserProfile();
+                }
+            } else if (profile) {
+                // Fusionner les données du profil avec l'utilisateur
+                this.user.profile = profile;
+                this.saveUserToStorage();
+            }
         } catch (error) {
-            console.error('❌ Erreur application code:', error);
-            return false;
+            console.warn('Exception chargement profil:', error);
         }
     }
 
-    async loadVipPrices(userId) {
-        if (!userId || !this.supabaseReady) {
-            console.log('❌ Impossible de charger les prix VIP : userId ou supabaseReady manquant', { 
-                userId, 
-                supabaseReady: this.supabaseReady 
-            });
-            return;
-        }
+    async createUserProfile() {
+        if (!this.user || !this.supabaseReady) return;
         
         try {
-            console.log(`🔍 Chargement des prix VIP pour l'utilisateur ${userId}...`);
-            
-            const { data, error } = await supabase
-                .from('vip_pricing')
-                .select('*')
-                .eq('user_id', userId);
-            
-            if (error) {
-                console.error('❌ Erreur Supabase lors du chargement des prix VIP:', error);
-                throw error;
-            }
-            
-            console.log(`✅ Données VIP récupérées (${data.length} entrées):`, data);
-            
-            // DEBUG: Afficher chaque entrée
-            data.forEach(item => {
-                console.log(`   - ${item.course_type} ${item.duration_minutes}min: ${item.price} ${item.currency}`, 
-                           `(type durée: ${typeof item.duration_minutes})`);
-            });
-            
-            if (data && data.length > 0) {
-                // Organiser les prix
-                this.vipPrices = {};
-                let userCurrency = null;
-                
-                data.forEach(item => {
-                    if (!this.vipPrices[item.course_type]) {
-                        this.vipPrices[item.course_type] = {};
-                    }
-                    
-                    // Convertir duration_minutes en nombre si nécessaire
-                    const duration = parseInt(item.duration_minutes);
-                    console.log(`   Ajout: ${item.course_type}[${duration}] = ${item.price} ${item.currency}`);
-                    
-                    this.vipPrices[item.course_type][duration] = {
-                        price: parseFloat(item.price),
-                        currency: item.currency
-                    };
-                    
-                    // Garder la devise de l'utilisateur
-                    if (!userCurrency && item.currency) {
-                        userCurrency = item.currency;
-                    }
+            const { error } = await supabase
+                .from('profiles')
+                .insert({
+                    id: this.user.id,
+                    email: this.user.email,
+                    full_name: this.user.user_metadata?.full_name || '',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    is_vip: false,
+                    preferred_currency: 'EUR',
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
                 });
-                
-                // Stocker dans l'objet user pour accès global
-                if (this.user) {
-                    this.user.vipPrices = this.vipPrices;
-                }
-                
-                this.userCurrency = userCurrency;
-                
-                // Mettre à jour la devise du site
-                if (userCurrency && window.currencyManager) {
-                    window.currencyManager.setCurrency(userCurrency, true);
-                }
-                
-                console.log('💰 Structure finale vipPrices:', this.vipPrices);
-                console.log('💰 Accès test: this.vipPrices["conversation"][60] =', 
-                           this.vipPrices["conversation"] ? this.vipPrices["conversation"][60] : 'undefined');
-                
-                // Mettre à jour les prix sur la page
-                this.updateVipPricesOnPage();
-                
-                // Émettre un événement pour informer les autres composants
-                window.dispatchEvent(new CustomEvent('vip:loaded', {
-                    detail: { 
-                        vipPrices: this.vipPrices, 
-                        currency: userCurrency,
-                        userId: userId 
-                    }
-                }));
-                
-                console.log('🎉 Prix VIP chargés avec succès!');
-                
+
+            if (error) {
+                console.warn('Erreur création profil:', error);
             } else {
-                console.log('ℹ️ Aucun prix VIP trouvé pour cet utilisateur.');
-                this.vipPrices = null;
-                this.userCurrency = null;
+                console.log('✅ Profil créé dans Supabase');
+                await this.loadUserProfile();
             }
         } catch (error) {
-            console.error('❌ Erreur chargement prix VIP:', error);
+            console.warn('Exception création profil:', error);
         }
-    }
-
-    getVipPrice(courseType, duration = 60) {
-        // Convertir duration en nombre
-        const durationNum = parseInt(duration);
-        
-        console.log(`🔍 Recherche prix VIP pour ${courseType} (${durationNum}min)...`, this.vipPrices);
-        
-        if (!this.vipPrices || !this.vipPrices[courseType]) {
-            console.log(`❌ Aucun prix VIP pour le type de cours ${courseType}`);
-            return null;
-        }
-        
-        // Chercher la durée exacte
-        if (this.vipPrices[courseType][durationNum]) {
-            const price = this.vipPrices[courseType][durationNum];
-            console.log(`✅ Prix VIP trouvé (durée exacte ${durationNum}min):`, price);
-            return price;
-        }
-        
-        // Sinon, chercher la première durée disponible
-        const availableDurations = Object.keys(this.vipPrices[courseType]).map(d => parseInt(d));
-        console.log(`   Durées disponibles pour ${courseType}:`, availableDurations);
-        
-        if (availableDurations.length > 0) {
-            // Trouver la durée la plus proche
-            const closestDuration = availableDurations.reduce((prev, curr) => {
-                return (Math.abs(curr - durationNum) < Math.abs(prev - durationNum) ? curr : prev);
-            });
-            
-            const price = this.vipPrices[courseType][closestDuration];
-            console.log(`✅ Prix VIP trouvé (durée la plus proche ${closestDuration}min):`, price);
-            return price;
-        }
-        
-        console.log(`❌ Aucun prix VIP disponible pour ${courseType}`);
-        return null;
-    }
-
-    isUserVip() {
-        const isVip = !!this.vipPrices && Object.keys(this.vipPrices).length > 0;
-        console.log(`👑 Vérification statut VIP: ${isVip}`, this.vipPrices);
-        return isVip;
-    }
-
-    updateVipPricesOnPage() {
-        if (!this.isUserVip()) {
-            console.log('👑 Utilisateur non VIP, pas de mise à jour des prix');
-            return;
-        }
-        
-        console.log('👑 Mise à jour des prix VIP sur la page');
-        // Selon la page actuelle, mettre à jour les prix
-        const path = window.location.pathname;
-        
-        if (path.includes('index.html') || path === '/' || path === '') {
-            this.updateIndexPageVipPrices();
-        }
-        
-        if (path.includes('booking.html')) {
-            // Émettre un événement pour informer booking.js
-            setTimeout(() => {
-                window.dispatchEvent(new CustomEvent('vip:loaded', {
-                    detail: { vipPrices: this.vipPrices }
-                }));
-            }, 100);
-        }
-    }
-
-    updateIndexPageVipPrices() {
-        console.log('🏠 Mise à jour des prix VIP sur index.html');
-        
-        // Mettre à jour le prix du cours d'essai (toujours 5€)
-        const essaiBtn = document.getElementById('essaiPriceBtn');
-        if (essaiBtn && window.currencyManager) {
-            const priceSpan = essaiBtn.querySelector('.price-essai');
-            if (priceSpan) {
-                priceSpan.textContent = window.currencyManager.formatPrice(5);
-            }
-        }
-        
-        // Mettre à jour les cartes de cours
-        document.querySelectorAll('.course-card').forEach(card => {
-            const courseId = card.dataset.courseId;
-            if (!courseId) return;
-            
-            let courseType = '';
-            switch(courseId) {
-                case '1': courseType = 'conversation'; break;
-                case '2': courseType = 'curriculum'; break;
-                case '3': courseType = 'examen'; break;
-            }
-            
-            const priceInfo = this.getVipPrice(courseType, 60);
-            if (!priceInfo) return;
-            
-            // Ajouter une classe VIP à la carte
-            card.classList.add('vip-highlight');
-            
-            // Mettre à jour le prix principal
-            const priceMain = card.querySelector('.price-main');
-            if (priceMain && window.currencyManager) {
-                const displayPrice = window.currencyManager.convertAndFormat(
-                    priceInfo.price,
-                    priceInfo.currency,
-                    window.currencyManager.currentCurrency
-                );
-                
-                const perHourSpan = priceMain.querySelector('.price-per-hour');
-                if (perHourSpan) {
-                    priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">/h</span>`;
-                    priceMain.classList.add('vip-price');
-                }
-            }
-            
-            // Mettre à jour les prix détaillés
-            card.querySelectorAll('.price-detail-item').forEach(item => {
-                let duration = 60;
-                let priceElement = null;
-                
-                if (item.querySelector('.price-30')) {
-                    duration = 30;
-                    priceElement = item.querySelector('.price-30');
-                } else if (item.querySelector('.price-45')) {
-                    duration = 45;
-                    priceElement = item.querySelector('.price-45');
-                } else if (item.querySelector('.price-forfait')) {
-                    duration = 60;
-                    priceElement = item.querySelector('.price-forfait');
-                }
-                
-                if (priceElement) {
-                    const detailPrice = this.getVipPrice(courseType, duration);
-                    if (detailPrice) {
-                        let price = detailPrice.price;
-                        
-                        // Pour le forfait : prix * 10 * 0.95
-                        if (item.querySelector('.price-forfait')) {
-                            price = price * 10 * 0.95;
-                        }
-                        
-                        const displayPrice = window.currencyManager.convertAndFormat(
-                            price,
-                            detailPrice.currency,
-                            window.currencyManager.currentCurrency
-                        );
-                        priceElement.textContent = displayPrice;
-                        priceElement.classList.add('vip-price');
-                    }
-                }
-            });
-            
-            // Ajouter un badge VIP à la carte
-            const cardHeader = card.querySelector('.course-header');
-            if (cardHeader && !cardHeader.querySelector('.vip-badge')) {
-                const vipBadge = document.createElement('span');
-                vipBadge.className = 'vip-badge';
-                vipBadge.textContent = 'VIP';
-                vipBadge.style.cssText = `
-                    display: inline-block;
-                    background: linear-gradient(135deg, #FFD700, #FFA500);
-                    color: #000;
-                    padding: 3px 10px;
-                    border-radius: 15px;
-                    font-size: 12px;
-                    font-weight: bold;
-                    margin-left: 10px;
-                    border: 1px solid #FFA500;
-                `;
-                cardHeader.appendChild(vipBadge);
-            }
-        });
-        
-        console.log('✅ Prix VIP mis à jour sur index.html');
-    }
-
-    showInvitationNotification(code) {
-        // Créer une notification discrète
-        const notification = document.createElement('div');
-        notification.id = 'invitation-notification';
-        notification.style.cssText = `
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            z-index: 9999;
-            font-size: 14px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            animation: slideInRight 0.5s ease;
-            max-width: 300px;
-        `;
-        
-        notification.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <i class="fas fa-gift" style="font-size: 18px;"></i>
-                <div>
-                    <strong>Invitation VIP détectée!</strong><br>
-                    <small>Créez un compte pour activer vos tarifs spéciaux.</small>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Ajouter le CSS pour l'animation
-        if (!document.querySelector('#invitation-styles')) {
-            const style = document.createElement('style');
-            style.id = 'invitation-styles';
-            style.textContent = `
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        // Supprimer après 8 secondes
-        setTimeout(() => {
-            notification.style.transition = 'all 0.5s ease';
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => notification.remove(), 500);
-        }, 8000);
     }
 
     // Méthode pour émettre des événements d'authentification
@@ -604,9 +248,8 @@ class AuthManager {
             id: this.user.id,
             email: this.user.email,
             user_metadata: this.user.user_metadata,
-            created_at: this.user.created_at,
-            vipPrices: this.vipPrices,
-            isVip: this.isUserVip()
+            profile: this.user.profile,
+            created_at: this.user.created_at
         };
         
         localStorage.setItem('yoteacher_user', JSON.stringify(userData));
@@ -614,7 +257,6 @@ class AuthManager {
 
     removeUserFromStorage() {
         localStorage.removeItem('yoteacher_user');
-        localStorage.removeItem('invitation_code');
     }
 
     async signUp(email, password, fullName) {
@@ -645,31 +287,24 @@ class AuthManager {
             }
 
             if (data.user) {
+                // Créer le profil dans la table profiles
                 try {
                     const { error: profileError } = await supabase
                         .from('profiles')
-                        .insert([
-                            {
-                                id: data.user.id,
-                                email: email,
-                                full_name: fullName,
-                                is_vip: false,
-                                credits: 0,
-                                created_at: new Date().toISOString()
-                            }
-                        ]);
+                        .insert({
+                            id: data.user.id,
+                            email: email,
+                            full_name: fullName,
+                            is_vip: false,
+                            preferred_currency: 'EUR',
+                            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        });
 
                     if (profileError) {
                         console.warn('Erreur création profil:', profileError);
                     }
-                    
-                    // Appliquer le code d'invitation si présent
-                    if (data.user.id) {
-                        setTimeout(async () => {
-                            await this.applyInvitationCode(data.user.id);
-                        }, 1000);
-                    }
-                    
                 } catch (profileErr) {
                     console.warn('Exception création profil:', profileErr);
                 }
@@ -699,6 +334,11 @@ class AuthManager {
                     user_metadata: {
                         full_name: fullName,
                         created_at: new Date().toISOString()
+                    },
+                    profile: {
+                        full_name: fullName,
+                        is_vip: false,
+                        preferred_currency: 'EUR'
                     },
                     created_at: new Date().toISOString()
                 };
@@ -730,19 +370,11 @@ class AuthManager {
             if (error) throw error;
             
             this.user = data.user;
-            this.saveUserToStorage();
+            await this.loadUserProfile();
             this.updateUI();
             
             // Événement : connexion réussie
             this.emitAuthEvent('login', this.user);
-            
-            // Appliquer le code d'invitation si présent
-            if (this.user.id) {
-                setTimeout(async () => {
-                    await this.applyInvitationCode(this.user.id);
-                    await this.loadVipPrices(this.user.id);
-                }, 500);
-            }
             
             const returnUrl = this.getReturnUrl();
             
@@ -825,7 +457,6 @@ class AuthManager {
             }
             
             this.user = null;
-            this.vipPrices = null;
             this.removeUserFromStorage();
             this.updateUI();
             
@@ -845,7 +476,6 @@ class AuthManager {
         } catch (error) {
             console.error('Erreur déconnexion:', error);
             this.user = null;
-            this.vipPrices = null;
             this.removeUserFromStorage();
             this.updateUI();
             
@@ -982,25 +612,6 @@ class AuthManager {
             </a>
         `;
         
-        // Ajouter un badge VIP si l'utilisateur est VIP
-        if (this.isUserVip()) {
-            const vipBadge = document.createElement('span');
-            vipBadge.className = 'vip-badge-header';
-            vipBadge.textContent = 'VIP';
-            vipBadge.style.cssText = `
-                display: inline-block;
-                background: linear-gradient(135deg, #FFD700, #FFA500);
-                color: #000;
-                padding: 2px 8px;
-                border-radius: 10px;
-                font-size: 10px;
-                font-weight: bold;
-                margin-left: 5px;
-                border: 1px solid #FFA500;
-            `;
-            avatar.querySelector('.dashboard-btn').appendChild(vipBadge);
-        }
-        
         // Ajouter l'avatar à la fin du container
         container.appendChild(avatar);
         
@@ -1033,8 +644,8 @@ class AuthManager {
     getUserInitials() {
         if (!this.user) return '?';
         
+        const fullName = this.user.profile?.full_name || this.user.user_metadata?.full_name || '';
         const email = this.user.email || '';
-        const fullName = this.user.user_metadata?.full_name || '';
         
         if (fullName) {
             const names = fullName.split(' ');
@@ -1116,7 +727,7 @@ class AuthManager {
             
             if (data.session) {
                 this.user = data.session.user;
-                this.saveUserToStorage();
+                await this.loadUserProfile();
                 this.updateUI();
                 // Événement : session rafraîchie
                 this.emitAuthEvent('login', this.user);
@@ -1150,7 +761,7 @@ class AuthManager {
         return errorMap[errorMessage] || errorMessage || 'Une erreur est survenue';
     }
 
-    // NOUVELLE MÉTHODE : Gestion des paiements
+    // MÉTHODE : Gestion des paiements
     async savePayment(paymentData) {
         try {
             if (!this.supabaseReady || !window.supabase) {
@@ -1166,46 +777,51 @@ class AuthManager {
                 return { success: true, id: paymentRecord.id, data: paymentRecord };
             }
 
-            const { data, error } = await supabase
-                .from('payments')
-                .insert([{
-                    user_id: paymentData.userId || this.user?.id,
-                    booking_id: paymentData.bookingId,
-                    amount: paymentData.amount,
-                    currency: paymentData.currency || 'EUR',
-                    method: paymentData.method,
-                    transaction_id: paymentData.transactionId,
-                    status: paymentData.status || 'completed',
-                    payment_data: paymentData.paymentData || paymentData,
-                    created_at: new Date().toISOString()
-                }])
-                .select();
-
-            if (error) {
-                console.error('Erreur sauvegarde paiement:', error);
-                return { success: false, error: error.message };
-            }
-
-            return { success: true, id: data[0].id, data: data[0] };
+            // Note: Votre schéma n'a pas de table 'payments', nous utiliserons bookings avec payment_method
+            // Si vous avez besoin d'une table payments, vous devrez la créer
+            console.log('⚠️ Table payments non trouvée dans le schéma');
+            
+            // Enregistrer dans localStorage comme fallback
+            const payments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
+            const paymentRecord = {
+                ...paymentData,
+                id: 'local_' + Date.now(),
+                created_at: new Date().toISOString()
+            };
+            payments.push(paymentRecord);
+            localStorage.setItem('yoteacher_payments', JSON.stringify(payments));
+            
+            return { success: true, id: paymentRecord.id, data: paymentRecord };
         } catch (error) {
             console.error('Exception sauvegarde paiement:', error);
             return { success: false, error: error.message };
         }
     }
 
-    // NOUVELLE MÉTHODE : Mettre à jour le statut d'une réservation après paiement
+    // MÉTHODE : Mettre à jour le statut d'une réservation
     async updateBookingStatus(bookingId, status) {
         try {
             if (!this.supabaseReady || !window.supabase) {
                 return { success: true, message: 'Mode local - statut mis à jour localement' };
             }
 
+            const updateData = { 
+                status: status,
+                updated_at: new Date().toISOString()
+            };
+
+            // Ajouter completed_at si le statut est 'completed'
+            if (status === 'completed') {
+                updateData.completed_at = new Date().toISOString();
+            }
+            // Ajouter cancelled_at si le statut est 'cancelled'
+            else if (status === 'cancelled') {
+                updateData.cancelled_at = new Date().toISOString();
+            }
+
             const { error } = await supabase
                 .from('bookings')
-                .update({ 
-                    status: status,
-                    updated_at: new Date().toISOString()
-                })
+                .update(updateData)
                 .eq('id', bookingId);
 
             if (error) {
@@ -1220,53 +836,108 @@ class AuthManager {
         }
     }
 
-    // NOUVELLE MÉTHODE : Obtenir l'historique des paiements
-    async getPaymentHistory() {
+    // MÉTHODE : Obtenir l'historique des réservations
+    async getBookingHistory() {
         try {
             if (!this.supabaseReady || !window.supabase || !this.user) {
-                // Retourner les paiements locaux
-                const localPayments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
-                return { success: true, data: localPayments };
+                // Retourner les réservations locales
+                const localBookings = JSON.parse(localStorage.getItem('yoteacher_bookings') || '[]');
+                return { success: true, data: localBookings };
             }
 
             const { data, error } = await supabase
-                .from('payments')
+                .from('bookings')
                 .select('*')
                 .eq('user_id', this.user.id)
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('Erreur récupération historique paiements:', error);
+                console.error('Erreur récupération historique réservations:', error);
                 return { success: false, error: error.message };
             }
 
             return { success: true, data };
         } catch (error) {
-            console.error('Exception récupération historique paiements:', error);
+            console.error('Exception récupération historique réservations:', error);
             return { success: false, error: error.message };
         }
     }
 
-    // Méthode utilitaire pour déboguer les prix VIP
-    debugVipPrices() {
-        console.log('=== DEBUG VIP PRICES ===');
-        console.log('Utilisateur:', this.user?.email);
-        console.log('VIP Status:', this.isUserVip());
-        console.log('VIP Prices:', this.vipPrices);
-        console.log('Currency:', this.userCurrency);
-        
-        if (this.vipPrices) {
-            Object.keys(this.vipPrices).forEach(courseType => {
-                console.log(`  ${courseType}:`, this.vipPrices[courseType]);
-            });
+    // MÉTHODE : Sauvegarder les données de réservation
+    async saveBookingData(bookingData) {
+        try {
+            if (!this.supabaseReady || !window.supabase || !this.user) {
+                // Sauvegarder localement
+                const bookings = JSON.parse(localStorage.getItem('yoteacher_bookings') || '[]');
+                bookings.push(bookingData);
+                localStorage.setItem('yoteacher_bookings', JSON.stringify(bookings));
+                return { success: true };
+            }
+
+            // Générer un numéro de réservation
+            const bookingNumber = `BK-${Date.now().toString().slice(-8)}`;
+            
+            const { error } = await supabase
+                .from('bookings')
+                .insert({
+                    user_id: this.user.id,
+                    course_type: bookingData.courseType,
+                    duration_minutes: bookingData.duration || 60,
+                    start_time: bookingData.startTime,
+                    end_time: bookingData.endTime,
+                    price_paid: bookingData.price,
+                    currency: bookingData.currency,
+                    platform: this.getPlatformName(bookingData.location),
+                    status: bookingData.status || 'pending',
+                    booking_number: bookingNumber,
+                    payment_method: bookingData.paymentMethod,
+                    payment_reference: bookingData.transactionId,
+                    created_at: new Date().toISOString()
+                });
+
+            if (error) {
+                console.error('Erreur sauvegarde réservation:', error);
+                return { success: false, error: error.message };
+            }
+
+            return { success: true, booking_number: bookingNumber };
+        } catch (error) {
+            console.error('Exception sauvegarde réservation:', error);
+            return { success: false, error: error.message };
         }
-        
-        return {
-            user: this.user?.email,
-            isVip: this.isUserVip(),
-            vipPrices: this.vipPrices,
-            currency: this.userCurrency
-        };
+    }
+
+    getPlatformName(location) {
+        if (!location) return 'zoom';
+        if (location.includes('google')) return 'google_meet';
+        if (location.includes('teams')) return 'microsoft_teams';
+        if (location.includes('zoom')) return 'zoom';
+        return location;
+    }
+
+    // MÉTHODE : Obtenir les statistiques de l'utilisateur
+    async getUserStatistics() {
+        try {
+            if (!this.supabaseReady || !window.supabase || !this.user) {
+                return { success: false, error: 'Utilisateur non connecté' };
+            }
+
+            const { data, error } = await supabase
+                .from('user_statistics')
+                .select('*')
+                .eq('user_id', this.user.id)
+                .single();
+
+            if (error) {
+                console.warn('Erreur récupération statistiques:', error);
+                return { success: false, error: error.message };
+            }
+
+            return { success: true, data };
+        } catch (error) {
+            console.error('Exception statistiques:', error);
+            return { success: false, error: error.message };
+        }
     }
 }
 
@@ -1277,10 +948,6 @@ window.addEventListener('auth:login', function(e) {
 
 window.addEventListener('auth:logout', function() {
     console.log('Événement global auth:logout reçu');
-});
-
-window.addEventListener('vip:loaded', function(e) {
-    console.log('Événement global vip:loaded reçu', e.detail);
 });
 
 document.addEventListener('DOMContentLoaded', function() {
