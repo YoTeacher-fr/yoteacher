@@ -351,7 +351,16 @@ class BookingManager {
     async createBooking(bookingData) {
         try {
             const user = window.authManager?.getCurrentUser();
-            
+            if (!bookingData) {
+            throw new Error('Données de réservation manquantes');
+        }
+        
+        const requiredFields = ['startTime', 'courseType'];
+        for (const field of requiredFields) {
+            if (!bookingData[field]) {
+                throw new Error(`Champ requis manquant: ${field}`);
+            }
+        }
             // Vérifier si c'est un forfait (packageQuantity > 1)
             const isPackage = bookingData.packageQuantity && bookingData.packageQuantity > 1;
             
