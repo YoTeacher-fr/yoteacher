@@ -96,89 +96,124 @@ class PaymentManager {
     }
     
     displayBookingSummary(booking) {
-        const summaryElement = document.getElementById('paymentSummary');
-        if (!summaryElement) return;
-        
-        const bookingDate = new Date(booking.startTime);
-        const formattedDate = bookingDate.toLocaleDateString('fr-FR', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        
-        const formattedTime = bookingDate.toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        // Obtenir le nom de la plateforme
-        const platformName = this.getPlatformName(booking.location);
-        
-        // Formater le prix selon la devise actuelle
-        let formattedPrice = `${booking.price}€`; // Par défaut
-        if (window.currencyManager) {
-            // Le prix dans la réservation est en EUR, on le convertit dans la devise actuelle
-            const amountEUR = booking.priceEUR || booking.price;
-            formattedPrice = window.currencyManager.formatPrice(amountEUR);
-        }
-        
-        let packageInfo = '';
-        if (booking.isPackage && booking.packageQuantity > 1) {
-            packageInfo = `
-                <div class="summary-item">
-                    <span class="label">Type d'achat:</span>
-                    <span class="value">Forfait VIP (${booking.packageQuantity} crédits)</span>
-                </div>
-            `;
-        } else {
-            packageInfo = `
-                <div class="summary-item">
-                    <span class="label">Type d'achat:</span>
-                    <span class="value">Cours unique</span>
-                </div>
-            `;
-        }
-        
-        summaryElement.innerHTML = `
-            <div class="booking-summary-card">
-                <h3 style="margin-bottom: 20px;"><i class="fas fa-calendar-check"></i> Récapitulatif</h3>
-                <div class="summary-details">
-                    <div class="summary-item">
-                        <span class="label">Type de cours:</span>
-                        <span class="value">${this.getCourseName(booking.courseType)}</span>
-                    </div>
-                    ${packageInfo}
-                    <div class="summary-item">
-                        <span class="label">Date:</span>
-                        <span class="value">${formattedDate}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Heure:</span>
-                        <span class="value">${formattedTime}</span>
-                    </div>
-                    ${booking.isPackage ? '' : `
-                    <div class="summary-item">
-                        <span class="label">Durée:</span>
-                        <span class="value">${booking.duration} min</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Plateforme:</span>
-                        <span class="value">${platformName}</span>
-                    </div>
-                    `}
-                    <div class="summary-item">
-                        <span class="label">Élève:</span>
-                        <span class="value">${booking.name}</span>
-                    </div>
-                    <div class="summary-item total">
-                        <span class="label">Total:</span>
-                        <span class="value">${formattedPrice}</span>
-                    </div>
-                </div>
+    const summaryElement = document.getElementById('paymentSummary');
+    if (!summaryElement) return;
+    
+    console.group('📋 Affichage récapitulatif paiement');
+    console.log('Booking reçu:', booking);
+    
+    const bookingDate = new Date(booking.startTime);
+    const formattedDate = bookingDate.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    const formattedTime = bookingDate.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    const platformName = this.getPlatformName(booking.location);
+    
+    let formattedPrice = '';
+    
+    console.log('Prix bruts:', {
+        price: booking.price,
+        priceEUR: booking.priceEUR,
+        currency: booking.currency
+    });
+    
+    if (window.currencyManager) {
+        formattedPrice = window.currencyManager.formatPrice(
+            booking.price,
+            booking.currency || window.currencyManager.currentCurrency
+        );
+    } else {
+        formattedPrice = `${booking.price.toFixed(2)} ${booking.currency || 'EUR'}`;
+    }
+    
+    console.log('Prix formaté:', formattedPrice);
+    
+    let packageInfo = '';
+    
+    if (booking.courseType === 'essai') {
+        packageInfo = `
+            <div class="summary-item">
+                <span class="label">Type d'achat:</span>
+                <span class="value">Cours d'essai unique (15 min)</span>
+            </div>
+        `;
+    } else if (booking.isPackage && booking.packageQuantity > 1) {
+        const discount = booking.discountPercent || 0;
+        packageInfo = `
+            <div class="summary-item">
+                <span class="label">Type d'achat:</span>
+                <span class="value">Forfait ${booking.packageQuantity} cours ${discount > 0 ? `(-${discount}%)` : ''}</span>
+            </div>
+        `;
+    } else {
+        packageInfo = `
+            <div class="summary-item">
+                <span class="label">Type d'achat:</span>
+                <span class="value">Cours unique</span>
             </div>
         `;
     }
+    
+    summaryElement.innerHTML = `
+        <div class="booking-summary-card">
+            <h3 style="margin-bottom: 20px;"><i class="fas fa-calendar-check"></i> Récapitulatif</h3>
+            <div class="summary-details">
+                <div class="summary-item">
+                    <span class="label">Type de cours:</span>
+                    <span class="value">${this.getCourseName(booking.courseType)}</span>
+                </div>
+                ${packageInfo}
+                <div class="summary-item">
+                    <span class="label">Date:</span>
+                    <span class="value">${formattedDate}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Heure:</span>
+                    <span class="value">${formattedTime}</span>
+                </div>
+                ${booking.courseType !== 'essai' && !booking.isPackage ? `
+                <div class="summary-item">
+                    <span class="label">Durée:</span>
+                    <span class="value">${booking.duration || 60} min</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Plateforme:</span>
+                    <span class="value">${platformName}</span>
+                </div>
+                ` : ''}
+                ${booking.courseType === 'essai' ? `
+                <div class="summary-item">
+                    <span class="label">Durée:</span>
+                    <span class="value">15 min</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Plateforme:</span>
+                    <span class="value">${platformName}</span>
+                </div>
+                ` : ''}
+                <div class="summary-item">
+                    <span class="label">Élève:</span>
+                    <span class="value">${booking.name}</span>
+                </div>
+                <div class="summary-item total">
+                    <span class="label">Total:</span>
+                    <span class="value">${formattedPrice}</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    console.log('✅ Récapitulatif affiché');
+    console.groupEnd();
+}
     
     getPlatformName(location) {
         if (!location) return 'À définir';
