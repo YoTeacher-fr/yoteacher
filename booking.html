@@ -2033,6 +2033,9 @@
     const isVip = window.authManager?.isUserVip();
     console.log(`💰 [updateSummary] Statut VIP: ${isVip}, Type: ${courseType}`);
     
+    // Déclarer vipPriceInfo en dehors des blocs conditionnels
+    let vipPriceInfo = null;
+    
     // Déterminer la plateforme
     const locationValue = selectedLocationInput.value;
     if (locationValue.includes('zoom')) platform = window.translationManager ? window.translationManager.getTranslation('booking.zoom') : 'Zoom';
@@ -2079,7 +2082,7 @@
                 console.log(`👑 Utilisateur VIP, recherche prix personnalisé...`);
                 
                 try {
-                    const vipPriceInfo = await window.authManager.getVipPrice(courseType, selectedDuration);
+                    vipPriceInfo = await window.authManager.getVipPrice(courseType, selectedDuration);
                     
                     if (vipPriceInfo && typeof vipPriceInfo.price === 'number' && !isNaN(vipPriceInfo.price)) {
                         console.log(`✅ Prix VIP trouvé:`, vipPriceInfo);
@@ -2132,6 +2135,7 @@
                 );
                 price = window.currencyManager.formatPrice(convertedPrice);
                 
+                // Ajouter l'indicateur VIP si l'utilisateur est VIP et qu'on a un prix VIP
                 if (isVip && vipPriceInfo) {
                     price += ' <span class="vip-indicator">VIP</span>';
                 }
