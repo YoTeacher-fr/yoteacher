@@ -78,10 +78,11 @@ class AuthManager {
 		if (profile.is_vip) {
                 await this.loadVipPrices();
             }
-                this.saveUserToStorage();
-		if (profile.is_vip) {
+if (profile.is_vip) {
     await this.loadVipPrices();
-}
+}                
+this.saveUserToStorage();
+		
             }
         } catch (error) {
             console.warn('Exception chargement profil:', error);
