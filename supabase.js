@@ -153,27 +153,19 @@ CREATE TABLE IF NOT EXISTS bookings (
 }
 
 // Exposer Supabase globalement
-window.supabaseInitialized = new Promise(async (resolve) => {
-    try {
-        const client = await initSupabase();
-        
-        if (client) {
-            window.supabase = client;
-            
-            // Vérifier les tables
-            await checkDatabaseTables();
-            
-            console.log("✨ Supabase prêt à l'emploi");
-            resolve(true);
-        } else {
-            console.error("❌ Échec de l'initialisation de Supabase");
-            resolve(false);
-        }
-    } catch (error) {
-        console.error("❌ Erreur lors de l'initialisation:", error);
-        resolve(false);
+window.supabase = null;
+window.supabaseReady = false;
+
+window.supabaseInitialized = (async function() {
+    const client = await initSupabase();
+    if (client) {
+        window.supabase = client;
+        window.supabaseReady = true;
+        await checkDatabaseTables();
+        return true;
     }
-});
+    return false;
+})();
 
 // Fonction helper pour attendre Supabase (pour compatibilité)
 window.waitForSupabase = function(callback) {
