@@ -1258,7 +1258,6 @@
     <script src="booking.js"></script>
     <script src="common.js"></script>
 
- 
     <script>
         // SCRIPT JAVASCRIPT POUR BOOKING.HTML
         document.addEventListener('DOMContentLoaded', function() {
@@ -1408,10 +1407,12 @@
             // Soumission du formulaire
             bookingForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
+                
                 if (!window.currencyManager) {
-        showError('Système de devise non disponible. Veuillez rafraîchir la page.');
-        return;
-    }
+                    showError('Système de devise non disponible. Veuillez rafraîchir la page.');
+                    return;
+                }
+                
                 if (!selectedDate || !selectedTime) {
                     showError('Veuillez sélectionner une date et une heure');
                     return;
@@ -1452,26 +1453,27 @@
                     let priceEUR = 5;
                     
                     // CORRECTION: Utiliser la durée du créneau pour calculer le prix
-const user = window.authManager?.getCurrentUser();
-const isVIP = window.authManager?.isUserVip();
+                    const user = window.authManager?.getCurrentUser();
+                    const isVIP = window.authManager?.isUserVip();
 
-if (isVIP) {
-    const vipPrice = await window.authManager.getVipPrice(courseType, duration);
-    if (vipPrice) {
-        priceEUR = vipPrice.price;
-    } else {
-        // Fallback prix normal
-        if (courseType === 'conversation') {
-            priceEUR = duration === 30 ? 10 : duration === 45 ? 15 : 20;
-        }
-    }
-} else {
-                    if (courseType === 'conversation') {
-                        priceEUR = duration === 30 ? 10 : duration === 45 ? 15 : 20;
-                    } else if (courseType === 'curriculum') {
-                        priceEUR = duration === 30 ? 17.5 : duration === 45 ? 26.25 : 35;
-                    } else if (courseType === 'examen') {
-                        priceEUR = duration === 30 ? 15 : duration === 45 ? 22.5 : 30;
+                    if (isVIP) {
+                        const vipPrice = await window.authManager.getVipPrice(courseType, duration);
+                        if (vipPrice) {
+                            priceEUR = vipPrice.price;
+                        } else {
+                            // Fallback prix normal
+                            if (courseType === 'conversation') {
+                                priceEUR = duration === 30 ? 10 : duration === 45 ? 15 : 20;
+                            }
+                        }
+                    } else {
+                        if (courseType === 'conversation') {
+                            priceEUR = duration === 30 ? 10 : duration === 45 ? 15 : 20;
+                        } else if (courseType === 'curriculum') {
+                            priceEUR = duration === 30 ? 17.5 : duration === 45 ? 26.25 : 35;
+                        } else if (courseType === 'examen') {
+                            priceEUR = duration === 30 ? 15 : duration === 45 ? 22.5 : 30;
+                        }
                     }
 
                     // Appliquer le nombre de cours
@@ -1498,7 +1500,7 @@ if (isVIP) {
                         basePriceEUR: priceEUR,
                         price: convertedPrice,
                         duration: duration,
-			packageQuantity: coursesCount,
+                        packageQuantity: coursesCount,
                         coursesCount: coursesCount,
                         discountPercent: discountPercent,
                         location: location,
