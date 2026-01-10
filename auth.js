@@ -686,11 +686,7 @@ class AuthManager {
     async getVipPrice(courseType, duration) {
     try {
         if (!this.supabaseReady || !window.supabase || !this.user) {
-            console.log('❌ Conditions VIP non remplies:', {
-                supabaseReady: this.supabaseReady,
-                hasSupabase: !!window.supabase,
-                hasUser: !!this.user
-            });
+            console.log('❌ Conditions VIP non remplies');
             return null;
         }
 
@@ -716,7 +712,11 @@ class AuthManager {
         }
 
         console.log('✅ Prix VIP trouvé:', data);
-        return data;
+        return {
+            price: parseFloat(data.price), // Convertir en nombre
+            currency: data.currency || 'EUR',
+            duration: data.duration_minutes
+        };
     } catch (error) {
         console.warn('Exception lors de la récupération du prix VIP:', error);
         return null;
