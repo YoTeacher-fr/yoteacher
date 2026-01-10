@@ -925,90 +925,151 @@ const appTranslationManager = {
     }
 };
 
-// ===== INITIALISATION PRINCIPALE =====
-const app = {
+// ===== GESTION DES PRIX VIP =====
+const vipPriceManager = {
     init: () => {
-        console.log('🚀 Initialisation de l\'application...');
+        console.log('👑 Initialisation du gestionnaire de prix VIP...');
         
-        // Empêcher le retour en haut au rafraîchissement
-        window.addEventListener('beforeunload', () => {
-            sessionStorage.setItem('scrollPosition', window.scrollY);
-        });
-        
-        if (sessionStorage.getItem('scrollPosition')) {
-            window.addEventListener('load', () => {
-                const savedPosition = parseInt(sessionStorage.getItem('scrollPosition'));
-                setTimeout(() => {
-                    window.scrollTo(0, savedPosition);
-                    sessionStorage.removeItem('scrollPosition');
-                }, 100);
-            });
-        }
-        
-        // Vérifier que le DOM est chargé
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', app.setup);
-        } else {
-            app.setup();
-        }
-    },
-    
-    setup: () => {
-        console.log('⚙️ Configuration des modules...');
-        
-        // Ajuster le padding pour le header fixe
-        document.body.style.paddingTop = '80px';
-        
-        // Vérifier d'abord que translationManager est prêt
-        const waitForTranslationManager = () => {
-            if (window.translationManager && typeof window.translationManager.getTranslation === 'function') {
-                console.log('✅ TranslationManager prêt, initialisation des composants...');
-                
-                console.log('1. Initialisation des cours...');
-                coursesManager.init();
-                
-                console.log('2. Initialisation des témoignages...');
-                testimonialsManager.init();
-                
-                console.log('3. Initialisation de la navigation...');
-                navigationManager.init();
-                
-                console.log('4. Initialisation de l\'UI...');
-                uiManager.init();
-                
-                console.log('5. Initialisation de l\'image...');
-                imageManager.init();
-                
-                console.log('6. Initialisation du mobile...');
-                mobileManager.init();
-                
-                console.log('7. Initialisation de la traduction de l\'app...');
-                appTranslationManager.init();
-                
-                console.log('✅ Application prête !');
-            } else {
-                console.log('⏳ En attente de translationManager...');
-                setTimeout(waitForTranslationManager, 100);
-            }
-        };
-        
-        waitForTranslationManager();
-        
-        // Gestion du redimensionnement
-        window.addEventListener('resize', () => {
-            testimonialsManager.calculateSlidesPerView();
-            testimonialsManager.updateSlider();
-            mobileManager.checkMobileLayout();
+        // Écouter les événements VIP
+        window.addEventListener('vip:loaded', () => {
+            console.log('🎁 Prix VIP chargés, mise à jour de l\'interface');
+            vipPriceManager.updateVIPPrices();
         });
         
         // Écouter les changements de devise
-        window.addEventListener('currency:ready', () => {
+        window.addEventListener('currency:changed', () => {
+            if (window.authManager && window.authManager.isUserVip()) {
+                vipPriceManager.updateVIPPrices();
+            }
+        });
+        
+        // Écouter les connexions/déconnexions
+        window.addEventListener('auth:login', () => {
+            setTimeout(() => {
+                if (window.authManager && window.authManager.isUserVip()) {
+                    vipPriceManager.updateVIPPrices();
+                }
+            }, 1000);
+        });
+        
+        window.addEventListener('auth:logout', () => {
+            // Réinitialiser les prix à la normale
             coursesManager.updateCoursePrices();
         });
         
-        window.addEventListener('currency:changed', () => {
-            coursesManager.updateCoursePrices();
+        console.log('✅ Gestionnaire de prix VIP initialisé');
+    },
+    
+    updateVIPPrices: () => {
+        if (!window.authManager || !window.authManager.isUserVip()) {
+            console.log('👑 Utilisateur non VIP, pas de mise à jour des prix');
+            return;
+        }
+        
+        console.log('👑 Mise à jour des prix VIP sur la page d\'accueil');
+        
+        // Mettre à jour le prix du cours d'essai (toujours 5€)
+        const essaiBtn = document.getElementById('essaiPriceBtn');
+        if (essaiBtn && window.currencyManager) {
+            const priceSpan = essaiBtn.querySelector('.price-essai');
+            if (priceSpan) {
+                priceSpan.textContent = window.currencyManager.formatPrice(5);
+            }
+        }
+        
+        // Mettre à jour les cartes de cours
+        document.querySelectorAll('.course-card').forEach(card => {
+            const courseId = card.dataset.courseId;
+            if (!courseId) return;
+            
+            let courseType = '';
+            switch(courseId) {
+                case '1': courseType = 'conversation'; break;
+                case '2': courseType = 'curriculum'; break;
+                case '3': courseType = 'examen'; break;
+            }
+            
+            const priceInfo = window.authManager.getVipPrice(courseType, 60);
+            if (!priceInfo) return;
+            
+            // Ajouter une classe VIP à la carte
+            card.classList.add('vip-highlight');
+            
+            // Mettre à jour le prix principal
+            const priceMain = card.querySelector('.price-main');
+            if (priceMain && window.currencyManager) {
+                const displayPrice = window.currencyManager.convertAndFormat(
+                    priceInfo.price,
+                    priceInfo.currency,
+                    window.currencyManager.currentCurrency
+                );
+                
+                const perHourSpan = priceMain.querySelector('.price-per-hour');
+                if (perHourSpan) {
+                    priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">/h</span>`;
+                    priceMain.classList.add('vip-price');
+                }
+            }
+            
+            // Mettre à jour les prix détaillés
+            card.querySelectorAll('.price-detail-item').forEach(item => {
+                let duration = 60;
+                let priceElement = null;
+                
+                if (item.querySelector('.price-30')) {
+                    duration = 30;
+                    priceElement = item.querySelector('.price-30');
+                } else if (item.querySelector('.price-45')) {
+                    duration = 45;
+                    priceElement = item.querySelector('.price-45');
+                } else if (item.querySelector('.price-forfait')) {
+                    duration = 60;
+                    priceElement = item.querySelector('.price-forfait');
+                }
+                
+                if (priceElement) {
+                    const detailPrice = window.authManager.getVipPrice(courseType, duration);
+                    if (detailPrice) {
+                        let price = detailPrice.price;
+                        
+                        // Pour le forfait : prix * 10 * 0.95
+                        if (item.querySelector('.price-forfait')) {
+                            price = price * 10 * 0.95;
+                        }
+                        
+                        const displayPrice = window.currencyManager.convertAndFormat(
+                            price,
+                            detailPrice.currency,
+                            window.currencyManager.currentCurrency
+                        );
+                        priceElement.textContent = displayPrice;
+                        priceElement.classList.add('vip-price');
+                    }
+                }
+            });
+            
+            // Ajouter un badge VIP à la carte
+            const cardHeader = card.querySelector('.course-header');
+            if (cardHeader && !cardHeader.querySelector('.vip-badge')) {
+                const vipBadge = document.createElement('span');
+                vipBadge.className = 'vip-badge';
+                vipBadge.textContent = 'VIP';
+                vipBadge.style.cssText = `
+                    display: inline-block;
+                    background: linear-gradient(135deg, #FFD700, #FFA500);
+                    color: #000;
+                    padding: 3px 10px;
+                    border-radius: 15px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    margin-left: 10px;
+                    border: 1px solid #FFA500;
+                `;
+                cardHeader.appendChild(vipBadge);
+            }
         });
+        
+        console.log('✅ Prix VIP mis à jour');
     }
 };
 
@@ -1084,6 +1145,99 @@ const initLanguageButtons = () => {
     console.log('✅ Boutons de langue initialisés');
 };
 
+// ===== INITIALISATION PRINCIPALE =====
+const app = {
+    init: () => {
+        console.log('🚀 Initialisation de l\'application...');
+        
+        // Empêcher le retour en haut au rafraîchissement
+        window.addEventListener('beforeunload', () => {
+            sessionStorage.setItem('scrollPosition', window.scrollY);
+        });
+        
+        if (sessionStorage.getItem('scrollPosition')) {
+            window.addEventListener('load', () => {
+                const savedPosition = parseInt(sessionStorage.getItem('scrollPosition'));
+                setTimeout(() => {
+                    window.scrollTo(0, savedPosition);
+                    sessionStorage.removeItem('scrollPosition');
+                }, 100);
+            });
+        }
+        
+        // Vérifier que le DOM est chargé
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', app.setup);
+        } else {
+            app.setup();
+        }
+    },
+    
+    setup: () => {
+        console.log('⚙️ Configuration des modules...');
+        
+        // Ajuster le padding pour le header fixe
+        document.body.style.paddingTop = '80px';
+        
+        // Vérifier d'abord que translationManager est prêt
+        const waitForTranslationManager = () => {
+            if (window.translationManager && typeof window.translationManager.getTranslation === 'function') {
+                console.log('✅ TranslationManager prêt, initialisation des composants...');
+                
+                console.log('1. Initialisation des cours...');
+                coursesManager.init();
+                
+                console.log('2. Initialisation des témoignages...');
+                testimonialsManager.init();
+                
+                console.log('3. Initialisation de la navigation...');
+                navigationManager.init();
+                
+                console.log('4. Initialisation de l\'UI...');
+                uiManager.init();
+                
+                console.log('5. Initialisation de l\'image...');
+                imageManager.init();
+                
+                console.log('6. Initialisation du mobile...');
+                mobileManager.init();
+                
+                console.log('7. Initialisation de la traduction de l\'app...');
+                appTranslationManager.init();
+                
+                console.log('8. Initialisation des prix VIP...');
+                vipPriceManager.init();
+                
+                console.log('✅ Application prête !');
+            } else {
+                console.log('⏳ En attente de translationManager...');
+                setTimeout(waitForTranslationManager, 100);
+            }
+        };
+        
+        waitForTranslationManager();
+        
+        // Gestion du redimensionnement
+        window.addEventListener('resize', () => {
+            testimonialsManager.calculateSlidesPerView();
+            testimonialsManager.updateSlider();
+            mobileManager.checkMobileLayout();
+        });
+        
+        // Écouter les changements de devise
+        window.addEventListener('currency:ready', () => {
+            coursesManager.updateCoursePrices();
+        });
+        
+        window.addEventListener('currency:changed', () => {
+            coursesManager.updateCoursePrices();
+        });
+        
+        // Initialiser les boutons de langue
+        setTimeout(initLanguageButtons, 300);
+    }
+};
+
 // ===== INITIALISATION FINALE =====
 // Attendre que tout soit chargé
 if (document.readyState === 'loading') {
@@ -1092,9 +1246,6 @@ if (document.readyState === 'loading') {
         
         // Initialiser l'application principale
         app.init();
-        
-        // Initialiser les boutons de langue (double sécurité)
-        setTimeout(initLanguageButtons, 300);
         
         // Vérifier que les conteneurs existent
         setTimeout(() => {
@@ -1121,12 +1272,12 @@ if (document.readyState === 'loading') {
     // Le DOM est déjà chargé
     console.log('📄 DOM déjà chargé - Initialisation...');
     app.init();
-    setTimeout(initLanguageButtons, 300);
 }
 
 // Exposer les managers pour le débogage
 window.coursesManager = coursesManager;
 window.testimonialsManager = testimonialsManager;
 window.appTranslationManager = appTranslationManager;
+window.vipPriceManager = vipPriceManager;
 
 console.log('📦 Script.js chargé avec succès');
