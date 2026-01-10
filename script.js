@@ -1307,9 +1307,7 @@ window.coursesManager = coursesManager;
 window.testimonialsManager = testimonialsManager;
 window.appTranslationManager = appTranslationManager;
 window.vipPriceManager = vipPriceManager;
-
-console.log('📦 Script.js chargé avec succès');
-// À la fin de script.js, ajouter :
+// ===== FONCTIONS DE DEBUG =====
 window.debugVIP = async function() {
     console.clear();
     console.group('🛠️ DEBUG VIP COMPLET');
@@ -1384,4 +1382,44 @@ window.debugVIP = async function() {
     await vipPriceManager.updateVIPPrices();
 };
 
-// Pour lancer le debug, exécutez dans la console : debugVIP()
+// Ajouter aussi un raccourci pour tester rapidement les prix
+window.testVipPrice = async function(courseType = 'conversation', duration = 60) {
+    console.group(`🧪 Test rapide prix VIP pour ${courseType} ${duration}min`);
+    
+    if (!window.authManager) {
+        console.error('❌ authManager non disponible');
+        console.groupEnd();
+        return;
+    }
+    
+    if (!window.authManager.user) {
+        console.error('❌ Aucun utilisateur connecté');
+        console.groupEnd();
+        return;
+    }
+    
+    console.log('👤 Utilisateur:', window.authManager.user.email);
+    console.log('👑 Est VIP?', window.authManager.isUserVip());
+    
+    const priceInfo = await window.authManager.getVipPrice(courseType, duration);
+    console.log('💰 Prix VIP:', priceInfo);
+    
+    if (priceInfo && window.currencyManager) {
+        const converted = window.currencyManager.convert(
+            priceInfo.price,
+            priceInfo.currency,
+            window.currencyManager.currentCurrency
+        );
+        console.log(`💱 Conversion: ${priceInfo.price} ${priceInfo.currency} → ${converted} ${window.currencyManager.currentCurrency}`);
+        console.log('📊 Formaté:', window.currencyManager.formatPrice(converted));
+    }
+    
+    console.groupEnd();
+};
+
+// Pour le débogage depuis la console
+console.log('🔧 Fonctions de debug disponibles:');
+console.log('- debugVIP(): Analyse complète du système VIP');
+console.log('- testVipPrice("conversation", 60): Test un prix spécifique');
+console.log('- window.authManager.getVipPrice(type, durée): Récupère un prix VIP');
+console.log('📦 Script.js chargé avec succès');
