@@ -369,21 +369,18 @@ class BookingManager {
             
             // Calculer le prix selon le forfait ou cours unique
             let priceEUR, finalPrice;
-            
-            if (isPackage && window.packagesManager) {
-                // Forfait VIP - utiliser le PackagesManager
-                priceEUR = window.packagesManager.calculatePrice(
-                    bookingData.courseType, 
-                    bookingData.packageQuantity, 
-                    bookingData.duration || 60
-                );
-                
-                // Convertir le prix si nécessaire
-                if (window.currencyManager && currentCurrency !== 'EUR') {
-                    finalPrice = window.currencyManager.convert(priceEUR, 'EUR', currentCurrency);
-                } else {
-                    finalPrice = priceEUR;
-                }
+            const user = window.authManager?.getCurrentUser();
+const isVIP = window.authManager?.isUserVip();
+
+if (isPackage && window.packagesManager) {
+    if (isVIP) {
+        // Utiliser prix VIP
+        const vipPrice = await window.authManager.getVipPrice(courseType, duration);
+        priceEUR = vipPrice ? vipPrice.price : window.packagesManager.calculatePrice(...);
+    } else {
+        priceEUR = window.packagesManager.calculatePrice(...);
+    }
+}
                 
                 console.log(`📦 Forfait VIP ${bookingData.packageQuantity} cours: ${priceEUR}€ → ${finalPrice}${currentCurrency}`);
             } else {
