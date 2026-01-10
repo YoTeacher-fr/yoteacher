@@ -1,4 +1,4 @@
-// payment.js - Gestionnaire de paiement avec Stripe et gestion packages Supabase
+// payment.js - Gestionnaire de paiement production avec Stripe
 class PaymentManager {
     constructor() {
         this.config = window.YOTEACHER_CONFIG || {};
@@ -17,6 +17,7 @@ class PaymentManager {
         }
 
         try {
+            // Stripe.js est déjà chargé via <script> dans payment.html
             if (!window.Stripe) {
                 console.error('❌ Stripe.js non chargé');
                 return false;
@@ -35,6 +36,7 @@ class PaymentManager {
         try {
             await this.initStripe();
             
+            // Créer les éléments Stripe
             this.elements = this.stripe.elements();
             
             const style = {
@@ -50,6 +52,7 @@ class PaymentManager {
             this.cardElement = this.elements.create('card', { style });
             this.cardElement.mount('#card-element');
 
+            // Gérer les erreurs
             this.cardElement.on('change', (event) => {
                 const displayError = document.getElementById('card-errors');
                 if (event.error) {
@@ -63,6 +66,7 @@ class PaymentManager {
 
             console.log('✅ Formulaire Stripe prêt');
             
+            // Activer le bouton
             const submitBtn = document.getElementById('processCardPayment');
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -78,8 +82,10 @@ class PaymentManager {
         try {
             this.currentBooking = bookingData;
             
+            // Afficher le récapitulatif
             this.displayBookingSummary(bookingData);
             
+            // Sauvegarder dans localStorage
             localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
             
             return { success: true, booking: bookingData };
@@ -106,32 +112,31 @@ class PaymentManager {
             minute: '2-digit'
         });
         
-        const platformName = this.getPlatformName(booking.location);
+        // Badge VIP si applicable
+        let vipBadge = '';
+        if (booking.isVip) {
+            vipBadge = '<span class="vip-badge" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; padding: 3px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; margin-left: 8px; border: 1px solid #FFA500;">VIP</span>';
+        }
         
+        // Formater le prix selon la devise actuelle
         let formattedPrice = `${booking.price}€`;
         if (window.currencyManager) {
-            const amountEUR = booking.priceEUR || booking.price;
-            formattedPrice = window.currencyManager.formatPrice(amountEUR);
+            formattedPrice = window.currencyManager.formatPrice(booking.price);
         }
+        
+        // Obtenir le nom de la plateforme
+        const platformName = this.getPlatformName(booking.location);
         
         summaryElement.innerHTML = `
             <div class="booking-summary-card">
-                <h3 style="margin-bottom: 20px;"><i class="fas fa-calendar-check"></i> Récapitulatif</h3>
+                <h3 style="margin-bottom: 20px;">
+                    <i class="fas fa-calendar-check"></i> Récapitulatif ${vipBadge}
+                </h3>
                 <div class="summary-details">
                     <div class="summary-item">
                         <span class="label">Type de cours:</span>
                         <span class="value">${this.getCourseName(booking.courseType)}</span>
                     </div>
-                    <div class="summary-item">
-                        <span class="label">Nombre de cours:</span>
-                        <span class="value">${booking.coursesCount || 1} cours</span>
-                    </div>
-                    ${booking.discountPercent > 0 ? `
-                    <div class="summary-item">
-                        <span class="label">Réduction:</span>
-                        <span class="value">-${booking.discountPercent}%</span>
-                    </div>
-                    ` : ''}
                     <div class="summary-item">
                         <span class="label">Date:</span>
                         <span class="value">${formattedDate}</span>
@@ -193,6 +198,7 @@ class PaymentManager {
                 case 'wise':
                 case 'paypal':
                 case 'interac':
+                    // Méthodes de paiement externes
                     await this.completePayment(methodId);
                     break;
                 case 'card':
@@ -223,6 +229,7 @@ class PaymentManager {
             
             this.hidePaymentError();
             
+            // Créer PaymentMethod
             const { error: createError, paymentMethod } = await this.stripe.createPaymentMethod({
                 type: 'card',
                 card: this.cardElement,
@@ -238,6 +245,7 @@ class PaymentManager {
 
             console.log('✅ PaymentMethod créé:', paymentMethod.id);
             
+            // Traiter le paiement via l'API
             await this.processStripePayment(paymentMethod.id);
             
         } catch (error) {
@@ -257,9 +265,11 @@ class PaymentManager {
         try {
             const apiUrl = this.config.STRIPE_BACKEND_URL || '/api/stripe-payment';
             
+            // Convertir le prix en centimes pour Stripe
             let amountInCents = Math.round(this.currentBooking.price * 100);
             let currency = this.currentBooking.currency || 'eur';
             
+            // Si le CurrencyManager est disponible, utiliser la conversion
             if (window.currencyManager) {
                 const amountEUR = this.currentBooking.priceEUR || this.currentBooking.price;
                 const convertedAmount = window.currencyManager.convert(amountEUR, 'EUR', window.currencyManager.currentCurrency);
@@ -284,6 +294,7 @@ class PaymentManager {
                 throw new Error(result.error || 'Échec du paiement');
             }
             
+            // Si 3D Secure requis
             if (result.requiresAction && result.clientSecret) {
                 const { error: confirmError, paymentIntent } = await this.stripe.confirmCardPayment(
                     result.clientSecret
@@ -313,50 +324,42 @@ class PaymentManager {
         console.log('✅ Finalisation paiement:', method);
         
         try {
-            const user = window.authManager?.getCurrentUser();
-            
             // Créer les données de paiement
             const paymentData = {
                 method: method,
-                amount: this.currentBooking.priceEUR || this.currentBooking.price,
-                currency: this.currentBooking.currency || 'EUR',
+                amount: this.currentBooking.price,
                 transactionId: transactionId || `${method}_${Date.now()}`,
                 status: 'completed',
                 timestamp: new Date().toISOString(),
                 booking: this.currentBooking
             };
             
-            // SI PACKAGE (coursesCount > 1) : Créer le package AVANT la réservation
-            let packageId = null;
-            if (this.currentBooking.coursesCount > 1) {
-                console.log('📦 Création package de', this.currentBooking.coursesCount, 'cours');
-                packageId = await this.createPackageInSupabase(user, paymentData);
-                
-                if (!packageId) {
-                    console.warn('⚠️ Échec création package, mais on continue');
+            // Sauvegarder dans Supabase
+            if (window.authManager && this.currentBooking.userId) {
+                try {
+                    await window.authManager.savePayment(paymentData);
+                } catch (saveError) {
+                    console.warn('⚠️ Erreur sauvegarde paiement:', saveError);
                 }
             }
             
             // Créer la réservation Cal.com
             let hasWarning = false;
-            let calcomResult = null;
             
             try {
-                calcomResult = await window.bookingManager.createBookingAfterPayment(this.currentBooking);
+                const bookingResult = await window.bookingManager.createBookingAfterPayment(this.currentBooking);
                 
-                if (calcomResult && calcomResult.success) {
+                if (bookingResult && bookingResult.success) {
                     console.log('✅ Réservation Cal.com créée');
-                    this.currentBooking.calcomId = calcomResult.data.id;
-                    this.currentBooking.calcomUid = calcomResult.data.uid;
-                    this.currentBooking.supabaseId = calcomResult.supabaseId;
+                    this.currentBooking.calcomId = bookingResult.data.id;
                     this.currentBooking.status = 'confirmed';
                     
-                    // Si package créé, lier le package_id à la réservation
-                    if (packageId && calcomResult.supabaseId) {
-                        await this.linkPackageToBooking(calcomResult.supabaseId, packageId);
+                    // Sauvegarder la réservation dans Supabase
+                    if (window.authManager?.saveBookingData) {
+                        await window.authManager.saveBookingData(this.currentBooking);
                     }
                 } else {
-                    throw new Error(calcomResult?.error || 'Échec Cal.com');
+                    throw new Error(bookingResult?.error || 'Échec Cal.com');
                 }
             } catch (calcomError) {
                 console.error('⚠️ Erreur Cal.com:', calcomError);
@@ -376,136 +379,6 @@ class PaymentManager {
         } catch (error) {
             console.error('❌ Erreur finalisation:', error);
             throw error;
-        }
-    }
-    
-    // NOUVELLE MÉTHODE : Créer package dans Supabase
-    async createPackageInSupabase(user, paymentData) {
-        try {
-            if (!window.supabase || !user) {
-                console.warn('Supabase ou user non disponible');
-                return null;
-            }
-            
-            const coursesCount = this.currentBooking.coursesCount || 1;
-            const discountPercent = this.currentBooking.discountPercent || 0;
-            const courseType = this.currentBooking.courseType || this.currentBooking.eventType;
-            const durationMinutes = parseInt(this.currentBooking.duration) || 60;
-            const priceEUR = this.currentBooking.priceEUR || this.currentBooking.price;
-            
-            const packageRecord = {
-                user_id: user.id,
-                course_type: courseType,
-                duration_minutes: durationMinutes,
-                total_credits: coursesCount,
-                remaining_credits: coursesCount,
-                price_paid: priceEUR,
-                currency: this.currentBooking.currency || 'EUR',
-                discount_percent: discountPercent,
-                purchased_at: new Date().toISOString()
-                // expires_at sera calculé automatiquement par le trigger (3 mois)
-            };
-            
-            console.log('💾 Création package Supabase:', packageRecord);
-            
-            const { data, error } = await supabase
-                .from('packages')
-                .insert([packageRecord])
-                .select();
-            
-            if (error) {
-                console.error('Erreur création package Supabase:', error);
-                return null;
-            }
-            
-            console.log('✅ Package créé avec ID:', data[0].id);
-            console.log('📅 Expire le:', data[0].expires_at);
-            
-            // Enregistrer la transaction d'achat
-            await this.recordCreditTransaction(user.id, data[0].id, coursesCount, 'purchase');
-            
-            return data[0].id;
-            
-        } catch (error) {
-            console.error('Exception création package:', error);
-            return null;
-        }
-    }
-    
-    // NOUVELLE MÉTHODE : Enregistrer transaction de crédits
-    async recordCreditTransaction(userId, packageId, creditsChange, transactionType, bookingId = null) {
-        try {
-            if (!window.supabase) return;
-            
-            // Récupérer le package pour connaître les crédits avant/après
-            const { data: pkg } = await supabase
-                .from('packages')
-                .select('remaining_credits')
-                .eq('id', packageId)
-                .single();
-            
-            if (!pkg) return;
-            
-            const creditsBefore = transactionType === 'purchase' ? 0 : pkg.remaining_credits + creditsChange;
-            const creditsAfter = pkg.remaining_credits;
-            
-            const transaction = {
-                user_id: userId,
-                package_id: packageId,
-                booking_id: bookingId,
-                transaction_type: transactionType,
-                credits_change: creditsChange,
-                credits_before: creditsBefore,
-                credits_after: creditsAfter,
-                reason: this.getTransactionReason(transactionType, creditsChange)
-            };
-            
-            const { error } = await supabase
-                .from('credit_transactions')
-                .insert([transaction]);
-            
-            if (error) {
-                console.warn('Erreur enregistrement transaction:', error);
-            } else {
-                console.log('✅ Transaction crédits enregistrée');
-            }
-        } catch (error) {
-            console.warn('Exception transaction crédits:', error);
-        }
-    }
-    
-    getTransactionReason(type, change) {
-        switch(type) {
-            case 'purchase':
-                return `Achat de ${change} crédit(s)`;
-            case 'use':
-                return `Utilisation d'un crédit`;
-            case 'refund':
-                return `Restitution de crédit`;
-            case 'expiration':
-                return `Expiration de ${Math.abs(change)} crédit(s)`;
-            default:
-                return 'Transaction de crédits';
-        }
-    }
-    
-    // NOUVELLE MÉTHODE : Lier package à réservation
-    async linkPackageToBooking(bookingId, packageId) {
-        try {
-            if (!window.supabase) return;
-            
-            const { error } = await supabase
-                .from('bookings')
-                .update({ package_id: packageId })
-                .eq('id', bookingId);
-            
-            if (error) {
-                console.warn('Erreur liaison package:', error);
-            } else {
-                console.log('✅ Package lié à la réservation');
-            }
-        } catch (error) {
-            console.warn('Exception liaison package:', error);
         }
     }
     
@@ -530,5 +403,23 @@ class PaymentManager {
     }
 }
 
+// Initialiser
 window.paymentManager = new PaymentManager();
-console.log('💳 PaymentManager prêt pour production avec gestion packages Supabase');
+
+// Écouter les événements VIP pour mettre à jour les prix
+window.addEventListener('vip:loaded', function() {
+    console.log('🎁 Prix VIP chargés, PaymentManager prêt');
+    // Si nous avons une réservation en cours, mettre à jour l'affichage
+    if (window.paymentManager && window.paymentManager.currentBooking) {
+        window.paymentManager.displayBookingSummary(window.paymentManager.currentBooking);
+    }
+});
+
+// Écouter les changements de devise
+window.addEventListener('currency:changed', function() {
+    if (window.paymentManager && window.paymentManager.currentBooking) {
+        window.paymentManager.displayBookingSummary(window.paymentManager.currentBooking);
+    }
+});
+
+console.log('💳 PaymentManager prêt pour production');

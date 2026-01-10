@@ -2438,3 +2438,39 @@ button {
         margin-left: auto;
     }
 }
+/* Badge VIP */
+.vip-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 8px;
+    border: 1px solid #FFA500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Animation pour le badge VIP */
+@keyframes vipPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.vip-badge:hover {
+    animation: vipPulse 0.5s ease;
+}
+
+/* Style pour les prix VIP dans les cartes */
+.course-card .price-main.vip-price {
+    color: #FFA500;
+    font-weight: 700;
+}
+
+/* Style pour les cartes VIP */
+.course-card.vip-highlight {
+    border: 2px solid #FFD700;
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2);
+}
