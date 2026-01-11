@@ -1288,17 +1288,65 @@
     <script src="supabase.js"></script>
     <script src="translation.js"></script>
     <script src="currency.js"></script>
-<script src="packages.js"></script>
+    <script src="packages.js"></script>
     <script src="auth.js"></script>
     <script src="booking.js"></script>
     <script src="payment.js"></script>
     <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
-   
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Initialisation page paiement...');
+        
+        // Debug: afficher les données de booking
+        console.group('🔍 DEBUG BOOKING DATA');
+        
+        // Récupérer la réservation depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookingParam = urlParams.get('booking');
+        
+        let currentBooking = null;
+        
+        if (bookingParam) {
+            try {
+                currentBooking = JSON.parse(decodeURIComponent(bookingParam));
+                console.log('📋 Réservation récupérée depuis URL:', currentBooking);
+                console.log('Prix:', currentBooking.price);
+                console.log('Devise:', currentBooking.currency);
+                console.log('Est VIP:', currentBooking.isVip);
+                console.log('Quantité:', currentBooking.packageQuantity);
+                console.log('Réduction:', currentBooking.discountPercent);
+                
+                if (currentBooking.isVip) {
+                    console.log('Prix VIP original:', currentBooking.vipPriceData);
+                }
+            } catch (error) {
+                console.error('❌ Erreur parsing booking:', error);
+                showPaymentError('Réservation invalide. Veuillez réessayer.');
+                return;
+            }
+        } else {
+            const storedBooking = localStorage.getItem('pendingBooking');
+            if (storedBooking) {
+                try {
+                    currentBooking = JSON.parse(storedBooking);
+                    console.log('📋 Réservation récupérée depuis localStorage:', currentBooking);
+                } catch (error) {
+                    console.error('❌ Erreur parsing stored booking:', error);
+                }
+            }
+        }
+        
+        console.groupEnd();
+        
+        if (!currentBooking) {
+            showPaymentError('Aucune réservation trouvée. Veuillez retourner à la page de réservation.');
+            setTimeout(() => {
+                window.location.href = 'booking.html';
+            }, 3000);
+            return;
+        }
         
         // Initialiser le menu mobile
         function initMobileMenu() {
@@ -1409,40 +1457,6 @@
         // Écouter les événements d'authentification
         window.addEventListener('auth:login', updateUserInterface);
         window.addEventListener('auth:logout', updateUserInterface);
-        
-        // Récupérer la réservation depuis l'URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const bookingParam = urlParams.get('booking');
-        
-        let currentBooking = null;
-        
-        if (bookingParam) {
-            try {
-                currentBooking = JSON.parse(decodeURIComponent(bookingParam));
-                console.log('📋 Réservation récupérée:', currentBooking);
-            } catch (error) {
-                console.error('❌ Erreur parsing booking:', error);
-                showPaymentError('Réservation invalide. Veuillez réessayer.');
-                return;
-            }
-        } else {
-            const storedBooking = localStorage.getItem('pendingBooking');
-            if (storedBooking) {
-                try {
-                    currentBooking = JSON.parse(storedBooking);
-                } catch (error) {
-                    console.error('❌ Erreur parsing stored booking:', error);
-                }
-            }
-        }
-        
-        if (!currentBooking) {
-            showPaymentError('Aucune réservation trouvée. Veuillez retourner à la page de réservation.');
-            setTimeout(() => {
-                window.location.href = 'booking.html';
-            }, 3000);
-            return;
-        }
         
         // Mettre à jour les détails de paiement ET le récapitulatif
         updatePaymentDetails(currentBooking);
@@ -1574,7 +1588,10 @@
         // Fonctions
         function updatePaymentDetails(booking) {
             const refNumber = Date.now().toString().slice(-6);
-            const amountEUR = booking.priceEUR || booking.price;
+            
+            // CORRECTION : Pour les VIP, on utilise déjà le prix dans la devise courante
+            let currentAmount = booking.price; // Déjà dans la devise courante
+            let currentCurrency = booking.currency || 'EUR';
             
             const config = window.YOTEACHER_CONFIG || {};
             
@@ -1588,17 +1605,14 @@
             document.getElementById('revolutRefNum').textContent = refNumber;
             document.getElementById('interacRefNum').textContent = refNumber;
             
-            let currentAmount = booking.price;
-            let currentCurrency = booking.currency || 'EUR';
-            
+            // FORMULER LE MONTANT CORRECT
+            let formattedAmount;
             if (window.currencyManager) {
-                currentCurrency = window.currencyManager.currentCurrency;
-                currentAmount = window.currencyManager.convert(amountEUR, 'EUR', currentCurrency);
+                // Le prix est déjà dans la devise courante, on le formate simplement
+                formattedAmount = window.currencyManager.formatPriceInCurrency(currentAmount, currentCurrency);
+            } else {
+                formattedAmount = `${currentAmount.toFixed(2)} ${currentCurrency}`;
             }
-            
-            const formattedAmount = window.currencyManager ? 
-                window.currencyManager.formatPrice(amountEUR) : 
-                `${currentAmount.toFixed(2)}${currentCurrency === 'EUR' ? '€' : ''}`;
             
             document.querySelectorAll('#revolutAmount, #wiseAmount, #paypalAmount, #interacAmount').forEach(el => {
                 el.textContent = formattedAmount;
@@ -1628,17 +1642,12 @@
             const summaryContainer = document.getElementById('paymentSummary');
             if (!summaryContainer) return;
             
-            const amountEUR = booking.priceEUR || booking.price;
-            let amount = booking.price;
+            // CORRECTION : Pour les VIP, on utilise déjà le prix dans la devise courante
+            let amount = booking.price; // Déjà dans la devise courante
             let currency = booking.currency || 'EUR';
             
-            if (window.currencyManager) {
-                currency = window.currencyManager.currentCurrency;
-                amount = window.currencyManager.convert(amountEUR, 'EUR', currency);
-            }
-            
             const formattedPrice = window.currencyManager ? 
-                window.currencyManager.formatPrice(amountEUR) : 
+                window.currencyManager.formatPriceInCurrency(amount, currency) : 
                 `${amount.toFixed(2)} ${currency}`;
             
             const startDate = new Date(booking.startTime);
@@ -1683,14 +1692,45 @@
             const platformLabel = window.translationManager?.getTranslation('payment.platform') || 'Plateforme:';
             const totalLabel = window.translationManager?.getTranslation('payment.total') || 'Total à payer:';
             
+            // Ajouter des informations VIP si applicable
+            let vipInfo = '';
+            if (booking.isVip) {
+                vipInfo = `
+                    <div class="summary-item" style="background: #fff8e1; border-radius: 8px; padding: 10px;">
+                        <span class="label" style="color: #ff8f00;"><i class="fas fa-crown"></i> Statut:</span>
+                        <span class="value" style="color: #ff8f00; font-weight: 600;">Prix VIP appliqué</span>
+                    </div>
+                `;
+            }
+            
+            // Ajouter des informations sur le forfait si applicable
+            let packageInfo = '';
+            if (booking.isPackage && booking.packageQuantity > 1) {
+                const discount = booking.discountPercent || 0;
+                packageInfo = `
+                    <div class="summary-item">
+                        <span class="label">Forfait:</span>
+                        <span class="value">${booking.packageQuantity} cours</span>
+                    </div>
+                    ${discount > 0 ? `
+                    <div class="summary-item" style="background: #e8f5e9; border-radius: 8px; padding: 10px;">
+                        <span class="label" style="color: #2e7d32;">Réduction:</span>
+                        <span class="value" style="color: #2e7d32; font-weight: 600;">${discount}%</span>
+                    </div>
+                    ` : ''}
+                `;
+            }
+            
             summaryContainer.innerHTML = `
                 <div class="booking-summary-card">
                     <h3 style="margin-bottom: 20px; color: #333;" data-i18n="payment.booking_details">Détails de votre réservation</h3>
                     <div class="summary-details">
+                        ${vipInfo}
                         <div class="summary-item">
                             <span class="label">${courseLabel}</span>
                             <span class="value">${courseName}</span>
                         </div>
+                        ${packageInfo}
                         <div class="summary-item">
                             <span class="label">${dateLabel}</span>
                             <span class="value">${formattedDate}</span>
@@ -1717,9 +1757,14 @@
         }
         
         function generatePaymentLinks(booking, revolutLink, wiseLink, paypalUsername, amount, currency) {
-            const revolutFullLink = `${revolutLink}?amount=${amount}&currency=${currency}&reference=COURS-${Date.now().toString().slice(-6)}`;
-            const wiseFullLink = `${wiseLink}?amount=${amount}&currency=${currency}`;
-            const paypalFullLink = `https://www.paypal.com/paypalme/${paypalUsername}/${amount}${currency}`;
+            // Utiliser le montant et la devise déjà présents dans l'objet booking
+            const bookingAmount = booking.price;
+            const bookingCurrency = booking.currency || 'EUR';
+            const refNumber = Date.now().toString().slice(-6);
+            
+            const revolutFullLink = `${revolutLink}?amount=${bookingAmount}&currency=${bookingCurrency}&reference=COURS-${refNumber}`;
+            const wiseFullLink = `${wiseLink}?amount=${bookingAmount}&currency=${bookingCurrency}`;
+            const paypalFullLink = `https://www.paypal.com/paypalme/${paypalUsername}/${bookingAmount}${bookingCurrency}`;
             
             document.getElementById('revolutQrCode').dataset.link = revolutFullLink;
             document.getElementById('revolutLinkItem').dataset.link = revolutFullLink;
