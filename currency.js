@@ -852,7 +852,55 @@ if (window.location.hostname === 'localhost' || window.location.hostname.include
         window.testVipPackages();
     }, 3000);
 }
-
+// FONCTION DE DEBUG GLOBALE
+window.debugVIPPriceIssue = function() {
+    console.group('🔍 DEBUG PRIX VIP');
+    
+    // 1. Vérifier CurrencyManager
+    if (window.currencyManager) {
+        console.log('💱 CurrencyManager:');
+        console.log('- Devise courante:', window.currencyManager.currentCurrency);
+        console.log('- Symbole:', window.currencyManager.getSymbol());
+        console.log('- Taux USD:', window.currencyManager.exchangeRates['USD']);
+        console.log('- Taux EUR:', window.currencyManager.exchangeRates['EUR']);
+    }
+    
+    // 2. Vérifier AuthManager
+    if (window.authManager) {
+        console.log('🔐 AuthManager:');
+        console.log('- Utilisateur VIP:', window.authManager.isUserVip());
+        console.log('- Utilisateur:', window.authManager.user?.email);
+        console.log('- Prix VIP chargés:', window.authManager.user?.vipPrices);
+    }
+    
+    // 3. Test de conversion
+    console.log('🧪 Test conversion 28.50 USD:');
+    const testAmount = 28.50;
+    if (window.currencyManager) {
+        const converted = window.currencyManager.convert(testAmount, 'USD', window.currencyManager.currentCurrency);
+        console.log(`${testAmount} USD → ${converted.toFixed(2)} ${window.currencyManager.currentCurrency}`);
+        
+        // Taux implicite
+        const implicitRate = converted / testAmount;
+        console.log(`Taux implicite USD→${window.currencyManager.currentCurrency}:`, implicitRate.toFixed(4));
+    }
+    
+    // 4. Calcul manuel
+    console.log('🧮 Calcul manuel:');
+    const vipPrice = 3; // USD
+    const quantity = 10;
+    const discount = 5; // %
+    
+    const totalUSD = vipPrice * quantity * (1 - discount/100);
+    console.log(`3 USD × 10 × (1 - 5%) = ${totalUSD.toFixed(2)} USD`);
+    
+    if (window.currencyManager) {
+        const convertedTotal = window.currencyManager.convert(totalUSD, 'USD', window.currencyManager.currentCurrency);
+        console.log(`→ ${convertedTotal.toFixed(2)} ${window.currencyManager.currentCurrency}`);
+    }
+    
+    console.groupEnd();
+};
 // Export pour Node.js
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { CurrencyManager };
