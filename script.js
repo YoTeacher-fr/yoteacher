@@ -1016,64 +1016,64 @@ const vipPriceManager = {
             const convertedPrice = window.currencyManager.convertVIPPrice(vipPriceData);
             
             // Mettre à jour le prix principal
-            const priceMain = card.querySelector('.price-main');
-            if (priceMain && convertedPrice) {
-                const perHourSpan = priceMain.querySelector('.price-per-hour');
-                const perHourText = getTranslation('courses.price_per_hour', '/h');
-                
-                // Formater le prix VIP avec indication de la devise originale
-                const displayPrice = window.currencyManager.formatVIPPrice(vipPriceData, true);
-                
-                if (perHourSpan) {
-                    priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
-                } else {
-                    priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
-                }
-                console.log(`  ✅ Prix principal ${courseType}: ${displayPrice}`);
-            }
-            
-            // Mettre à jour les prix détaillés
-            const priceDetailItems = card.querySelectorAll('.price-detail-item');
-            
-            for (const item of priceDetailItems) {
-                // Prix 30min
-                const price30Element = item.querySelector('.price-30');
-                if (price30Element) {
-                    const price30Data = await window.authManager.getVipPrice(courseType, 30);
-                    if (price30Data && window.currencyManager) {
-                        const display30 = window.currencyManager.formatVIPPrice(price30Data, false);
-                        price30Element.innerHTML = display30;
-                        console.log(`  ✅ Prix 30min ${courseType}: ${display30}`);
-                    }
-                }
-                
-                // Prix 45min
-                const price45Element = item.querySelector('.price-45');
-                if (price45Element) {
-                    const price45Data = await window.authManager.getVipPrice(courseType, 45);
-                    if (price45Data && window.currencyManager) {
-                        const display45 = window.currencyManager.formatVIPPrice(price45Data, false);
-                        price45Element.innerHTML = display45;
-                        console.log(`  ✅ Prix 45min ${courseType}: ${display45}`);
-                    }
-                }
-                
-                // Prix forfait (10 cours)
-                const priceForfaitElement = item.querySelector('.price-forfait');
-                if (priceForfaitElement) {
-                    // Pour le forfait, utiliser le prix 60min × 10 × 0.95 (5% de réduction)
-                    const forfaitPriceData = {
-                        price: vipPriceData.price * 10 * 0.95,
-                        currency: vipPriceData.currency
-                    };
-                    
-                    if (window.currencyManager) {
-                        const displayForfait = window.currencyManager.formatVIPPrice(forfaitPriceData, false);
-                        priceForfaitElement.innerHTML = displayForfait;
-                        console.log(`  ✅ Prix forfait ${courseType}: ${displayForfait}`);
-                    }
-                }
-            }
+const priceMain = card.querySelector('.price-main');
+if (priceMain && convertedPrice) {
+    const perHourSpan = priceMain.querySelector('.price-per-hour');
+    const perHourText = getTranslation('courses.price_per_hour', '/h');
+    
+    // Afficher uniquement le prix converti, sans annotation
+    let displayPrice = convertedPrice.display;
+    
+    if (perHourSpan) {
+        priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
+    } else {
+        priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
+    }
+    console.log(`  ✅ Prix principal ${courseType}: ${displayPrice}`);
+}
+
+// Mettre à jour les prix détaillés
+const priceDetailItems = card.querySelectorAll('.price-detail-item');
+
+for (const item of priceDetailItems) {
+    // Prix 30min
+    const price30Element = item.querySelector('.price-30');
+    if (price30Element) {
+        const price30Data = await window.authManager.getVipPrice(courseType, 30);
+        if (price30Data && window.currencyManager) {
+            const converted30 = window.currencyManager.convertVIPPrice(price30Data);
+            price30Element.innerHTML = converted30.display;
+            console.log(`  ✅ Prix 30min ${courseType}: ${converted30.display}`);
+        }
+    }
+    
+    // Prix 45min
+    const price45Element = item.querySelector('.price-45');
+    if (price45Element) {
+        const price45Data = await window.authManager.getVipPrice(courseType, 45);
+        if (price45Data && window.currencyManager) {
+            const converted45 = window.currencyManager.convertVIPPrice(price45Data);
+            price45Element.innerHTML = converted45.display;
+            console.log(`  ✅ Prix 45min ${courseType}: ${converted45.display}`);
+        }
+    }
+    
+    // Prix forfait (10 cours)
+    const priceForfaitElement = item.querySelector('.price-forfait');
+    if (priceForfaitElement) {
+        // Pour le forfait, utiliser le prix 60min × 10 × 0.95 (5% de réduction)
+        const forfaitPriceData = {
+            price: vipPriceData.price * 10 * 0.95,
+            currency: vipPriceData.currency
+        };
+        
+        if (window.currencyManager) {
+            const convertedForfait = window.currencyManager.convertVIPPrice(forfaitPriceData);
+            priceForfaitElement.innerHTML = convertedForfait.display;
+            console.log(`  ✅ Prix forfait ${courseType}: ${convertedForfait.display}`);
+        }
+    }
+}
             
             // Ajouter un indicateur VIP à la carte
             const courseHeader = card.querySelector('.course-header');
