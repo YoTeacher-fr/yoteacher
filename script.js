@@ -166,14 +166,29 @@ let state = {
 
 // Fonction utilitaire pour obtenir une traduction
 function getTranslation(key, fallback) {
+    console.log('🔍 getTranslation appelé avec key:', key, 'et fallback:', fallback);
+    
     if (window.translationManager) {
+        console.log('✅ translationManager trouvé:', window.translationManager);
+        console.log('🔍 Type de getTranslation:', typeof window.translationManager.getTranslation);
+        
+        // Vérifier si getTranslation existe et est une fonction
         if (typeof window.translationManager.getTranslation === 'function') {
             const translation = window.translationManager.getTranslation(key);
+            console.log('🌍 Traduction obtenue:', translation);
+            
             if (translation && translation !== key) {
                 return translation;
             }
+        } else {
+            console.error('❌ translationManager.getTranslation n\'est pas une fonction');
+            console.log('🔍 translationManager:', window.translationManager);
         }
+    } else {
+        console.error('❌ translationManager non disponible');
     }
+    
+    console.log('↩️ Retour fallback:', fallback);
     return fallback;
 }
 
@@ -189,10 +204,17 @@ const coursesManager = {
         
         container.innerHTML = '';
         
+        // Vérifier si translationManager est prêt
+        if (!window.translationManager) {
+            console.warn('⚠️ translationManager non disponible, utilisation des textes par défaut');
+        }
+        
         coursesData.forEach(course => coursesManager.createCourseCard(course, container));
         
+        // Ajouter les événements aux boutons
         coursesManager.addCourseEvents();
         
+        // Mettre à jour les prix avec la devise actuelle
         coursesManager.updateCoursePrices();
         
         console.log(`✅ ${coursesData.length} cartes de cours créées`);
@@ -204,17 +226,22 @@ const coursesManager = {
         card.setAttribute('data-course-id', course.id);
         card.setAttribute('data-base-price', course.basePriceEUR);
         
+        // Obtenir les textes traduits avec fallback
         const courseType = getTranslation(course.typeKey, course.type);
         const courseFocus = getTranslation(course.focusKey, course.focus);
         const courseButtonText = getTranslation(course.buttonTextKey, course.buttonText);
         const pricePerHour = getTranslation('courses.price_per_hour', '/h');
         
+        // Générer les détails de prix
         let priceDetailsHTML = '';
         
+        // Pour TOUTES les cartes, on affiche 30min et 45min sur la même ligne, puis le forfait séparément
+        // Chercher les détails 30min et 45min
         const detail30min = course.details.find(d => d.duration === '30min' || d.durationKey === 'courses.detail_30min');
         const detail45min = course.details.find(d => d.duration === '45min' || d.durationKey === 'courses.detail_45min');
         const forfaitDetail = course.details.find(d => d.durationKey === 'courses.detail_forfait');
         
+        // Afficher 30min et 45min sur la même ligne avec │
         if (detail30min && detail45min) {
             const duration30 = getTranslation(detail30min.durationKey || 'courses.detail_30min', '30min');
             const duration45 = getTranslation(detail45min.durationKey || 'courses.detail_45min', '45min');
@@ -225,6 +252,7 @@ const coursesManager = {
                 </div>
             `;
         } else {
+            // Fallback si on ne trouve pas les deux durées
             course.details.forEach(detail => {
                 if (detail.duration !== 'Forfait 10 cours' && detail.durationKey !== 'courses.detail_forfait') {
                     const durationText = getTranslation(detail.durationKey, detail.duration);
@@ -237,6 +265,7 @@ const coursesManager = {
             });
         }
         
+        // Ajouter le forfait séparément
         if (forfaitDetail) {
             const durationText = getTranslation(forfaitDetail.durationKey, forfaitDetail.duration);
             const discountText = getTranslation(forfaitDetail.discountKey, forfaitDetail.discount);
@@ -248,6 +277,7 @@ const coursesManager = {
             `;
         }
         
+        // Générer les features avec traductions
         const featuresHTML = course.features.map(feature => {
             const featureText = feature.key ? 
                 getTranslation(feature.key, feature.text) : 
@@ -260,6 +290,7 @@ const coursesManager = {
             `;
         }).join('');
         
+        // HTML pour le prix
         let priceHTML = '';
         if (course.id === 3) {
             priceHTML = `<span class="price-main">${course.price}€<span class="price-per-hour">${pricePerHour}</span></span>`;
@@ -308,6 +339,7 @@ const coursesManager = {
             if (priceElement && basePrice > 0) {
                 const formattedPrice = window.currencyManager.formatPrice(basePrice);
                 
+                // Garder le "/h" si présent
                 const perHourSpan = priceElement.querySelector('.price-per-hour');
                 if (perHourSpan) {
                     priceElement.innerHTML = `${formattedPrice}<span class="price-per-hour">${getTranslation('courses.price_per_hour', '/h')}</span>`;
@@ -316,8 +348,10 @@ const coursesManager = {
                 }
             }
             
+            // Mettre à jour les prix détaillés
             const priceDetails = card.querySelectorAll('.price-detail-item');
             priceDetails.forEach(detail => {
+                // Récupérer le prix de base depuis les attributs data
                 let basePriceDetail = 0;
                 
                 if (detail.hasAttribute('data-base-price-30')) {
@@ -327,6 +361,7 @@ const coursesManager = {
                         price30.textContent = window.currencyManager.formatPrice(basePriceDetail);
                     }
                     
+                    // Mettre à jour aussi le prix 45min
                     const basePrice45 = parseFloat(detail.getAttribute('data-base-price-45'));
                     const price45 = detail.querySelector('.price-45');
                     if (price45) {
@@ -370,6 +405,7 @@ const coursesManager = {
             });
         });
         
+        // Animation au survol
         document.querySelectorAll('.course-card').forEach(card => {
             card.addEventListener('mouseenter', function() {
                 this.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
@@ -398,21 +434,27 @@ const testimonialsManager = {
             return;
         }
         
+        // Réinitialiser à la première slide
         testimonialsManager.currentSlide = 0;
         
+        // Calculer le nombre de slides en fonction de l'écran
         testimonialsManager.calculateSlidesPerView();
         
+        // Générer les témoignages
         container.innerHTML = '';
         testimonialsData.forEach((testimonial, index) => {
             const card = testimonialsManager.createTestimonialCard(testimonial);
             container.appendChild(card);
         });
         
+        // Générer les indicateurs
         testimonialsManager.generateIndicators(indicatorsContainer);
         
+        // Ajouter les événements
         testimonialsManager.addTestimonialEvents();
         testimonialsManager.setupNavigation();
         
+        // Mettre à jour l'affichage
         testimonialsManager.updateSlider();
         
         state.testimonialsLoaded = true;
@@ -437,16 +479,19 @@ const testimonialsManager = {
         card.className = 'testimonial-card fade-in-up';
         card.setAttribute('data-testimonial-id', testimonial.id);
         
+        // Obtenir les traductions
         const name = getTranslation(`testimonial.${testimonial.id}.name`, testimonial.name);
         const country = getTranslation(`testimonial.${testimonial.id}.country`, testimonial.country);
         const content = getTranslation(`testimonial.${testimonial.id}.content`, testimonial.content);
         const lessons = getTranslation(`testimonial.${testimonial.id}.lessons`, testimonial.lessons);
         
+        // Générer les étoiles
         let starsHTML = '';
         for (let i = 0; i < testimonial.rating; i++) {
             starsHTML += '<i class="fas fa-star"></i>';
         }
         
+        // Première lettre du nom
         const firstLetter = name.charAt(0);
         
         card.innerHTML = `
@@ -496,6 +541,7 @@ const testimonialsManager = {
     },
     
     setupNavigation: () => {
+        // Supprimer tous les anciens écouteurs d'événements
         testimonialsManager.removeAllEventListeners();
         
         const prevBtn = document.getElementById('prevTestimonial');
@@ -517,6 +563,7 @@ const testimonialsManager = {
             });
         }
         
+        // Navigation au clavier
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') {
                 testimonialsManager.prevSlide();
@@ -525,10 +572,12 @@ const testimonialsManager = {
             }
         });
         
+        // Redimensionnement de la fenêtre
         window.addEventListener('resize', () => {
             const oldSlidesPerView = testimonialsManager.slidesPerView;
             testimonialsManager.calculateSlidesPerView();
             
+            // Regénérer seulement si le nombre de slides par vue a changé
             if (oldSlidesPerView !== testimonialsManager.slidesPerView) {
                 testimonialsManager.init();
             } else {
@@ -538,6 +587,7 @@ const testimonialsManager = {
     },
     
     removeAllEventListeners: () => {
+        // Supprimer les événements des boutons précédent/suivant
         const prevBtn = document.getElementById('prevTestimonial');
         const nextBtn = document.getElementById('nextTestimonial');
         
@@ -551,6 +601,7 @@ const testimonialsManager = {
             nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
         }
         
+        // Supprimer les événements des indicateurs
         const indicators = document.querySelectorAll('.testimonial-indicator');
         indicators.forEach(indicator => {
             const newIndicator = indicator.cloneNode(true);
@@ -565,6 +616,7 @@ const testimonialsManager = {
             testimonialsManager.currentSlide--;
             testimonialsManager.updateSlider();
         } else {
+            // Revenir à la dernière slide
             testimonialsManager.currentSlide = totalSlides - 1;
             testimonialsManager.updateSlider();
         }
@@ -579,6 +631,7 @@ const testimonialsManager = {
             testimonialsManager.currentSlide++;
             testimonialsManager.updateSlider();
         } else {
+            // Revenir à la première slide
             testimonialsManager.currentSlide = 0;
             testimonialsManager.updateSlider();
         }
@@ -601,6 +654,7 @@ const testimonialsManager = {
         
         if (!container) return;
         
+        // Masquer tous les témoignages
         const cards = container.querySelectorAll('.testimonial-card');
         cards.forEach(card => {
             card.style.display = 'none';
@@ -608,14 +662,17 @@ const testimonialsManager = {
             card.style.transform = 'translateY(20px)';
         });
         
+        // Calculer les indices des témoignages à afficher
         const startIndex = testimonialsManager.currentSlide * testimonialsManager.slidesPerView;
         const endIndex = Math.min(startIndex + testimonialsManager.slidesPerView, testimonialsData.length);
         
         console.log(`🔄 Affichage des témoignages ${startIndex + 1} à ${endIndex}`);
         
+        // Afficher seulement ceux de la slide actuelle avec animation
         for (let i = startIndex; i < endIndex; i++) {
             if (cards[i]) {
                 cards[i].style.display = 'block';
+                // Animation progressive
                 setTimeout(() => {
                     cards[i].style.opacity = '1';
                     cards[i].style.transform = 'translateY(0)';
@@ -624,6 +681,7 @@ const testimonialsManager = {
             }
         }
         
+        // Mettre à jour les indicateurs
         indicators.forEach((indicator, index) => {
             if (index === testimonialsManager.currentSlide) {
                 indicator.classList.add('active');
@@ -632,6 +690,7 @@ const testimonialsManager = {
             }
         });
         
+        // Mettre à jour les boutons de navigation
         const prevBtn = document.getElementById('prevTestimonial');
         const nextBtn = document.getElementById('nextTestimonial');
         const totalSlides = Math.ceil(testimonialsData.length / testimonialsManager.slidesPerView);
@@ -668,6 +727,7 @@ const testimonialsManager = {
 // ===== NAVIGATION =====
 const navigationManager = {
     init: () => {
+        // Navigation fluide
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 const href = this.getAttribute('href');
@@ -678,6 +738,7 @@ const navigationManager = {
             });
         });
         
+        // Boutons CTA
         document.querySelectorAll('.btn[href^="#"]').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 const href = this.getAttribute('href');
@@ -693,6 +754,7 @@ const navigationManager = {
         const target = document.querySelector(selector);
         if (!target) return;
         
+        // Pour la section cours
         if (selector === '#courses') {
             setTimeout(() => {
                 const coursesContainer = document.querySelector('.courses-container');
@@ -714,6 +776,7 @@ const navigationManager = {
             return;
         }
         
+        // Pour les autres sections
         const headerHeight = 100;
         window.scrollTo({
             top: target.offsetTop - headerHeight,
@@ -725,7 +788,10 @@ const navigationManager = {
 // ===== INTERACTIONS UTILISATEUR =====
 const uiManager = {
     init: () => {
+        // Gestion du scroll pour le header
         window.addEventListener('scroll', uiManager.handleScroll);
+        
+        // Initialiser le header
         uiManager.handleScroll();
     },
     
@@ -769,8 +835,13 @@ const imageManager = {
 // ===== GESTION MOBILE =====
 const mobileManager = {
     init: () => {
+        // Mettre à jour les liens de connexion mobile
         mobileManager.updateMobileLoginLinks();
+        
+        // Redimensionnement
         window.addEventListener('resize', mobileManager.updateMobileLoginLinks);
+        
+        // Vérifier la taille d'écran au chargement
         mobileManager.checkMobileLayout();
     },
     
@@ -779,11 +850,13 @@ const mobileManager = {
             const mobileLoginBtn = document.querySelector('.mobile-login-btn');
             const mobileLoginHeaderBtn = document.querySelector('.mobile-login-btn-header');
             
+            // Mettre à jour le bouton dans le header
             if (mobileLoginHeaderBtn && !window.location.pathname.includes('login.html')) {
                 const currentUrl = encodeURIComponent(window.location.href);
                 mobileLoginHeaderBtn.href = `login.html?redirect=${currentUrl}`;
             }
             
+            // Mettre à jour le bouton dans le menu mobile
             if (mobileLoginBtn && !window.location.pathname.includes('login.html')) {
                 const currentUrl = encodeURIComponent(window.location.href);
                 mobileLoginBtn.href = `login.html?redirect=${currentUrl}`;
@@ -792,7 +865,9 @@ const mobileManager = {
     },
     
     checkMobileLayout: () => {
+        // Adapter le layout pour mobile
         if (window.innerWidth <= 768) {
+            // Cacher les statistiques desktop, montrer mobile
             document.querySelectorAll('.desktop-stat').forEach(el => {
                 el.style.display = 'none';
             });
@@ -800,6 +875,7 @@ const mobileManager = {
                 el.style.display = 'inline';
             });
         } else {
+            // Cacher les statistiques mobile, montrer desktop
             document.querySelectorAll('.desktop-stat').forEach(el => {
                 el.style.display = 'inline';
             });
@@ -815,39 +891,53 @@ const appTranslationManager = {
     init: () => {
         console.log('🌍 Initialisation du gestionnaire de traduction de l\'app...');
         
+        // Vérifier que le gestionnaire de traduction principal est disponible
         if (!window.translationManager) {
             console.warn('⚠️ TranslationManager principal non disponible');
             return;
         }
         
         console.log('✅ TranslationManager principal disponible');
+        
+        // Mettre à jour les cartes de cours avec les traductions
         appTranslationManager.translateCourses();
         
+        // Écouter les changements de langue
         window.addEventListener('language:changed', () => {
             console.log('🌍 Changement de langue détecté dans l\'app');
+            
+            // Réinitialiser complètement les témoignages
             testimonialsManager.init();
+            
+            // Recharger les cours
             appTranslationManager.translateCourses();
         });
         
+        // Vérifier l'état initial de la langue
         console.log(`🌍 Langue actuelle: ${window.translationManager.getCurrentLanguage()}`);
     },
     
     translateCourses: () => {
         console.log('🌍 Traduction des cours dans l\'app...');
+        
+        // Recharger toutes les cartes de cours avec les nouvelles traductions
         coursesManager.reloadCourses();
     }
 };
 
 // ===== GESTION DES PRIX VIP =====
+// ===== GESTION DES PRIX VIP =====
 const vipPriceManager = {
     init: () => {
         console.log('👑 Initialisation du gestionnaire de prix VIP...');
         
+        // Écouter les événements VIP
         window.addEventListener('vip:loaded', (e) => {
             console.log('🎁 Prix VIP chargés, mise à jour de l\'interface');
             vipPriceManager.updateVIPPrices();
         });
         
+        // Écouter les changements de devise
         window.addEventListener('currency:changed', () => {
             if (window.authManager && window.authManager.isUserVip()) {
                 console.log('💱 Devise changée, mise à jour des prix VIP');
@@ -855,6 +945,7 @@ const vipPriceManager = {
             }
         });
         
+        // Écouter les connexions
         window.addEventListener('auth:login', () => {
             console.log('🔐 Connexion détectée');
             setTimeout(() => {
@@ -867,154 +958,190 @@ const vipPriceManager = {
         
         window.addEventListener('auth:logout', () => {
             console.log('🔓 Déconnexion, réinitialisation des prix');
+            // Réinitialiser les prix à la normale
             coursesManager.updateCoursePrices();
+            // Retirer les styles VIP
+            vipPriceManager.removeVIPStyles();
         });
         
         console.log('✅ Gestionnaire de prix VIP initialisé');
     },
     
     updateVIPPrices: async () => {
-        if (!window.authManager || !window.authManager.isUserVip()) {
-            console.log('👑 Utilisateur non VIP, pas de mise à jour des prix');
-            return;
+    if (!window.authManager || !window.authManager.isUserVip()) {
+        console.log('👑 Utilisateur non VIP, pas de mise à jour des prix');
+        return;
+    }
+    
+    console.log('👑 Mise à jour des prix VIP sur la page d\'accueil');
+    
+    // Mettre à jour le prix du cours d'essai (toujours 5€)
+    const essaiBtn = document.getElementById('essaiPriceBtn');
+    if (essaiBtn && window.currencyManager) {
+        const priceSpan = essaiBtn.querySelector('.price-essai');
+        if (priceSpan) {
+            priceSpan.textContent = window.currencyManager.formatPrice(5);
+            console.log('✅ Prix essai mis à jour');
+        }
+    }
+    
+    // Mettre à jour les cartes de cours
+    const coursesUpdated = [];
+    
+    for (const card of document.querySelectorAll('.course-card')) {
+        const courseId = card.dataset.courseId;
+        if (!courseId) continue;
+        
+        let courseType = '';
+        switch(courseId) {
+            case '1': courseType = 'conversation'; break;
+            case '2': courseType = 'curriculum'; break;
+            case '3': courseType = 'examen'; break;
         }
         
-        console.log('👑 Mise à jour des prix VIP sur la page d\'accueil');
+        if (!courseType) continue;
         
-        const essaiBtn = document.getElementById('essaiPriceBtn');
-        if (essaiBtn && window.currencyManager) {
-            const priceSpan = essaiBtn.querySelector('.price-essai');
-            if (priceSpan) {
-                priceSpan.textContent = window.currencyManager.formatPrice(5);
-                console.log('✅ Prix essai mis à jour');
+        console.log(`🔄 Traitement ${courseType}...`);
+        
+        // Récupérer le prix VIP pour 60min (prix principal)
+        const vipPriceData = await window.authManager.getVipPrice(courseType, 60);
+        
+        if (!vipPriceData) {
+            console.log(`⚠️ Aucun prix VIP pour ${courseType}`);
+            continue;
+        }
+        
+        console.log(`✅ Prix VIP trouvé pour ${courseType}:`, vipPriceData);
+        
+        // Utiliser la nouvelle méthode de conversion
+        const convertedPrice = window.currencyManager.convertVIPPrice(vipPriceData);
+        
+        // Mettre à jour le prix principal
+        const priceMain = card.querySelector('.price-main');
+        if (priceMain && convertedPrice) {
+            const perHourSpan = priceMain.querySelector('.price-per-hour');
+            const perHourText = getTranslation('courses.price_per_hour', '/h');
+            
+            // Formater le prix VIP avec indication de la devise originale
+            const displayPrice = window.currencyManager.formatVIPPrice(vipPriceData, true);
+            
+            if (perHourSpan) {
+                priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
+            } else {
+                priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
+            }
+            console.log(`  ✅ Prix principal ${courseType}: ${displayPrice}`);
+        }
+        
+        // Mettre à jour les prix détaillés
+        const priceDetailItems = card.querySelectorAll('.price-detail-item');
+        
+        for (const item of priceDetailItems) {
+            // Prix 30min
+            const price30Element = item.querySelector('.price-30');
+            if (price30Element) {
+                const price30Data = await window.authManager.getVipPrice(courseType, 30);
+                if (price30Data && window.currencyManager) {
+                    const display30 = window.currencyManager.formatVIPPrice(price30Data, false);
+                    price30Element.innerHTML = display30;
+                    console.log(`  ✅ Prix 30min ${courseType}: ${display30}`);
+                }
+            }
+            
+            // Prix 45min
+            const price45Element = item.querySelector('.price-45');
+            if (price45Element) {
+                const price45Data = await window.authManager.getVipPrice(courseType, 45);
+                if (price45Data && window.currencyManager) {
+                    const display45 = window.currencyManager.formatVIPPrice(price45Data, false);
+                    price45Element.innerHTML = display45;
+                    console.log(`  ✅ Prix 45min ${courseType}: ${display45}`);
+                }
+            }
+            
+            // Prix forfait (10 cours)
+            const priceForfaitElement = item.querySelector('.price-forfait');
+            if (priceForfaitElement) {
+                // Pour le forfait, utiliser le prix 60min × 10 × 0.95 (5% de réduction)
+                const forfaitPriceData = {
+                    price: vipPriceData.price * 10 * 0.95,
+                    currency: vipPriceData.currency
+                };
+                
+                if (window.currencyManager) {
+                    const displayForfait = window.currencyManager.formatVIPPrice(forfaitPriceData, false);
+                    priceForfaitElement.innerHTML = displayForfait;
+                    console.log(`  ✅ Prix forfait ${courseType}: ${displayForfait}`);
+                }
             }
         }
         
-        const coursesUpdated = [];
-        
-        for (const card of document.querySelectorAll('.course-card')) {
-            const courseId = card.dataset.courseId;
-            if (!courseId) continue;
-            
-            let courseType = '';
-            switch(courseId) {
-                case '1': courseType = 'conversation'; break;
-                case '2': courseType = 'curriculum'; break;
-                case '3': courseType = 'examen'; break;
-            }
-            
-            if (!courseType) continue;
-            
-            console.log(`🔄 Traitement ${courseType}...`);
-            
-            const priceInfo = await window.authManager.getVipPrice(courseType, 60);
-            
-            if (!priceInfo) {
-                console.log(`⚠️ Aucun prix VIP pour ${courseType}`);
-                continue;
-            }
-            
-            console.log(`✅ Prix VIP trouvé pour ${courseType}:`, priceInfo);
-            
-            const priceMain = card.querySelector('.price-main');
-            if (priceMain && window.currencyManager) {
-                const displayPrice = window.currencyManager.formatPrice(
-                    window.currencyManager.convert(
-                        priceInfo.price, 
-                        priceInfo.currency, 
-                        window.currencyManager.currentCurrency
-                    )
-                );
-                
-                const perHourSpan = priceMain.querySelector('.price-per-hour');
-                const perHourText = getTranslation('courses.price_per_hour', '/h');
-                
-                if (perHourSpan) {
-                    priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
-                } else {
-                    priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
-                }
-                console.log(`  ✅ Prix principal ${courseType}: ${displayPrice}`);
-            }
-            
-            const priceDetailItems = card.querySelectorAll('.price-detail-item');
-            
-            for (const item of priceDetailItems) {
-                const price30Element = item.querySelector('.price-30');
-                if (price30Element) {
-                    const price30Info = await window.authManager.getVipPrice(courseType, 30);
-                    if (price30Info && window.currencyManager) {
-                        const display30 = window.currencyManager.formatPrice(
-                            window.currencyManager.convert(
-                                price30Info.price,
-                                price30Info.currency,
-                                window.currencyManager.currentCurrency
-                            )
-                        );
-                        price30Element.textContent = display30;
-                        console.log(`  ✅ Prix 30min ${courseType}: ${display30}`);
-                    }
-                }
-                
-                const price45Element = item.querySelector('.price-45');
-                if (price45Element) {
-                    const price45Info = await window.authManager.getVipPrice(courseType, 45);
-                    if (price45Info && window.currencyManager) {
-                        const display45 = window.currencyManager.formatPrice(
-                            window.currencyManager.convert(
-                                price45Info.price,
-                                price45Info.currency,
-                                window.currencyManager.currentCurrency
-                            )
-                        );
-                        price45Element.textContent = display45;
-                        console.log(`  ✅ Prix 45min ${courseType}: ${display45}`);
-                    }
-                }
-                
-                const priceForfaitElement = item.querySelector('.price-forfait');
-                if (priceForfaitElement && priceInfo) {
-                    const forfaitPrice = priceInfo.price * 10 * 0.95;
-                    if (window.currencyManager) {
-                        const displayForfait = window.currencyManager.formatPrice(
-                            window.currencyManager.convert(
-                                forfaitPrice,
-                                priceInfo.currency,
-                                window.currencyManager.currentCurrency
-                            )
-                        );
-                        priceForfaitElement.textContent = displayForfait;
-                        console.log(`  ✅ Prix forfait ${courseType}: ${displayForfait}`);
-                    }
-                }
-            }
-            
-            coursesUpdated.push(courseType);
+        // Ajouter un indicateur VIP à la carte
+        const courseHeader = card.querySelector('.course-header');
+        if (courseHeader && !courseHeader.querySelector('.vip-badge')) {
+            const vipBadge = document.createElement('span');
+            vipBadge.className = 'vip-badge';
+            vipBadge.textContent = 'VIP';
+            vipBadge.style.cssText = `
+                display: inline-block;
+                background: linear-gradient(135deg, #FFD700, #FFA500);
+                color: #000;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 11px;
+                font-weight: bold;
+                margin-left: 10px;
+                border: 1px solid #FFA500;
+                vertical-align: middle;
+            `;
+            courseHeader.querySelector('.course-type').appendChild(vipBadge);
         }
         
-        console.log('✅ Prix VIP mis à jour pour:', coursesUpdated);
+        coursesUpdated.push(courseType);
+    }
+    
+    console.log('✅ Prix VIP mis à jour pour:', coursesUpdated);
+},
+    
+    removeVIPStyles: () => {
+        // Retirer toutes les classes VIP
+        document.querySelectorAll('.vip-highlight, .vip-price, .vip-badge').forEach(el => {
+            el.classList.remove('vip-highlight', 'vip-price');
+            if (el.classList.contains('vip-badge')) {
+                el.remove();
+            }
+        });
+        
+        // Retirer la notification VIP
+        const notification = document.getElementById('vip-notification');
+        if (notification) notification.remove();
     }
 };
-
 // ===== GESTION DES BOUTONS DE LANGUE =====
 const initLanguageButtons = () => {
     console.log('🔧 Initialisation des boutons de langue...');
     
+    // Fonction pour basculer la langue
     const toggleLanguage = () => {
         if (window.translationManager && typeof window.translationManager.toggleLanguage === 'function') {
             window.translationManager.toggleLanguage();
         } else {
+            // Fallback si translationManager n'est pas disponible
             const currentLang = document.documentElement.lang || 'fr';
             const newLang = currentLang === 'fr' ? 'en' : 'fr';
             
+            // Mettre à jour l'attribut lang
             document.documentElement.lang = newLang;
             
+            // Mettre à jour l'affichage des boutons
             document.querySelectorAll('.language-switcher span:last-child, .mobile-language span:last-child').forEach(el => {
                 el.textContent = newLang === 'fr' ? 'EN' : 'FR';
             });
             
+            // Sauvegarder dans localStorage
             localStorage.setItem('language', newLang);
             
+            // Déclencher un événement
             window.dispatchEvent(new CustomEvent('language:changed', { 
                 detail: { language: newLang } 
             }));
@@ -1023,8 +1150,10 @@ const initLanguageButtons = () => {
         }
     };
     
+    // Attacher les événements aux boutons de langue desktop
     const desktopSwitcher = document.getElementById('languageSwitcherDesktop');
     if (desktopSwitcher) {
+        // Supprimer les anciens écouteurs pour éviter les doublons
         const newDesktopSwitcher = desktopSwitcher.cloneNode(true);
         desktopSwitcher.parentNode.replaceChild(newDesktopSwitcher, desktopSwitcher);
         
@@ -1036,8 +1165,10 @@ const initLanguageButtons = () => {
         });
     }
     
+    // Attacher les événements aux boutons de langue mobile
     const mobileSwitcher = document.getElementById('languageSwitcherMobile');
     if (mobileSwitcher) {
+        // Supprimer les anciens écouteurs pour éviter les doublons
         const newMobileSwitcher = mobileSwitcher.cloneNode(true);
         mobileSwitcher.parentNode.replaceChild(newMobileSwitcher, mobileSwitcher);
         
@@ -1047,6 +1178,7 @@ const initLanguageButtons = () => {
             console.log('🌍 Clic sur bouton de langue mobile');
             toggleLanguage();
             
+            // Fermer le menu mobile après changement
             const mobileMenu = document.getElementById('mobileMenu');
             if (mobileMenu && mobileMenu.classList.contains('active')) {
                 mobileMenu.classList.remove('active');
@@ -1062,6 +1194,7 @@ const app = {
     init: () => {
         console.log('🚀 Initialisation de l\'application...');
         
+        // Empêcher le retour en haut au rafraîchissement
         window.addEventListener('beforeunload', () => {
             sessionStorage.setItem('scrollPosition', window.scrollY);
         });
@@ -1076,6 +1209,7 @@ const app = {
             });
         }
         
+        // Vérifier que le DOM est chargé
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', app.setup);
         } else {
@@ -1086,8 +1220,10 @@ const app = {
     setup: () => {
         console.log('⚙️ Configuration des modules...');
         
+        // Ajuster le padding pour le header fixe
         document.body.style.paddingTop = '80px';
         
+        // Vérifier d'abord que translationManager est prêt
         const waitForTranslationManager = () => {
             if (window.translationManager && typeof window.translationManager.getTranslation === 'function') {
                 console.log('✅ TranslationManager prêt, initialisation des composants...');
@@ -1125,12 +1261,14 @@ const app = {
         
         waitForTranslationManager();
         
+        // Gestion du redimensionnement
         window.addEventListener('resize', () => {
             testimonialsManager.calculateSlidesPerView();
             testimonialsManager.updateSlider();
             mobileManager.checkMobileLayout();
         });
         
+        // Écouter les changements de devise
         window.addEventListener('currency:ready', () => {
             coursesManager.updateCoursePrices();
         });
@@ -1139,17 +1277,21 @@ const app = {
             coursesManager.updateCoursePrices();
         });
         
+        // Initialiser les boutons de langue
         setTimeout(initLanguageButtons, 300);
     }
 };
 
 // ===== INITIALISATION FINALE =====
+// Attendre que tout soit chargé
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         console.log('📄 DOMContentLoaded - Initialisation...');
         
+        // Initialiser l'application principale
         app.init();
         
+        // Vérifier que les conteneurs existent
         setTimeout(() => {
             const coursesContainer = document.getElementById('coursesContainer');
             const testimonialsContainer = document.getElementById('testimonialsSlider');
@@ -1158,6 +1300,7 @@ if (document.readyState === 'loading') {
             console.log(`- Conteneur cours: ${coursesContainer ? 'TROUVÉ' : 'NON TROUVÉ'}`);
             console.log(`- Conteneur témoignages: ${testimonialsContainer ? 'TROUVÉ' : 'NON TROUVÉ'}`);
             
+            // Si les conteneurs existent mais sont vides, réinitialiser
             if (coursesContainer && coursesContainer.children.length === 0) {
                 console.log('⚠️ Conteneur cours vide, réinitialisation...');
                 coursesManager.init();
@@ -1170,117 +1313,12 @@ if (document.readyState === 'loading') {
         }, 1000);
     });
 } else {
+    // Le DOM est déjà chargé
     console.log('📄 DOM déjà chargé - Initialisation...');
     app.init();
 }
 
-// ===== FONCTIONS DE DEBUG =====
-window.debugVIP = async function() {
-    console.clear();
-    console.group('🛠️ DEBUG VIP COMPLET');
-    
-    console.log('1. ✅ authManager:', {
-        exists: !!window.authManager,
-        user: window.authManager?.user,
-        isVip: window.authManager?.isUserVip(),
-        profile: window.authManager?.user?.profile
-    });
-    
-    console.log('2. 💰 currencyManager:', {
-        exists: !!window.currencyManager,
-        currentCurrency: window.currencyManager?.currentCurrency,
-        rates: window.currencyManager?.rates
-    });
-    
-    const courses = [
-        { id: 1, type: 'conversation' },
-        { id: 2, type: 'curriculum' },
-        { id: 3, type: 'examen' }
-    ];
-    
-    for (const course of courses) {
-        console.group(`3. 🧪 Test ${course.type}`);
-        
-        const priceInfo = await window.authManager.getVipPrice(course.type, 60);
-        console.log('Résultat:', priceInfo);
-        
-        if (priceInfo) {
-            const converted = window.currencyManager.convert(
-                priceInfo.price,
-                priceInfo.currency,
-                window.currencyManager.currentCurrency
-            );
-            console.log(`Conversion: ${priceInfo.price}${priceInfo.currency} → ${converted}${window.currencyManager.currentCurrency}`);
-            console.log('isNaN?', isNaN(converted));
-        }
-        
-        console.groupEnd();
-    }
-    
-    console.log('4. 📦 Données utilisateur dans localStorage:');
-    const storedUser = localStorage.getItem('yoteacher_user');
-    if (storedUser) {
-        try {
-            const user = JSON.parse(storedUser);
-            console.log('Utilisateur:', {
-                id: user.id,
-                email: user.email,
-                is_vip: user.profile?.is_vip,
-                vipPrices: user.vipPrices
-            });
-        } catch (e) {
-            console.error('Erreur parsing JSON:', e);
-        }
-    }
-    
-    console.log('5. 👑 Prix VIP dans authManager.user:');
-    console.log(window.authManager.user?.vipPrices);
-    
-    console.groupEnd();
-    
-    console.log('🔄 Lancement de updateVIPPrices...');
-    await vipPriceManager.updateVIPPrices();
-};
-
-window.testVipPrice = async function(courseType = 'conversation', duration = 60) {
-    console.group(`🧪 Test rapide prix VIP pour ${courseType} ${duration}min`);
-    
-    if (!window.authManager) {
-        console.error('❌ authManager non disponible');
-        console.groupEnd();
-        return;
-    }
-    
-    if (!window.authManager.user) {
-        console.error('❌ Aucun utilisateur connecté');
-        console.groupEnd();
-        return;
-    }
-    
-    console.log('👤 Utilisateur:', window.authManager.user.email);
-    console.log('👑 Est VIP?', window.authManager.isUserVip());
-    
-    const priceInfo = await window.authManager.getVipPrice(courseType, duration);
-    console.log('💰 Prix VIP:', priceInfo);
-    
-    if (priceInfo && window.currencyManager) {
-        const converted = window.currencyManager.convert(
-            priceInfo.price,
-            priceInfo.currency,
-            window.currencyManager.currentCurrency
-        );
-        console.log(`💱 Conversion: ${priceInfo.price} ${priceInfo.currency} → ${converted} ${window.currencyManager.currentCurrency}`);
-        console.log('📊 Formaté:', window.currencyManager.formatPrice(converted));
-    }
-    
-    console.groupEnd();
-};
-
-console.log('🔧 Fonctions de debug disponibles:');
-console.log('- debugVIP(): Analyse complète du système VIP');
-console.log('- testVipPrice("conversation", 60): Test un prix spécifique');
-console.log('- window.authManager.getVipPrice(type, durée): Récupère un prix VIP');
-
+// Exposer les managers pour le débogage
 window.coursesManager = coursesManager;
 window.testimonialsManager = testimonialsManager;
 window.appTranslationManager = appTranslationManager;
