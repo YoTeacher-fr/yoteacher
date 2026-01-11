@@ -282,7 +282,30 @@ class CurrencyManager {
         
         return showSymbol ? `${symbol}${formattedPrice}` : formattedPrice;
     }
+    // NOUVELLE MÉTHODE: Formater un prix dans une devise spécifique SANS conversion
+formatPriceInCurrency(amount, currency, showSymbol = true) {
+    const symbol = this.currencySymbols[currency] || currency;
     
+    // Formatage selon la devise
+    let formattedPrice;
+    
+    switch(currency) {
+        case 'JPY':
+        case 'KRW':
+        case 'INR':
+            // Pas de décimales pour ces devises
+            formattedPrice = Math.round(amount).toLocaleString();
+            break;
+        default:
+            // 2 décimales pour la plupart des devises
+            formattedPrice = amount.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+    }
+    
+    return showSymbol ? `${symbol}${formattedPrice}` : formattedPrice;
+}
     setCurrency(currencyCode) {
         if (!this.supportedCurrencies.includes(currencyCode)) {
             console.warn(`❌ Devise non supportée: ${currencyCode}`);
@@ -401,95 +424,75 @@ class CurrencyManager {
         return true;
     }
     
-    // NOUVELLE MÉTHODE : Conversion des prix VIP multi-devises - SIMPLIFIÉE
-    convertVIPPrice(vipPriceData, targetCurrency = null) {
-        if (!vipPriceData || vipPriceData.price === undefined) {
-            console.warn('❌ Données VIP manquantes pour conversion');
-            return null;
-        }
-        
-        if (!targetCurrency) {
-            targetCurrency = this.currentCurrency;
-        }
-        
-        const originalPrice = parseFloat(vipPriceData.price);
-        const originalCurrency = vipPriceData.currency || 'EUR';
-        
-        console.log(`💱 Conversion VIP: ${originalPrice} ${originalCurrency} → ${targetCurrency}`);
-        
-        // SIMPLIFICATION : Si mêmes devises, pas de conversion
-        if (originalCurrency === targetCurrency) {
-            console.log('✅ Même devise, pas de conversion nécessaire');
-            return {
-                price: originalPrice,
-                currency: targetCurrency,
-                originalPrice: originalPrice,
-                originalCurrency: originalCurrency,
-                display: this.formatPrice(originalPrice, targetCurrency)
-            };
-        }
-        
-        // SIMPLIFICATION : Si USD vers USD (exemple), convertir via EUR
-        if (originalCurrency === 'USD' && targetCurrency === 'EUR') {
-            const rate = this.exchangeRates['USD'] || 1.08;
-            const convertedPrice = originalPrice / rate;
-            return {
-                price: convertedPrice,
-                currency: 'EUR',
-                originalPrice: originalPrice,
-                originalCurrency: originalCurrency,
-                display: this.formatPrice(convertedPrice, 'EUR')
-            };
-        }
-        
-        // Conversion standard via EUR
-        const fromRate = this.exchangeRates[originalCurrency] || 1;
-        const toRate = this.exchangeRates[targetCurrency] || 1;
-        
-        if (fromRate === 1 && toRate === 1) {
-            console.warn('⚠️ Taux non disponibles, conversion directe');
-            return {
-                price: originalPrice,
-                currency: targetCurrency,
-                originalPrice: originalPrice,
-                originalCurrency: originalCurrency,
-                display: `${originalPrice} ${originalCurrency}`
-            };
-        }
-        
-        const amountInEUR = originalPrice / fromRate;
-        const finalPrice = amountInEUR * toRate;
-        
-        console.log(`✅ Conversion VIP réussie: ${finalPrice.toFixed(2)} ${targetCurrency}`);
-        
+    // MÉTHODE VIP SIMPLIFIÉE: Conversion intelligente des prix VIP
+convertVIPPrice(vipPriceData, targetCurrency = null) {
+    if (!vipPriceData || vipPriceData.price === undefined) {
+        console.warn('❌ Données VIP manquantes pour conversion');
+        return null;
+    }
+    
+    if (!targetCurrency) {
+        targetCurrency = this.currentCurrency;
+    }
+    
+    const originalPrice = parseFloat(vipPriceData.price);
+    const originalCurrency = vipPriceData.currency || 'EUR';
+    
+    console.log(`💱 Conversion VIP: ${originalPrice} ${originalCurrency} → ${targetCurrency}`);
+    
+    // SI MÊME DEVISE: PAS DE CONVERSION, retour direct
+    if (originalCurrency === targetCurrency) {
+        console.log('✅ Même devise, pas de conversion');
         return {
-            price: finalPrice,
+            price: originalPrice,
             currency: targetCurrency,
             originalPrice: originalPrice,
             originalCurrency: originalCurrency,
-            display: this.formatPrice(finalPrice, targetCurrency)
+            display: this.formatPriceInCurrency(originalPrice, targetCurrency),
+            converted: false
         };
     }
     
-    // NOUVELLE MÉTHODE : Formater un prix VIP avec indication de la devise d'origine
-    formatVIPPrice(vipPriceData, showOriginal = true) {
-        if (!vipPriceData || vipPriceData.price === undefined) return 'N/A';
-        
-        const converted = this.convertVIPPrice(vipPriceData);
-        if (!converted) return 'N/A';
-        
-        let display = converted.display;
-        
-        if (showOriginal && vipPriceData.currency !== this.currentCurrency) {
-            const originalFormatted = this.formatPrice(
-                vipPriceData.price, 
-                vipPriceData.currency
-            );
-            display += ` <small style="opacity:0.7;font-size:0.8em">(${originalFormatted})</small>`;
-        }
-        
-        return display;
+    // CONVERSION NÉCESSAIRE
+    const fromRate = this.exchangeRates[originalCurrency] || 1;
+    const toRate = this.exchangeRates[targetCurrency] || 1;
+    
+    if (!fromRate || !toRate) {
+        console.warn('⚠️ Taux non disponibles, pas de conversion');
+        return {
+            price: originalPrice,
+            currency: originalCurrency,
+            originalPrice: originalPrice,
+            originalCurrency: originalCurrency,
+            display: this.formatPriceInCurrency(originalPrice, originalCurrency),
+            converted: false
+        };
     }
+    
+    const amountInEUR = originalPrice / fromRate;
+    const finalPrice = amountInEUR * toRate;
+    
+    console.log(`✅ Conversion VIP réussie: ${finalPrice.toFixed(2)} ${targetCurrency}`);
+    
+    return {
+        price: finalPrice,
+        currency: targetCurrency,
+        originalPrice: originalPrice,
+        originalCurrency: originalCurrency,
+        display: this.formatPriceInCurrency(finalPrice, targetCurrency),
+        converted: true
+    };
+}
+    
+    // MÉTHODE VIP: Formater simplement, sans indication de conversion
+formatVIPPrice(vipPriceData, showOriginal = false) {
+    if (!vipPriceData || vipPriceData.price === undefined) return 'N/A';
+    
+    const converted = this.convertVIPPrice(vipPriceData);
+    if (!converted) return 'N/A';
+    
+    // Retourner uniquement le prix affiché, sans annotation
+    return converted.display;
 }
 
 // Initialiser et exposer globalement
