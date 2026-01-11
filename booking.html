@@ -1260,7 +1260,7 @@
     <script src="common.js"></script>
 
     <script>
-    // SCRIPT JAVASCRIPT POUR BOOKING.HTML - CORRIGÉ
+    // SCRIPT JAVASCRIPT POUR BOOKING.HTML - CORRIGÉ AVEC GESTION CURRENCYMANAGER
     document.addEventListener('DOMContentLoaded', function() {
         let selectedDate = null;
         let selectedTime = null;
@@ -1296,6 +1296,63 @@
 
         // Stocker le type de cours avant redirection
         let preLoginCourseType = null;
+
+        // FORCER L'INITIALISATION DE CURRENCYMANAGER SI NÉCESSAIRE
+        function ensureCurrencyManager() {
+            return new Promise(async (resolve, reject) => {
+                console.log('💰 Vérification de CurrencyManager...');
+                
+                if (!window.currencyManager) {
+                    console.log('💱 CurrencyManager non trouvé, création...');
+                    try {
+                        // Vérifier si la classe existe
+                        if (typeof CurrencyManager === 'undefined') {
+                            console.error('❌ Classe CurrencyManager non définie');
+                            reject(new Error('CurrencyManager non disponible'));
+                            return;
+                        }
+                        
+                        window.currencyManager = new CurrencyManager();
+                        await window.currencyManager.init();
+                        console.log('✅ CurrencyManager créé avec succès');
+                        resolve(window.currencyManager);
+                    } catch (error) {
+                        console.error('❌ Erreur création CurrencyManager:', error);
+                        reject(error);
+                    }
+                } else if (!window.currencyManager.currentCurrency || 
+                          !window.currencyManager.exchangeRates || 
+                          Object.keys(window.currencyManager.exchangeRates).length === 0) {
+                    console.log('💱 CurrencyManager incomplet, réinitialisation...');
+                    try {
+                        await window.currencyManager.init();
+                        resolve(window.currencyManager);
+                    } catch (error) {
+                        console.error('❌ Erreur réinitialisation CurrencyManager:', error);
+                        reject(error);
+                    }
+                } else {
+                    console.log('✅ CurrencyManager déjà disponible');
+                    resolve(window.currencyManager);
+                }
+            });
+        }
+
+        // DEBUG GLOBAL
+        window.debugCurrencyManager = function() {
+            console.group('🔧 Debug CurrencyManager - Booking');
+            console.log('Disponible:', !!window.currencyManager);
+            console.log('Devise actuelle:', window.currencyManager?.currentCurrency);
+            console.log('Taux chargés:', window.currencyManager?.exchangeRates);
+            console.log('Taille des taux:', Object.keys(window.currencyManager?.exchangeRates || {}).length);
+            
+            if (window.currencyManager) {
+                console.log('Test conversion 10 EUR → USD:', window.currencyManager.convert(10, 'EUR', 'USD'));
+                console.log('Test conversion 10 EUR → devise courante:', window.currencyManager.formatPrice(10));
+            }
+            
+            console.groupEnd();
+        };
 
         // Initialiser la page
         initializePage();
@@ -1410,16 +1467,16 @@
         bookingForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Vérifier si currencyManager est disponible
-            if (!window.currencyManager || !window.currencyManager.currentCurrency) {
-                console.warn('⚠️ CurrencyManager non disponible, tentative de réinitialisation');
-                try {
-                    window.currencyManager = new CurrencyManager();
-                    await window.currencyManager.init();
-                } catch (error) {
-                    showError('Système de devise non disponible. Veuillez rafraîchir la page.');
-                    return;
-                }
+            console.log('💰 Début de la préparation du paiement');
+            
+            // FORCER l'initialisation de currencyManager
+            try {
+                await ensureCurrencyManager();
+                console.log('✅ CurrencyManager prêt pour le paiement');
+            } catch (error) {
+                console.error('❌ Impossible d\'initialiser CurrencyManager:', error);
+                showError('Système de devise temporairement indisponible. Veuillez réessayer dans quelques instants.');
+                return;
             }
             
             if (!selectedDate || !selectedTime) {
@@ -1559,7 +1616,22 @@
         }
 
         // Fonctions
-        function initializePage() {
+        async function initializePage() {
+            console.log('🚀 Initialisation de la page booking...');
+            
+            // FORCER l'initialisation de currencyManager d'abord
+            try {
+                await ensureCurrencyManager();
+                console.log('✅ CurrencyManager initialisé avec succès');
+                
+                // Initialiser les sélecteurs de devise
+                if (window.currencyManager.initCurrencySelectors) {
+                    window.currencyManager.initCurrencySelectors();
+                }
+            } catch (error) {
+                console.warn('⚠️ CurrencyManager non disponible, continuation en mode EUR');
+            }
+            
             // Récupérer le type de cours depuis l'URL
             const urlParams = new URLSearchParams(window.location.search);
             let courseTypeParam = urlParams.get('type');
@@ -1725,7 +1797,7 @@
             const startingDay = firstDay.getDay();
 
             const dayHeadersFr = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-            const dayHeadersEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayHeadersEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sam'];
             const dayHeaders = isFrench ? dayHeadersFr : dayHeadersEn;
             
             calendarDays.innerHTML = '';
@@ -1967,6 +2039,22 @@
         }
 
         async function updateSummary() {
+            console.log('📋 Mise à jour du récapitulatif...');
+            
+            // VÉRIFIER QUE CURRENCYMANAGER EST DISPONIBLE
+            if (!window.currencyManager || !window.currencyManager.currentCurrency) {
+                console.warn('⚠️ CurrencyManager non disponible, tentative d\'initialisation...');
+                try {
+                    await ensureCurrencyManager();
+                    console.log('✅ CurrencyManager initialisé pour updateSummary');
+                } catch (error) {
+                    console.error('❌ Impossible d\'initialiser CurrencyManager:', error);
+                    // Fallback: afficher les prix en EUR
+                    showDefaultPricesInEUR();
+                    return;
+                }
+            }
+            
             const courseType = document.getElementById('courseType').value;
             const user = window.authManager?.getCurrentUser();
             let courseName = '-';
@@ -2031,32 +2119,28 @@
                                 console.log(`✅ Prix VIP trouvé:`, vipPriceInfo);
                                 
                                 const vipCurrency = vipPriceInfo.currency || 'EUR';
-                                let currentCurrency = 'EUR';
+                                let currentCurrency = window.currencyManager.currentCurrency || 'EUR';
                                 
-                                // Vérifier si currencyManager est disponible
-                                if (window.currencyManager && window.currencyManager.currentCurrency) {
-                                    currentCurrency = window.currencyManager.currentCurrency;
-                                } else {
-                                    console.warn('⚠️ CurrencyManager non disponible, utilisation EUR par défaut');
-                                }
-                                
-                                // Calculer le total VIP
-                                let totalVipPrice = vipPriceInfo.price * coursesCount;
-                                
-                                // Appliquer la réduction
-                                if (discountPercent > 0) {
-                                    totalVipPrice = totalVipPrice * (1 - discountPercent / 100);
-                                    console.log(`🎁 Réduction ${discountPercent}% appliquée: ${totalVipPrice} ${vipCurrency}`);
-                                }
-                                
-                                // LOGIQUE VIP
+                                // SI MÊME DEVISE: PAS DE CONVERSION, retour direct
                                 if (vipCurrency === currentCurrency) {
-                                    // Même devise: afficher directement sans conversion
-                                    price = totalVipPrice.toFixed(2) + ' ' + vipCurrency;
+                                    console.log('✅ Même devise, pas de conversion');
+                                    // Calculer le total VIP
+                                    let totalVipPrice = vipPriceInfo.price * coursesCount;
+                                    
+                                    // Appliquer la réduction
+                                    if (discountPercent > 0) {
+                                        totalVipPrice = totalVipPrice * (1 - discountPercent / 100);
+                                        console.log(`🎁 Réduction ${discountPercent}% appliquée: ${totalVipPrice} ${vipCurrency}`);
+                                    }
+                                    
+                                    price = window.currencyManager.formatPriceInCurrency(totalVipPrice, vipCurrency);
                                     console.log(`✅ Prix VIP (devise native ${vipCurrency}): ${price}`);
                                 } else {
-                                    // Devises différentes: convertir si currencyManager disponible
-                                    if (window.currencyManager) {
+                                    // Devises différentes: convertir
+                                    console.log(`💱 Devises différentes: ${vipCurrency} → ${currentCurrency}`);
+                                    
+                                    if (window.currencyManager.convertVIPPrice) {
+                                        const totalVipPrice = vipPriceInfo.price * coursesCount * (1 - discountPercent / 100);
                                         const converted = window.currencyManager.convertVIPPrice(
                                             { price: totalVipPrice, currency: vipCurrency },
                                             currentCurrency
@@ -2066,10 +2150,10 @@
                                             price = converted.display;
                                             console.log(`💱 Prix VIP converti: ${price}`);
                                         } else {
-                                            price = totalVipPrice.toFixed(2) + ' ' + vipCurrency;
+                                            price = window.currencyManager.formatPrice(totalVipPrice);
                                         }
                                     } else {
-                                        price = totalVipPrice.toFixed(2) + ' ' + vipCurrency;
+                                        price = window.currencyManager.formatPrice(vipPriceInfo.price * coursesCount * (1 - discountPercent / 100));
                                     }
                                 }
                             } else {
@@ -2143,6 +2227,12 @@
                 (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
             
             submitButton.disabled = !canSubmit;
+        }
+
+        // Fonction fallback pour afficher les prix en EUR
+        function showDefaultPricesInEUR() {
+            document.getElementById('summaryPrice').textContent = '20€';
+            console.warn('⚠️ Affichage des prix en EUR par défaut');
         }
 
         // Fonction : Calculer le prix normal
