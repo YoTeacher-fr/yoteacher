@@ -408,28 +408,28 @@ class PaymentManager {
                 console.log('✅ Forfait acheté avec succès:', packageResult.package);
                 
                 // Créer une réservation pour enregistrer l'achat
-                if (window.supabase && booking.userId) {
-                    const bookingNumber = `PKG-${Date.now().toString().slice(-8)}`;
+                //if (window.supabase && booking.userId) {
+                  //  const bookingNumber = `PKG-${Date.now().toString().slice(-8)}`;
                     
-                    const { error } = await supabase
-                        .from('bookings')
-                        .insert({
-                            user_id: booking.userId,
-                            course_type: booking.courseType,
-                            status: 'package_purchased',
-                            price_paid: booking.price,
-                            currency: booking.currency,
-                            payment_method: paymentData.method,
-                            payment_reference: paymentData.transactionId,
-                            booking_number: bookingNumber,
-                            package_id: packageResult.package?.id,
-                            created_at: new Date().toISOString()
-                        });
+                    //const { error } = await supabase
+                      //  .from('bookings')
+                        //.insert({
+                          //  user_id: booking.userId,
+                           // course_type: booking.courseType,
+                 //           status: 'package_purchased',
+                   //         price_paid: booking.price,
+                     //       currency: booking.currency,
+                       //     payment_method: paymentData.method,
+                         //   payment_reference: paymentData.transactionId,
+          //                  booking_number: bookingNumber,
+            //                package_id: packageResult.package?.id,
+              //              created_at: new Date().toISOString()
+                //        });
                     
-                    if (error) {
-                        console.warn('⚠️ Erreur enregistrement achat forfait:', error);
-                    }
-                }
+                  //  if (error) {
+         //               console.warn('⚠️ Erreur enregistrement achat forfait:', error);
+           //         }
+             //   }
                 
                 return { success: true, package: packageResult.package };
             } else {
