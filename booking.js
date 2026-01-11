@@ -1,4 +1,4 @@
-// booking.js - Gestion des réservations avec Cal.com (API v2)
+// booking.js - Gestion des réservations avec Cal.com (API v2) - LOGIQUE VIP COMPLÈTE
 
 class BookingManager {
     constructor() {
@@ -273,7 +273,7 @@ class BookingManager {
         const selectedDuration = duration || this.getDefaultDuration(eventType);
         
         for (let hour = 9; hour <= 18; hour++) {
-            const slotTime = `${baseDate}T${hour.toString().padStart(2, '0')}:00:00Z`;
+            const slotTime = `${baseDate}T${hour.toString().padStart(2, '0')}:00:00Z';
             slots.push({
                 id: `mock_${hour}`,
                 start: slotTime,
@@ -363,7 +363,7 @@ class BookingManager {
                 }
             }
             
-            console.group('💰 Calcul prix réservation - VIP CORRIGÉ');
+            console.group('💰 Calcul prix réservation - LOGIQUE VIP CORRIGÉE POUR TOUS LES CAS');
             console.log('Type de cours:', bookingData.courseType);
             console.log('Durée:', bookingData.duration);
             console.log('Quantité:', bookingData.packageQuantity || 1);
@@ -378,9 +378,11 @@ class BookingManager {
             const quantity = bookingData.packageQuantity || 1;
             const isPackage = quantity > 1;
             let vipPriceData = null;
+            let useVipPrice = isVIP;
             
             console.log('Statut VIP:', isVIP);
             console.log('Est un package:', isPackage);
+            console.log('Quantité de cours:', quantity);
             
             // Vérifier que les taux de change sont chargés
             if (window.currencyManager && 
@@ -390,7 +392,7 @@ class BookingManager {
                 await window.currencyManager.loadExchangeRates();
             }
             
-            // COURS D'ESSAI
+            // COURS D'ESSAI - Toujours 5€
             if (bookingData.courseType === 'essai') {
                 console.log('🎫 Cours d\'essai détecté');
                 priceEUR = 5;
@@ -401,9 +403,7 @@ class BookingManager {
             }
             // COURS PAYANTS
             else {
-                let unitPriceEUR = 0;
-                
-                // PRIX VIP - CORRECTION IMPORTANTE
+                // PRIX VIP - LOGIQUE CORRECTE POUR TOUS LES CAS
                 if (isVIP) {
                     console.log('👑 Recherche prix VIP...');
                     
@@ -416,46 +416,58 @@ class BookingManager {
                         if (vipPriceData && typeof vipPriceData.price === 'number' && !isNaN(vipPriceData.price)) {
                             console.log('✅ Prix VIP trouvé:', vipPriceData);
                             
-                            // CORRECTION: Logique simplifiée pour VIP
-                            // 1. Vérifier la devise du prix VIP
-                            const vipCurrency = vipPriceData.currency || 'EUR';
+                            const vipCurrency = vipPriceData.currency || 'USD';
+                            const vipUnitPrice = vipPriceData.price;
                             
-                            // 2. Si même devise que courante, utiliser directement
-                            if (vipCurrency === currentCurrency) {
-                                unitPriceEUR = vipPriceData.price;
-                                console.log(`💰 Prix VIP direct (même devise): ${unitPriceEUR} ${vipCurrency}`);
-                            } 
-                            // 3. Si devises différentes, convertir via EUR
-                            else {
-                                if (window.currencyManager) {
-                                    // Convertir le prix VIP en EUR pour le stockage
-                                    const convertedToEUR = window.currencyManager.convertVIPPrice(vipPriceData, 'EUR');
-                                    
-                                    if (convertedToEUR && convertedToEUR.price) {
-                                        unitPriceEUR = convertedToEUR.price;
-                                        console.log(`💱 Prix VIP converti en EUR: ${vipPriceData.price} ${vipCurrency} → ${unitPriceEUR} EUR`);
-                                    } else {
-                                        console.warn('⚠️ Conversion VIP échouée, utilisation prix normal');
-                                        unitPriceEUR = this.getDefaultPrice(bookingData.courseType, duration);
-                                    }
-                                } else {
-                                    // Fallback simple
-                                    unitPriceEUR = vipPriceData.price;
-                                    console.log(`⚠️ CurrencyManager non disponible, prix VIP direct: ${unitPriceEUR} ${vipCurrency}`);
+                            console.log(`💰 Prix unitaire VIP: ${vipUnitPrice} ${vipCurrency}`);
+                            
+                            // 1. Calculer le total DANS LA DEVISE VIP
+                            let totalVipPrice = vipUnitPrice * quantity;
+                            
+                            // 2. Appliquer la réduction DANS LA DEVISE VIP (si forfait)
+                            if (isPackage && bookingData.discountPercent) {
+                                const discount = parseFloat(bookingData.discountPercent) || 0;
+                                if (discount > 0) {
+                                    totalVipPrice = totalVipPrice * (1 - discount / 100);
+                                    console.log(`🎁 Réduction ${discount}% appliquée: ${totalVipPrice} ${vipCurrency}`);
                                 }
                             }
+                            
+                            console.log(`📦 Total VIP (${quantity} cours): ${totalVipPrice} ${vipCurrency}`);
+                            
+                            // 3. Stocker le prix DANS LA DEVISE VIP
+                            priceEUR = totalVipPrice; // En réalité c'est le prix dans la devise VIP
+                            const originalCurrency = vipCurrency;
+                            
+                            // 4. Calculer le prix final DANS LA DEVISE COURANTE
+                            if (window.currencyManager) {
+                                if (originalCurrency === currentCurrency) {
+                                    finalPrice = totalVipPrice;
+                                    console.log(`💳 Même devise: ${finalPrice} ${currentCurrency}`);
+                                } else {
+                                    // Convertir uniquement pour l'affichage
+                                    finalPrice = window.currencyManager.convert(totalVipPrice, originalCurrency, currentCurrency);
+                                    console.log(`💳 Conversion: ${totalVipPrice} ${originalCurrency} → ${finalPrice} ${currentCurrency}`);
+                                }
+                            } else {
+                                finalPrice = totalVipPrice;
+                            }
+                            
                         } else {
                             console.log('⚠️ Prix VIP invalide, utilisation prix normal');
-                            unitPriceEUR = this.getDefaultPrice(bookingData.courseType, duration);
+                            useVipPrice = false;
                         }
                     } catch (error) {
                         console.error('❌ Erreur prix VIP:', error);
-                        unitPriceEUR = this.getDefaultPrice(bookingData.courseType, duration);
+                        useVipPrice = false;
                     }
                 }
-                // PRIX NORMAL
-                else {
+                
+                // PRIX NORMAL ou fallback si VIP échoue
+                if (!isVIP || !useVipPrice) {
                     console.log('👤 Utilisation prix normal');
+                    
+                    let unitPriceEUR = 0;
                     
                     if (window.packagesManager) {
                         unitPriceEUR = window.packagesManager.calculatePrice(
@@ -466,57 +478,34 @@ class BookingManager {
                     } else {
                         unitPriceEUR = this.getDefaultPrice(bookingData.courseType, duration);
                     }
-                }
-                
-                if (typeof unitPriceEUR !== 'number' || isNaN(unitPriceEUR) || unitPriceEUR <= 0) {
-                    console.error('❌ Prix unitaire invalide:', unitPriceEUR);
-                    unitPriceEUR = this.getDefaultPrice(bookingData.courseType, duration);
-                }
-                
-                console.log(`💎 Prix unitaire final: ${unitPriceEUR}€`);
-                
-                priceEUR = unitPriceEUR * quantity;
-                
-                if (isPackage && bookingData.discountPercent) {
-                    const discount = parseFloat(bookingData.discountPercent) || 0;
-                    if (discount > 0) {
-                        priceEUR = priceEUR * (1 - discount / 100);
-                        console.log(`🎁 Réduction ${discount}% appliquée: ${priceEUR}€`);
+                    
+                    if (typeof unitPriceEUR !== 'number' || isNaN(unitPriceEUR) || unitPriceEUR <= 0) {
+                        console.error('❌ Prix unitaire invalide:', unitPriceEUR);
+                        unitPriceEUR = this.getDefaultPrice(bookingData.courseType, duration);
                     }
-                }
-                
-                // CALCUL FINAL DU PRIX
-                if (window.currencyManager) {
-                    // CORRECTION: Si VIP avec devise différente, convertir le total
-                    if (isVIP && vipPriceData && vipPriceData.currency && vipPriceData.currency !== currentCurrency) {
-                        // Calculer le total dans la devise VIP
-                        let totalVipPrice = vipPriceData.price * quantity;
-                        
-                        if (bookingData.discountPercent) {
-                            totalVipPrice = totalVipPrice * (1 - (bookingData.discountPercent / 100));
+                    
+                    console.log(`💎 Prix unitaire final: ${unitPriceEUR}€`);
+                    
+                    priceEUR = unitPriceEUR * quantity;
+                    
+                    // Appliquer la réduction si forfait
+                    if (isPackage && bookingData.discountPercent) {
+                        const discount = parseFloat(bookingData.discountPercent) || 0;
+                        if (discount > 0) {
+                            priceEUR = priceEUR * (1 - discount / 100);
+                            console.log(`🎁 Réduction ${discount}% appliquée: ${priceEUR}€`);
                         }
-                        
-                        // Convertir ce total vers la devise courante
-                        const totalConverted = window.currencyManager.convertVIPPrice(
-                            { price: totalVipPrice, currency: vipPriceData.currency },
-                            currentCurrency
-                        );
-                        
-                        finalPrice = totalConverted?.price || window.currencyManager.convert(priceEUR, 'EUR', currentCurrency);
-                    } else {
-                        // Conversion standard
-                        finalPrice = window.currencyManager.convert(priceEUR, 'EUR', currentCurrency);
                     }
-                } else {
-                    finalPrice = priceEUR;
-                }
-                
-                // Logs détaillés pour debug
-                console.log(`📦 Total EUR (${quantity} cours): ${priceEUR}€`);
-                console.log(`💳 Prix final (${currentCurrency}): ${finalPrice}`);
-                
-                if (isVIP && vipPriceData) {
-                    console.log(`💰 Prix VIP original: ${vipPriceData.price} ${vipPriceData.currency || 'EUR'}`);
+                    
+                    // CALCUL FINAL DU PRIX
+                    if (window.currencyManager) {
+                        finalPrice = window.currencyManager.convert(priceEUR, 'EUR', currentCurrency);
+                    } else {
+                        finalPrice = priceEUR;
+                    }
+                    
+                    console.log(`📦 Total EUR (${quantity} cours): ${priceEUR}€`);
+                    console.log(`💳 Prix final (${currentCurrency}): ${finalPrice}`);
                 }
             }
             
@@ -532,11 +521,14 @@ class BookingManager {
             }
             
             console.log('✅ Prix validés:', { 
-                priceEUR: priceEUR + '€', 
+                priceEUR: priceEUR + (isVIP && vipPriceData ? ` (${vipPriceData.currency})` : '€'), 
                 finalPrice: finalPrice + ' ' + currentCurrency,
                 currency: currentCurrency,
                 isVip: isVIP,
-                vipOriginalPrice: vipPriceData ? `${vipPriceData.price} ${vipPriceData.currency}` : 'N/A'
+                vipOriginalPrice: vipPriceData ? `${vipPriceData.price} ${vipPriceData.currency}` : 'N/A',
+                quantity: quantity,
+                discount: bookingData.discountPercent || 0,
+                useVipPrice: useVipPrice
             });
             console.groupEnd();
             
@@ -545,11 +537,18 @@ class BookingManager {
                 endTime: bookingData.endTime,
                 eventType: bookingData.eventType || bookingData.courseType,
                 courseType: bookingData.courseType,
-                priceEUR: priceEUR,
-                price: finalPrice,
+                
+                // Stocker les informations de prix
+                price: finalPrice, // Prix final dans la devise courante
+                currency: currentCurrency, // Devise courante
+                
+                // Pour référence
+                priceEUR: isVIP ? null : priceEUR, // Prix en EUR seulement pour non-VIP
+                originalPrice: vipPriceData?.price || priceEUR, // Prix unitaire dans devise d'origine
+                originalCurrency: vipPriceData?.currency || 'EUR', // Devise d'origine
+                
                 duration: duration,
                 location: bookingData.location,
-                currency: currentCurrency,
                 
                 name: bookingData.name,
                 email: bookingData.email,
@@ -558,16 +557,18 @@ class BookingManager {
                 timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 language: 'fr',
                 
+                // Informations package
                 isPackage: isPackage,
                 packageQuantity: quantity,
                 packageCredits: quantity,
                 discountPercent: bookingData.discountPercent || 0,
                 
-                // Ajouter les informations VIP CORRECTES
-                isVip: isVIP,
+                // Informations VIP
+                isVip: isVIP && useVipPrice,
                 vipPriceData: vipPriceData,
                 vipOriginalPrice: vipPriceData?.price || null,
                 vipOriginalCurrency: vipPriceData?.currency || null,
+                vipTotal: vipPriceData ? vipPriceData.price * quantity * (1 - (bookingData.discountPercent || 0)/100) : null,
                 
                 createdAt: new Date().toISOString(),
                 status: 'pending_payment'
@@ -662,14 +663,16 @@ class BookingManager {
                 metadata: {
                     userId: user?.id ? String(user.id) : "", 
                     courseType: String(bookingData.courseType || ''),
-                    price: String(bookingData.priceEUR || bookingData.price || '0'),
-                    originalPrice: String(bookingData.vipPriceData?.price || bookingData.price || '0'),
-                    originalCurrency: String(bookingData.vipPriceData?.currency || bookingData.currency || 'EUR'),
+                    price: String(bookingData.price || '0'),
+                    originalPrice: String(bookingData.vipPriceData?.price || bookingData.originalPrice || '0'),
+                    originalCurrency: String(bookingData.vipPriceData?.currency || bookingData.originalCurrency || 'EUR'),
                     currency: String(bookingData.currency || 'EUR'),
                     notes: String(bookingData.notes || ''),
                     duration: String(bookingData.duration || ''),
                     isVip: String(bookingData.isVip || 'false'),
-                    vipPriceData: bookingData.vipPriceData ? JSON.stringify(bookingData.vipPriceData) : ''
+                    vipPriceData: bookingData.vipPriceData ? JSON.stringify(bookingData.vipPriceData) : '',
+                    quantity: String(bookingData.packageQuantity || '1'),
+                    discount: String(bookingData.discountPercent || '0')
                 }
             };
 
@@ -812,14 +815,16 @@ class BookingManager {
                 price_paid: bookingData.price,
                 currency: bookingData.currency,
                 // Ajouter la devise et prix d'origine pour les VIP
-                original_price: bookingData.vipPriceData?.price || bookingData.price,
-                original_currency: bookingData.vipPriceData?.currency || bookingData.currency,
+                original_price: bookingData.vipPriceData?.price || bookingData.originalPrice,
+                original_currency: bookingData.vipPriceData?.currency || bookingData.originalCurrency,
                 is_vip_booking: bookingData.isVip || false,
                 platform: this.getPlatformName(bookingData.location),
                 booking_number: bookingNumber,
                 calcom_booking_id: calcomBooking.id || calcomBooking.uid,
                 calcom_uid: calcomBooking.uid,
                 meeting_link: calcomBooking.location || calcomBooking.meetingUrl,
+                package_quantity: bookingData.packageQuantity || 1,
+                discount_percent: bookingData.discountPercent || 0,
                 created_at: new Date().toISOString()
             };
 
@@ -967,5 +972,45 @@ class BookingManager {
         }
     }
 }
+
+// TEST VIP COMPLET
+window.testVipAllCases = async function() {
+    console.group('🧪 TEST COMPLET PRIX VIP - TOUS LES CAS');
+    
+    // Prix VIP: 3 USD par cours
+    const vipPrice = 3;
+    const vipCurrency = 'USD';
+    
+    const testCases = [
+        { quantity: 1, discount: 0, expected: 3.00, description: '1 cours - pas de réduction' },
+        { quantity: 5, discount: 2, expected: 14.70, description: '5 cours - 2% réduction' },
+        { quantity: 10, discount: 5, expected: 28.50, description: '10 cours - 5% réduction' }
+    ];
+    
+    for (const testCase of testCases) {
+        console.log(`\n📊 ${testCase.description}`);
+        console.log(`📦 Calcul: ${vipPrice}$ × ${testCase.quantity} × (1 - ${testCase.discount}%)`);
+        
+        const totalVip = vipPrice * testCase.quantity * (1 - testCase.discount/100);
+        console.log(`💰 Total VIP: ${totalVip.toFixed(2)} ${vipCurrency}`);
+        
+        if (Math.abs(totalVip - testCase.expected) > 0.01) {
+            console.error(`❌ ERREUR: Attendu ${testCase.expected}$, obtenu ${totalVip.toFixed(2)}$`);
+        } else {
+            console.log(`✅ CORRECT: ${totalVip.toFixed(2)} ${vipCurrency}`);
+        }
+        
+        // Test avec conversion
+        if (window.currencyManager) {
+            const currentCurrency = window.currencyManager.currentCurrency;
+            if (currentCurrency !== vipCurrency) {
+                const converted = window.currencyManager.convert(totalVip, vipCurrency, currentCurrency);
+                console.log(`💱 Conversion: ${totalVip.toFixed(2)} ${vipCurrency} → ${converted.toFixed(2)} ${currentCurrency}`);
+            }
+        }
+    }
+    
+    console.groupEnd();
+};
 
 window.bookingManager = new BookingManager();

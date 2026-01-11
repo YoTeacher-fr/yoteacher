@@ -684,47 +684,84 @@ class AuthManager {
     }
 
     // MÉTHODE : Obtenir le prix VIP pour un type de cours et une durée
-    async getVipPrice(courseType, duration) {
-        try {
-            if (!this.supabaseReady || !window.supabase || !this.user) {
-                console.log('❌ Conditions VIP non remplies');
-                return null;
-            }
+    // auth.js - MÉTHODE getVipPrice améliorée
 
-            const durationInt = parseInt(duration);
-            console.log(`🔍 Recherche prix VIP pour ${courseType} - ${durationInt}min, user: ${this.user.id}`);
+async getVipPrice(courseType, duration) {
+    try {
+        if (!this.supabaseReady || !window.supabase || !this.user) {
+            console.log('❌ Conditions VIP non remplies');
+            return null;
+        }
+
+        const durationInt = parseInt(duration);
+        console.log(`🔍 Recherche prix VIP pour ${courseType} - ${durationInt}min, user: ${this.user.id}`);
+        
+        // Chercher d'abord le prix exact pour cette durée
+        const { data, error } = await supabase
+            .from('vip_pricing')
+            .select('price, currency, duration_minutes')
+            .eq('user_id', this.user.id)
+            .eq('course_type', courseType)
+            .eq('duration_minutes', durationInt)
+            .maybeSingle();
+
+        if (error) {
+            console.warn('⚠️ Erreur requête prix VIP:', error);
+            return null;
+        }
+
+        if (data) {
+            console.log('✅ Prix VIP exact trouvé:', data);
             
-            const { data, error } = await supabase
-                .from('vip_pricing')
-                .select('price, currency, duration_minutes')
-                .eq('user_id', this.user.id)
-                .eq('course_type', courseType)
-                .eq('duration_minutes', durationInt)
-                .maybeSingle();
-
-            if (error) {
-                console.warn('⚠️ Erreur requête prix VIP:', error);
-                return null;
-            }
-
-            if (!data) {
-                console.log(`ℹ️ Aucun prix VIP trouvé pour ${courseType} ${durationInt}min`);
-                return null;
-            }
-
-            console.log('✅ Prix VIP trouvé:', data);
-            
-            // Retourner les données brutes, la conversion sera faite par currencyManager
             return {
                 price: parseFloat(data.price),
                 currency: data.currency,
-                duration: data.duration_minutes
+                duration: data.duration_minutes,
+                isExact: true
             };
-        } catch (error) {
-            console.warn('Exception lors de la récupération du prix VIP:', error);
+        }
+
+        // Si pas de prix exact, chercher le prix pour 60min et ajuster
+        console.log(`ℹ️ Pas de prix exact pour ${durationInt}min, recherche 60min...`);
+        
+        const { data: data60, error: error60 } = await supabase
+            .from('vip_pricing')
+            .select('price, currency')
+            .eq('user_id', this.user.id)
+            .eq('course_type', courseType)
+            .eq('duration_minutes', 60)
+            .maybeSingle();
+
+        if (error60) {
+            console.warn('⚠️ Erreur recherche prix 60min:', error60);
             return null;
         }
+
+        if (data60) {
+            // Ajuster le prix selon la durée
+            const basePrice = parseFloat(data60.price);
+            const adjustedPrice = basePrice * (durationInt / 60);
+            
+            console.log(`📏 Prix ajusté: ${basePrice}${data60.currency} (60min) → ${adjustedPrice.toFixed(2)}${data60.currency} (${durationInt}min)`);
+            
+            return {
+                price: adjustedPrice,
+                currency: data60.currency,
+                duration: durationInt,
+                isExact: false,
+                basePrice: basePrice,
+                baseDuration: 60
+            };
+        }
+
+        console.log(`ℹ️ Aucun prix VIP trouvé pour ${courseType}`);
+        return null;
+        
+    } catch (error) {
+        console.warn('Exception lors de la récupération du prix VIP:', error);
+        return null;
     }
+}
 
     // AJOUTER après la méthode getVipPrice :
     async loadVipPrices() {

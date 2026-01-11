@@ -1,4 +1,5 @@
-// payment.js - Gestionnaire de paiement adapté à votre schéma Supabase
+// payment.js - Gestionnaire de paiement adapté à votre schéma Supabase - LOGIQUE VIP COMPLÈTE
+
 class PaymentManager {
     constructor() {
         this.config = window.YOTEACHER_CONFIG || {};
@@ -99,7 +100,7 @@ class PaymentManager {
     const summaryElement = document.getElementById('paymentSummary');
     if (!summaryElement) return;
     
-    console.group('📋 Affichage récapitulatif paiement');
+    console.group('📋 Affichage récapitulatif paiement - VERSION COMPLÈTE');
     console.log('Booking reçu:', booking);
     
     const bookingDate = new Date(booking.startTime);
@@ -118,25 +119,40 @@ class PaymentManager {
     const platformName = this.getPlatformName(booking.location);
     
     let formattedPrice = '';
+    let originalPriceDisplay = '';
     
     console.log('Prix bruts:', {
         price: booking.price,
-        priceEUR: booking.priceEUR,
-        currency: booking.currency
+        currency: booking.currency,
+        isVip: booking.isVip,
+        vipTotal: booking.vipTotal,
+        discountPercent: booking.discountPercent
     });
     
     if (window.currencyManager) {
-        formattedPrice = window.currencyManager.formatPrice(
-            booking.price,
-            booking.currency || window.currencyManager.currentCurrency
-        );
+        formattedPrice = window.currencyManager.formatPriceInCurrency(booking.price, booking.currency);
+        
+        // Afficher le prix original pour les VIP
+        if (booking.isVip && booking.vipPriceData) {
+            originalPriceDisplay = window.currencyManager.formatPriceInCurrency(
+                booking.vipPriceData.price, 
+                booking.vipPriceData.currency
+            );
+        }
     } else {
         formattedPrice = `${booking.price.toFixed(2)} ${booking.currency || 'EUR'}`;
+        if (booking.isVip && booking.vipPriceData) {
+            originalPriceDisplay = `${booking.vipPriceData.price.toFixed(2)} ${booking.vipPriceData.currency}`;
+        }
     }
     
     console.log('Prix formaté:', formattedPrice);
+    if (originalPriceDisplay) {
+        console.log('Prix original VIP:', originalPriceDisplay);
+    }
     
     let packageInfo = '';
+    let discountInfo = '';
     
     if (booking.courseType === 'essai') {
         packageInfo = `
@@ -147,12 +163,27 @@ class PaymentManager {
         `;
     } else if (booking.isPackage && booking.packageQuantity > 1) {
         const discount = booking.discountPercent || 0;
+        const savings = booking.isVip ? 
+            (booking.vipPriceData.price * booking.packageQuantity * (discount/100)) :
+            (booking.originalPrice * booking.packageQuantity * (discount/100));
+            
         packageInfo = `
             <div class="summary-item">
                 <span class="label">Type d'achat:</span>
-                <span class="value">Forfait ${booking.packageQuantity} cours ${discount > 0 ? `(-${discount}%)` : ''}</span>
+                <span class="value">Forfait ${booking.packageQuantity} cours</span>
             </div>
         `;
+        
+        if (discount > 0) {
+            discountInfo = `
+                <div class="summary-item highlight">
+                    <span class="label">Réduction:</span>
+                    <span class="value">${discount}% (économie: ${window.currencyManager ? 
+                        window.currencyManager.formatPriceInCurrency(savings, booking.currency) : 
+                        savings.toFixed(2)} ${booking.currency})</span>
+                </div>
+            `;
+        }
     } else {
         packageInfo = `
             <div class="summary-item">
@@ -162,15 +193,36 @@ class PaymentManager {
         `;
     }
     
+    let vipInfo = '';
+    if (booking.isVip) {
+        vipInfo = `
+            <div class="summary-item vip-highlight">
+                <span class="label">Statut:</span>
+                <span class="value"><i class="fas fa-crown"></i> Prix VIP appliqué</span>
+            </div>
+        `;
+        
+        if (originalPriceDisplay && booking.packageQuantity > 1) {
+            vipInfo += `
+                <div class="summary-item">
+                    <span class="label">Prix unitaire VIP:</span>
+                    <span class="value">${originalPriceDisplay}</span>
+                </div>
+            `;
+        }
+    }
+    
     summaryElement.innerHTML = `
         <div class="booking-summary-card">
             <h3 style="margin-bottom: 20px;"><i class="fas fa-calendar-check"></i> Récapitulatif</h3>
             <div class="summary-details">
+                ${vipInfo}
                 <div class="summary-item">
                     <span class="label">Type de cours:</span>
                     <span class="value">${this.getCourseName(booking.courseType)}</span>
                 </div>
                 ${packageInfo}
+                ${discountInfo}
                 <div class="summary-item">
                     <span class="label">Date:</span>
                     <span class="value">${formattedDate}</span>
@@ -314,16 +366,28 @@ class PaymentManager {
         try {
             const apiUrl = this.config.STRIPE_BACKEND_URL || '/api/stripe-payment';
             
-            // Convertir le prix en centimes pour Stripe
+            // Utiliser le prix déjà calculé dans la devise courante
             let amountInCents = Math.round(this.currentBooking.price * 100);
             let currency = this.currentBooking.currency || 'eur';
             
-            // Si le CurrencyManager est disponible, utiliser la conversion
-            if (window.currencyManager) {
-                const amountEUR = this.currentBooking.priceEUR || this.currentBooking.price;
-                const convertedAmount = window.currencyManager.convert(amountEUR, 'EUR', window.currencyManager.currentCurrency);
-                amountInCents = Math.round(convertedAmount * 100);
-                currency = window.currencyManager.currentCurrency.toLowerCase();
+            // Pour Stripe, convertir en minuscules et valider la devise
+            currency = currency.toLowerCase();
+            
+            // Vérifier que Stripe supporte cette devise
+            const stripeSupportedCurrencies = [
+                'usd', 'eur', 'gbp', 'cad', 'aud', 'chf', 'jpy', 'sgd',
+                'hkd', 'nzd', 'sek', 'nok', 'dkk', 'pln', 'mxn', 'brl',
+                'inr', 'rub', 'try', 'zar', 'aed', 'sar', 'thb', 'krw', 'myr'
+            ];
+            
+            if (!stripeSupportedCurrencies.includes(currency)) {
+                // Fallback en USD
+                console.warn(`⚠️ Devise ${currency} non supportée par Stripe, conversion en USD`);
+                if (window.currencyManager) {
+                    const amountUSD = window.currencyManager.convert(this.currentBooking.price, currency, 'USD');
+                    amountInCents = Math.round(amountUSD * 100);
+                    currency = 'usd';
+                }
             }
             
             const response = await fetch(apiUrl, {
@@ -369,10 +433,10 @@ class PaymentManager {
         }
     }
     
-    // Méthode pour traiter l'achat de forfait
+    // Méthode pour traiter l'achat de forfait - VERSION CORRIGÉE
     async processPackagePurchase(paymentData) {
         try {
-            console.log('📦 Traitement achat forfait...');
+            console.group('📦 Traitement achat forfait - LOGIQUE CORRECTE');
             
             const booking = this.currentBooking;
             
@@ -385,8 +449,25 @@ class PaymentManager {
                 quantity: booking.packageQuantity,
                 price: booking.price,
                 currency: booking.currency,
+                originalCurrency: booking.originalCurrency,
+                vipOriginalPrice: booking.vipPriceData?.price,
+                isVip: booking.isVip,
+                discountPercent: booking.discountPercent || 0,
                 userId: booking.userId
             });
+            
+            // DÉTERMINER LE PRIX À UTILISER
+            let packagePrice = booking.price;
+            let packageCurrency = booking.currency;
+            
+            // Si VIP, utiliser le prix VIP dans la devise d'origine
+            if (booking.isVip && booking.vipTotal) {
+                packagePrice = booking.vipTotal;
+                packageCurrency = booking.vipOriginalCurrency || booking.originalCurrency;
+                console.log(`💰 Utilisation prix VIP: ${packagePrice} ${packageCurrency}`);
+            }
+            
+            console.log(`💳 Prix final pour forfait: ${packagePrice} ${packageCurrency}`);
             
             // Ajouter les crédits à l'utilisateur via PackagesManager
             if (window.packagesManager && booking.userId) {
@@ -394,11 +475,11 @@ class PaymentManager {
                     booking.userId,
                     booking.courseType,
                     booking.packageQuantity,
-                    booking.price,
-                    booking.currency,
+                    packagePrice,
+                    packageCurrency,
                     paymentData.method,
                     paymentData.transactionId,
-			booking
+                    booking
                 );
                 
                 if (!packageResult.success) {
@@ -407,42 +488,52 @@ class PaymentManager {
                 
                 console.log('✅ Forfait acheté avec succès:', packageResult.package);
                 
-                // Créer une réservation pour enregistrer l'achat
-                //if (window.supabase && booking.userId) {
-                  //  const bookingNumber = `PKG-${Date.now().toString().slice(-8)}`;
+                // Créer une entrée dans la table packages
+                if (window.supabase && booking.userId) {
+                    const bookingNumber = `PKG-${Date.now().toString().slice(-8)}`;
                     
-                    //const { error } = await supabase
-                      //  .from('bookings')
-                        //.insert({
-                          //  user_id: booking.userId,
-                           // course_type: booking.courseType,
-                 //           status: 'package_purchased',
-                   //         price_paid: booking.price,
-                     //       currency: booking.currency,
-                       //     payment_method: paymentData.method,
-                         //   payment_reference: paymentData.transactionId,
-          //                  booking_number: bookingNumber,
-            //                package_id: packageResult.package?.id,
-              //              created_at: new Date().toISOString()
-                //        });
+                    const { error } = await supabase
+                        .from('bookings')
+                        .insert({
+                            user_id: booking.userId,
+                            course_type: booking.courseType,
+                            status: 'package_purchased',
+                            price_paid: packagePrice,
+                            currency: packageCurrency,
+                            original_price: booking.vipPriceData?.price || booking.originalPrice,
+                            original_currency: booking.vipPriceData?.currency || booking.originalCurrency,
+                            payment_method: paymentData.method,
+                            payment_reference: paymentData.transactionId,
+                            booking_number: bookingNumber,
+                            package_id: packageResult.package?.id,
+                            package_quantity: booking.packageQuantity,
+                            discount_percent: booking.discountPercent || 0,
+                            is_vip_booking: booking.isVip || false,
+                            created_at: new Date().toISOString()
+                        });
                     
-                  //  if (error) {
-         //               console.warn('⚠️ Erreur enregistrement achat forfait:', error);
-           //         }
-             //   }
+                    if (error) {
+                        console.warn('⚠️ Erreur enregistrement achat forfait:', error);
+                    } else {
+                        console.log('✅ Enregistrement achat forfait créé');
+                    }
+                }
                 
+                console.groupEnd();
                 return { success: true, package: packageResult.package };
             } else {
                 throw new Error('PackagesManager non disponible');
             }
         } catch (error) {
             console.error('❌ Erreur traitement forfait:', error);
+            console.groupEnd();
             return { success: false, error: error.message };
         }
     }
     
     async completePayment(method, transactionId = null) {
-    console.log('✅ Finalisation paiement:', method);
+    console.group('✅ Finalisation paiement - LOGIQUE COMPLÈTE');
+    console.log('Méthode:', method, 'Transaction ID:', transactionId);
     
     try {
         // Créer les données de paiement
@@ -469,10 +560,11 @@ class PaymentManager {
         let resultMessage = '';
         let bookingResult = null;
         
-        // Traiter différemment selon le type d'achat
+        // TRAITEMENT DIFFÉRENCIÉ
         if (this.currentBooking.isPackage) {
             // ACHAT DE FORFAIT AVEC RÉSERVATION IMMÉDIATE
             console.log('📦 Traitement achat forfait avec réservation immédiate');
+            
             try {
                 // 1. Acheter le forfait (crée le package avec X crédits)
                 const packageResult = await this.processPackagePurchase(paymentData);
@@ -491,7 +583,9 @@ class PaymentManager {
                     const tempBookingData = {
                         id: 'temp_' + Date.now(),
                         courseType: this.currentBooking.courseType,
-                        userId: this.currentBooking.userId
+                        userId: this.currentBooking.userId,
+                        startTime: this.currentBooking.startTime,
+                        duration: this.currentBooking.duration
                     };
                     
                     const useCreditResult = await window.packagesManager.useCredit(
@@ -502,8 +596,13 @@ class PaymentManager {
                     
                     if (!useCreditResult.success) {
                         console.warn('⚠️ Erreur utilisation crédit:', useCreditResult.error);
+                        // Mettre à jour le statut pour indiquer l'erreur
+                        this.currentBooking.creditError = useCreditResult.error;
+                        hasWarning = true;
                     } else {
                         console.log(`✅ 1 crédit utilisé, reste: ${this.currentBooking.packageQuantity - 1} crédits`);
+                        this.currentBooking.creditsUsed = 1;
+                        this.currentBooking.remainingCredits = this.currentBooking.packageQuantity - 1;
                     }
                 }
                 
@@ -524,13 +623,16 @@ class PaymentManager {
                         
                         // 4. Sauvegarder la réservation dans la base
                         if (window.authManager?.saveBookingData) {
-                            await window.authManager.saveBookingData({
+                            const saveResult = await window.authManager.saveBookingData({
                                 ...this.currentBooking,
                                 paymentMethod: method,
                                 transactionId: transactionId,
                                 packageId: packageResult.package?.id,
-                                creditsUsed: 1
+                                creditsUsed: 1,
+                                remainingCredits: this.currentBooking.packageQuantity - 1
                             });
+                            
+                            console.log('✅ Réservation sauvegardée:', saveResult);
                         }
                     } else {
                         throw new Error(bookingResult?.error || 'Échec Cal.com');
@@ -544,6 +646,7 @@ class PaymentManager {
                 hasWarning = true;
                 this.currentBooking.status = 'payment_ok_booking_failed';
                 resultMessage = 'Paiement réussi mais erreur lors de la réservation du cours. Contactez le support pour régulariser votre forfait.';
+                this.currentBooking.errorDetails = packageError.message;
             }
         } else {
             // RÉSERVATION DE COURS UNIQUE (sans forfait)
@@ -573,6 +676,7 @@ class PaymentManager {
                 hasWarning = true;
                 this.currentBooking.status = 'payment_ok_reservation_failed';
                 resultMessage = 'Paiement réussi mais erreur lors de la création de la réservation. Contactez le support.';
+                this.currentBooking.errorDetails = calcomError.message;
             }
         }
         
@@ -584,19 +688,24 @@ class PaymentManager {
             success: true,
             warning: hasWarning,
             message: resultMessage,
-            booking: this.currentBooking
+            booking: this.currentBooking,
+            timestamp: new Date().toISOString()
         }));
         
         // Encoder les données de réservation pour l'URL
         const bookingEncoded = encodeURIComponent(JSON.stringify(this.currentBooking));
         const redirectUrl = `payment-success.html?booking=${bookingEncoded}&warning=${hasWarning}`;
         
+        console.log('🔄 Redirection vers:', redirectUrl);
+        console.groupEnd();
+        
         setTimeout(() => {
             window.location.href = redirectUrl;
-        }, 1000);
+        }, 1500);
         
     } catch (error) {
         console.error('❌ Erreur finalisation:', error);
+        console.groupEnd();
         this.showPaymentError('Erreur lors de la finalisation du paiement: ' + error.message);
     }
 }
@@ -642,6 +751,102 @@ class PaymentManager {
     }
 }
 
+// Fonctions de test VIP
+window.testVipPaymentLogic = async function() {
+    console.group('🧪 TEST LOGIQUE DE PAIEMENT VIP');
+    
+    // Simuler différents scénarios
+    const testScenarios = [
+        {
+            name: '1 cours VIP',
+            isVip: true,
+            vipPrice: 3,
+            vipCurrency: 'USD',
+            quantity: 1,
+            discount: 0,
+            expected: 3.00
+        },
+        {
+            name: '5 cours VIP (-2%)',
+            isVip: true,
+            vipPrice: 3,
+            vipCurrency: 'USD',
+            quantity: 5,
+            discount: 2,
+            expected: 14.70
+        },
+        {
+            name: '10 cours VIP (-5%)',
+            isVip: true,
+            vipPrice: 3,
+            vipCurrency: 'USD',
+            quantity: 10,
+            discount: 5,
+            expected: 28.50
+        },
+        {
+            name: '1 cours normal',
+            isVip: false,
+            basePrice: 20,
+            quantity: 1,
+            discount: 0,
+            expected: 20.00
+        },
+        {
+            name: '5 cours normal (-2%)',
+            isVip: false,
+            basePrice: 20,
+            quantity: 5,
+            discount: 2,
+            expected: 98.00
+        },
+        {
+            name: '10 cours normal (-5%)',
+            isVip: false,
+            basePrice: 20,
+            quantity: 10,
+            discount: 5,
+            expected: 190.00
+        }
+    ];
+    
+    for (const scenario of testScenarios) {
+        console.log(`\n📊 ${scenario.name}:`);
+        
+        if (scenario.isVip) {
+            const total = scenario.vipPrice * scenario.quantity * (1 - scenario.discount/100);
+            console.log(`  Calcul: ${scenario.vipPrice}${scenario.vipCurrency} × ${scenario.quantity} × (1 - ${scenario.discount}%)`);
+            console.log(`  Total attendu: ${total.toFixed(2)} ${scenario.vipCurrency}`);
+            
+            if (Math.abs(total - scenario.expected) < 0.01) {
+                console.log(`  ✅ CORRECT`);
+            } else {
+                console.log(`  ❌ ERREUR: Attendu ${scenario.expected}, obtenu ${total.toFixed(2)}`);
+            }
+        } else {
+            const total = scenario.basePrice * scenario.quantity * (1 - scenario.discount/100);
+            console.log(`  Calcul: ${scenario.basePrice}€ × ${scenario.quantity} × (1 - ${scenario.discount}%)`);
+            console.log(`  Total attendu: ${total.toFixed(2)}€`);
+            
+            if (Math.abs(total - scenario.expected) < 0.01) {
+                console.log(`  ✅ CORRECT`);
+            } else {
+                console.log(`  ❌ ERREUR: Attendu ${scenario.expected}€, obtenu ${total.toFixed(2)}€`);
+            }
+        }
+    }
+    
+    console.groupEnd();
+};
+
 // Initialiser
 window.paymentManager = new PaymentManager();
-console.log('💳 PaymentManager prêt pour schéma Supabase');
+console.log('💳 PaymentManager prêt avec logique VIP complète');
+
+// Test automatique au chargement
+if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+    setTimeout(() => {
+        console.log('🧪 Test automatique de la logique de paiement');
+        window.testVipPaymentLogic();
+    }, 3000);
+}

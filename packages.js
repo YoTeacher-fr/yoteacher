@@ -1,11 +1,12 @@
-// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase
+// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - LOGIQUE RÉDUCTION CORRECTE
+
 class PackagesManager {
     constructor() {
         this.packages = {
             'conversation': {
                 single: { price: 20, duration: 60 },
                 package5: { price: 98, discount_percent: 2, total_credits: 5 },
-                package10: { price: 190, discount_percent: 10, total_credits: 10 }
+                package10: { price: 190, discount_percent: 5, total_credits: 10 }
             },
             'curriculum': {
                 single: { price: 35, duration: 60 },
@@ -21,6 +22,8 @@ class PackagesManager {
                 single: { price: 5, duration: 15 }
             }
         };
+        
+        console.log('📦 PackagesManager initialisé avec réductions: 5 cours (-2%), 10 cours (-5%)');
     }
 
     calculatePrice(courseType, quantity = 1, duration = 60) {
@@ -47,6 +50,7 @@ class PackagesManager {
             return packageType.package10.price;
         }
         
+        // Fallback : prix normal sans réduction
         return packageType.single.price * quantity;
     }
 
@@ -58,20 +62,23 @@ class PackagesManager {
             return {
                 total_credits: packageType.package5.total_credits,
                 discount_percent: packageType.package5.discount_percent,
-                pricePerCourse: packageType.package5.price / quantity
+                pricePerCourse: packageType.package5.price / quantity,
+                basePricePerCourse: packageType.single.price
             };
         } else if (quantity === 10 && packageType.package10) {
             return {
                 total_credits: packageType.package10.total_credits,
                 discount_percent: packageType.package10.discount_percent,
-                pricePerCourse: packageType.package10.price / quantity
+                pricePerCourse: packageType.package10.price / quantity,
+                basePricePerCourse: packageType.single.price
             };
         }
 
         return { 
             total_credits: 1, 
-            discount_percent: null, 
-            pricePerCourse: this.calculatePrice(courseType, 1, 60) 
+            discount_percent: 0, 
+            pricePerCourse: this.calculatePrice(courseType, 1, 60),
+            basePricePerCourse: this.calculatePrice(courseType, 1, 60)
         };
     }
 
@@ -225,6 +232,20 @@ class PackagesManager {
                 throw new Error('Type de forfait non valide');
             }
 
+            // Calculer le prix par cours pour le forfait
+            const pricePerCourse = price / quantity;
+            
+            console.log('📦 Création package avec détails:', {
+                user_id: userId,
+                course_type: courseType,
+                quantity: quantity,
+                total_price: price,
+                currency: currency,
+                price_per_course: pricePerCourse,
+                discount_percent: packageInfo.discount_percent || 0,
+                base_price_per_course: packageInfo.basePricePerCourse || 0
+            });
+
             // Créer un nouveau package
             const { data: newPackage, error: packageError } = await supabase
                 .from('packages')
@@ -235,12 +256,16 @@ class PackagesManager {
                     total_credits: packageInfo.total_credits,
                     remaining_credits: packageInfo.total_credits,
                     price_paid: price,
+                    price_per_course: pricePerCourse,
+                    base_price_per_course: packageInfo.basePricePerCourse || 0,
                     discount_percent: packageInfo.discount_percent || 0,
                     currency: currency,
                     status: 'active',
                     purchased_at: new Date().toISOString(),
                     expires_at: expiresAt.toISOString(),
-                    expiration_alert_sent: false
+                    expiration_alert_sent: false,
+                    payment_method: paymentMethod,
+                    transaction_id: transactionId
                 })
                 .select()
                 .single();
@@ -253,6 +278,8 @@ class PackagesManager {
                 course_type: newPackage.course_type,
                 total_credits: newPackage.total_credits,
                 remaining_credits: newPackage.remaining_credits,
+                price_per_course: newPackage.price_per_course,
+                discount_percent: newPackage.discount_percent,
                 expires_at: newPackage.expires_at
             });
 
@@ -267,7 +294,7 @@ class PackagesManager {
                         credits_change: packageInfo.total_credits,
                         credits_after: packageInfo.total_credits,
                         transaction_type: 'purchase',
-                        reason: `Achat forfait ${quantity} ${courseType}`,
+                        reason: `Achat forfait ${quantity} ${courseType} (${packageInfo.discount_percent || 0}% de réduction)`,
                         created_at: new Date().toISOString()
                     });
 
@@ -318,7 +345,7 @@ class PackagesManager {
         const packageInfo = this.getPackageInfo(courseType, quantity);
         
         let display = `Forfait ${quantity} cours`;
-        if (packageInfo?.discount_percent) {
+        if (packageInfo?.discount_percent && packageInfo.discount_percent > 0) {
             display += ` (${packageInfo.discount_percent}% de réduction)`;
         }
         
@@ -356,7 +383,8 @@ class PackagesManager {
                 price: packageInfo.package5.price,
                 discount_percent: packageInfo.package5.discount_percent,
                 total_credits: packageInfo.package5.total_credits,
-                pricePerCourse: packageInfo.package5.price / packageInfo.package5.total_credits
+                pricePerCourse: packageInfo.package5.price / packageInfo.package5.total_credits,
+                savings: (packageInfo.single.price * 5) - packageInfo.package5.price
             };
         }
         
@@ -365,7 +393,8 @@ class PackagesManager {
                 price: packageInfo.package10.price,
                 discount_percent: packageInfo.package10.discount_percent,
                 total_credits: packageInfo.package10.total_credits,
-                pricePerCourse: packageInfo.package10.price / packageInfo.package10.total_credits
+                pricePerCourse: packageInfo.package10.price / packageInfo.package10.total_credits,
+                savings: (packageInfo.single.price * 10) - packageInfo.package10.price
             };
         }
         
@@ -375,6 +404,54 @@ class PackagesManager {
     isPackageQuantity(quantity) {
         return quantity === 5 || quantity === 10;
     }
+    
+    // MÉTHODE : Calculer l'économie pour un forfait
+    calculateSavings(courseType, quantity) {
+        const packageInfo = this.getPackageInfo(courseType, quantity);
+        if (!packageInfo || quantity === 1) return 0;
+        
+        const singlePrice = this.calculatePrice(courseType, 1, 60);
+        const packagePrice = this.calculatePrice(courseType, quantity, 60);
+        
+        return (singlePrice * quantity) - packagePrice;
+    }
 }
 
+// Fonctions de test
+window.testPackagePrices = function() {
+    console.group('🧪 TEST PRIX FORFAITS');
+    
+    const manager = window.packagesManager || new PackagesManager();
+    const courseTypes = ['conversation', 'curriculum', 'examen'];
+    
+    for (const courseType of courseTypes) {
+        console.log(`\n📚 ${courseType.toUpperCase()}:`);
+        
+        for (const quantity of [1, 5, 10]) {
+            const price = manager.calculatePrice(courseType, quantity);
+            const packageInfo = manager.getPackageInfo(courseType, quantity);
+            
+            console.log(`  ${quantity} cours: ${price}€ (réduction: ${packageInfo?.discount_percent || 0}%)`);
+            
+            if (quantity > 1) {
+                const pricePerCourse = price / quantity;
+                const singlePrice = manager.calculatePrice(courseType, 1);
+                const savings = (singlePrice * quantity) - price;
+                
+                console.log(`    → ${pricePerCourse.toFixed(2)}€/cours (économie: ${savings.toFixed(2)}€)`);
+            }
+        }
+    }
+    
+    console.groupEnd();
+};
+
 window.packagesManager = new PackagesManager();
+
+// Test automatique au chargement
+if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+    setTimeout(() => {
+        console.log('🧪 Test automatique des prix de forfaits');
+        window.testPackagePrices();
+    }, 2000);
+}
