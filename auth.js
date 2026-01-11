@@ -717,9 +717,11 @@ vipPrices: this.user.vipPrices,
         }
 
         console.log('✅ Prix VIP trouvé:', data);
+        
+        // Retourner les données brutes, la conversion sera faite plus tard
         return {
-            price: parseFloat(data.price), // Convertir en nombre
-            currency: data.currency || 'EUR',
+            price: parseFloat(data.price),
+            currency: data.currency,
             duration: data.duration_minutes
         };
     } catch (error) {
