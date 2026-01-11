@@ -1260,137 +1260,84 @@
     <script src="common.js"></script>
 
     <script>
-        // SCRIPT JAVASCRIPT POUR BOOKING.HTML
-        document.addEventListener('DOMContentLoaded', function() {
-            let selectedDate = null;
-            let selectedTime = null;
-            let selectedSlot = null;
-            let currentMonth = new Date().getMonth();
-            let currentYear = new Date().getFullYear();
-            
-            // NOUVELLE VARIABLE: Suivre si c'est la première initialisation
-            let isFirstLoad = true;
+    // SCRIPT JAVASCRIPT POUR BOOKING.HTML
+    document.addEventListener('DOMContentLoaded', function() {
+        let selectedDate = null;
+        let selectedTime = null;
+        let selectedSlot = null;
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let vipPriceInfo = null; // Variable globale pour stocker les infos prix VIP
+        
+        // NOUVELLE VARIABLE: Suivre si c'est la première initialisation
+        let isFirstLoad = true;
 
-            // Éléments DOM
-            const errorDiv = document.getElementById('errorMessage');
-            const successDiv = document.getElementById('successMessage');
-            const errorText = document.getElementById('errorText');
-            const successText = document.getElementById('successText');
-            const calendarDays = document.getElementById('calendarDays');
-            const timeSlots = document.getElementById('timeSlots');
-            const currentMonthElement = document.getElementById('currentMonth');
-            const bookingForm = document.getElementById('bookingForm');
-            const submitButton = document.getElementById('submitBooking');
-            const durationGroup = document.getElementById('durationGroup');
-            const durationInput = document.getElementById('duration');
-            const basePriceInput = document.getElementById('basePriceEUR');
-            const loginRequired = document.getElementById('loginRequired');
-            const courseTypeName = document.getElementById('courseTypeName');
-            const loginLink = document.getElementById('loginLink');
-            const signupLink = document.getElementById('signupLink');
-            const selectedLocationInput = document.getElementById('selectedLocation');
-            const coursesCountGroup = document.getElementById('coursesCountGroup');
-            const coursesCountInput = document.getElementById('coursesCount');
-            const discountPercentInput = document.getElementById('discountPercent');
+        // Éléments DOM
+        const errorDiv = document.getElementById('errorMessage');
+        const successDiv = document.getElementById('successMessage');
+        const errorText = document.getElementById('errorText');
+        const successText = document.getElementById('successText');
+        const calendarDays = document.getElementById('calendarDays');
+        const timeSlots = document.getElementById('timeSlots');
+        const currentMonthElement = document.getElementById('currentMonth');
+        const bookingForm = document.getElementById('bookingForm');
+        const submitButton = document.getElementById('submitBooking');
+        const durationGroup = document.getElementById('durationGroup');
+        const durationInput = document.getElementById('duration');
+        const basePriceInput = document.getElementById('basePriceEUR');
+        const loginRequired = document.getElementById('loginRequired');
+        const courseTypeName = document.getElementById('courseTypeName');
+        const loginLink = document.getElementById('loginLink');
+        const signupLink = document.getElementById('signupLink');
+        const selectedLocationInput = document.getElementById('selectedLocation');
+        const coursesCountGroup = document.getElementById('coursesCountGroup');
+        const coursesCountInput = document.getElementById('coursesCount');
+        const discountPercentInput = document.getElementById('discountPercent');
 
-            // Stocker le type de cours avant redirection
-            let preLoginCourseType = null;
+        // Stocker le type de cours avant redirection
+        let preLoginCourseType = null;
 
-            // Initialiser la page
-            initializePage();
+        // Initialiser la page
+        initializePage();
 
-            // Navigation du calendrier
-            document.getElementById('prevMonth').addEventListener('click', () => {
-                currentMonth--;
-                if (currentMonth < 0) {
-                    currentMonth = 11;
-                    currentYear--;
-                }
-                initCalendar();
-            });
+        // Navigation du calendrier
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            initCalendar();
+        });
 
-            document.getElementById('nextMonth').addEventListener('click', () => {
-                currentMonth++;
-                if (currentMonth > 11) {
-                    currentMonth = 0;
-                    currentYear++;
-                }
-                initCalendar();
-            });
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            initCalendar();
+        });
 
-            // Changement de type de cours
-            document.getElementById('courseType').addEventListener('change', function() {
-                const courseType = this.value;
-                preLoginCourseType = courseType;
-                updateUIForCourseType(courseType, true);
-                if (selectedDate) {
-                    loadAvailableSlots(selectedDate);
-                }
-                updateSummary();
-            });
+        // Changement de type de cours
+        document.getElementById('courseType').addEventListener('change', function() {
+            const courseType = this.value;
+            preLoginCourseType = courseType;
+            updateUIForCourseType(courseType, true);
+            if (selectedDate) {
+                loadAvailableSlots(selectedDate);
+            }
+            updateSummary();
+        });
 
-            // Gestion des boutons de durée
-            document.querySelectorAll('.duration-option').forEach(button => {
-                if (button.hasAttribute('data-duration')) {
-                    button.addEventListener('click', function(e) {
-                        e.preventDefault(); // Empêcher tout comportement par défaut
-                        
-                        // Retirer la sélection précédente
-                        document.querySelectorAll('.duration-option[data-duration]').forEach(btn => {
-                            btn.classList.remove('selected');
-                        });
-                        
-                        // Ajouter la nouvelle sélection
-                        this.classList.add('selected');
-                        
-                        // Mettre à jour la valeur
-                        const duration = this.getAttribute('data-duration');
-                        durationInput.value = duration;
-                        
-                        // Mettre à jour le prix de base
-                        const basePrice = this.getAttribute('data-price-eur') || '20';
-                        basePriceInput.value = basePrice;
-                        
-                        // Recharger les créneaux si une date est sélectionnée
-                        if (selectedDate) {
-                            loadAvailableSlots(selectedDate);
-                        }
-                        
-                        updateSummary();
-                    });
-                }
-            });
-
-            // Gestion des boutons de nombre de cours
-            document.querySelectorAll('.courses-count-option').forEach(button => {
+        // Gestion des boutons de durée
+        document.querySelectorAll('.duration-option').forEach(button => {
+            if (button.hasAttribute('data-duration')) {
                 button.addEventListener('click', function(e) {
                     e.preventDefault(); // Empêcher tout comportement par défaut
                     
                     // Retirer la sélection précédente
-                    document.querySelectorAll('.courses-count-option').forEach(btn => {
-                        btn.classList.remove('selected');
-                    });
-                    
-                    // Ajouter la nouvelle sélection
-                    this.classList.add('selected');
-                    
-                    // Mettre à jour les valeurs
-                    const count = this.getAttribute('data-count');
-                    const discount = this.getAttribute('data-discount');
-                    coursesCountInput.value = count;
-                    discountPercentInput.value = discount;
-                    
-                    updateSummary();
-                });
-            });
-
-            // Gestion des boutons de moyen de communication
-            document.querySelectorAll('.location-btn').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault(); // Empêcher tout comportement par défaut
-                    
-                    // Retirer la sélection précédente
-                    document.querySelectorAll('.location-btn').forEach(btn => {
+                    document.querySelectorAll('.duration-option[data-duration]').forEach(btn => {
                         btn.classList.remove('selected');
                     });
                     
@@ -1398,952 +1345,904 @@
                     this.classList.add('selected');
                     
                     // Mettre à jour la valeur
-                    const location = this.getAttribute('data-location');
-                    selectedLocationInput.value = location;
+                    const duration = this.getAttribute('data-duration');
+                    durationInput.value = duration;
+                    
+                    // Mettre à jour le prix de base
+                    const basePrice = this.getAttribute('data-price-eur') || '20';
+                    basePriceInput.value = basePrice;
+                    
+                    // Recharger les créneaux si une date est sélectionnée
+                    if (selectedDate) {
+                        loadAvailableSlots(selectedDate);
+                    }
                     
                     updateSummary();
                 });
-            });
-
-            // Soumission du formulaire
-            bookingForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                if (!window.currencyManager) {
-                    showError('Système de devise non disponible. Veuillez rafraîchir la page.');
-                    return;
-                }
-                
-                if (!selectedDate || !selectedTime) {
-                    showError('Veuillez sélectionner une date et une heure');
-                    return;
-                }
-
-                const courseType = document.getElementById('courseType').value;
-                const name = document.getElementById('name').value;
-                const email = document.getElementById('email').value;
-                const notes = document.getElementById('notes').value;
-                const location = selectedLocationInput.value;
-                const coursesCount = parseInt(coursesCountInput.value);
-                const discountPercent = parseFloat(discountPercentInput.value);
-
-                // Validation
-                if (!courseType || !name || !email) {
-                    showError('Veuillez remplir tous les champs obligatoires');
-                    return;
-                }
-
-                // Vérifier si l'utilisateur doit être connecté
-                if ((courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') && !window.authManager?.getCurrentUser()) {
-                    showError('Veuillez vous connecter pour réserver ce type de cours');
-                    return;
-                }
-
-                hideMessages();
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
-
-                try {
-                    // Utiliser les données du créneau sélectionné
-                    if (!selectedSlot) {
-                        throw new Error('Aucun créneau sélectionné');
-                    }
-
-                    // Déterminer la durée et le prix EN EUR (prix de base)
-                    let duration = selectedSlot.durationInMinutes || 15;
-                    let priceEUR = 5;
-                    
-                    // CORRECTION: Utiliser la durée du créneau pour calculer le prix
-                    const user = window.authManager?.getCurrentUser();
-                    const isVIP = window.authManager?.isUserVip();
-
-                    if (isVIP) {
-                        const vipPrice = await window.authManager.getVipPrice(courseType, duration);
-                        if (vipPrice) {
-                            priceEUR = vipPrice.price;
-                        } else {
-                            // Fallback prix normal
-                            if (courseType === 'conversation') {
-                                priceEUR = duration === 30 ? 10 : duration === 45 ? 15 : 20;
-                            }
-                        }
-                    } else {
-                        if (courseType === 'conversation') {
-                            priceEUR = duration === 30 ? 10 : duration === 45 ? 15 : 20;
-                        } else if (courseType === 'curriculum') {
-                            priceEUR = duration === 30 ? 17.5 : duration === 45 ? 26.25 : 35;
-                        } else if (courseType === 'examen') {
-                            priceEUR = duration === 30 ? 15 : duration === 45 ? 22.5 : 30;
-                        }
-                    }
-
-                    // Appliquer le nombre de cours
-                    let totalPriceEUR = priceEUR * coursesCount;
-                    
-                    // Appliquer la réduction
-                    if (discountPercent > 0) {
-                        totalPriceEUR = totalPriceEUR * (1 - discountPercent / 100);
-                    }
-
-                    // Convertir le prix dans la devise actuelle pour l'affichage
-                    const currentCurrency = window.currencyManager?.currentCurrency || 'EUR';
-                    const convertedPrice = window.currencyManager?.convert(totalPriceEUR, 'EUR', currentCurrency) || totalPriceEUR;
-                    
-                    const bookingData = {
-                        eventType: courseType,
-                        startTime: selectedSlot.start,
-                        endTime: selectedSlot.end,
-                        name: name,
-                        email: email,
-                        notes: notes,
-                        courseType: courseType,
-                        priceEUR: totalPriceEUR,
-                        basePriceEUR: priceEUR,
-                        price: convertedPrice,
-                        duration: duration,
-                        packageQuantity: coursesCount,
-                        coursesCount: coursesCount,
-                        discountPercent: discountPercent,
-                        location: location,
-                        lengthInMinutes: courseType !== 'essai' ? duration : undefined,
-                        currency: currentCurrency
-                    };
-
-                    // Appeler la méthode qui prépare les données SANS créer sur Cal.com
-                    const result = await window.bookingManager.createBooking(bookingData);
-                    
-                    if (result.success) {
-                        showSuccess('Redirection vers le paiement...');
-                        
-                        // Redirection vers la page de paiement
-                        setTimeout(() => {
-                            window.location.href = result.redirectTo;
-                        }, 1000);
-                    } else {
-                        throw new Error(result.error || 'Erreur inconnue');
-                    }
-
-                } catch (error) {
-                    showError('Erreur lors de la préparation : ' + error.message);
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="fas fa-calendar-check"></i> Réserver et payer';
-                }
-            });
-
-            // Écouter les événements d'authentification
-            window.addEventListener('auth:login', function() {
-                console.log('Utilisateur connecté, mise à jour de l\'interface');
-                updateUserInterface();
-            });
-
-            window.addEventListener('auth:logout', function() {
-                console.log('Utilisateur déconnecté, mise à jour de l\'interface');
-                updateUserInterface();
-            });
-            
-            // Écouter les changements de devise
-            window.addEventListener('currency:ready', function() {
-                updateSummary();
-            });
-            
-            window.addEventListener('currency:changed', function() {
-                updateSummary();
-            });
-            
-            // Écouter les changements de langue
-            window.addEventListener('language:changed', function() {
-                // Mettre à jour le calendrier avec les noms de mois dans la bonne langue
-                initCalendar();
-                updateSummary();
-            });
-            
-            // ===== NOUVEAU: Écouter les événements VIP =====
-            window.addEventListener('vip:loaded', function() {
-                console.log('🎁 Prix VIP chargés dans booking.html, mise à jour des prix');
-                updateUserInterface();
-                updateSummary();
-            });
-
-            // Fonction pour initialiser le sélecteur de devise mobile
-            function initMobileCurrencySelector() {
-                const mobileSelector = document.getElementById('currencySelectorMobile');
-                if (!mobileSelector || !window.currencyManager) return;
-                
-                // Vider les options existantes
-                mobileSelector.innerHTML = '';
-                
-                // Remplir les options
-                window.currencyManager.supportedCurrencies.forEach(currency => {
-                    const option = document.createElement('option');
-                    option.value = currency;
-                    option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
-                    
-                    if (currency === window.currencyManager.currentCurrency) {
-                        option.selected = true;
-                    }
-                    
-                    mobileSelector.appendChild(option);
-                });
-                
-                // Écouter les changements
-                mobileSelector.addEventListener('change', (e) => {
-                    const newCurrency = e.target.value;
-                    if (window.currencyManager.setCurrency(newCurrency)) {
-                        // Fermer le menu mobile après changement
-                        const mobileMenu = document.getElementById('mobileMenu');
-                        if (mobileMenu) {
-                            mobileMenu.classList.remove('active');
-                        }
-                    }
-                });
             }
+        });
 
-            // Fonctions
-            function initializePage() {
-                // Récupérer le type de cours depuis l'URL
-                const urlParams = new URLSearchParams(window.location.search);
-                let courseTypeParam = urlParams.get('type');
+        // Gestion des boutons de nombre de cours
+        document.querySelectorAll('.courses-count-option').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault(); // Empêcher tout comportement par défaut
                 
-                // Si pas de paramètre "type", vérifier dans localStorage
-                if (!courseTypeParam || !['essai', 'conversation', 'curriculum', 'examen'].includes(courseTypeParam)) {
-                    const storedCourseType = localStorage.getItem('preLoginCourseType');
-                    
-                    if (storedCourseType && ['essai', 'conversation', 'curriculum', 'examen'].includes(storedCourseType)) {
-                        courseTypeParam = storedCourseType;
-                        localStorage.removeItem('preLoginCourseType');
-                    } else {
-                        courseTypeParam = 'essai';
-                    }
-                }
-                
-                // Forcer la sélection dans le dropdown
-                document.getElementById('courseType').value = courseTypeParam;
-                preLoginCourseType = courseTypeParam;
-                
-                // Stocker aussi dans l'URL si ce n'est pas déjà fait
-                if (!urlParams.has('type')) {
-                    const newUrl = new URL(window.location);
-                    newUrl.searchParams.set('type', courseTypeParam);
-                    window.history.replaceState({}, '', newUrl);
-                }
-                
-                // NOUVELLE LOGIQUE: Pré-sélectionner 60min, 10 cours, Google Meet
-                preselectDefaults();
-                
-                // Initialiser le calendrier
-                initCalendar();
-                
-                // Charger les créneaux pour aujourd'hui par défaut
-                const today = new Date().toISOString().split('T')[0];
-                selectToday(today);
-                
-                // Mettre à jour l'interface
-                updateUIForCourseType(document.getElementById('courseType').value, false);
-                
-                // Mettre à jour l'interface utilisateur
-                updateUserInterface();
-                
-                // Marquer que le premier chargement est terminé
-                setTimeout(() => {
-                    isFirstLoad = false;
-                }, 1000);
-                
-                // Initialiser le sélecteur de devise mobile
-                window.addEventListener('currency:ready', function() {
-                    initMobileCurrencySelector();
-                });
-                
-                // Gestion du menu mobile
-                initMobileMenu();
-            }
-            
-            // Initialiser le menu mobile
-            function initMobileMenu() {
-                const hamburgerBtn = document.getElementById('hamburgerBtn');
-                const closeMenuBtn = document.getElementById('closeMenuBtn');
-                const mobileMenu = document.getElementById('mobileMenu');
-                
-                if (hamburgerBtn && mobileMenu) {
-                    hamburgerBtn.addEventListener('click', () => {
-                        mobileMenu.classList.add('active');
-                    });
-                }
-                
-                if (closeMenuBtn && mobileMenu) {
-                    closeMenuBtn.addEventListener('click', () => {
-                        mobileMenu.classList.remove('active');
-                    });
-                }
-                
-                // Fermer le menu en cliquant en dehors
-                if (mobileMenu) {
-                    mobileMenu.addEventListener('click', (e) => {
-                        if (e.target === mobileMenu) {
-                            mobileMenu.classList.remove('active');
-                        }
-                    });
-                }
-                
-                // Gestion du changement de langue mobile
-                const mobileLanguageSwitcher = document.getElementById('languageSwitcherMobile');
-                if (mobileLanguageSwitcher) {
-                    mobileLanguageSwitcher.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (window.translationManager) {
-                            window.translationManager.toggleLanguage();
-                        }
-                        
-                        // Fermer le menu mobile après changement
-                        if (mobileMenu) {
-                            mobileMenu.classList.remove('active');
-                        }
-                    });
-                }
-                
-                // Gestion du changement de langue desktop
-                const desktopLanguageSwitcher = document.getElementById('languageSwitcherDesktop');
-                if (desktopLanguageSwitcher) {
-                    desktopLanguageSwitcher.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (window.translationManager) {
-                            window.translationManager.toggleLanguage();
-                        }
-                    });
-                }
-            }
-            
-            // NOUVELLE FONCTION: Pré-sélectionner les valeurs par défaut
-            function preselectDefaults() {
-                // Pré-sélectionner 60 min
-                const duration60Btn = document.querySelector('.duration-option[data-duration="60"]');
-                if (duration60Btn) {
-                    document.querySelectorAll('.duration-option[data-duration]').forEach(btn => {
-                        btn.classList.remove('selected');
-                    });
-                    duration60Btn.classList.add('selected');
-                    durationInput.value = '60';
-                    basePriceInput.value = duration60Btn.getAttribute('data-price-eur') || '20';
-                }
-                
-                // Pré-sélectionner 10 cours
-                const courses10Btn = document.querySelector('.courses-count-option[data-count="10"]');
-                if (courses10Btn) {
-                    document.querySelectorAll('.courses-count-option').forEach(btn => {
-                        btn.classList.remove('selected');
-                    });
-                    courses10Btn.classList.add('selected');
-                    coursesCountInput.value = '10';
-                    discountPercentInput.value = courses10Btn.getAttribute('data-discount') || '5';
-                }
-                
-                // Pré-sélectionner Google Meet
-                const meetBtn = document.querySelector('.location-btn[data-location*="google"]');
-                if (meetBtn) {
-                    document.querySelectorAll('.location-btn').forEach(btn => {
-                        btn.classList.remove('selected');
-                    });
-                    meetBtn.classList.add('selected');
-                    selectedLocationInput.value = meetBtn.getAttribute('data-location');
-                }
-            }
-
-            function initCalendar() {
-                // Déterminer la langue actuelle
-                const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
-                
-                const monthNamesFr = [
-                    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-                    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-                ];
-                
-                const monthNamesEn = [
-                    'January', 'February', 'March', 'April', 'May', 'June',
-                    'July', 'August', 'September', 'October', 'November', 'December'
-                ];
-                
-                const monthNames = isFrench ? monthNamesFr : monthNamesEn;
-                currentMonthElement.textContent = `${monthNames[currentMonth]} ${currentYear}`;
-
-                const firstDay = new Date(currentYear, currentMonth, 1);
-                const lastDay = new Date(currentYear, currentMonth + 1, 0);
-                const daysInMonth = lastDay.getDate();
-                const startingDay = firstDay.getDay();
-
-                const dayHeadersFr = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-                const dayHeadersEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                const dayHeaders = isFrench ? dayHeadersFr : dayHeadersEn;
-                
-                calendarDays.innerHTML = '';
-
-                dayHeaders.forEach(day => {
-                    const dayElement = document.createElement('div');
-                    dayElement.className = 'calendar-day-header';
-                    dayElement.textContent = day;
-                    calendarDays.appendChild(dayElement);
-                });
-
-                for (let i = 0; i < startingDay; i++) {
-                    const emptyDay = document.createElement('div');
-                    emptyDay.className = 'calendar-day disabled';
-                    calendarDays.appendChild(emptyDay);
-                }
-
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const date = new Date(currentYear, currentMonth, day);
-                    const dayElement = document.createElement('div');
-                    dayElement.className = 'calendar-day';
-                    dayElement.textContent = day;
-                    dayElement.setAttribute('data-date', 
-                        `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-                    );
-                    
-                    if (date.getDate() === today.getDate() && 
-                        date.getMonth() === today.getMonth() && 
-                        date.getFullYear() === today.getFullYear()) {
-                        dayElement.classList.add('today');
-                    }
-
-                    if (date < today) {
-                        dayElement.classList.add('disabled');
-                    } else {
-                        dayElement.addEventListener('click', () => selectDate(
-                            `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-                        ));
-                    }
-
-                    calendarDays.appendChild(dayElement);
-                }
-            }
-
-            function selectToday(today) {
-                const todayElement = document.querySelector(`.calendar-day[data-date="${today}"]`);
-                if (todayElement && !todayElement.classList.contains('disabled')) {
-                    selectDate(today);
-                } else {
-                    const firstAvailable = document.querySelector('.calendar-day:not(.disabled)');
-                    if (firstAvailable) {
-                        selectDate(firstAvailable.getAttribute('data-date'));
-                    }
-                }
-            }
-
-            function updateUIForCourseType(courseType, forceUpdate = false) {
-                console.log('updateUIForCourseType appelé avec:', courseType, 'forceUpdate:', forceUpdate);
-                
-                preLoginCourseType = courseType;
-                
-                const user = window.authManager?.getCurrentUser();
-                const isLoggedIn = !!user;
-                
-                console.log('Utilisateur connecté:', isLoggedIn, 'User:', user);
-                
-                if (courseType && courseType !== 'essai') {
-                    const redirectUrl = `booking.html?type=${courseType}`;
-                    loginLink.href = `login.html?redirect=${encodeURIComponent(redirectUrl)}`;
-                    signupLink.href = `signup.html?redirect=${encodeURIComponent(redirectUrl)}`;
-                    localStorage.setItem('preLoginCourseType', courseType);
-                }
-                
-                if (courseType === 'essai') {
-                    durationGroup.classList.remove('visible');
-                    coursesCountGroup.style.display = 'none';
-                    loginRequired.style.display = 'none';
-                } else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
-                    if (isLoggedIn) {
-                        durationGroup.classList.add('visible');
-                        coursesCountGroup.style.display = 'block';
-                        loginRequired.style.display = 'none';
-                        console.log('Sélecteur de durée affiché pour', courseType);
-                    } else {
-                        durationGroup.classList.remove('visible');
-                        coursesCountGroup.style.display = 'none';
-                        loginRequired.style.display = 'block';
-                        // Mettre à jour le nom du type de cours dans le message
-                        if (window.translationManager) {
-                            if (courseType === 'conversation') courseTypeName.textContent = window.translationManager.getTranslation('courses.conversation');
-                            else if (courseType === 'curriculum') courseTypeName.textContent = window.translationManager.getTranslation('courses.curriculum');
-                            else if (courseType === 'examen') courseTypeName.textContent = window.translationManager.getTranslation('courses.exam');
-                        } else {
-                            if (courseType === 'conversation') courseTypeName.textContent = 'Conversation';
-                            else if (courseType === 'curriculum') courseTypeName.textContent = 'Curriculum complet';
-                            else if (courseType === 'examen') courseTypeName.textContent = 'Préparation d\'examen';
-                        }
-                        console.log('Message connexion affiché pour', courseType);
-                    }
-                } else {
-                    durationGroup.classList.remove('visible');
-                    coursesCountGroup.style.display = 'none';
-                    loginRequired.style.display = 'none';
-                }
-                
-                if (isLoggedIn && user) {
-                    document.getElementById('name').value = user.user_metadata?.full_name || user.email?.split('@')[0] || '';
-                    document.getElementById('email').value = user.email || '';
-                }
-                
-                if (forceUpdate && selectedDate) {
-                    loadAvailableSlots(selectedDate);
-                }
-                
-                updateSummary();
-            }
-
-            async function loadAvailableSlots(date = null) {
-                try {
-                    const loadingText = window.translationManager ? 
-                        window.translationManager.getTranslation('booking.loading_slots') : 
-                        'Chargement des créneaux...';
-                    
-                    timeSlots.innerHTML = `<div class="loading-slots"><i class="fas fa-spinner fa-spin"></i> ${loadingText}</div>`;
-                    
-                    const courseType = document.getElementById('courseType').value || 'essai';
-                    
-                    let duration = null;
-                    if (courseType !== 'essai' && durationGroup.classList.contains('visible')) {
-                        duration = parseInt(durationInput.value) || 60;
-                    }
-                    
-                    const slots = await window.bookingManager.getAvailableSlots(courseType, date, duration);
-                    
-                    timeSlots.innerHTML = '';
-                    
-                    if (slots.length === 0) {
-                        const noSlotsText = window.translationManager ?
-                            window.translationManager.getTranslation('booking.no_slots') :
-                            'Aucun créneau disponible pour cette date.';
-                        timeSlots.innerHTML = `<p class="no-slots">${noSlotsText}</p>`;
-                        return;
-                    }
-
-                    let hasFutureSlots = false;
-                    
-                    slots.forEach(slot => {
-                        const slotDate = new Date(slot.start);
-                        const now = new Date();
-                        
-                        if (slotDate > now) {
-                            hasFutureSlots = true;
-                            const slotElement = document.createElement('div');
-                            slotElement.className = 'time-slot';
-                            
-                            // Déterminer la langue pour le format d'heure
-                            const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
-                            const timeOptions = { hour: '2-digit', minute: '2-digit' };
-                            
-                            slotElement.innerHTML = `
-                                <div class="time-slot-time">
-                                    <i class="far fa-clock"></i>
-                                    ${slotDate.toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions)}
-                                </div>
-                                <div class="time-slot-duration">
-                                    ${window.bookingManager.formatTime(slot.start)} - ${slot.duration}
-                                </div>
-                            `;
-                            
-                            slotElement.addEventListener('click', () => selectTimeSlot(slot, slotElement));
-                            timeSlots.appendChild(slotElement);
-                        }
-                    });
-
-                    if (!hasFutureSlots) {
-                        const noFutureSlotsText = window.translationManager ?
-                            window.translationManager.getTranslation('booking.no_future_slots') :
-                            'Tous les créneaux sont complets pour aujourd\'hui.';
-                        timeSlots.innerHTML = `<p class="no-slots">${noFutureSlotsText}</p>`;
-                    }
-
-                } catch (error) {
-                    console.error('Erreur chargement créneaux:', error);
-                    
-                    const errorTitle = window.translationManager ?
-                        window.translationManager.getTranslation('booking.error_loading') :
-                        'Erreur lors du chargement des créneaux';
-                    
-                    const retryText = window.translationManager ?
-                        window.translationManager.getTranslation('booking.retry') :
-                        'Réessayer';
-                    
-                    timeSlots.innerHTML = `
-                        <div class="error-slots">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <p>${errorTitle}</p>
-                            <p class="error-details">${error.message || 'Veuillez réessayer'}</p>
-                            <button onclick="loadAvailableSlots('${date}')" class="retry-btn">
-                                <i class="fas fa-redo"></i> ${retryText}
-                            </button>
-                        </div>
-                    `;
-                }
-            }
-
-            function selectDate(date) {
-                selectedDate = date;
-                
-                document.querySelectorAll('.calendar-day').forEach(dayEl => {
-                    dayEl.classList.remove('selected');
-                });
-                
-                const selectedDayElement = document.querySelector(`.calendar-day[data-date="${date}"]`);
-                if (selectedDayElement) {
-                    selectedDayElement.classList.add('selected');
-                }
-                
-                loadAvailableSlots(selectedDate);
-                updateSummary();
-            }
-
-            function selectTimeSlot(slot, element) {
                 // Retirer la sélection précédente
-                document.querySelectorAll('.time-slot').forEach(slotEl => {
-                    slotEl.classList.remove('selected');
+                document.querySelectorAll('.courses-count-option').forEach(btn => {
+                    btn.classList.remove('selected');
                 });
-
+                
                 // Ajouter la nouvelle sélection
-                element.classList.add('selected');
+                this.classList.add('selected');
                 
-                selectedSlot = slot;
-                
-                // Déterminer la langue pour le format d'heure
-                const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
-                const timeOptions = { hour: '2-digit', minute: '2-digit' };
-                
-                selectedTime = new Date(slot.start).toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions);
-                
-                // NE PLUS changer automatiquement la durée sélectionnée
-                // L'utilisateur garde sa sélection
+                // Mettre à jour les valeurs
+                const count = this.getAttribute('data-count');
+                const discount = this.getAttribute('data-discount');
+                coursesCountInput.value = count;
+                discountPercentInput.value = discount;
                 
                 updateSummary();
+            });
+        });
+
+        // Gestion des boutons de moyen de communication
+        document.querySelectorAll('.location-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault(); // Empêcher tout comportement par défaut
+                
+                // Retirer la sélection précédente
+                document.querySelectorAll('.location-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                
+                // Ajouter la nouvelle sélection
+                this.classList.add('selected');
+                
+                // Mettre à jour la valeur
+                const location = this.getAttribute('data-location');
+                selectedLocationInput.value = location;
+                
+                updateSummary();
+            });
+        });
+
+        // Soumission du formulaire
+        bookingForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!window.currencyManager) {
+                showError('Système de devise non disponible. Veuillez rafraîchir la page.');
+                return;
+            }
+            
+            if (!selectedDate || !selectedTime) {
+                showError('Veuillez sélectionner une date et une heure');
+                return;
             }
 
-            async function updateSummary() {
-    const courseType = document.getElementById('courseType').value;
-    const user = window.authManager?.getCurrentUser();
-    let courseName = '-';
-    let price = '-';
-    let duration = '-';
-    let platform = 'Google Meet';
-    const coursesCount = parseInt(coursesCountInput.value);
-    const discountPercent = parseFloat(discountPercentInput.value);
-    
-    const isVip = window.authManager?.isUserVip();
-    console.log(`💰 [updateSummary] Statut VIP: ${isVip}, Type: ${courseType}`);
-    
-    // Déclarer vipPriceInfo en dehors des blocs conditionnels
-    let vipPriceInfo = null;
-    
-    // Déterminer la plateforme
-    const locationValue = selectedLocationInput.value;
-    if (locationValue.includes('zoom')) platform = window.translationManager ? window.translationManager.getTranslation('booking.zoom') : 'Zoom';
-    else if (locationValue.includes('google')) platform = window.translationManager ? window.translationManager.getTranslation('booking.meet') : 'Google Meet';
-    else if (locationValue.includes('teams')) platform = window.translationManager ? window.translationManager.getTranslation('booking.teams') : 'Microsoft Teams';
+            const courseType = document.getElementById('courseType').value;
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const notes = document.getElementById('notes').value;
+            const location = selectedLocationInput.value;
+            const coursesCount = parseInt(coursesCountInput.value);
+            const discountPercent = parseFloat(discountPercentInput.value);
 
-    // COURS D'ESSAI
-    if (courseType === 'essai') {
-        console.log('🎫 Cours d\'essai détecté');
-        courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
-        duration = '15 min';
-        
-        let unitPriceEUR = 5;
-        let totalPriceEUR = unitPriceEUR;
-        
-        if (window.currencyManager) {
-            price = window.currencyManager.formatPrice(totalPriceEUR);
-        } else {
-            price = totalPriceEUR + '€';
-        }
-        
-        console.log(`✅ Prix essai: ${price}`);
-    } 
-    // COURS PAYANTS
-else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
-    if (courseType === 'conversation') {
-        courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
-    } else if (courseType === 'curriculum') {
-        courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
-    } else if (courseType === 'examen') {
-        courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
-    }
-    
-    if (user && durationGroup.classList.contains('visible')) {
-        const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
-        duration = selectedDuration + ' min';
-        
-        let unitPriceEUR = 0;
-        
-        console.log(`📊 Calcul prix pour ${courseType} ${selectedDuration}min`);
-        
-        // PRIX VIP
-        if (isVip) {
-            console.log(`👑 Utilisateur VIP, recherche prix personnalisé...`);
-            
+            // Validation
+            if (!courseType || !name || !email) {
+                showError('Veuillez remplir tous les champs obligatoires');
+                return;
+            }
+
+            // Vérifier si l'utilisateur doit être connecté
+            if ((courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') && !window.authManager?.getCurrentUser()) {
+                showError('Veuillez vous connecter pour réserver ce type de cours');
+                return;
+            }
+
+            hideMessages();
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+
             try {
-                vipPriceInfo = await window.authManager.getVipPrice(courseType, selectedDuration);
+                // Utiliser les données du créneau sélectionné
+                if (!selectedSlot) {
+                    throw new Error('Aucun créneau sélectionné');
+                }
+
+                // Déterminer la durée et le prix EN EUR (prix de base)
+                let duration = selectedSlot.durationInMinutes || 15;
                 
-                if (vipPriceInfo && typeof vipPriceInfo.price === 'number' && !isNaN(vipPriceInfo.price)) {
-                    console.log(`✅ Prix VIP trouvé:`, vipPriceInfo);
+                const user = window.authManager?.getCurrentUser();
+                const isVIP = window.authManager?.isUserVip();
+
+                // Préparer les données de réservation
+                const bookingData = {
+                    startTime: selectedSlot.start,
+                    endTime: selectedSlot.end,
+                    courseType: courseType,
+                    duration: duration,
+                    location: location,
+                    name: name,
+                    email: email,
+                    notes: notes,
+                    packageQuantity: coursesCount,
+                    discountPercent: discountPercent
+                };
+
+                // Appeler la méthode qui prépare les données SANS créer sur Cal.com
+                const result = await window.bookingManager.createBooking(bookingData);
+                
+                if (result.success) {
+                    showSuccess('Redirection vers le paiement...');
                     
-                    // Utiliser le nouveau système de conversion multi-devises
-                    if (window.currencyManager) {
-                        const convertedPrice = window.currencyManager.convertVIPPrice(vipPriceInfo);
-                        if (convertedPrice) {
-                            price = convertedPrice.display;
-                            
-                            // Ajouter le prix original entre parenthèses si différent
-                            if (vipPriceInfo.currency !== window.currencyManager.currentCurrency) {
-                                const originalFormatted = window.currencyManager.formatPrice(
-                                    vipPriceInfo.price, 
-                                    vipPriceInfo.currency
-                                );
-                                price += ` <small style="opacity:0.7;font-size:0.8em">(${originalFormatted})</small>`;
-                            }
-                            
-                            // Calculer le prix total pour plusieurs cours
-                            const coursesCount = parseInt(coursesCountInput.value);
-                            const discountPercent = parseFloat(discountPercentInput.value);
-                            
-                            let totalPriceData = {
-                                price: vipPriceInfo.price * coursesCount,
-                                currency: vipPriceInfo.currency
-                            };
-                            
-                            // Appliquer la réduction
-                            if (discountPercent > 0) {
-                                totalPriceData.price = totalPriceData.price * (1 - discountPercent / 100);
-                            }
-                            
-                            // Convertir le total
-                            const totalConverted = window.currencyManager.convertVIPPrice(totalPriceData);
-                            if (totalConverted) {
-                                price = totalConverted.display;
-                                if (vipPriceInfo.currency !== window.currencyManager.currentCurrency) {
-                                    const originalTotal = window.currencyManager.formatPrice(
-                                        totalPriceData.price, 
-                                        vipPriceInfo.currency
-                                    );
-                                    price += ` <small style="opacity:0.7;font-size:0.8em">(${originalTotal})</small>`;
-                                }
-                            }
-                        }
-                    } else {
-                        unitPriceEUR = getNormalPrice(courseType, selectedDuration);
-                    }
+                    // Redirection vers la page de paiement
+                    setTimeout(() => {
+                        window.location.href = result.redirectTo;
+                    }, 1000);
                 } else {
-                    console.log(`⚠️ Aucun prix VIP valide, utilisation prix normal`);
-                    unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+                    throw new Error(result.error || 'Erreur inconnue');
                 }
+
             } catch (error) {
-                console.error('❌ Erreur récupération prix VIP:', error);
-                unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+                showError('Erreur lors de la préparation : ' + error.message);
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-calendar-check"></i> Réserver et payer';
             }
-        } 
-        // PRIX NORMAL (même code que avant)
-        // ...
-    }
-}
-            // PRIX NORMAL
-            else {
-                console.log(`👤 Utilisateur standard, prix normal`);
-                unitPriceEUR = getNormalPrice(courseType, selectedDuration);
-            }
+        });
+
+        // Écouter les événements d'authentification
+        window.addEventListener('auth:login', function() {
+            console.log('Utilisateur connecté, mise à jour de l\'interface');
+            updateUserInterface();
+        });
+
+        window.addEventListener('auth:logout', function() {
+            console.log('Utilisateur déconnecté, mise à jour de l\'interface');
+            updateUserInterface();
+        });
+        
+        // Écouter les changements de devise
+        window.addEventListener('currency:ready', function() {
+            updateSummary();
+        });
+        
+        window.addEventListener('currency:changed', function() {
+            updateSummary();
+        });
+        
+        // Écouter les changements de langue
+        window.addEventListener('language:changed', function() {
+            // Mettre à jour le calendrier avec les noms de mois dans la bonne langue
+            initCalendar();
+            updateSummary();
+        });
+        
+        // ===== NOUVEAU: Écouter les événements VIP =====
+        window.addEventListener('vip:loaded', function() {
+            console.log('🎁 Prix VIP chargés dans booking.html, mise à jour des prix');
+            updateUserInterface();
+            updateSummary();
+        });
+
+        // Fonction pour initialiser le sélecteur de devise mobile
+        function initMobileCurrencySelector() {
+            const mobileSelector = document.getElementById('currencySelectorMobile');
+            if (!mobileSelector || !window.currencyManager) return;
             
-            if (isNaN(unitPriceEUR) || unitPriceEUR <= 0) {
-                console.error(`❌ Prix invalide: ${unitPriceEUR}, utilisation prix par défaut`);
-                unitPriceEUR = getNormalPrice(courseType, selectedDuration);
-            }
+            // Vider les options existantes
+            mobileSelector.innerHTML = '';
             
-            console.log(`📦 Prix unitaire final: ${unitPriceEUR}€ × ${coursesCount} cours`);
-            
-            let totalPriceEUR = unitPriceEUR * coursesCount;
-            
-            if (discountPercent > 0) {
-                totalPriceEUR = totalPriceEUR * (1 - discountPercent / 100);
-                console.log(`🎁 Réduction ${discountPercent}% appliquée: ${totalPriceEUR}€`);
-            }
-            
-            if (window.currencyManager) {
-                const convertedPrice = window.currencyManager.convert(
-                    totalPriceEUR, 
-                    'EUR', 
-                    window.currencyManager.currentCurrency
-                );
-                price = window.currencyManager.formatPrice(convertedPrice);
+            // Remplir les options
+            window.currencyManager.supportedCurrencies.forEach(currency => {
+                const option = document.createElement('option');
+                option.value = currency;
+                option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
                 
-                // Ajouter l'indicateur VIP si l'utilisateur est VIP et qu'on a un prix VIP
-                if (isVip && vipPriceInfo) {
-                    price += ' <span class="vip-indicator">VIP</span>';
+                if (currency === window.currencyManager.currentCurrency) {
+                    option.selected = true;
                 }
-            } else {
-                price = totalPriceEUR.toFixed(2) + ' EUR';
-                if (isVip && vipPriceInfo) {
-                    price += ' <span class="vip-indicator">VIP</span>';
+                
+                mobileSelector.appendChild(option);
+            });
+            
+            // Écouter les changements
+            mobileSelector.addEventListener('change', (e) => {
+                const newCurrency = e.target.value;
+                if (window.currencyManager.setCurrency(newCurrency)) {
+                    // Fermer le menu mobile après changement
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                }
+            });
+        }
+
+        // Fonctions
+        function initializePage() {
+            // Récupérer le type de cours depuis l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            let courseTypeParam = urlParams.get('type');
+            
+            // Si pas de paramètre "type", vérifier dans localStorage
+            if (!courseTypeParam || !['essai', 'conversation', 'curriculum', 'examen'].includes(courseTypeParam)) {
+                const storedCourseType = localStorage.getItem('preLoginCourseType');
+                
+                if (storedCourseType && ['essai', 'conversation', 'curriculum', 'examen'].includes(storedCourseType)) {
+                    courseTypeParam = storedCourseType;
+                    localStorage.removeItem('preLoginCourseType');
+                } else {
+                    courseTypeParam = 'essai';
                 }
             }
             
-            console.log(`✅ Prix final affiché: ${price}`);
+            // Forcer la sélection dans le dropdown
+            document.getElementById('courseType').value = courseTypeParam;
+            preLoginCourseType = courseTypeParam;
             
-        } else {
-            duration = '60 min';
-            let unitPriceEUR = getNormalPrice(courseType, 60);
-            let totalPriceEUR = unitPriceEUR * coursesCount;
+            // Stocker aussi dans l'URL si ce n'est pas déjà fait
+            if (!urlParams.has('type')) {
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('type', courseTypeParam);
+                window.history.replaceState({}, '', newUrl);
+            }
             
-            if (window.currencyManager) {
-                price = window.currencyManager.formatPrice(totalPriceEUR);
-            } else {
-                price = totalPriceEUR + '€';
+            // NOUVELLE LOGIQUE: Pré-sélectionner 60min, 10 cours, Google Meet
+            preselectDefaults();
+            
+            // Initialiser le calendrier
+            initCalendar();
+            
+            // Charger les créneaux pour aujourd'hui par défaut
+            const today = new Date().toISOString().split('T')[0];
+            selectToday(today);
+            
+            // Mettre à jour l'interface
+            updateUIForCourseType(document.getElementById('courseType').value, false);
+            
+            // Mettre à jour l'interface utilisateur
+            updateUserInterface();
+            
+            // Marquer que le premier chargement est terminé
+            setTimeout(() => {
+                isFirstLoad = false;
+            }, 1000);
+            
+            // Initialiser le sélecteur de devise mobile
+            window.addEventListener('currency:ready', function() {
+                initMobileCurrencySelector();
+            });
+            
+            // Gestion du menu mobile
+            initMobileMenu();
+        }
+        
+        // Initialiser le menu mobile
+        function initMobileMenu() {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const closeMenuBtn = document.getElementById('closeMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if (hamburgerBtn && mobileMenu) {
+                hamburgerBtn.addEventListener('click', () => {
+                    mobileMenu.classList.add('active');
+                });
+            }
+            
+            if (closeMenuBtn && mobileMenu) {
+                closeMenuBtn.addEventListener('click', () => {
+                    mobileMenu.classList.remove('active');
+                });
+            }
+            
+            // Fermer le menu en cliquant en dehors
+            if (mobileMenu) {
+                mobileMenu.addEventListener('click', (e) => {
+                    if (e.target === mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Gestion du changement de langue mobile
+            const mobileLanguageSwitcher = document.getElementById('languageSwitcherMobile');
+            if (mobileLanguageSwitcher) {
+                mobileLanguageSwitcher.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (window.translationManager) {
+                        window.translationManager.toggleLanguage();
+                    }
+                    
+                    // Fermer le menu mobile après changement
+                    if (mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Gestion du changement de langue desktop
+            const desktopLanguageSwitcher = document.getElementById('languageSwitcherDesktop');
+            if (desktopLanguageSwitcher) {
+                desktopLanguageSwitcher.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (window.translationManager) {
+                        window.translationManager.toggleLanguage();
+                    }
+                });
             }
         }
-    }
-
-    // MISE À JOUR INTERFACE
-    document.getElementById('summaryType').textContent = courseName;
-    
-    if (courseType === 'essai') {
-        document.getElementById('summaryCoursesCount').textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-        document.getElementById('summaryDiscount').textContent = '0%';
-    } else {
-        document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-        document.getElementById('summaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
-    }
-    
-    if (selectedDate) {
-        const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
-        const dateObj = new Date(selectedDate);
-        const formattedDate = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
-            weekday: 'short',
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-        document.getElementById('summaryDate').textContent = formattedDate;
-    } else {
-        document.getElementById('summaryDate').textContent = '-';
-    }
-    
-    document.getElementById('summaryTime').textContent = selectedTime || '-';
-    document.getElementById('summaryDuration').textContent = duration;
-    document.getElementById('summaryPlatform').textContent = platform;
-    
-    const summaryPriceElement = document.getElementById('summaryPrice');
-    summaryPriceElement.innerHTML = price;
-    
-    if (isVip && courseType !== 'essai') {
-        summaryPriceElement.classList.add('vip-price-display');
-    } else {
-        summaryPriceElement.classList.remove('vip-price-display');
-    }
-
-    const canSubmit = selectedDate && selectedTime && courseType && 
-        (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
-    
-    submitButton.disabled = !canSubmit;
-}
-
-// NOUVELLE FONCTION À AJOUTER APRÈS updateSummary()
-function getNormalPrice(courseType, duration) {
-    console.log(`📋 Calcul prix normal pour ${courseType} ${duration}min`);
-    
-    switch(courseType) {
-        case 'conversation':
-            if (duration === 30) return 10;
-            else if (duration === 45) return 15;
-            else return 20;
-        case 'curriculum':
-            if (duration === 30) return 17.5;
-            else if (duration === 45) return 26.25;
-            else return 35;
-        case 'examen':
-            if (duration === 30) return 15;
-            else if (duration === 45) return 22.5;
-            else return 30;
-        case 'essai':
-            return 5;
-        default:
-            console.warn(`⚠️ Type de cours inconnu: ${courseType}`);
-            return 20;
-    }
-}
-
-            // NOUVELLE FONCTION: Obtenir les prix normaux
-            function getNormalPrice(courseType, duration) {
-                switch(courseType) {
-                    case 'conversation':
-                        if (duration === 30) return 10;
-                        else if (duration === 45) return 15;
-                        else return 20;
-                    case 'curriculum':
-                        if (duration === 30) return 17.5;
-                        else if (duration === 45) return 26.25;
-                        else return 35;
-                    case 'examen':
-                        if (duration === 30) return 15;
-                        else if (duration === 45) return 22.5;
-                        else return 30;
-                    default:
-                        return 20;
-                }
-            }
-
-            function showError(message) {
-                errorText.textContent = message;
-                errorDiv.style.display = 'block';
-                successDiv.style.display = 'none';
-            }
-
-            function showSuccess(message) {
-                successText.textContent = message;
-                successDiv.style.display = 'block';
-                errorDiv.style.display = 'none';
-            }
-
-            function hideMessages() {
-                errorDiv.style.display = 'none';
-                successDiv.style.display = 'none';
+        
+        // NOUVELLE FONCTION: Pré-sélectionner les valeurs par défaut
+        function preselectDefaults() {
+            // Pré-sélectionner 60 min
+            const duration60Btn = document.querySelector('.duration-option[data-duration="60"]');
+            if (duration60Btn) {
+                document.querySelectorAll('.duration-option[data-duration]').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                duration60Btn.classList.add('selected');
+                durationInput.value = '60';
+                basePriceInput.value = duration60Btn.getAttribute('data-price-eur') || '20';
             }
             
-            function updateUserInterface() {
-                const user = window.authManager?.getCurrentUser();
-                const isLoggedIn = !!user;
-                const isVip = window.authManager?.isUserVip();
+            // Pré-sélectionner 10 cours
+            const courses10Btn = document.querySelector('.courses-count-option[data-count="10"]');
+            if (courses10Btn) {
+                document.querySelectorAll('.courses-count-option').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                courses10Btn.classList.add('selected');
+                coursesCountInput.value = '10';
+                discountPercentInput.value = courses10Btn.getAttribute('data-discount') || '5';
+            }
+            
+            // Pré-sélectionner Google Meet
+            const meetBtn = document.querySelector('.location-btn[data-location*="google"]');
+            if (meetBtn) {
+                document.querySelectorAll('.location-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                meetBtn.classList.add('selected');
+                selectedLocationInput.value = meetBtn.getAttribute('data-location');
+            }
+        }
+
+        function initCalendar() {
+            // Déterminer la langue actuelle
+            const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+            
+            const monthNamesFr = [
+                'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+            ];
+            
+            const monthNamesEn = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            
+            const monthNames = isFrench ? monthNamesFr : monthNamesEn;
+            currentMonthElement.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+
+            const dayHeadersFr = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+            const dayHeadersEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayHeaders = isFrench ? dayHeadersFr : dayHeadersEn;
+            
+            calendarDays.innerHTML = '';
+
+            dayHeaders.forEach(day => {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day-header';
+                dayElement.textContent = day;
+                calendarDays.appendChild(dayElement);
+            });
+
+            for (let i = 0; i < startingDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day disabled';
+                calendarDays.appendChild(emptyDay);
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentYear, currentMonth, day);
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = day;
+                dayElement.setAttribute('data-date', 
+                    `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                );
                 
-                if (isLoggedIn && user) {
-                    // Mettre à jour les informations du formulaire
-                    document.getElementById('name').value = user.user_metadata?.full_name || user.email?.split('@')[0] || '';
-                    document.getElementById('email').value = user.email || '';
-                    
-                    // Ajouter un badge VIP si l'utilisateur est VIP
-                    if (isVip) {
-                        const bookingTitle = document.querySelector('.booking-title');
-                        if (bookingTitle && !bookingTitle.querySelector('.vip-badge-booking')) {
-                            const vipBadge = document.createElement('span');
-                            vipBadge.className = 'vip-badge-booking';
-                            vipBadge.textContent = 'VIP';
-                            vipBadge.style.cssText = `
-                                display: inline-block;
-                                background: linear-gradient(135deg, #FFD700, #FFA500);
-                                color: #000;
-                                padding: 4px 12px;
-                                border-radius: 20px;
-                                font-size: 14px;
-                                font-weight: bold;
-                                margin-left: 15px;
-                                border: 1px solid #FFA500;
-                                vertical-align: middle;
-                            `;
-                            bookingTitle.appendChild(vipBadge);
-                        }
+                if (date.getDate() === today.getDate() && 
+                    date.getMonth() === today.getMonth() && 
+                    date.getFullYear() === today.getFullYear()) {
+                    dayElement.classList.add('today');
+                }
+
+                if (date < today) {
+                    dayElement.classList.add('disabled');
+                } else {
+                    dayElement.addEventListener('click', () => selectDate(
+                        `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                    ));
+                }
+
+                calendarDays.appendChild(dayElement);
+            }
+        }
+
+        function selectToday(today) {
+            const todayElement = document.querySelector(`.calendar-day[data-date="${today}"]`);
+            if (todayElement && !todayElement.classList.contains('disabled')) {
+                selectDate(today);
+            } else {
+                const firstAvailable = document.querySelector('.calendar-day:not(.disabled)');
+                if (firstAvailable) {
+                    selectDate(firstAvailable.getAttribute('data-date'));
+                }
+            }
+        }
+
+        function updateUIForCourseType(courseType, forceUpdate = false) {
+            console.log('updateUIForCourseType appelé avec:', courseType, 'forceUpdate:', forceUpdate);
+            
+            preLoginCourseType = courseType;
+            
+            const user = window.authManager?.getCurrentUser();
+            const isLoggedIn = !!user;
+            
+            console.log('Utilisateur connecté:', isLoggedIn, 'User:', user);
+            
+            if (courseType && courseType !== 'essai') {
+                const redirectUrl = `booking.html?type=${courseType}`;
+                loginLink.href = `login.html?redirect=${encodeURIComponent(redirectUrl)}`;
+                signupLink.href = `signup.html?redirect=${encodeURIComponent(redirectUrl)}`;
+                localStorage.setItem('preLoginCourseType', courseType);
+            }
+            
+            if (courseType === 'essai') {
+                durationGroup.classList.remove('visible');
+                coursesCountGroup.style.display = 'none';
+                loginRequired.style.display = 'none';
+            } else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
+                if (isLoggedIn) {
+                    durationGroup.classList.add('visible');
+                    coursesCountGroup.style.display = 'block';
+                    loginRequired.style.display = 'none';
+                    console.log('Sélecteur de durée affiché pour', courseType);
+                } else {
+                    durationGroup.classList.remove('visible');
+                    coursesCountGroup.style.display = 'none';
+                    loginRequired.style.display = 'block';
+                    // Mettre à jour le nom du type de cours dans le message
+                    if (window.translationManager) {
+                        if (courseType === 'conversation') courseTypeName.textContent = window.translationManager.getTranslation('courses.conversation');
+                        else if (courseType === 'curriculum') courseTypeName.textContent = window.translationManager.getTranslation('courses.curriculum');
+                        else if (courseType === 'examen') courseTypeName.textContent = window.translationManager.getTranslation('courses.exam');
+                    } else {
+                        if (courseType === 'conversation') courseTypeName.textContent = 'Conversation';
+                        else if (courseType === 'curriculum') courseTypeName.textContent = 'Curriculum complet';
+                        else if (courseType === 'examen') courseTypeName.textContent = 'Préparation d\'examen';
                     }
+                    console.log('Message connexion affiché pour', courseType);
+                }
+            } else {
+                durationGroup.classList.remove('visible');
+                coursesCountGroup.style.display = 'none';
+                loginRequired.style.display = 'none';
+            }
+            
+            if (isLoggedIn && user) {
+                document.getElementById('name').value = user.user_metadata?.full_name || user.email?.split('@')[0] || '';
+                document.getElementById('email').value = user.email || '';
+            }
+            
+            if (forceUpdate && selectedDate) {
+                loadAvailableSlots(selectedDate);
+            }
+            
+            updateSummary();
+        }
+
+        async function loadAvailableSlots(date = null) {
+            try {
+                const loadingText = window.translationManager ? 
+                    window.translationManager.getTranslation('booking.loading_slots') : 
+                    'Chargement des créneaux...';
+                
+                timeSlots.innerHTML = `<div class="loading-slots"><i class="fas fa-spinner fa-spin"></i> ${loadingText}</div>`;
+                
+                const courseType = document.getElementById('courseType').value || 'essai';
+                
+                let duration = null;
+                if (courseType !== 'essai' && durationGroup.classList.contains('visible')) {
+                    duration = parseInt(durationInput.value) || 60;
                 }
                 
-                // Mettre à jour l'interface en fonction du type de cours
-                const currentCourseType = document.getElementById('courseType').value;
-                updateUIForCourseType(currentCourseType, true);
+                const slots = await window.bookingManager.getAvailableSlots(courseType, date, duration);
+                
+                timeSlots.innerHTML = '';
+                
+                if (slots.length === 0) {
+                    const noSlotsText = window.translationManager ?
+                        window.translationManager.getTranslation('booking.no_slots') :
+                        'Aucun créneau disponible pour cette date.';
+                    timeSlots.innerHTML = `<p class="no-slots">${noSlotsText}</p>`;
+                    return;
+                }
+
+                let hasFutureSlots = false;
+                
+                slots.forEach(slot => {
+                    const slotDate = new Date(slot.start);
+                    const now = new Date();
+                    
+                    if (slotDate > now) {
+                        hasFutureSlots = true;
+                        const slotElement = document.createElement('div');
+                        slotElement.className = 'time-slot';
+                        
+                        // Déterminer la langue pour le format d'heure
+                        const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                        const timeOptions = { hour: '2-digit', minute: '2-digit' };
+                        
+                        slotElement.innerHTML = `
+                            <div class="time-slot-time">
+                                <i class="far fa-clock"></i>
+                                ${slotDate.toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions)}
+                            </div>
+                            <div class="time-slot-duration">
+                                ${window.bookingManager.formatTime(slot.start)} - ${slot.duration}
+                            </div>
+                        `;
+                        
+                        slotElement.addEventListener('click', () => selectTimeSlot(slot, slotElement));
+                        timeSlots.appendChild(slotElement);
+                    }
+                });
+
+                if (!hasFutureSlots) {
+                    const noFutureSlotsText = window.translationManager ?
+                        window.translationManager.getTranslation('booking.no_future_slots') :
+                        'Tous les créneaux sont complets pour aujourd\'hui.';
+                    timeSlots.innerHTML = `<p class="no-slots">${noFutureSlotsText}</p>`;
+                }
+
+            } catch (error) {
+                console.error('Erreur chargement créneaux:', error);
+                
+                const errorTitle = window.translationManager ?
+                    window.translationManager.getTranslation('booking.error_loading') :
+                    'Erreur lors du chargement des créneaux';
+                
+                const retryText = window.translationManager ?
+                    window.translationManager.getTranslation('booking.retry') :
+                    'Réessayer';
+                
+                timeSlots.innerHTML = `
+                    <div class="error-slots">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>${errorTitle}</p>
+                        <p class="error-details">${error.message || 'Veuillez réessayer'}</p>
+                        <button onclick="loadAvailableSlots('${date}')" class="retry-btn">
+                            <i class="fas fa-redo"></i> ${retryText}
+                        </button>
+                    </div>
+                `;
             }
-        });
-    </script>
+        }
+
+        function selectDate(date) {
+            selectedDate = date;
+            
+            document.querySelectorAll('.calendar-day').forEach(dayEl => {
+                dayEl.classList.remove('selected');
+            });
+            
+            const selectedDayElement = document.querySelector(`.calendar-day[data-date="${date}"]`);
+            if (selectedDayElement) {
+                selectedDayElement.classList.add('selected');
+            }
+            
+            loadAvailableSlots(selectedDate);
+            updateSummary();
+        }
+
+        function selectTimeSlot(slot, element) {
+            // Retirer la sélection précédente
+            document.querySelectorAll('.time-slot').forEach(slotEl => {
+                slotEl.classList.remove('selected');
+            });
+
+            // Ajouter la nouvelle sélection
+            element.classList.add('selected');
+            
+            selectedSlot = slot;
+            
+            // Déterminer la langue pour le format d'heure
+            const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+            const timeOptions = { hour: '2-digit', minute: '2-digit' };
+            
+            selectedTime = new Date(slot.start).toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions);
+            
+            // NE PLUS changer automatiquement la durée sélectionnée
+            // L'utilisateur garde sa sélection
+            
+            updateSummary();
+        }
+
+        async function updateSummary() {
+            const courseType = document.getElementById('courseType').value;
+            const user = window.authManager?.getCurrentUser();
+            let courseName = '-';
+            let price = '-';
+            let duration = '-';
+            let platform = 'Google Meet';
+            const coursesCount = parseInt(coursesCountInput.value);
+            const discountPercent = parseFloat(discountPercentInput.value);
+            
+            const isVip = window.authManager?.isUserVip();
+            console.log(`💰 [updateSummary] Statut VIP: ${isVip}, Type: ${courseType}`);
+            
+            // Déterminer la plateforme
+            const locationValue = selectedLocationInput.value;
+            if (locationValue.includes('zoom')) platform = window.translationManager ? window.translationManager.getTranslation('booking.zoom') : 'Zoom';
+            else if (locationValue.includes('google')) platform = window.translationManager ? window.translationManager.getTranslation('booking.meet') : 'Google Meet';
+            else if (locationValue.includes('teams')) platform = window.translationManager ? window.translationManager.getTranslation('booking.teams') : 'Microsoft Teams';
+
+            // COURS D'ESSAI
+            if (courseType === 'essai') {
+                console.log('🎫 Cours d\'essai détecté');
+                courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
+                duration = '15 min';
+                
+                let unitPriceEUR = 5;
+                let totalPriceEUR = unitPriceEUR;
+                
+                if (window.currencyManager) {
+                    price = window.currencyManager.formatPrice(totalPriceEUR);
+                } else {
+                    price = totalPriceEUR + '€';
+                }
+                
+                console.log(`✅ Prix essai: ${price}`);
+            } 
+            // COURS PAYANTS
+            else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
+                if (courseType === 'conversation') {
+                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
+                } else if (courseType === 'curriculum') {
+                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
+                } else if (courseType === 'examen') {
+                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
+                }
+                
+                if (user && durationGroup.classList.contains('visible')) {
+                    const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
+                    duration = selectedDuration + ' min';
+                    
+                    let unitPriceEUR = 0;
+                    
+                    console.log(`📊 Calcul prix pour ${courseType} ${selectedDuration}min`);
+                    
+                    // PRIX VIP
+                    if (isVip) {
+                        console.log(`👑 Utilisateur VIP, recherche prix personnalisé...`);
+                        
+                        try {
+                            vipPriceInfo = await window.authManager.getVipPrice(courseType, selectedDuration);
+                            
+                            if (vipPriceInfo && typeof vipPriceInfo.price === 'number' && !isNaN(vipPriceInfo.price)) {
+                                console.log(`✅ Prix VIP trouvé:`, vipPriceInfo);
+                                
+                                // Utiliser le nouveau système de conversion multi-devises
+                                if (window.currencyManager) {
+                                    // Calculer le prix pour plusieurs cours
+                                    let totalPriceData = {
+                                        price: vipPriceInfo.price * coursesCount,
+                                        currency: vipPriceInfo.currency
+                                    };
+                                    
+                                    // Appliquer la réduction
+                                    if (discountPercent > 0) {
+                                        totalPriceData.price = totalPriceData.price * (1 - discountPercent / 100);
+                                        console.log(`🎁 Réduction ${discountPercent}% appliquée`);
+                                    }
+                                    
+                                    // Convertir le total
+                                    const totalConverted = window.currencyManager.convertVIPPrice(totalPriceData);
+                                    if (totalConverted) {
+                                        price = totalConverted.display;
+                                        if (vipPriceInfo.currency !== window.currencyManager.currentCurrency) {
+                                            const originalTotal = window.currencyManager.formatPrice(
+                                                totalPriceData.price, 
+                                                vipPriceInfo.currency
+                                            );
+                                            price += ` <small style="opacity:0.7;font-size:0.8em">(${originalTotal})</small>`;
+                                        }
+                                    } else {
+                                        unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+                                    }
+                                } else {
+                                    unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+                                }
+                            } else {
+                                console.log(`⚠️ Aucun prix VIP valide, utilisation prix normal`);
+                                unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+                            }
+                        } catch (error) {
+                            console.error('❌ Erreur récupération prix VIP:', error);
+                            unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+                        }
+                    } 
+                    // PRIX NORMAL
+                    else {
+                        console.log(`👤 Utilisateur standard, prix normal`);
+                        unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+                        
+                        let totalPriceEUR = unitPriceEUR * coursesCount;
+                        
+                        if (discountPercent > 0) {
+                            totalPriceEUR = totalPriceEUR * (1 - discountPercent / 100);
+                        }
+                        
+                        if (window.currencyManager) {
+                            price = window.currencyManager.formatPrice(totalPriceEUR);
+                        } else {
+                            price = totalPriceEUR.toFixed(2) + ' EUR';
+                        }
+                    }
+                    
+                    console.log(`✅ Prix final affiché: ${price}`);
+                    
+                } else {
+                    duration = '60 min';
+                    let unitPriceEUR = getNormalPrice(courseType, 60);
+                    let totalPriceEUR = unitPriceEUR * coursesCount;
+                    
+                    if (window.currencyManager) {
+                        price = window.currencyManager.formatPrice(totalPriceEUR);
+                    } else {
+                        price = totalPriceEUR + '€';
+                    }
+                }
+            }
+
+            // MISE À JOUR INTERFACE
+            document.getElementById('summaryType').textContent = courseName;
+            
+            if (courseType === 'essai') {
+                document.getElementById('summaryCoursesCount').textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+                document.getElementById('summaryDiscount').textContent = '0%';
+            } else {
+                document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+                document.getElementById('summaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
+            }
+            
+            if (selectedDate) {
+                const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                const dateObj = new Date(selectedDate);
+                const formattedDate = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                document.getElementById('summaryDate').textContent = formattedDate;
+            } else {
+                document.getElementById('summaryDate').textContent = '-';
+            }
+            
+            document.getElementById('summaryTime').textContent = selectedTime || '-';
+            document.getElementById('summaryDuration').textContent = duration;
+            document.getElementById('summaryPlatform').textContent = platform;
+            
+            const summaryPriceElement = document.getElementById('summaryPrice');
+            summaryPriceElement.innerHTML = price;
+            
+            if (isVip && courseType !== 'essai') {
+                summaryPriceElement.classList.add('vip-price-display');
+            } else {
+                summaryPriceElement.classList.remove('vip-price-display');
+            }
+
+            const canSubmit = selectedDate && selectedTime && courseType && 
+                (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
+            
+            submitButton.disabled = !canSubmit;
+        }
+
+        // NOUVELLE FONCTION : Obtenir les prix normaux
+        function getNormalPrice(courseType, duration) {
+            console.log(`📋 Calcul prix normal pour ${courseType} ${duration}min`);
+            
+            switch(courseType) {
+                case 'conversation':
+                    if (duration === 30) return 10;
+                    else if (duration === 45) return 15;
+                    else return 20;
+                case 'curriculum':
+                    if (duration === 30) return 17.5;
+                    else if (duration === 45) return 26.25;
+                    else return 35;
+                case 'examen':
+                    if (duration === 30) return 15;
+                    else if (duration === 45) return 22.5;
+                    else return 30;
+                case 'essai':
+                    return 5;
+                default:
+                    console.warn(`⚠️ Type de cours inconnu: ${courseType}`);
+                    return 20;
+            }
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            successText.textContent = message;
+            successDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+        }
+
+        function hideMessages() {
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+        }
+        
+        function updateUserInterface() {
+            const user = window.authManager?.getCurrentUser();
+            const isLoggedIn = !!user;
+            const isVip = window.authManager?.isUserVip();
+            
+            if (isLoggedIn && user) {
+                // Mettre à jour les informations du formulaire
+                document.getElementById('name').value = user.user_metadata?.full_name || user.email?.split('@')[0] || '';
+                document.getElementById('email').value = user.email || '';
+                
+                // Ajouter un badge VIP si l'utilisateur est VIP
+                if (isVip) {
+                    const bookingTitle = document.querySelector('.booking-title');
+                    if (bookingTitle && !bookingTitle.querySelector('.vip-badge-booking')) {
+                        const vipBadge = document.createElement('span');
+                        vipBadge.className = 'vip-badge-booking';
+                        vipBadge.textContent = 'VIP';
+                        vipBadge.style.cssText = `
+                            display: inline-block;
+                            background: linear-gradient(135deg, #FFD700, #FFA500);
+                            color: #000;
+                            padding: 4px 12px;
+                            border-radius: 20px;
+                            font-size: 14px;
+                            font-weight: bold;
+                            margin-left: 15px;
+                            border: 1px solid #FFA500;
+                            vertical-align: middle;
+                        `;
+                        bookingTitle.appendChild(vipBadge);
+                    }
+                }
+            }
+            
+            // Mettre à jour l'interface en fonction du type de cours
+            const currentCourseType = document.getElementById('courseType').value;
+            updateUIForCourseType(currentCourseType, true);
+        }
+    });
+</script>
 </body>
 </html>
