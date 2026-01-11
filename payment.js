@@ -481,7 +481,7 @@ class PaymentManager {
                         resultMessage = 'Votre forfait a été acheté avec succès. Les crédits ont été ajoutés à votre compte.';
                         
                         // Envoyer un email de confirmation de forfait
-                        this.sendPackageConfirmationEmail();
+                       // this.sendPackageConfirmationEmail();
                     } else {
                         throw new Error(packageResult.error || 'Échec achat forfait');
                     }
