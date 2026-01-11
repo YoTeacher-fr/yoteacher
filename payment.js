@@ -509,35 +509,28 @@ class PaymentManager {
                 
                 // 3. Créer la réservation Cal.com pour le cours sélectionné
                 console.log('🎫 Création réservation Cal.com pour le cours sélectionné...');
+                bookingResult = await window.bookingManager.createBookingAfterPayment(this.currentBooking);
                 
-                // Vérifier que la réservation n'existe pas déjà (au cas où)
-                if (!this.currentBooking.calcomId) {
-                    bookingResult = await window.bookingManager.createBookingAfterPayment(this.currentBooking);
+                if (bookingResult && bookingResult.success) {
+                    console.log('✅ Réservation Cal.com créée');
+                    this.currentBooking.calcomId = bookingResult.data.id;
+                    this.currentBooking.status = 'confirmed';
+                    this.currentBooking.packageId = packageResult.package?.id;
                     
-                    if (bookingResult && bookingResult.success) {
-                        console.log('✅ Réservation Cal.com créée');
-                        this.currentBooking.calcomId = bookingResult.data.id;
-                        this.currentBooking.status = 'confirmed';
-                        this.currentBooking.packageId = packageResult.package?.id;
-                        
-                        resultMessage = `Votre forfait de ${this.currentBooking.packageQuantity} cours a été acheté avec succès ! Votre premier cours est réservé pour le ${new Date(this.currentBooking.startTime).toLocaleDateString('fr-FR')} à ${new Date(this.currentBooking.startTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`;
-                        
-                        // 4. Sauvegarder la réservation dans la base
-                        if (window.authManager?.saveBookingData) {
-                            await window.authManager.saveBookingData({
-                                ...this.currentBooking,
-                                paymentMethod: method,
-                                transactionId: transactionId,
-                                packageId: packageResult.package?.id,
-                                creditsUsed: 1
-                            });
-                        }
-                    } else {
-                        throw new Error(bookingResult?.error || 'Échec Cal.com');
+                    resultMessage = `Votre forfait de ${this.currentBooking.packageQuantity} cours a été acheté avec succès ! Votre premier cours est réservé pour le ${new Date(this.currentBooking.startTime).toLocaleDateString('fr-FR')} à ${new Date(this.currentBooking.startTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`;
+                    
+                    // 4. Sauvegarder la réservation dans la base
+                    if (window.authManager?.saveBookingData) {
+                        await window.authManager.saveBookingData({
+                            ...this.currentBooking,
+                            paymentMethod: method,
+                            transactionId: transactionId,
+                            packageId: packageResult.package?.id,
+                            creditsUsed: 1
+                        });
                     }
                 } else {
-                    console.log('⚠️ Réservation Cal.com existe déjà, pas de création nécessaire');
-                    resultMessage = `Votre forfait de ${this.currentBooking.packageQuantity} cours a été acheté avec succès ! Votre premier cours est réservé pour le ${new Date(this.currentBooking.startTime).toLocaleDateString('fr-FR')} à ${new Date(this.currentBooking.startTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`;
+                    throw new Error(bookingResult?.error || 'Échec Cal.com');
                 }
             } catch (packageError) {
                 console.error('⚠️ Erreur achat forfait avec réservation:', packageError);

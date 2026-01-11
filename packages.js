@@ -115,7 +115,7 @@ class PackagesManager {
             // Trouver un package actif avec des crédits restants
             const { data: activePackage, error: findError } = await supabase
                 .from('user_active_packages')
-                .select('id, remaining_credits, package_id')
+                .select('id, remaining_credits')
                 .eq('user_id', userId)
                 .eq('course_type', courseType)
                 .gt('remaining_credits', 0)
@@ -128,15 +128,15 @@ class PackagesManager {
                 throw new Error('Aucun forfait actif avec des crédits disponibles');
             }
 
-            // Décrémenter les crédits restants dans la table PACKAGES (pas user_active_packages)
+            // Décrémenter les crédits restants
             const newRemainingCredits = activePackage.remaining_credits - 1;
             const { error: updateError } = await supabase
-                .from('packages')
+                .from('user_active_packages')
                 .update({ 
-                    remaining_credits: newRemainingCredits
-                    // NE PAS mettre à jour updated_at car ce n'est pas dans la vue
+                    remaining_credits: newRemainingCredits,
+                    updated_at: new Date().toISOString()
                 })
-                .eq('id', activePackage.id); // Utiliser l'ID du package
+                .eq('id', activePackage.id);
 
             if (updateError) throw updateError;
 
@@ -243,7 +243,36 @@ class PackagesManager {
             } catch (emailError) {
                 console.warn('Erreur récupération email:', emailError);
             }
+	    /*
+            // Créer une notification d'email (seulement si on a un email)
+            if (userEmail) {
+                try {
+                    const { error: emailError } = await supabase
+                        .from('email_notifications')
+                        .insert({
+                            user_id: userId,
+                            email_to: userEmail,
+                            notification_type: 'booking_purchase',
+                            subject: `Confirmation d'achat - Forfait ${courseType}`,
+                            body: `Vous avez acheté un forfait de ${quantity} cours ${courseType}. Les crédits ont été ajoutés à votre compte.`,
+                            scheduled_for: new Date().toISOString(),
+                            status: 'pending',
+                            booking_id: null,
+                            created_at: new Date().toISOString()
+                        });
 
+                    if (emailError) {
+                        console.warn('⚠️ Erreur création notification email:', emailError);
+                        // Continuer même si l'email échoue - ce n'est pas critique
+                    } else {
+                        console.log('📧 Notification d\'email créée avec succès');
+                    }
+                } catch (emailErr) {
+                    console.warn('Exception création notification email:', emailErr);
+                    // Continuer même si l'email échoue
+                }
+            }
+*/
             return { success: true, package: newPackage };
         } catch (error) {
             console.error('❌ Erreur ajout crédits:', error);
