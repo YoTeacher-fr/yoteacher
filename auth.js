@@ -127,47 +127,55 @@ class AuthManager {
     }
 
     async waitForSupabase() {
-        return new Promise(async (resolve) => {
-            try {
-                const initialized = await window.supabaseInitialized;
-                this.supabaseReady = initialized;
-            } catch (error) {
-                console.warn('Erreur initialisation Supabase:', error);
-                this.supabaseReady = false;
-            }
-
-            let attempts = 0;
-            const maxAttempts = 100;
+    console.log('⏳ Attente de Supabase...');
+    
+    return new Promise(async (resolve) => {
+        try {
+            const initialized = await window.supabaseInitialized;
+            this.supabaseReady = initialized;
             
-            const checkSupabase = async () => {
-                attempts++;
-                
-                if (window.supabase?.auth?.getSession) {
-                    try {
-                        await window.supabase.auth.getSession();
-                        this.supabaseReady = true;
-                        resolve();
-                        return;
-                    } catch (err) {
-                        this.supabaseReady = false;
-                        resolve();
-                        return;
-                    }
-                }
-                
-                if (attempts >= maxAttempts) {
-                    console.warn('Supabase non initialisé après 10 secondes - mode dégradé');
-                    this.supabaseReady = false;
+            if (initialized && window.supabase?.auth?.getSession) {
+                console.log('✅ Supabase initialisé via supabaseInitialized');
+                resolve();
+                return;
+            }
+        } catch (error) {
+            console.warn('⚠️ Erreur lors de l\'attente de supabaseInitialized:', error);
+        }
+        
+        let attempts = 0;
+        const maxAttempts = 150; // Augmenté à 15 secondes
+        
+        const checkSupabase = async () => {
+            attempts++;
+            
+            console.log(`Vérification Supabase ${attempts}/${maxAttempts}`);
+            
+            if (window.supabase?.auth?.getSession) {
+                try {
+                    await window.supabase.auth.getSession();
+                    this.supabaseReady = true;
+                    console.log('✅ Supabase prêt et fonctionnel');
                     resolve();
                     return;
+                } catch (err) {
+                    console.warn('⚠️ Supabase existe mais erreur:', err.message);
                 }
-                
-                setTimeout(checkSupabase, 100);
-            };
+            }
             
-            checkSupabase();
-        });
-    }
+            if (attempts >= maxAttempts) {
+                console.warn('⚠️ Supabase non initialisé après 15 secondes - mode dégradé');
+                this.supabaseReady = false;
+                resolve();
+                return;
+            }
+            
+            setTimeout(checkSupabase, 100);
+        };
+        
+        checkSupabase();
+    });
+}
 
     setupDegradedMode() {
         const storedUser = localStorage.getItem('yoteacher_user');
