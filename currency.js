@@ -351,6 +351,78 @@ class CurrencyManager {
         }
         return true;
     }
+    
+    // NOUVELLE MÉTHODE : Conversion des prix VIP multi-devises
+    convertVIPPrice(vipPriceData, targetCurrency = null) {
+        if (!vipPriceData || !vipPriceData.price) return null;
+        
+        if (!targetCurrency) {
+            targetCurrency = this.currentCurrency;
+        }
+        
+        const originalPrice = parseFloat(vipPriceData.price);
+        const originalCurrency = vipPriceData.currency || 'EUR';
+        
+        // Si la devise source et cible sont les mêmes
+        if (originalCurrency === targetCurrency) {
+            return {
+                price: originalPrice,
+                currency: targetCurrency,
+                originalPrice: originalPrice,
+                originalCurrency: originalCurrency,
+                display: this.formatPrice(originalPrice, targetCurrency)
+            };
+        }
+        
+        // Convertir via EUR (devise de base)
+        let priceInEUR;
+        
+        // Si la devise d'origine n'est pas l'EUR, convertir d'abord en EUR
+        if (originalCurrency !== 'EUR') {
+            // Obtenir le taux de conversion vers EUR
+            const rateToEUR = 1 / (this.exchangeRates[originalCurrency] || 1);
+            priceInEUR = originalPrice * rateToEUR;
+        } else {
+            priceInEUR = originalPrice;
+        }
+        
+        // Convertir de EUR vers la devise cible
+        const finalPrice = this.convert(priceInEUR, 'EUR', targetCurrency);
+        
+        return {
+            price: finalPrice,
+            currency: targetCurrency,
+            originalPrice: originalPrice,
+            originalCurrency: originalCurrency,
+            display: this.formatPrice(finalPrice, targetCurrency),
+            // Information de conversion pour le debug
+            conversion: {
+                from: originalCurrency,
+                to: targetCurrency,
+                rate: this.exchangeRates[targetCurrency] || 1
+            }
+        };
+    }
+    
+    // NOUVELLE MÉTHODE : Formater un prix VIP avec indication de la devise d'origine
+    formatVIPPrice(vipPriceData, showOriginal = true) {
+        if (!vipPriceData || !vipPriceData.price) return 'N/A';
+        
+        const converted = this.convertVIPPrice(vipPriceData);
+        if (!converted) return 'N/A';
+        
+        let display = converted.display;
+        
+        if (showOriginal && vipPriceData.currency !== this.currentCurrency) {
+            const originalFormatted = this.formatPrice(
+                vipPriceData.price, 
+                vipPriceData.currency
+            );
+            display += ` <small style="opacity:0.7;font-size:0.8em">(${originalFormatted})</small>`;
+        }
+        
+        return display;
+    }
 }
 
 // Initialiser et exposer globalement
@@ -381,77 +453,23 @@ window.debugCurrency = () => {
     console.log('Symbol:', window.currencyManager?.getSymbol());
     console.log('Taux chargés:', !!window.currencyManager?.exchangeRates);
     console.log('Taux EUR→USD:', window.currencyManager?.exchangeRates['USD']);
+    console.log('Taux EUR→CAD:', window.currencyManager?.exchangeRates['CAD']);
+    console.log('Taux EUR→GBP:', window.currencyManager?.exchangeRates['GBP']);
     console.log('Exemple 10€ →:', window.currencyManager?.formatPrice(10));
+    
+    // Tester la conversion VIP
+    const testVipPrices = [
+        { price: 15, currency: 'EUR' },
+        { price: 16.20, currency: 'USD' },
+        { price: 22, currency: 'CAD' },
+        { price: 28, currency: 'GBP' }
+    ];
+    
+    console.log('\n🧪 Test conversion VIP:');
+    testVipPrices.forEach(test => {
+        const converted = window.currencyManager?.convertVIPPrice(test);
+        console.log(`${test.price} ${test.currency} → ${converted?.display}`);
+    });
+    
     console.groupEnd();
 };
-// Méthode pour convertir les prix VIP multi-devises
-convertVIPPrice(vipPriceData, targetCurrency = null) {
-    if (!vipPriceData || !vipPriceData.price) return null;
-    
-    if (!targetCurrency) {
-        targetCurrency = this.currentCurrency;
-    }
-    
-    const originalPrice = parseFloat(vipPriceData.price);
-    const originalCurrency = vipPriceData.currency || 'EUR';
-    
-    // Si la devise source et cible sont les mêmes
-    if (originalCurrency === targetCurrency) {
-        return {
-            price: originalPrice,
-            currency: targetCurrency,
-            originalPrice: originalPrice,
-            originalCurrency: originalCurrency,
-            display: this.formatPrice(originalPrice, targetCurrency)
-        };
-    }
-    
-    // Convertir via EUR (devise de base)
-    let priceInEUR;
-    
-    // Si la devise d'origine n'est pas l'EUR, convertir d'abord en EUR
-    if (originalCurrency !== 'EUR') {
-        // Obtenir le taux de conversion vers EUR
-        const rateToEUR = 1 / (this.exchangeRates[originalCurrency] || 1);
-        priceInEUR = originalPrice * rateToEUR;
-    } else {
-        priceInEUR = originalPrice;
-    }
-    
-    // Convertir de EUR vers la devise cible
-    const finalPrice = this.convert(priceInEUR, 'EUR', targetCurrency);
-    
-    return {
-        price: finalPrice,
-        currency: targetCurrency,
-        originalPrice: originalPrice,
-        originalCurrency: originalCurrency,
-        display: this.formatPrice(finalPrice, targetCurrency),
-        // Information de conversion pour le debug
-        conversion: {
-            from: originalCurrency,
-            to: targetCurrency,
-            rate: this.exchangeRates[targetCurrency] || 1
-        }
-    };
-}
-
-// Méthode pour formater un prix VIP avec indication de la devise d'origine
-formatVIPPrice(vipPriceData, showOriginal = true) {
-    if (!vipPriceData || !vipPriceData.price) return 'N/A';
-    
-    const converted = this.convertVIPPrice(vipPriceData);
-    if (!converted) return 'N/A';
-    
-    let display = converted.display;
-    
-    if (showOriginal && vipPriceData.currency !== this.currentCurrency) {
-        const originalFormatted = this.formatPrice(
-            vipPriceData.price, 
-            vipPriceData.currency
-        );
-        display += ` <small style="opacity:0.7;font-size:0.8em">(${originalFormatted})</small>`;
-    }
-    
-    return display;
-}
