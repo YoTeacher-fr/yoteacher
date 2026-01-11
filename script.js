@@ -926,7 +926,6 @@ const appTranslationManager = {
 };
 
 // ===== GESTION DES PRIX VIP =====
-// ===== GESTION DES PRIX VIP =====
 const vipPriceManager = {
     init: () => {
         console.log('👑 Initialisation du gestionnaire de prix VIP...');
@@ -968,140 +967,140 @@ const vipPriceManager = {
     },
     
     updateVIPPrices: async () => {
-    if (!window.authManager || !window.authManager.isUserVip()) {
-        console.log('👑 Utilisateur non VIP, pas de mise à jour des prix');
-        return;
-    }
-    
-    console.log('👑 Mise à jour des prix VIP sur la page d\'accueil');
-    
-    // Mettre à jour le prix du cours d'essai (toujours 5€)
-    const essaiBtn = document.getElementById('essaiPriceBtn');
-    if (essaiBtn && window.currencyManager) {
-        const priceSpan = essaiBtn.querySelector('.price-essai');
-        if (priceSpan) {
-            priceSpan.textContent = window.currencyManager.formatPrice(5);
-            console.log('✅ Prix essai mis à jour');
-        }
-    }
-    
-    // Mettre à jour les cartes de cours
-    const coursesUpdated = [];
-    
-    for (const card of document.querySelectorAll('.course-card')) {
-        const courseId = card.dataset.courseId;
-        if (!courseId) continue;
-        
-        let courseType = '';
-        switch(courseId) {
-            case '1': courseType = 'conversation'; break;
-            case '2': courseType = 'curriculum'; break;
-            case '3': courseType = 'examen'; break;
+        if (!window.authManager || !window.authManager.isUserVip()) {
+            console.log('👑 Utilisateur non VIP, pas de mise à jour des prix');
+            return;
         }
         
-        if (!courseType) continue;
+        console.log('👑 Mise à jour des prix VIP sur la page d\'accueil');
         
-        console.log(`🔄 Traitement ${courseType}...`);
-        
-        // Récupérer le prix VIP pour 60min (prix principal)
-        const vipPriceData = await window.authManager.getVipPrice(courseType, 60);
-        
-        if (!vipPriceData) {
-            console.log(`⚠️ Aucun prix VIP pour ${courseType}`);
-            continue;
-        }
-        
-        console.log(`✅ Prix VIP trouvé pour ${courseType}:`, vipPriceData);
-        
-        // Utiliser la nouvelle méthode de conversion
-        const convertedPrice = window.currencyManager.convertVIPPrice(vipPriceData);
-        
-        // Mettre à jour le prix principal
-        const priceMain = card.querySelector('.price-main');
-        if (priceMain && convertedPrice) {
-            const perHourSpan = priceMain.querySelector('.price-per-hour');
-            const perHourText = getTranslation('courses.price_per_hour', '/h');
-            
-            // Formater le prix VIP avec indication de la devise originale
-            const displayPrice = window.currencyManager.formatVIPPrice(vipPriceData, true);
-            
-            if (perHourSpan) {
-                priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
-            } else {
-                priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
+        // Mettre à jour le prix du cours d'essai (toujours 5€)
+        const essaiBtn = document.getElementById('essaiPriceBtn');
+        if (essaiBtn && window.currencyManager) {
+            const priceSpan = essaiBtn.querySelector('.price-essai');
+            if (priceSpan) {
+                priceSpan.textContent = window.currencyManager.formatPrice(5);
+                console.log('✅ Prix essai mis à jour');
             }
-            console.log(`  ✅ Prix principal ${courseType}: ${displayPrice}`);
         }
         
-        // Mettre à jour les prix détaillés
-        const priceDetailItems = card.querySelectorAll('.price-detail-item');
+        // Mettre à jour les cartes de cours
+        const coursesUpdated = [];
         
-        for (const item of priceDetailItems) {
-            // Prix 30min
-            const price30Element = item.querySelector('.price-30');
-            if (price30Element) {
-                const price30Data = await window.authManager.getVipPrice(courseType, 30);
-                if (price30Data && window.currencyManager) {
-                    const display30 = window.currencyManager.formatVIPPrice(price30Data, false);
-                    price30Element.innerHTML = display30;
-                    console.log(`  ✅ Prix 30min ${courseType}: ${display30}`);
-                }
+        for (const card of document.querySelectorAll('.course-card')) {
+            const courseId = card.dataset.courseId;
+            if (!courseId) continue;
+            
+            let courseType = '';
+            switch(courseId) {
+                case '1': courseType = 'conversation'; break;
+                case '2': courseType = 'curriculum'; break;
+                case '3': courseType = 'examen'; break;
             }
             
-            // Prix 45min
-            const price45Element = item.querySelector('.price-45');
-            if (price45Element) {
-                const price45Data = await window.authManager.getVipPrice(courseType, 45);
-                if (price45Data && window.currencyManager) {
-                    const display45 = window.currencyManager.formatVIPPrice(price45Data, false);
-                    price45Element.innerHTML = display45;
-                    console.log(`  ✅ Prix 45min ${courseType}: ${display45}`);
-                }
+            if (!courseType) continue;
+            
+            console.log(`🔄 Traitement ${courseType}...`);
+            
+            // Récupérer le prix VIP pour 60min (prix principal)
+            const vipPriceData = await window.authManager.getVipPrice(courseType, 60);
+            
+            if (!vipPriceData) {
+                console.log(`⚠️ Aucun prix VIP pour ${courseType}`);
+                continue;
             }
             
-            // Prix forfait (10 cours)
-            const priceForfaitElement = item.querySelector('.price-forfait');
-            if (priceForfaitElement) {
-                // Pour le forfait, utiliser le prix 60min × 10 × 0.95 (5% de réduction)
-                const forfaitPriceData = {
-                    price: vipPriceData.price * 10 * 0.95,
-                    currency: vipPriceData.currency
-                };
+            console.log(`✅ Prix VIP trouvé pour ${courseType}:`, vipPriceData);
+            
+            // Utiliser la nouvelle méthode de conversion
+            const convertedPrice = window.currencyManager.convertVIPPrice(vipPriceData);
+            
+            // Mettre à jour le prix principal
+            const priceMain = card.querySelector('.price-main');
+            if (priceMain && convertedPrice) {
+                const perHourSpan = priceMain.querySelector('.price-per-hour');
+                const perHourText = getTranslation('courses.price_per_hour', '/h');
                 
-                if (window.currencyManager) {
-                    const displayForfait = window.currencyManager.formatVIPPrice(forfaitPriceData, false);
-                    priceForfaitElement.innerHTML = displayForfait;
-                    console.log(`  ✅ Prix forfait ${courseType}: ${displayForfait}`);
+                // Formater le prix VIP avec indication de la devise originale
+                const displayPrice = window.currencyManager.formatVIPPrice(vipPriceData, true);
+                
+                if (perHourSpan) {
+                    priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
+                } else {
+                    priceMain.innerHTML = `${displayPrice}<span class="price-per-hour">${perHourText}</span>`;
+                }
+                console.log(`  ✅ Prix principal ${courseType}: ${displayPrice}`);
+            }
+            
+            // Mettre à jour les prix détaillés
+            const priceDetailItems = card.querySelectorAll('.price-detail-item');
+            
+            for (const item of priceDetailItems) {
+                // Prix 30min
+                const price30Element = item.querySelector('.price-30');
+                if (price30Element) {
+                    const price30Data = await window.authManager.getVipPrice(courseType, 30);
+                    if (price30Data && window.currencyManager) {
+                        const display30 = window.currencyManager.formatVIPPrice(price30Data, false);
+                        price30Element.innerHTML = display30;
+                        console.log(`  ✅ Prix 30min ${courseType}: ${display30}`);
+                    }
+                }
+                
+                // Prix 45min
+                const price45Element = item.querySelector('.price-45');
+                if (price45Element) {
+                    const price45Data = await window.authManager.getVipPrice(courseType, 45);
+                    if (price45Data && window.currencyManager) {
+                        const display45 = window.currencyManager.formatVIPPrice(price45Data, false);
+                        price45Element.innerHTML = display45;
+                        console.log(`  ✅ Prix 45min ${courseType}: ${display45}`);
+                    }
+                }
+                
+                // Prix forfait (10 cours)
+                const priceForfaitElement = item.querySelector('.price-forfait');
+                if (priceForfaitElement) {
+                    // Pour le forfait, utiliser le prix 60min × 10 × 0.95 (5% de réduction)
+                    const forfaitPriceData = {
+                        price: vipPriceData.price * 10 * 0.95,
+                        currency: vipPriceData.currency
+                    };
+                    
+                    if (window.currencyManager) {
+                        const displayForfait = window.currencyManager.formatVIPPrice(forfaitPriceData, false);
+                        priceForfaitElement.innerHTML = displayForfait;
+                        console.log(`  ✅ Prix forfait ${courseType}: ${displayForfait}`);
+                    }
                 }
             }
+            
+            // Ajouter un indicateur VIP à la carte
+            const courseHeader = card.querySelector('.course-header');
+            if (courseHeader && !courseHeader.querySelector('.vip-badge')) {
+                const vipBadge = document.createElement('span');
+                vipBadge.className = 'vip-badge';
+                vipBadge.textContent = 'VIP';
+                vipBadge.style.cssText = `
+                    display: inline-block;
+                    background: linear-gradient(135deg, #FFD700, #FFA500);
+                    color: #000;
+                    padding: 2px 8px;
+                    border-radius: 10px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    margin-left: 10px;
+                    border: 1px solid #FFA500;
+                    vertical-align: middle;
+                `;
+                courseHeader.querySelector('.course-type').appendChild(vipBadge);
+            }
+            
+            coursesUpdated.push(courseType);
         }
         
-        // Ajouter un indicateur VIP à la carte
-        const courseHeader = card.querySelector('.course-header');
-        if (courseHeader && !courseHeader.querySelector('.vip-badge')) {
-            const vipBadge = document.createElement('span');
-            vipBadge.className = 'vip-badge';
-            vipBadge.textContent = 'VIP';
-            vipBadge.style.cssText = `
-                display: inline-block;
-                background: linear-gradient(135deg, #FFD700, #FFA500);
-                color: #000;
-                padding: 2px 8px;
-                border-radius: 10px;
-                font-size: 11px;
-                font-weight: bold;
-                margin-left: 10px;
-                border: 1px solid #FFA500;
-                vertical-align: middle;
-            `;
-            courseHeader.querySelector('.course-type').appendChild(vipBadge);
-        }
-        
-        coursesUpdated.push(courseType);
-    }
-    
-    console.log('✅ Prix VIP mis à jour pour:', coursesUpdated);
-},
+        console.log('✅ Prix VIP mis à jour pour:', coursesUpdated);
+    },
     
     removeVIPStyles: () => {
         // Retirer toutes les classes VIP
@@ -1117,6 +1116,7 @@ const vipPriceManager = {
         if (notification) notification.remove();
     }
 };
+
 // ===== GESTION DES BOUTONS DE LANGUE =====
 const initLanguageButtons = () => {
     console.log('🔧 Initialisation des boutons de langue...');
