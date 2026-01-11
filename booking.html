@@ -1,13 +1,1251 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <!-- Head inchangé... -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="booking.page_title">Réserver un cours - YoTeacher</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* RÉDUCTION DE LA HAUTEUR DU HEADER */
+        .main-header {
+            background-color: rgba(255, 255, 255, 0.98) !important;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
+            backdrop-filter: blur(10px) !important;
+            min-height: 60px !important;
+        }
+        
+        /* CORRECTION COMPLÈTE DU HEADER POUR ALIGNEMENT À DROITE */
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 !important;
+            width: 100%;
+        }
+        
+        .logo-section {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .main-header .nav-link {
+            display: none !important;
+        }
+        
+        .main-header .nav-spacer {
+            display: none !important;
+        }
+        
+        .main-header .logo {
+            color: #333 !important;
+            font-weight: 700;
+            font-size: 1.5rem !important;
+        }
+        
+        /* Grouper langue, devise et avatar à droite */
+        .header-right-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+            flex: 0 0 auto;
+        }
+        
+        /* Devise dans le header réduit */
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .currency-selector select {
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            padding: 4px 8px;
+            color: #333;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            width: auto;
+            min-width: 70px;
+            text-align: center;
+            text-align-last: center;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: all 0.3s ease;
+        }
+        
+        .currency-selector i {
+            font-size: 0.9rem;
+            color: #333;
+        }
+        
+        /* Langue dans le header réduit */
+        .language-switcher {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #333;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .language-switcher:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Bouton Connexion dans le header réduit */
+        .main-header .login-btn {
+            padding: 8px 20px !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            border-radius: 50px;
+            background: #4f9ad1 !important;
+            color: white !important;
+            border: none;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        
+        .main-header .login-btn:hover {
+            background: #3c84f6 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
+        }
+        
+        /* Avatar utilisateur */
+        .user-avatar {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .avatar-img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f9ad1, #3c84f6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .user-menu {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            min-width: 180px;
+            padding: 10px 0;
+            display: none;
+            z-index: 1000;
+            border: 1px solid #eee;
+        }
+        
+        .user-avatar:hover .user-menu {
+            display: block;
+        }
+        
+        .user-menu a {
+            display: block;
+            padding: 10px 15px;
+            color: #333;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+        
+        .user-menu a:hover {
+            background: #f5f5f5;
+            color: #3c84f6;
+        }
+        
+        .user-menu .logout-btn {
+            border-top: 1px solid #eee;
+            color: #d32f2f;
+            margin-top: 5px;
+        }
+        
+        .user-menu .logout-btn:hover {
+            background: #ffeaea;
+        }
+        
+        /* Menu hamburger */
+        .hamburger-menu {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 10px;
+        }
+        
+        .hamburger-menu span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background: #333;
+            margin: 4px 0;
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+        
+        /* Menu mobile */
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .mobile-menu-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background: white;
+            padding: 20px;
+            overflow-y: auto;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+        }
+        
+        .mobile-menu-overlay.active .mobile-nav {
+            transform: translateX(0);
+        }
+        
+        .close-menu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: #333;
+            cursor: pointer;
+        }
+        
+        .mobile-nav-link {
+            display: block;
+            padding: 15px 0;
+            color: #333;
+            text-decoration: none;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* CORRECTION DU PADDING DU BODY */
+        body {
+            padding-top: 60px !important;
+        }
+        
+        /* Bouton connexion mobile */
+        .mobile-login-btn-header {
+            display: none !important;
+        }
+        
+        /* FOND INITIAL DE BOOKING */
+        .booking-section {
+            padding: 40px 20px;
+            background: #f8f9fa;
+            min-height: calc(100vh - 60px);
+        }
+
+        .booking-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .booking-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .booking-title {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .booking-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .booking-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .booking-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeaea;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .calendar-container {
+            margin-bottom: 30px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .month-year {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+
+        .calendar-nav button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .calendar-nav button:hover {
+            background: #f0f0f0;
+            border-color: #3c84f6;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .calendar-day {
+            text-align: center;
+            padding: 12px 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background: #f0f7ff;
+        }
+
+        .calendar-day.selected {
+            background: #3c84f6;
+            color: white;
+        }
+
+        .calendar-day.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .calendar-day.today {
+            border: 2px solid #3c84f6;
+        }
+
+        .time-slots {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .time-slot {
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .time-slot:hover {
+            border-color: #3c84f6;
+            background: #f0f7ff;
+        }
+
+        .time-slot.selected {
+            background: #3c84f6;
+            color: white;
+            border-color: #3c84f6;
+        }
+
+        .time-slot.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .time-slot-time {
+            font-weight: 600;
+        }
+
+        .time-slot-duration {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3c84f6;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .booking-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-item.total {
+            font-weight: 600;
+            font-size: 1.2rem;
+            border-bottom: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #ddd;
+        }
+
+        .btn-booking {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3c84f6, #1e88e5);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-booking:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+        }
+
+        .btn-booking:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #ffeaea;
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #d32f2f;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .loading-slots {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading-slots i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #3c84f6;
+        }
+
+        .no-slots {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error-slots {
+            text-align: center;
+            padding: 30px;
+            background: #ffeaea;
+            border-radius: 10px;
+            color: #d32f2f;
+        }
+
+        .error-slots i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .error-details {
+            font-size: 0.9rem;
+            margin: 10px 0;
+            opacity: 0.8;
+        }
+
+        .retry-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #3c84f6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .retry-btn:hover {
+            background: #2c74e6;
+        }
+        
+        /* NOUVEAUX STYLES POUR LES BULLES DE DURÉE */
+        .duration-group {
+            display: none;
+        }
+        
+        .duration-group.visible {
+            display: block;
+        }
+        
+        .duration-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .duration-option {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .duration-option:hover {
+            border-color: #4781db;
+            background: #f0f7ff;
+            color: #4781db;
+        }
+        
+        .duration-option.selected {
+            background: #4781db;
+            border-color: #4781db;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(71, 129, 219, 0.3);
+        }
+        
+        /* Styles pour les boutons de moyen de communication */
+        .location-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .location-btn i {
+            font-size: 1.1rem;
+        }
+        
+        .location-btn:hover {
+            border-color: #3069c4;
+            background: #f0f7ff;
+            color: #3069c4;
+        }
+
+        .location-btn.selected {
+            background: #3069c4;
+            border-color: #3069c4;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(48, 105, 196, 0.3);
+        }
+        
+        .login-required {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .login-required a {
+            color: #3c84f6;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .login-required a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Nouveau style pour le sélecteur de nombre de cours */
+        .courses-count-group {
+            margin-bottom: 20px;
+        }
+        
+        .courses-count-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .courses-count-option {
+            flex: 1;
+            min-width: 70px;
+            padding: 12px 10px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            position: relative;
+        }
+        
+        .courses-count-option:hover {
+            border-color: #3c84f6;
+            background: #f0f7ff;
+            color: #3c84f6;
+        }
+        
+        .courses-count-option.selected {
+            background: #3c84f6;
+            border-color: #3c84f6;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
+        }
+        
+        .discount-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f6ae3b;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        /* Styles pour le menu mobile */
+        .currency-selector-mobile {
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+            margin-top: 15px;
+        }
+        
+        .currency-selector-mobile label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .currency-selector-mobile select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 0.9rem;
+        }
+        
+        .mobile-language {
+            padding: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #333;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .mobile-language:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        .mobile-login-btn {
+            margin: 20px 0 10px;
+            padding: 12px;
+            text-align: center;
+            background: #3c84f6;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            display: block;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .mobile-login-btn:hover {
+            background: #2c74e6;
+        }
+
+        /* Styles responsives */
+        @media (max-width: 768px) {
+            .booking-section {
+                padding: 30px 15px;
+                min-height: calc(100vh - 60px);
+            }
+            
+            .booking-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .booking-title {
+                font-size: 2rem;
+            }
+            
+            .calendar-grid {
+                gap: 3px;
+            }
+            
+            .calendar-day {
+                padding: 8px 3px;
+                font-size: 0.9rem;
+            }
+            
+            .booking-card {
+                padding: 25px 20px;
+            }
+            
+            .duration-options,
+            .courses-count-options {
+                gap: 8px;
+            }
+            
+            .duration-option,
+            .courses-count-option {
+                min-width: 70px;
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            
+            /* Header mobile */
+            .hamburger-menu {
+                display: block;
+            }
+            
+            .mobile-login-btn-header {
+                display: block !important;
+                padding: 6px 12px;
+                font-size: 0.85rem;
+                background: #4f9ad1;
+                color: white;
+                border-radius: 20px;
+                text-decoration: none;
+            }
+            
+            /* Cacher les éléments du groupe droit sur mobile */
+            .header-right-group {
+                display: none;
+            }
+            
+            .main-header .login-btn {
+                display: none !important;
+            }
+            
+            .language-switcher {
+                display: none;
+            }
+            
+            .currency-selector {
+                display: none;
+            }
+            
+            .user-avatar {
+                display: none;
+            }
+            
+            .logo-section {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            
+            .header-content {
+                justify-content: space-between;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .booking-card {
+                padding: 20px 15px;
+            }
+            
+            .booking-title {
+                font-size: 1.8rem;
+            }
+            
+            .card-title {
+                font-size: 1.3rem;
+            }
+            
+            .btn-booking {
+                padding: 14px;
+            }
+            
+            .form-input, .form-select, .form-textarea {
+                padding: 10px 12px;
+            }
+            
+            .duration-options,
+            .courses-count-options {
+                gap: 6px;
+            }
+            
+            .duration-option,
+            .courses-count-option {
+                min-width: 60px;
+                padding: 8px 10px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* Animation subtile pour les cartes */
+        .booking-card {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* ===== STYLES VIP AJOUTÉS ===== */
+        /* Style pour les prix VIP */
+        .vip-price-display {
+            color: #D4AF37 !important;
+            font-weight: bold !important;
+            position: relative;
+        }
+        
+        .vip-price-display::before {
+            content: '💰 ';
+        }
+        
+        .vip-badge-booking {
+            animation: pulseVIP 2s infinite;
+        }
+        
+        @keyframes pulseVIP {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Style pour le récapitulatif VIP */
+        .summary-item.vip-highlight {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.1));
+            border-left: 4px solid #FFD700;
+            padding-left: 10px;
+        }
+        
+        /* Indicateur VIP dans le récapitulatif */
+        .vip-indicator {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 5px;
+            border: 1px solid #FFA500;
+            vertical-align: middle;
+        }
+    </style>
 </head>
 <body>
-    <!-- Header inchangé... -->
+    <!-- Header réduit -->
+    <header class="main-header scrolled">
+        <div class="container">
+            <div class="header-content">
+                <button class="hamburger-menu" id="hamburgerBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
+                <div class="logo-section">
+                    <a href="index.html" class="logo">Yoann</a>
+                    <div class="flag">🇫🇷</div>
+                </div>
+                
+                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                
+                <!-- Groupe droit pour langue, devise et avatar -->
+                <div class="header-right-group">
+                    <!-- Avatar utilisateur -->
+                    <div class="user-avatar" id="userAvatar" style="display: none;">
+                        <div class="avatar-img" id="avatarInitials">Y</div>
+                        <div class="user-menu">
+                            <a href="dashboard.html" data-i18n="dashboard.my_dashboard">Mon tableau de bord</a>
+                            <a href="profile.html" data-i18n="dashboard.my_profile">Mon profil</a>
+                            <a href="bookings.html" data-i18n="payment.my_bookings">Mes réservations</a>
+                            <a href="#" class="logout-btn" id="logoutBtn" data-i18n="dashboard.logout">Déconnexion</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Sélecteur de devise -->
+                    <div class="currency-selector">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <select id="currencySelector">
+                            <!-- Rempli dynamiquement par currency.js -->
+                        </select>
+                    </div>
+                    
+                    <!-- Sélecteur de langue -->
+                    <div class="language-switcher" id="languageSwitcherDesktop">
+                        <span class="flag">🌐</span>
+                        <span data-i18n="header.language">EN</span>
+                    </div>
+                    
+                    <!-- Bouton de connexion (visible si non connecté) -->
+                    <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Menu Mobile -->
+        <div class="mobile-menu-overlay" id="mobileMenu">
+            <nav class="mobile-nav">
+                <button class="close-menu" id="closeMenuBtn">×</button>
+                <!-- La section utilisateur sera ajoutée dynamiquement ici -->
+                <a href="index.html#about" class="mobile-nav-link" data-i18n="nav.about">À propos</a>
+                <a href="index.html#courses" class="mobile-nav-link" data-i18n="nav.courses">Cours</a>
+                <a href="index.html#testimonials" class="mobile-nav-link" data-i18n="nav.testimonials">Témoignages</a>
+                <a href="index.html#contact" class="mobile-nav-link" data-i18n="nav.contact">Contact</a>
+                
+                <!-- Sélecteur de devise mobile -->
+                <div class="currency-selector-mobile">
+                    <label><i class="fas fa-money-bill-wave"></i> Devise</label>
+                    <select id="currencySelectorMobile">
+                        <!-- Rempli dynamiquement -->
+                    </select>
+                </div>
+                
+                <div class="mobile-language" id="languageSwitcherMobile">
+                    <span class="flag">🌐</span>
+                    <span data-i18n="header.language">EN</span>
+                </div>
+                
+                <a href="login.html" class="mobile-login-btn" data-i18n="header.login">Connexion</a>
+            </nav>
+        </div>
+    </header>
 
     <section class="booking-section">
-        <!-- HTML inchangé... -->
+        <div class="booking-container">
+            <div class="booking-header">
+                <h1 class="booking-title" data-i18n="booking.title">Réserver un cours</h1>
+                <p class="booking-subtitle" data-i18n="booking.subtitle">Choisissez la date, l'heure et le type de cours qui vous convient</p>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-circle"></i> <span id="errorText"></span>
+            </div>
+
+            <div class="success-message" id="successMessage">
+                <i class="fas fa-check-circle"></i> <span id="successText"></span>
+            </div>
+
+            <div class="booking-grid">
+                <!-- Colonne gauche : Calendrier et créneaux -->
+                <div class="booking-card">
+                    <h2 class="card-title" data-i18n="booking.choose_slot">Choisir un créneau</h2>
+                    
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <div class="month-year" id="currentMonth">Janvier 2024</div>
+                            <div class="calendar-nav">
+                                <button id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                                <button id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div class="calendar-grid" id="calendarDays">
+                            <!-- Les jours seront générés par JavaScript -->
+                        </div>
+                    </div>
+
+                    <h3 style="margin-bottom: 15px;" data-i18n="booking.available_slots">Créneaux disponibles</h3>
+                    <div class="time-slots" id="timeSlots">
+                        <!-- Les créneaux seront générés par JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Colonne droite : Formulaire et récapitulatif -->
+                <div class="booking-card">
+                    <h2 class="card-title" data-i18n="booking.details">Détails de la réservation</h2>
+                    
+                    <!-- Message de connexion requise -->
+                    <div class="login-required" id="loginRequired" style="display: none;">
+                        <i class="fas fa-info-circle"></i> <span data-i18n="booking.login_required">Pour réserver un cours</span> <span id="courseTypeName"></span>, 
+                        <a href="login.html" id="loginLink" data-i18n="booking.connect">connectez-vous</a> <span data-i18n="booking.or">ou</span> 
+                        <a href="signup.html" id="signupLink" data-i18n="booking.create_account">créez un compte</a>.
+                    </div>
+                    
+                    <form id="bookingForm">
+                        <div class="form-group">
+                            <label class="form-label" for="courseType" data-i18n="booking.course_type">Type de cours</label>
+                            <select id="courseType" class="form-select" required>
+                                <option value="" data-i18n="booking.select_course">Sélectionnez un type de cours</option>
+                                <option value="essai" data-i18n="courses.trial">Cours d'essai (15 min)</option>
+                                <option value="conversation" data-i18n="courses.conversation">Conversation</option>
+                                <option value="curriculum" data-i18n="courses.curriculum">Curriculum complet</option>
+                                <option value="examen" data-i18n="courses.exam">Préparation d'examen</option>
+                            </select>
+                        </div>
+
+                        <!-- Sélecteur de durée en bulles cliquables -->
+                        <div class="form-group duration-group" id="durationGroup">
+                            <label class="form-label" data-i18n="booking.duration">Durée du cours</label>
+                            <div class="duration-options">
+                                <button type="button" class="duration-option" data-duration="30" data-price-eur="10" data-i18n="courses.detail_30min">30 min</button>
+                                <button type="button" class="duration-option" data-duration="45" data-price-eur="15" data-i18n="courses.detail_45min">45 min</button>
+                                <button type="button" class="duration-option" data-duration="60" data-price-eur="20" data-selected="true" data-i18n="courses.duration_60">60 min</button>
+                            </div>
+                            <input type="hidden" id="duration" value="60">
+                            <input type="hidden" id="basePriceEUR" value="20">
+                        </div>
+
+                        <!-- Nouveau: Sélecteur du nombre de cours -->
+                        <div class="form-group courses-count-group" id="coursesCountGroup">
+                            <label class="form-label" data-i18n="booking.courses_count">Nombre de cours</label>
+                            <div class="courses-count-options">
+                                <button type="button" class="courses-count-option selected" data-count="1" data-discount="0" data-i18n="booking.one_course">
+                                    1 cours
+                                </button>
+                                <button type="button" class="courses-count-option" data-count="5" data-discount="2" data-i18n="booking.five_courses">
+                                    5 cours
+                                    <span class="discount-badge" data-i18n="booking.discount_badge">-2%</span>
+                                </button>
+                                <button type="button" class="courses-count-option" data-count="10" data-discount="5" data-i18n="booking.ten_courses">
+                                    10 cours
+                                    <span class="discount-badge" data-i18n="booking.discount_badge_5">-5%</span>
+                                </button>
+                            </div>
+                            <input type="hidden" id="coursesCount" value="10">
+                            <input type="hidden" id="discountPercent" value="5">
+                        </div>
+
+                        <!-- Sélecteur de moyen de communication -->
+                        <div class="form-group" id="locationGroup">
+                            <label class="form-label" data-i18n="booking.communication">Moyen de communication</label>
+                            <div class="duration-options">
+                                <button type="button" class="duration-option location-btn" data-location="integrations:zoom">
+                                    <i class="fab fa-zoom"></i> <span data-i18n="booking.zoom">Zoom</span>
+                                </button>
+                                <button type="button" class="duration-option location-btn" data-location="https://teams.live.com/l/invite/FEAJFWoKc8mbrQCGwM?v=g1">
+                                    <i class="fab fa-microsoft"></i> <span data-i18n="booking.teams">Teams</span>
+                                </button>
+                                <button type="button" class="duration-option location-btn selected" data-location="integrations:google:meet">
+                                    <i class="fab fa-google"></i> <span data-i18n="booking.meet">Meet</span>
+                                </button>
+                            </div>
+                            <input type="hidden" id="selectedLocation" value="integrations:google:meet">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="name" data-i18n="booking.full_name">Nom complet</label>
+                            <input type="text" id="name" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="email" data-i18n="booking.email">Email</label>
+                            <input type="email" id="email" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="notes" data-i18n="booking.notes">Notes pour le professeur (optionnel)</label>
+                            <textarea id="notes" class="form-textarea" placeholder="Votre niveau, objectifs, sujets de discussion préférés..." data-i18n-placeholder="booking.notes_placeholder"></textarea>
+                        </div>
+
+                        <div class="booking-summary">
+                            <h3 style="margin-bottom: 15px;" data-i18n="booking.summary">Récapitulatif</h3>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_type">Type de cours:</span>
+                                <span id="summaryType">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_courses">Nombre de cours:</span>
+                                <span id="summaryCoursesCount">1 cours</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_discount">Réduction:</span>
+                                <span id="summaryDiscount">0%</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_date">Date:</span>
+                                <span id="summaryDate">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_time">Heure:</span>
+                                <span id="summaryTime">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_duration">Durée:</span>
+                                <span id="summaryDuration">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_platform">Plateforme:</span>
+                                <span id="summaryPlatform">Google Meet</span>
+                            </div>
+                            <div class="summary-item total">
+                                <span data-i18n="booking.summary_total">Total:</span>
+                                <span id="summaryPrice">-</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-booking" id="submitBooking" disabled>
+                            <i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>
+                        </button>
+                        
+                        <div style="margin-top: 15px; text-align: center; font-size: 0.9rem; color: #666;">
+                            <i class="fas fa-lock"></i> <span data-i18n="booking.payment_redirect">Vous serez redirigé vers la page de paiement après confirmation</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- Scripts -->
@@ -16,7 +1254,7 @@
     <script src="supabase.js"></script>
     <script src="currency.js"></script>
     <script src="translation.js"></script>
-    <script src="packages.js"></script>
+<script src="packages.js"></script>
     <script src="auth.js"></script>
     <script src="booking.js"></script>
     <script src="common.js"></script>
