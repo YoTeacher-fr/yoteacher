@@ -2011,74 +2011,58 @@
                     
                     console.log(`📊 Calcul prix pour ${courseType} ${selectedDuration}min`);
                     
-                    // PRIX VIP - CORRECTION IMPORTANTE
-                    if (isVipUser) {
-                        console.log(`👑 Utilisateur VIP, recherche prix personnalisé...`);
-                        
-                        try {
-                            vipPriceInfo = await window.authManager.getVipPrice(courseType, selectedDuration);
-                            
-                            if (vipPriceInfo && typeof vipPriceInfo.price === 'number' && !isNaN(vipPriceInfo.price)) {
-                                console.log(`✅ Prix VIP trouvé:`, vipPriceInfo);
-                                
-                                // CORRECTION: Logique simplifiée pour VIP
-                                const vipCurrency = vipPriceInfo.currency || 'EUR';
-                                const currentCurrency = window.currencyManager.currentCurrency;
-                                
-                                // Calculer le total VIP
-                                let totalVipPrice = vipPriceInfo.price * coursesCount;
-                                
-                                // Appliquer la réduction
-                                if (discountPercent > 0) {
-                                    totalVipPrice = totalVipPrice * (1 - discountPercent / 100);
-                                    console.log(`🎁 Réduction ${discountPercent}% appliquée: ${totalVipPrice} ${vipCurrency}`);
-                                }
-                                
-                                // Si même devise, afficher directement
-                                if (vipCurrency === currentCurrency) {
-                                    if (window.currencyManager) {
-                                        price = window.currencyManager.formatPrice(totalVipPrice, currentCurrency);
-                                    } else {
-                                        price = `${totalVipPrice.toFixed(2)} ${vipCurrency}`;
-                                    }
-                                    console.log(`✅ Prix VIP (même devise): ${price}`);
-                                } 
-                                // Si devises différentes, convertir
-                                else {
-                                    if (window.currencyManager) {
-                                        const converted = window.currencyManager.convertVIPPrice(
-                                            { price: totalVipPrice, currency: vipCurrency },
-                                            currentCurrency
-                                        );
-                                        
-                                        if (converted) {
-                                            price = converted.display;
-                                            // Ajouter le prix original entre parenthèses
-                                            const originalFormatted = window.currencyManager.formatPrice(
-                                                totalVipPrice, 
-                                                vipCurrency
-                                            );
-                                            price += ` <small style="opacity:0.7;font-size:0.8em">(${originalFormatted})</small>`;
-                                        } else {
-                                            // Fallback
-                                            price = window.currencyManager.formatPrice(totalVipPrice);
-                                        }
-                                        console.log(`💱 Prix VIP converti: ${price}`);
-                                    } else {
-                                        price = `${totalVipPrice.toFixed(2)} ${vipCurrency}`;
-                                    }
-                                }
-                            } else {
-                                console.log(`⚠️ Aucun prix VIP valide, utilisation prix normal`);
-                                unitPriceEUR = getNormalPrice(courseType, selectedDuration);
-                                price = calculateNormalPrice(unitPriceEUR, coursesCount, discountPercent);
-                            }
-                        } catch (error) {
-                            console.error('❌ Erreur récupération prix VIP:', error);
-                            unitPriceEUR = getNormalPrice(courseType, selectedDuration);
-                            price = calculateNormalPrice(unitPriceEUR, coursesCount, discountPercent);
-                        }
-                    } 
+                    // PRIX VIP - SANS CONVERSION INUTILE
+if (isVIP) {
+    console.log(`💎 Utilisateur VIP, recherche prix personnalisé...`);
+    
+    try {
+        vipPriceInfo = await window.authManager.getVipPrice(courseType, selectedDuration);
+        
+        if (vipPriceInfo && typeof vipPriceInfo.price === 'number' && !isNaN(vipPriceInfo.price)) {
+            console.log(`✅ Prix VIP trouvé:`, vipPriceInfo);
+            
+            const vipCurrency = vipPriceInfo.currency || 'EUR';
+            const currentCurrency = window.currencyManager.currentCurrency;
+            
+            // Calculer le total VIP
+            let totalVipPrice = vipPriceInfo.price * coursesCount;
+            
+            // Appliquer la réduction
+            if (discountPercent > 0) {
+                totalVipPrice = totalVipPrice * (1 - discountPercent / 100);
+                console.log(`🎁 Réduction ${discountPercent}% appliquée: ${totalVipPrice} ${vipCurrency}`);
+            }
+            
+            // LOGIQUE VIP: Afficher le prix final dans la devise sélectionnée
+            if (vipCurrency === currentCurrency) {
+                // Même devise: afficher directement sans conversion
+                price = window.currencyManager.formatPriceInCurrency(totalVipPrice, vipCurrency);
+                console.log(`✅ Prix VIP (devise native ${vipCurrency}): ${price}`);
+            } else {
+                // Devises différentes: convertir et afficher uniquement le prix converti
+                const converted = window.currencyManager.convertVIPPrice(
+                    { price: totalVipPrice, currency: vipCurrency },
+                    currentCurrency
+                );
+                
+                if (converted) {
+                    price = converted.display;
+                    console.log(`💱 Prix VIP converti: ${price}`);
+                } else {
+                    price = window.currencyManager.formatPriceInCurrency(totalVipPrice, vipCurrency);
+                }
+            }
+        } else {
+            console.log(`⚠️ Aucun prix VIP valide, utilisation prix normal`);
+            unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+            price = calculateNormalPrice(unitPriceEUR, coursesCount, discountPercent);
+        }
+    } catch (error) {
+        console.error('❌ Erreur récupération prix VIP:', error);
+        unitPriceEUR = getNormalPrice(courseType, selectedDuration);
+        price = calculateNormalPrice(unitPriceEUR, coursesCount, discountPercent);
+    }
+}
                     // PRIX NORMAL
                     else {
                         console.log(`👤 Utilisateur standard, prix normal`);
