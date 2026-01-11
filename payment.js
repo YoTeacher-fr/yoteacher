@@ -442,108 +442,157 @@ class PaymentManager {
     }
     
     async completePayment(method, transactionId = null) {
-        console.log('✅ Finalisation paiement:', method);
+    console.log('✅ Finalisation paiement:', method);
+    
+    try {
+        // Créer les données de paiement
+        const paymentData = {
+            method: method,
+            amount: this.currentBooking.price,
+            transactionId: transactionId || `${method}_${Date.now()}`,
+            status: 'completed',
+            timestamp: new Date().toISOString(),
+            booking: this.currentBooking
+        };
         
-        try {
-            // Créer les données de paiement
-            const paymentData = {
-                method: method,
-                amount: this.currentBooking.price,
-                transactionId: transactionId || `${method}_${Date.now()}`,
-                status: 'completed',
-                timestamp: new Date().toISOString(),
-                booking: this.currentBooking
-            };
-            
-            // Sauvegarder le paiement via AuthManager
-            if (window.authManager && this.currentBooking.userId) {
-                try {
-                    const paymentResult = await window.authManager.savePayment(paymentData);
-                    console.log('✅ Paiement enregistré:', paymentResult);
-                } catch (saveError) {
-                    console.warn('⚠️ Erreur sauvegarde paiement:', saveError);
-                }
+        // Sauvegarder le paiement via AuthManager
+        if (window.authManager && this.currentBooking.userId) {
+            try {
+                const paymentResult = await window.authManager.savePayment(paymentData);
+                console.log('✅ Paiement enregistré:', paymentResult);
+            } catch (saveError) {
+                console.warn('⚠️ Erreur sauvegarde paiement:', saveError);
             }
-            
-            let hasWarning = false;
-            let resultMessage = '';
-            
-            // Traiter différemment selon le type d'achat
-            if (this.currentBooking.isPackage) {
-                // ACHAT DE FORFAIT VIP
-                console.log('📦 Traitement achat forfait VIP');
-                try {
-                    const packageResult = await this.processPackagePurchase(paymentData);
-                    
-                    if (packageResult.success) {
-                        console.log('✅ Forfait VIP acheté avec succès');
-                        this.currentBooking.status = 'package_purchased';
-                        resultMessage = 'Votre forfait a été acheté avec succès. Les crédits ont été ajoutés à votre compte.';
-                        
-                        // Envoyer un email de confirmation de forfait
-                       // this.sendPackageConfirmationEmail();
-                    } else {
-                        throw new Error(packageResult.error || 'Échec achat forfait');
-                    }
-                } catch (packageError) {
-                    console.error('⚠️ Erreur achat forfait:', packageError);
-                    hasWarning = true;
-                    this.currentBooking.status = 'payment_ok_package_failed';
-                    resultMessage = 'Paiement réussi mais erreur lors de l\'ajout des crédits. Contactez le support.';
-                }
-            } else {
-                // RÉSERVATION DE COURS UNIQUE
-                console.log('🎫 Traitement réservation cours unique');
-                try {
-                    const bookingResult = await window.bookingManager.createBookingAfterPayment(this.currentBooking);
-                    
-                    if (bookingResult && bookingResult.success) {
-                        console.log('✅ Réservation Cal.com créée');
-                        this.currentBooking.calcomId = bookingResult.data.id;
-                        this.currentBooking.status = 'confirmed';
-                        resultMessage = 'Votre réservation a été confirmée. Vous recevrez un email avec le lien de la visioconférence.';
-                        
-                        // Mettre à jour la réservation avec les infos de paiement
-                        if (window.authManager?.saveBookingData) {
-                            await window.authManager.saveBookingData({
-                                ...this.currentBooking,
-                                paymentMethod: method,
-                                transactionId: transactionId
-                            });
-                        }
-                    } else {
-                        throw new Error(bookingResult?.error || 'Échec Cal.com');
-                    }
-                } catch (calcomError) {
-                    console.error('⚠️ Erreur Cal.com:', calcomError);
-                    hasWarning = true;
-                    this.currentBooking.status = 'payment_ok_reservation_failed';
-                    resultMessage = 'Paiement réussi mais erreur lors de la création de la réservation. Contactez le support.';
-                }
-            }
-            
-            // Nettoyer et rediriger
-            localStorage.removeItem('pendingBooking');
-            
-            // Stocker le message de résultat
-            sessionStorage.setItem('paymentResult', JSON.stringify({
-                success: true,
-                warning: hasWarning,
-                message: resultMessage,
-                booking: this.currentBooking
-            }));
-            const bookingEncoded = encodeURIComponent(JSON.stringify(this.currentBooking));
-const redirectUrl = `payment-success.html?booking=${bookingEncoded}&warning=${hasWarning}`;
-
-setTimeout(() => {
-    window.location.href = redirectUrl;
-}, 1000);
-            
-        } catch (error) {
-            console.error('❌ Erreur finalisation:', error);
-            this.showPaymentError('Erreur lors de la finalisation du paiement: ' + error.message);
         }
+        
+        let hasWarning = false;
+        let resultMessage = '';
+        let bookingResult = null;
+        
+        // Traiter différemment selon le type d'achat
+        if (this.currentBooking.isPackage) {
+            // ACHAT DE FORFAIT AVEC RÉSERVATION IMMÉDIATE
+            console.log('📦 Traitement achat forfait avec réservation immédiate');
+            try {
+                // 1. Acheter le forfait (crée le package avec X crédits)
+                const packageResult = await this.processPackagePurchase(paymentData);
+                
+                if (!packageResult.success) {
+                    throw new Error(packageResult.error || 'Échec achat forfait');
+                }
+                
+                console.log('✅ Forfait acheté avec succès');
+                
+                // 2. Utiliser immédiatement 1 crédit pour la réservation
+                if (window.packagesManager && this.currentBooking.userId) {
+                    console.log(`💰 Utilisation d'1 crédit pour la réservation...`);
+                    
+                    // Créer d'abord un objet de réservation temporaire
+                    const tempBookingData = {
+                        id: 'temp_' + Date.now(),
+                        courseType: this.currentBooking.courseType,
+                        userId: this.currentBooking.userId
+                    };
+                    
+                    const useCreditResult = await window.packagesManager.useCredit(
+                        this.currentBooking.userId,
+                        this.currentBooking.courseType,
+                        tempBookingData
+                    );
+                    
+                    if (!useCreditResult.success) {
+                        console.warn('⚠️ Erreur utilisation crédit:', useCreditResult.error);
+                    } else {
+                        console.log(`✅ 1 crédit utilisé, reste: ${this.currentBooking.packageQuantity - 1} crédits`);
+                    }
+                }
+                
+                // 3. Créer la réservation Cal.com pour le cours sélectionné
+                console.log('🎫 Création réservation Cal.com pour le cours sélectionné...');
+                bookingResult = await window.bookingManager.createBookingAfterPayment(this.currentBooking);
+                
+                if (bookingResult && bookingResult.success) {
+                    console.log('✅ Réservation Cal.com créée');
+                    this.currentBooking.calcomId = bookingResult.data.id;
+                    this.currentBooking.status = 'confirmed';
+                    this.currentBooking.packageId = packageResult.package?.id;
+                    
+                    resultMessage = `Votre forfait de ${this.currentBooking.packageQuantity} cours a été acheté avec succès ! Votre premier cours est réservé pour le ${new Date(this.currentBooking.startTime).toLocaleDateString('fr-FR')} à ${new Date(this.currentBooking.startTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`;
+                    
+                    // 4. Sauvegarder la réservation dans la base
+                    if (window.authManager?.saveBookingData) {
+                        await window.authManager.saveBookingData({
+                            ...this.currentBooking,
+                            paymentMethod: method,
+                            transactionId: transactionId,
+                            packageId: packageResult.package?.id,
+                            creditsUsed: 1
+                        });
+                    }
+                } else {
+                    throw new Error(bookingResult?.error || 'Échec Cal.com');
+                }
+            } catch (packageError) {
+                console.error('⚠️ Erreur achat forfait avec réservation:', packageError);
+                hasWarning = true;
+                this.currentBooking.status = 'payment_ok_booking_failed';
+                resultMessage = 'Paiement réussi mais erreur lors de la réservation du cours. Contactez le support pour régulariser votre forfait.';
+            }
+        } else {
+            // RÉSERVATION DE COURS UNIQUE (sans forfait)
+            console.log('🎫 Traitement réservation cours unique');
+            try {
+                bookingResult = await window.bookingManager.createBookingAfterPayment(this.currentBooking);
+                
+                if (bookingResult && bookingResult.success) {
+                    console.log('✅ Réservation Cal.com créée');
+                    this.currentBooking.calcomId = bookingResult.data.id;
+                    this.currentBooking.status = 'confirmed';
+                    resultMessage = 'Votre réservation a été confirmée. Vous recevrez un email avec le lien de la visioconférence.';
+                    
+                    // Mettre à jour la réservation avec les infos de paiement
+                    if (window.authManager?.saveBookingData) {
+                        await window.authManager.saveBookingData({
+                            ...this.currentBooking,
+                            paymentMethod: method,
+                            transactionId: transactionId
+                        });
+                    }
+                } else {
+                    throw new Error(bookingResult?.error || 'Échec Cal.com');
+                }
+            } catch (calcomError) {
+                console.error('⚠️ Erreur Cal.com:', calcomError);
+                hasWarning = true;
+                this.currentBooking.status = 'payment_ok_reservation_failed';
+                resultMessage = 'Paiement réussi mais erreur lors de la création de la réservation. Contactez le support.';
+            }
+        }
+        
+        // Nettoyer et rediriger
+        localStorage.removeItem('pendingBooking');
+        
+        // Stocker le message de résultat
+        sessionStorage.setItem('paymentResult', JSON.stringify({
+            success: true,
+            warning: hasWarning,
+            message: resultMessage,
+            booking: this.currentBooking
+        }));
+        
+        // Encoder les données de réservation pour l'URL
+        const bookingEncoded = encodeURIComponent(JSON.stringify(this.currentBooking));
+        const redirectUrl = `payment-success.html?booking=${bookingEncoded}&warning=${hasWarning}`;
+        
+        setTimeout(() => {
+            window.location.href = redirectUrl;
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ Erreur finalisation:', error);
+        this.showPaymentError('Erreur lors de la finalisation du paiement: ' + error.message);
     }
+}
 
     // Méthode pour envoyer un email de confirmation de forfait
     async sendPackageConfirmationEmail() {
