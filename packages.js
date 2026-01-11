@@ -164,94 +164,98 @@ class PackagesManager {
         }
     }
 
-    async addCredits(userId, courseType, quantity, price, currency, paymentMethod, transactionId) {
-        if (!window.supabase || !userId) return { success: false, error: 'Supabase ou utilisateur non disponible' };
-        
-        try {
-            // Calculer la date d'expiration (1 an)
-            const expiresAt = new Date();
-            expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    // packages.js - CORRECTION de la fonction addCredits
+async addCredits(userId, courseType, quantity, price, currency, paymentMethod, transactionId, bookingData = null) {
+    if (!window.supabase || !userId) return { success: false, error: 'Supabase ou utilisateur non disponible' };
+    
+    try {
+        // Calculer la date d'expiration (1 an)
+        const expiresAt = new Date();
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
-            // Obtenir les informations du forfait
-            const packageInfo = this.getPackageInfo(courseType, quantity);
-            if (!packageInfo) {
-                throw new Error('Type de forfait non valide');
-            }
-
-            // Créer un nouveau package
-            const { data: newPackage, error: packageError } = await supabase
-                .from('packages')
-                .insert({
-                    user_id: userId,
-                    course_type: courseType,
-                    duration_minutes: 60, // Par défaut
-                    total_credits: packageInfo.total_credits,
-                    remaining_credits: packageInfo.total_credits,
-                    price_paid: price,
-                    discount_percent: packageInfo.discount_percent || 0,
-                    currency: currency,
-                    status: 'active',
-                    purchased_at: new Date().toISOString(),
-                    expires_at: expiresAt.toISOString(),
-                    expiration_alert_sent: false
-                })
-                .select()
-                .single();
-
-            if (packageError) throw packageError;
-
-            // Créer une transaction de crédit
-            const { error: transactionError } = await supabase
-                .from('credit_transactions')
-                .insert({
-                    user_id: userId,
-                    package_id: newPackage.id,
-                    credits_before: 0,
-                    credits_change: packageInfo.total_credits,
-                    credits_after: packageInfo.total_credits,
-                    transaction_type: 'purchase',
-                    reason: `Achat forfait ${quantity} ${courseType}`,
-                    created_at: new Date().toISOString()
-                });
-
-            if (transactionError) console.warn('Erreur transaction crédit:', transactionError);
-
-            // Mettre à jour le profil pour VIP si nécessaire
-            if (quantity >= 5) {
-                const { error: profileError } = await supabase
-                    .from('profiles')
-                    .update({ 
-                        is_vip: true,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', userId);
-
-                if (profileError) console.warn('Erreur mise à jour profil VIP:', profileError);
-            }
-
-            // Créer une notification d'email
-            const { error: emailError } = await supabase
-                .from('email_notifications')
-                .insert({
-                    user_id: userId,
-                    email_to: bookingData?.email || '',
-                    notification_type: 'package_purchase',
-                    subject: `Confirmation d'achat - Forfait ${courseType}`,
-                    body: `Vous avez acheté un forfait de ${quantity} cours ${courseType}.`,
-                    scheduled_for: new Date().toISOString(),
-                    status: 'pending',
-                    booking_id: bookingData?.id || null,
-                    created_at: new Date().toISOString()
-                });
-
-            if (emailError) console.warn('Erreur création notification email:', emailError);
-
-            return { success: true, package: newPackage };
-        } catch (error) {
-            console.error('❌ Erreur ajout crédits:', error);
-            return { success: false, error: error.message };
+        // Obtenir les informations du forfait
+        const packageInfo = this.getPackageInfo(courseType, quantity);
+        if (!packageInfo) {
+            throw new Error('Type de forfait non valide');
         }
+
+        // Créer un nouveau package
+        const { data: newPackage, error: packageError } = await supabase
+            .from('packages')
+            .insert({
+                user_id: userId,
+                course_type: courseType,
+                duration_minutes: 60,
+                total_credits: packageInfo.total_credits,
+                remaining_credits: packageInfo.total_credits,
+                price_paid: price,
+                discount_percent: packageInfo.discount_percent || 0,
+                currency: currency,
+                status: 'active',
+                purchased_at: new Date().toISOString(),
+                expires_at: expiresAt.toISOString(),
+                expiration_alert_sent: false
+            })
+            .select()
+            .single();
+
+        if (packageError) throw packageError;
+
+        // Créer une transaction de crédit
+        const { error: transactionError } = await supabase
+            .from('credit_transactions')
+            .insert({
+                user_id: userId,
+                package_id: newPackage.id,
+                credits_before: 0,
+                credits_change: packageInfo.total_credits,
+                credits_after: packageInfo.total_credits,
+                transaction_type: 'purchase',
+                reason: `Achat forfait ${quantity} ${courseType}`,
+                created_at: new Date().toISOString()
+            });
+
+        if (transactionError) console.warn('Erreur transaction crédit:', transactionError);
+
+        // Mettre à jour le profil pour VIP si nécessaire
+        if (quantity >= 5) {
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update({ 
+                    is_vip: true,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId);
+
+            if (profileError) console.warn('Erreur mise à jour profil VIP:', profileError);
+        }
+
+        // CORRECTION: Utiliser bookingData si disponible, sinon chaîne vide
+        const userEmail = bookingData?.email || '';
+
+        // Créer une notification d'email
+        const { error: emailError } = await supabase
+            .from('email_notifications')
+            .insert({
+                user_id: userId,
+                email_to: userEmail,
+                notification_type: 'package_purchase',
+                subject: `Confirmation d'achat - Forfait ${courseType}`,
+                body: `Vous avez acheté un forfait de ${quantity} cours ${courseType}.`,
+                scheduled_for: new Date().toISOString(),
+                status: 'pending',
+                booking_id: null, // Pas de réservation pour un forfait
+                created_at: new Date().toISOString()
+            });
+
+        if (emailError) console.warn('Erreur création notification email:', emailError);
+
+        return { success: true, package: newPackage };
+    } catch (error) {
+        console.error('❌ Erreur ajout crédits:', error);
+        return { success: false, error: error.message };
     }
+}
 
     async getUserActivePackages(userId) {
         if (!window.supabase || !userId) return [];

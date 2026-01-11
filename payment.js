@@ -397,7 +397,8 @@ class PaymentManager {
                     booking.price,
                     booking.currency,
                     paymentData.method,
-                    paymentData.transactionId
+                    paymentData.transactionId,
+			booking
                 );
                 
                 if (!packageResult.success) {
