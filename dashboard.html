@@ -883,35 +883,105 @@
         document.body.style.visibility = 'hidden';
         
         function checkAuthentication() {
-            let attempts = 0;
-            const maxAttempts = 30;
-            
-            function check() {
-                attempts++;
-                
-                if (window.authManager && window.authManager.isAuthenticated !== undefined) {
-                    if (window.authManager.isAuthenticated()) {
-                        document.body.classList.add('loaded');
-                        document.body.style.opacity = '1';
-                        document.body.style.visibility = 'visible';
-                        
-                        setTimeout(() => {
-                            if (window.loadDashboard) window.loadDashboard();
-                        }, 100);
-                    } else {
-                        const currentUrl = encodeURIComponent(window.location.href);
-                        window.location.replace(`login.html?redirect=${currentUrl}`);
-                    }
-                } else if (attempts >= maxAttempts) {
-                    const currentUrl = encodeURIComponent(window.location.href);
-                    window.location.replace(`login.html?redirect=${currentUrl}`);
-                } else {
-                    setTimeout(check, 100);
-                }
+    console.log('🔐 Vérification de l\'authentification...');
+    
+    let attempts = 0;
+    const maxAttempts = 100;
+    
+    function check() {
+        attempts++;
+        console.log(`Tentative ${attempts}/${maxAttempts}`);
+        
+        if (!window.authManager) {
+            console.log('⏳ authManager non disponible, attente...');
+            if (attempts >= maxAttempts) {
+                redirectToLogin();
+            } else {
+                setTimeout(check, 100);
             }
-            
-            check();
+            return;
         }
+        
+        if (typeof window.authManager.isAuthenticated !== 'function') {
+            console.log('⏳ isAuthenticated non disponible, attente...');
+            if (attempts >= maxAttempts) {
+                redirectToLogin();
+            } else {
+                setTimeout(check, 100);
+            }
+            return;
+        }
+        
+        if (!window.authManager.supabaseReady) {
+            console.log('⏳ Supabase non prêt, attente...');
+            if (attempts >= maxAttempts) {
+                checkDegradedMode();
+            } else {
+                setTimeout(check, 100);
+            }
+            return;
+        }
+        
+        console.log('✅ AuthManager prêt, vérification...');
+        
+        if (window.authManager.isAuthenticated()) {
+            console.log('✅ Utilisateur authentifié');
+            document.body.classList.add('loaded');
+            document.body.style.opacity = '1';
+            document.body.style.visibility = 'visible';
+            
+            setTimeout(() => {
+                if (window.loadDashboard) {
+                    console.log('📊 Chargement du dashboard...');
+                    window.loadDashboard();
+                }
+            }, 100);
+        } else {
+            console.log('❌ Utilisateur non authentifié');
+            redirectToLogin();
+        }
+    }
+    
+    function checkDegradedMode() {
+        const storedUser = localStorage.getItem('yoteacher_user');
+        
+        if (storedUser) {
+            try {
+                const userData = JSON.parse(storedUser);
+                console.log('✅ Utilisateur trouvé dans localStorage:', userData.email);
+                
+                if (window.authManager) {
+                    window.authManager.user = userData;
+                }
+                
+                document.body.classList.add('loaded');
+                document.body.style.opacity = '1';
+                document.body.style.visibility = 'visible';
+                
+                setTimeout(() => {
+                    if (window.loadDashboard) {
+                        window.loadDashboard();
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.error('❌ Erreur lecture localStorage:', error);
+                redirectToLogin();
+            }
+        } else {
+            console.log('❌ Aucun utilisateur dans localStorage');
+            redirectToLogin();
+        }
+    }
+    
+    function redirectToLogin() {
+        console.log('🔄 Redirection vers login...');
+        const currentUrl = encodeURIComponent(window.location.href);
+        window.location.replace(`login.html?redirect=${currentUrl}`);
+    }
+    
+    setTimeout(check, 200);
+}
         
         setTimeout(checkAuthentication, 200);
     </script>
