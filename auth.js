@@ -159,109 +159,114 @@ class AuthManager {
     }
 
     async applyInvitationCode(code) {
-        if (!this.supabaseReady || !this.user) {
-            console.error('❌ Conditions non remplies pour appliquer le code VIP');
-            return { success: false };
-        }
+    if (!this.supabaseReady || !this.user) {
+        console.error('❌ Conditions non remplies pour appliquer le code');
+        return { success: false };
+    }
+    
+    try {
+        console.log(`🔍 Vérification du code VIP: ${code}`);
         
-        try {
-            console.log(`🔍 Vérification du code VIP: ${code}`);
-            
-            // 1. Vérifier si l'utilisateur a déjà des prix VIP avec ce code
-            const { data: existingPricing, error: checkError } = await supabase
-                .from('vip_pricing')
-                .select('id')
-                .eq('user_id', this.user.id)
-                .eq('invitation_code', code.toUpperCase())
-                .limit(1);
-            
-            if (existingPricing && existingPricing.length > 0) {
-                console.log('ℹ️ Code VIP déjà appliqué');
-                sessionStorage.removeItem('invitation_code');
-                this.invitationCode = null;
-                return { success: true, message: 'Déjà appliqué' };
-            }
-            
-            // 2. Récupérer les prix VIP "template" (user_id = NULL) pour ce code
-            const { data: templatePrices, error: pricesError } = await supabase
-                .from('vip_pricing')
-                .select('*')
-                .eq('invitation_code', code.toUpperCase())
-                .is('user_id', null);
-            
-            if (pricesError) {
-                console.error('❌ Erreur récupération template VIP:', pricesError);
-                return { success: false, error: pricesError.message };
-            }
-            
-            if (!templatePrices || templatePrices.length === 0) {
-                console.warn('⚠️ Aucun prix VIP template pour ce code');
-                this.showError('Code d\'invitation VIP invalide');
-                return { success: false, error: 'Code invalide' };
-            }
-            
-            console.log(`📋 ${templatePrices.length} prix VIP à copier`);
-            
-            // 3. Copier les prix pour l'utilisateur
-            const newPrices = templatePrices.map(price => ({
-                user_id: this.user.id,
-                course_type: price.course_type,
-                duration_minutes: price.duration_minutes,
-                price: price.price,
-                currency: price.currency,
-                invitation_code: code.toUpperCase(),
-                created_at: new Date().toISOString()
-            }));
-            
-            const { data: insertedPrices, error: insertError } = await supabase
-                .from('vip_pricing')
-                .insert(newPrices)
-                .select();
-            
-            if (insertError) {
-                console.error('❌ Erreur insertion prix VIP:', insertError);
-                this.showError('Erreur lors de l\'application des prix VIP');
-                return { success: false, error: insertError.message };
-            }
-            
-            console.log('✅ Prix VIP insérés:', insertedPrices);
-            
-            // 4. Mettre à jour le profil (is_vip = true)
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .update({ 
-                    is_vip: true,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', this.user.id);
-            
-            if (profileError) {
-                console.warn('⚠️ Erreur mise à jour profil VIP:', profileError);
-            }
-            
-            // 5. Recharger le profil
-            await this.loadUserProfile();
-            
-            // 6. Nettoyer
+        // 1. Vérifier si l'utilisateur a déjà le statut VIP
+        if (this.user.profile?.is_vip) {
+            console.log('ℹ️ Utilisateur déjà VIP');
             sessionStorage.removeItem('invitation_code');
             this.invitationCode = null;
-            
-            // 7. Afficher succès
-            this.showSuccess('🎉 Bienvenue en tant que membre VIP ! Vous bénéficiez de prix préférentiels.');
-            
-            // 8. Émettre événement
-            window.dispatchEvent(new CustomEvent('vip:applied', {
-                detail: { code: code, prices: insertedPrices }
-            }));
-            
-            return { success: true, prices: insertedPrices };
-            
-        } catch (error) {
-            console.error('❌ Exception application code VIP:', error);
-            this.showError('Une erreur est survenue');
-            return { success: false, error: error.message };
+            return { success: true, message: 'Déjà VIP' };
         }
+        
+        // 2. Vérifier que le code existe dans la table (au moins 1 prix template)
+        const { data: templatePrices, error: pricesError } = await supabase
+            .from('vip_pricing')
+            .select('*')
+            .eq('invitation_code', code.toUpperCase())
+            .is('user_id', null);
+        
+        if (pricesError) {
+            console.error('❌ Erreur récupération template:', pricesError);
+            return { success: false, error: pricesError.message };
+        }
+        
+        if (!templatePrices || templatePrices.length === 0) {
+            console.warn('⚠️ Code VIP invalide (aucun prix configuré)');
+            this.showError('Code d\'invitation invalide');
+            sessionStorage.removeItem('invitation_code');
+            this.invitationCode = null;
+            return { success: false, error: 'Code invalide' };
+        }
+        
+        console.log(`✅ Code valide trouvé avec ${templatePrices.length} prix VIP`);
+        
+        // 3. Copier TOUS les prix VIP template pour cet utilisateur
+        const newPrices = templatePrices.map(price => ({
+            user_id: this.user.id,
+            course_type: price.course_type,
+            duration_minutes: price.duration_minutes,
+            price: price.price,
+            currency: price.currency,
+            invitation_code: code.toUpperCase(),
+            created_at: new Date().toISOString()
+        }));
+        
+        const { data: insertedPrices, error: insertError } = await supabase
+            .from('vip_pricing')
+            .insert(newPrices)
+            .select();
+        
+        if (insertError) {
+            console.error('❌ Erreur insertion prix VIP:', insertError);
+            this.showError('Erreur lors de l\'application des prix VIP');
+            return { success: false, error: insertError.message };
+        }
+        
+        console.log(`✅ ${insertedPrices.length} prix VIP copiés pour l'utilisateur`);
+        
+        // 4. Mettre à jour le profil → is_vip = true
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ 
+                is_vip: true,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', this.user.id);
+        
+        if (profileError) {
+            console.warn('⚠️ Erreur mise à jour profil VIP:', profileError);
+        } else {
+            console.log('✅ Profil mis à jour : is_vip = true');
+        }
+        
+        // 5. Recharger le profil pour mettre à jour this.user
+        await this.loadUserProfile();
+        
+        // 6. Nettoyer
+        sessionStorage.removeItem('invitation_code');
+        this.invitationCode = null;
+        
+        // 7. Afficher message de succès
+        this.showSuccess(`🎉 Bienvenue en tant que membre VIP ! Vous bénéficiez de ${insertedPrices.length} prix préférentiels.`);
+        
+        // 8. Émettre événement
+        window.dispatchEvent(new CustomEvent('vip:applied', {
+            detail: { 
+                code: code, 
+                prices: insertedPrices,
+                nb_prix: insertedPrices.length 
+            }
+        }));
+        
+        return { 
+            success: true, 
+            prices: insertedPrices,
+            nb_prix: insertedPrices.length 
+        };
+        
+    } catch (error) {
+        console.error('❌ Exception application code VIP:', error);
+        this.showError('Une erreur est survenue lors de l\'application du code');
+        return { success: false, error: error.message };
     }
+}
 
     showSuccess(message) {
         if (window.utils && window.utils.showNotification) {
