@@ -79,11 +79,12 @@ class PackagesManager {
         if (!window.supabase || !userId) return { conversation: 0, curriculum: 0, examen: 0 };
         
         try {
-            // Récupérer les packages actifs de l'utilisateur
+            // Récupérer les packages actifs de l'utilisateur depuis la table packages
             const { data: packages, error } = await supabase
-                .from('user_active_packages')
-                .select('course_type, remaining_credits')
+                .from('packages')
+                .select('course_type, remaining_credits, expires_at')
                 .eq('user_id', userId)
+                .eq('status', 'active')
                 .gt('remaining_credits', 0)
                 .gt('expires_at', new Date().toISOString());
 
@@ -112,50 +113,79 @@ class PackagesManager {
         if (!window.supabase || !userId) return { success: false, error: 'Supabase ou utilisateur non disponible' };
         
         try {
-            // Trouver un package actif avec des crédits restants
+            // Trouver un package actif avec des crédits restants dans la table packages
             const { data: activePackage, error: findError } = await supabase
-                .from('user_active_packages')
-                .select('id, remaining_credits, package_id')
+                .from('packages')
+                .select('id, remaining_credits, expires_at')
                 .eq('user_id', userId)
                 .eq('course_type', courseType)
+                .eq('status', 'active')
                 .gt('remaining_credits', 0)
                 .gt('expires_at', new Date().toISOString())
                 .order('expires_at', { ascending: true })
                 .limit(1)
                 .single();
 
-            if (findError || !activePackage) {
+            if (findError) {
+                console.error('Erreur recherche package actif:', findError);
+                throw new Error('Erreur lors de la recherche de forfait actif');
+            }
+
+            if (!activePackage) {
                 throw new Error('Aucun forfait actif avec des crédits disponibles');
             }
 
-            // Décrémenter les crédits restants dans la table PACKAGES (pas user_active_packages)
-            const newRemainingCredits = activePackage.remaining_credits - 1;
+            console.log('✅ Package actif trouvé pour utilisation de crédit:', {
+                id: activePackage.id,
+                credits_avant: activePackage.remaining_credits
+            });
+
+            // Décrémenter les crédits restants
+            const newRemainingCredits = (activePackage.remaining_credits || 0) - 1;
             const { error: updateError } = await supabase
                 .from('packages')
                 .update({ 
-                    remaining_credits: newRemainingCredits
-                    // NE PAS mettre à jour updated_at car ce n'est pas dans la vue
+                    remaining_credits: newRemainingCredits,
+                    updated_at: new Date().toISOString()
                 })
-                .eq('id', activePackage.id); // Utiliser l'ID du package
+                .eq('id', activePackage.id);
 
-            if (updateError) throw updateError;
+            if (updateError) {
+                console.error('Erreur mise à jour crédits:', updateError);
+                throw updateError;
+            }
 
-            // Créer une transaction de crédit
-            const { error: transactionError } = await supabase
-                .from('credit_transactions')
-                .insert({
-                    user_id: userId,
-                    package_id: activePackage.id,
-                    booking_id: bookingData.id,
-                    credits_before: activePackage.remaining_credits,
-                    credits_change: -1,
-                    credits_after: newRemainingCredits,
-                    transaction_type: 'usage',
-                    reason: `Réservation de cours ${courseType}`,
-                    created_at: new Date().toISOString()
-                });
+            console.log('✅ Crédits mis à jour:', {
+                id: activePackage.id,
+                credits_apres: newRemainingCredits
+            });
 
-            if (transactionError) console.warn('Erreur transaction crédit:', transactionError);
+            // Créer une transaction de crédit si la table existe
+            try {
+                const { error: transactionError } = await supabase
+                    .from('credit_transactions')
+                    .insert({
+                        user_id: userId,
+                        package_id: activePackage.id,
+                        booking_id: bookingData.id || `temp_${Date.now()}`,
+                        credits_before: activePackage.remaining_credits || 0,
+                        credits_change: -1,
+                        credits_after: newRemainingCredits,
+                        transaction_type: 'usage',
+                        reason: `Réservation de cours ${courseType}`,
+                        created_at: new Date().toISOString()
+                    });
+
+                if (transactionError) {
+                    console.warn('Erreur création transaction crédit:', transactionError);
+                    // Ne pas arrêter le processus si l'insertion de transaction échoue
+                } else {
+                    console.log('✅ Transaction crédit créée');
+                }
+            } catch (transactionErr) {
+                console.warn('Exception création transaction crédit:', transactionErr);
+                // Continuer même si la transaction échoue
+            }
 
             return { success: true, package_id: activePackage.id };
         } catch (error) {
@@ -200,48 +230,37 @@ class PackagesManager {
 
             if (packageError) throw packageError;
 
-            // Créer une transaction de crédit
-            const { error: transactionError } = await supabase
-                .from('credit_transactions')
-                .insert({
-                    user_id: userId,
-                    package_id: newPackage.id,
-                    credits_before: 0,
-                    credits_change: packageInfo.total_credits,
-                    credits_after: packageInfo.total_credits,
-                    transaction_type: 'purchase',
-                    reason: `Achat forfait ${quantity} ${courseType}`,
-                    created_at: new Date().toISOString()
-                });
+            console.log('✅ Nouveau package créé:', {
+                id: newPackage.id,
+                user_id: newPackage.user_id,
+                course_type: newPackage.course_type,
+                total_credits: newPackage.total_credits,
+                remaining_credits: newPackage.remaining_credits
+            });
 
-            if (transactionError) console.warn('Erreur transaction crédit:', transactionError);
-
-            // NE PAS modifier le statut VIP automatiquement - GÉRÉ UNIQUEMENT MANUELLEMENT
-            // Le statut VIP doit être géré manuellement via codes d'invitation ou par l'admin
-            
-            // Récupérer l'email de l'utilisateur
-            let userEmail = '';
+            // Créer une transaction de crédit si la table existe
             try {
-                if (window.authManager?.user?.email) {
-                    userEmail = window.authManager.user.email;
-                } else if (bookingData?.email) {
-                    userEmail = bookingData.email;
+                const { error: transactionError } = await supabase
+                    .from('credit_transactions')
+                    .insert({
+                        user_id: userId,
+                        package_id: newPackage.id,
+                        credits_before: 0,
+                        credits_change: packageInfo.total_credits,
+                        credits_after: packageInfo.total_credits,
+                        transaction_type: 'purchase',
+                        reason: `Achat forfait ${quantity} ${courseType}`,
+                        created_at: new Date().toISOString()
+                    });
+
+                if (transactionError) {
+                    console.warn('⚠️ Erreur transaction crédit:', transactionError);
+                } else {
+                    console.log('✅ Transaction d\'achat créée');
                 }
-                
-                // Si on n'a toujours pas d'email, essayer de récupérer le profil
-                if (!userEmail && window.supabase) {
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('email')
-                        .eq('id', userId)
-                        .single();
-                    
-                    if (profile?.email) {
-                        userEmail = profile.email;
-                    }
-                }
-            } catch (emailError) {
-                console.warn('Erreur récupération email:', emailError);
+            } catch (transactionErr) {
+                console.warn('⚠️ Exception création transaction crédit:', transactionErr);
+                // Continuer même si la transaction échoue
             }
 
             return { success: true, package: newPackage };
@@ -256,9 +275,10 @@ class PackagesManager {
         
         try {
             const { data: packages, error } = await supabase
-                .from('user_active_packages')
+                .from('packages')
                 .select('*')
                 .eq('user_id', userId)
+                .eq('status', 'active')
                 .gt('remaining_credits', 0)
                 .gt('expires_at', new Date().toISOString())
                 .order('expires_at', { ascending: true });
