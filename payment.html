@@ -1299,28 +1299,19 @@
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Initialisation page paiement...');
         
-        // Debug: afficher les données de booking
-        console.group('🔍 DEBUG BOOKING DATA');
+        // Variables globales
+        let currentBooking = null;
+        let currentCurrency = 'EUR';
         
         // Récupérer la réservation depuis l'URL
         const urlParams = new URLSearchParams(window.location.search);
         const bookingParam = urlParams.get('booking');
         
-        let currentBooking = null;
-        
         if (bookingParam) {
             try {
                 currentBooking = JSON.parse(decodeURIComponent(bookingParam));
                 console.log('📋 Réservation récupérée depuis URL:', currentBooking);
-                console.log('Prix:', currentBooking.price);
-                console.log('Devise:', currentBooking.currency);
-                console.log('Est VIP:', currentBooking.isVip);
-                console.log('Quantité:', currentBooking.packageQuantity);
-                console.log('Réduction:', currentBooking.discountPercent);
-                
-                if (currentBooking.isVip) {
-                    console.log('Prix VIP original:', currentBooking.vipPriceData);
-                }
+                currentCurrency = currentBooking.currency || 'EUR';
             } catch (error) {
                 console.error('❌ Erreur parsing booking:', error);
                 showPaymentError('Réservation invalide. Veuillez réessayer.');
@@ -1332,13 +1323,12 @@
                 try {
                     currentBooking = JSON.parse(storedBooking);
                     console.log('📋 Réservation récupérée depuis localStorage:', currentBooking);
+                    currentCurrency = currentBooking.currency || 'EUR';
                 } catch (error) {
                     console.error('❌ Erreur parsing stored booking:', error);
                 }
             }
         }
-        
-        console.groupEnd();
         
         if (!currentBooking) {
             showPaymentError('Aucune réservation trouvée. Veuillez retourner à la page de réservation.');
@@ -1375,34 +1365,104 @@
             }
         }
         
-        // Initialiser le sélecteur de devise mobile
-        function initMobileCurrencySelector() {
-            const mobileSelector = document.getElementById('currencySelectorMobile');
-            if (!mobileSelector || !window.currencyManager) return;
-            
-            mobileSelector.innerHTML = '';
-            
-            window.currencyManager.supportedCurrencies.forEach(currency => {
-                const option = document.createElement('option');
-                option.value = currency;
-                option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
-                
-                if (currency === window.currencyManager.currentCurrency) {
-                    option.selected = true;
+        // Initialiser les sélecteurs de devise
+        function initCurrencySelectors() {
+            // Initialiser les sélecteurs quand CurrencyManager est prêt
+            const initSelectors = () => {
+                if (!window.currencyManager) {
+                    console.warn('CurrencyManager non disponible');
+                    return;
                 }
                 
-                mobileSelector.appendChild(option);
-            });
+                const currencyManager = window.currencyManager;
+                currentCurrency = currencyManager.currentCurrency;
+                
+                // Initialiser le sélecteur desktop
+                const desktopSelector = document.getElementById('currencySelector');
+                if (desktopSelector) {
+                    desktopSelector.innerHTML = '';
+                    
+                    currencyManager.supportedCurrencies.forEach(currency => {
+                        const option = document.createElement('option');
+                        option.value = currency;
+                        const symbol = currencyManager.currencySymbols[currency] || currency;
+                        option.textContent = `${symbol} ${currency}`;
+                        
+                        if (currency === currentCurrency) {
+                            option.selected = true;
+                        }
+                        
+                        desktopSelector.appendChild(option);
+                    });
+                    
+                    desktopSelector.addEventListener('change', (e) => {
+                        const newCurrency = e.target.value;
+                        console.log(`💱 Changement devise: ${currentCurrency} → ${newCurrency}`);
+                        
+                        if (currencyManager.setCurrency(newCurrency)) {
+                            currentCurrency = newCurrency;
+                            updatePaymentDisplay();
+                        }
+                    });
+                }
+                
+                // Initialiser le sélecteur mobile
+                const mobileSelector = document.getElementById('currencySelectorMobile');
+                if (mobileSelector) {
+                    mobileSelector.innerHTML = '';
+                    
+                    currencyManager.supportedCurrencies.forEach(currency => {
+                        const option = document.createElement('option');
+                        option.value = currency;
+                        const symbol = currencyManager.currencySymbols[currency] || currency;
+                        option.textContent = `${symbol} ${currency}`;
+                        
+                        if (currency === currentCurrency) {
+                            option.selected = true;
+                        }
+                        
+                        mobileSelector.appendChild(option);
+                    });
+                    
+                    mobileSelector.addEventListener('change', (e) => {
+                        const newCurrency = e.target.value;
+                        console.log(`💱 Changement devise mobile: ${currentCurrency} → ${newCurrency}`);
+                        
+                        if (currencyManager.setCurrency(newCurrency)) {
+                            currentCurrency = newCurrency;
+                            updatePaymentDisplay();
+                            
+                            // Fermer le menu mobile
+                            const mobileMenu = document.getElementById('mobileMenu');
+                            if (mobileMenu) {
+                                mobileMenu.classList.remove('active');
+                            }
+                        }
+                    });
+                }
+                
+                // Mettre à jour l'affichage de la devise
+                updateCurrencyDisplay();
+                
+                // Initialiser l'affichage des paiements
+                updatePaymentDisplay();
+            };
             
-            mobileSelector.addEventListener('change', (e) => {
-                const newCurrency = e.target.value;
-                if (window.currencyManager.setCurrency(newCurrency)) {
-                    const mobileMenu = document.getElementById('mobileMenu');
-                    if (mobileMenu) {
-                        mobileMenu.classList.remove('active');
+            // Attendre que CurrencyManager soit prêt
+            if (window.currencyManager && window.currencyManager.exchangeRates) {
+                initSelectors();
+            } else {
+                // Écouter l'événement de prêt
+                window.addEventListener('currency:ready', initSelectors);
+                window.addEventListener('currency:changed', initSelectors);
+                
+                // Fallback: vérifier périodiquement
+                setTimeout(() => {
+                    if (window.currencyManager) {
+                        initSelectors();
                     }
-                }
-            });
+                }, 1000);
+            }
         }
         
         // Mettre à jour l'interface utilisateur
@@ -1443,155 +1503,56 @@
             }
         }
         
-        // Initialiser le menu mobile
-        initMobileMenu();
-        
-        // Initialiser le sélecteur de devise mobile quand la devise est prête
-        window.addEventListener('currency:ready', function() {
-            initMobileCurrencySelector();
-        });
-        
-        // Mettre à jour l'interface utilisateur
-        updateUserInterface();
-        
-        // Écouter les événements d'authentification
-        window.addEventListener('auth:login', updateUserInterface);
-        window.addEventListener('auth:logout', updateUserInterface);
-        
-        // Mettre à jour les détails de paiement ET le récapitulatif
-        updatePaymentDetails(currentBooking);
-        updatePaymentSummary(currentBooking);
-        
-        // Gestion des boutons de méthode de paiement
-        document.querySelectorAll('.payment-method-btn').forEach(button => {
-            button.addEventListener('click', async function() {
-                const method = this.getAttribute('data-method');
-                
-                togglePaymentMethod(method);
-                
-                if (method === 'interac' && window.currencyManager) {
-                    const interacNotice = document.getElementById('interacCurrencyNotice');
-                    const currentCurrency = window.currencyManager.currentCurrency;
-                    
-                    console.log(`💱 Sélection Interac détectée. Devise actuelle: ${currentCurrency}`);
-                    
-                    if (currentCurrency !== 'CAD') {
-                        if (interacNotice) {
-                            interacNotice.style.display = 'block';
-                        }
-                        
-                        try {
-                            console.log('💱 Forçage de la devise CAD pour Interac...');
-                            
-                            const success = await window.currencyManager.forceCADForInterac();
-                            
-                            if (success) {
-                                console.log('✅ Devise changée en CAD avec succès');
-                                
-                                updateCurrencySelectorDisplay();
-                                
-                                if (currentBooking) {
-                                    updatePaymentDetails(currentBooking);
-                                    updatePaymentSummary(currentBooking);
-                                }
-                            } else {
-                                console.error('❌ Échec du changement de devise en CAD');
-                            }
-                        } catch (error) {
-                            console.error('❌ Erreur lors du forçage CAD:', error);
-                        }
-                    } else {
-                        if (interacNotice) {
-                            interacNotice.style.display = 'none';
-                        }
-                        console.log('✅ Déjà en CAD, pas de changement nécessaire');
-                    }
-                } else {
-                    const interacNotice = document.getElementById('interacCurrencyNotice');
-                    if (interacNotice) {
-                        interacNotice.style.display = 'none';
-                    }
-                }
-            });
-        });
-        
-        // Gestion des clics sur les QR codes et liens cliquables
-        setupClickableElements();
-        
-        // Gestion des boutons de confirmation de paiement
-        document.querySelectorAll('.btn-confirm-payment').forEach(button => {
-            button.addEventListener('click', async function() {
-                if (this.disabled) return;
-                
-                const method = this.getAttribute('data-method');
-                console.log('💳 Confirmation paiement:', method);
-                
-                if (method === 'interac' && window.currencyManager && !window.currencyManager.isInteracCurrency()) {
-                    showPaymentError('Les paiements Interac doivent être effectués en dollars canadiens (CAD). Veuillez sélectionner CAD comme devise.');
-                    return;
-                }
-                
-                const originalText = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (window.translationManager?.getTranslation('payment.processing') || 'Traitement en cours...');
-                this.disabled = true;
-                
-                hidePaymentError();
-                
-                try {
-                    if (window.paymentManager) {
-                        window.paymentManager.currentBooking = currentBooking;
-                        await window.paymentManager.handlePaymentMethod(method);
-                    } else {
-                        throw new Error('PaymentManager non disponible');
-                    }
-                } catch (error) {
-                    console.error('❌ Erreur paiement:', error);
-                    showPaymentError('Erreur lors du traitement : ' + error.message);
-                    
-                    this.innerHTML = originalText;
-                    this.disabled = false;
-                }
-            });
-        });
-        
-        // Écouter les changements de devise
-        window.addEventListener('currency:ready', function() {
-            updateCurrencyDisplay();
-            if (currentBooking) {
-                updatePaymentDetails(currentBooking);
-                updatePaymentSummary(currentBooking);
-            }
-        });
-        
-        window.addEventListener('currency:changed', function() {
-            updateCurrencyDisplay();
-            if (currentBooking) {
-                updatePaymentDetails(currentBooking);
-                updatePaymentSummary(currentBooking);
-            }
+        // Mettre à jour l'affichage des paiements
+        function updatePaymentDisplay() {
+            if (!currentBooking) return;
             
-            const interacBtn = document.querySelector('.payment-method-btn[data-method="interac"]');
-            if (interacBtn && interacBtn.classList.contains('active')) {
-                const interacNotice = document.getElementById('interacCurrencyNotice');
-                if (!window.currencyManager.isInteracCurrency()) {
-                    if (interacNotice) {
-                        interacNotice.style.display = 'block';
-                    }
-                } else {
-                    if (interacNotice) {
-                        interacNotice.style.display = 'none';
-                    }
-                }
-            }
-        });
+            console.log('🔄 Mise à jour affichage paiement avec devise:', currentCurrency);
+            
+            updatePaymentDetails(currentBooking);
+            updatePaymentSummary(currentBooking);
+            updateCurrencyDisplay();
+        }
         
-        // Fonctions
+        // Mettre à jour les détails de paiement
         function updatePaymentDetails(booking) {
             const refNumber = Date.now().toString().slice(-6);
             
-            // CORRECTION : Pour les VIP, on utilise déjà le prix dans la devise courante
-            let currentAmount = booking.price; // Déjà dans la devise courante
-            let currentCurrency = booking.currency || 'EUR';
+            // Calculer le montant dans la devise courante
+            let amountToDisplay = booking.price;
+            let currencyToDisplay = currentCurrency;
+            
+            // Si la devise a changé, recalculer le prix
+            if (window.currencyManager && currentCurrency !== booking.currency) {
+                console.log(`💱 Conversion nécessaire: ${booking.currency} → ${currentCurrency}`);
+                
+                // Déterminer la devise et le montant d'origine
+                let originalAmount, originalCurrency;
+                
+                if (booking.isVip && booking.vipPriceData) {
+                    // Pour les VIP, le prix d'origine est en USD
+                    originalAmount = booking.vipPriceData.price * (booking.packageQuantity || 1);
+                    originalCurrency = booking.vipPriceData.currency || 'USD';
+                    
+                    // Appliquer la réduction si applicable
+                    if (booking.discountPercent && booking.discountPercent > 0) {
+                        originalAmount = originalAmount * (1 - (booking.discountPercent / 100));
+                    }
+                } else {
+                    // Pour les non-VIP, le prix d'origine est en EUR
+                    originalAmount = booking.originalPrice || booking.priceEUR || booking.price;
+                    originalCurrency = booking.originalCurrency || 'EUR';
+                }
+                
+                // Convertir dans la devise courante
+                amountToDisplay = window.currencyManager.convert(
+                    originalAmount,
+                    originalCurrency,
+                    currentCurrency
+                );
+                
+                console.log(`💱 Converti: ${originalAmount} ${originalCurrency} → ${amountToDisplay} ${currentCurrency}`);
+            }
             
             const config = window.YOTEACHER_CONFIG || {};
             
@@ -1605,13 +1566,12 @@
             document.getElementById('revolutRefNum').textContent = refNumber;
             document.getElementById('interacRefNum').textContent = refNumber;
             
-            // FORMULER LE MONTANT CORRECT
+            // Formater le montant
             let formattedAmount;
             if (window.currencyManager) {
-                // Le prix est déjà dans la devise courante, on le formate simplement
-                formattedAmount = window.currencyManager.formatPriceInCurrency(currentAmount, currentCurrency);
+                formattedAmount = window.currencyManager.formatPriceInCurrency(amountToDisplay, currencyToDisplay);
             } else {
-                formattedAmount = `${currentAmount.toFixed(2)} ${currentCurrency}`;
+                formattedAmount = `${amountToDisplay.toFixed(2)} ${currencyToDisplay}`;
             }
             
             document.querySelectorAll('#revolutAmount, #wiseAmount, #paypalAmount, #interacAmount').forEach(el => {
@@ -1635,20 +1595,59 @@
             document.getElementById('wiseLinkDisplay').textContent = wiseDisplay;
             document.getElementById('paypalLinkDisplay').textContent = paypalDisplay;
             
-            generatePaymentLinks(booking, revolutLink, wiseLink, paypalUsername, currentAmount, currentCurrency);
+            // Générer les liens de paiement avec le bon montant
+            const revolutFullLink = `${revolutLink}?amount=${amountToDisplay}&currency=${currencyToDisplay}&reference=COURS-${refNumber}`;
+            const wiseFullLink = `${wiseLink}?amount=${amountToDisplay}&currency=${currencyToDisplay}`;
+            const paypalFullLink = `https://www.paypal.com/paypalme/${paypalUsername}/${amountToDisplay}${currencyToDisplay}`;
+            
+            document.getElementById('revolutQrCode').dataset.link = revolutFullLink;
+            document.getElementById('revolutLinkItem').dataset.link = revolutFullLink;
+            
+            document.getElementById('wiseQrCode').dataset.link = wiseFullLink;
+            document.getElementById('wiseLinkItem').dataset.link = wiseFullLink;
+            
+            document.getElementById('paypalQrCode').dataset.link = paypalFullLink;
+            document.getElementById('paypalLinkItem').dataset.link = paypalFullLink;
         }
         
+        // Mettre à jour le récapitulatif
         function updatePaymentSummary(booking) {
             const summaryContainer = document.getElementById('paymentSummary');
             if (!summaryContainer) return;
             
-            // CORRECTION : Pour les VIP, on utilise déjà le prix dans la devise courante
-            let amount = booking.price; // Déjà dans la devise courante
-            let currency = booking.currency || 'EUR';
+            // Calculer le montant dans la devise courante
+            let amountToDisplay = booking.price;
+            
+            if (window.currencyManager && currentCurrency !== booking.currency) {
+                // Déterminer la devise et le montant d'origine
+                let originalAmount, originalCurrency;
+                
+                if (booking.isVip && booking.vipPriceData) {
+                    // Pour les VIP, le prix d'origine est en USD
+                    originalAmount = booking.vipPriceData.price * (booking.packageQuantity || 1);
+                    originalCurrency = booking.vipPriceData.currency || 'USD';
+                    
+                    // Appliquer la réduction si applicable
+                    if (booking.discountPercent && booking.discountPercent > 0) {
+                        originalAmount = originalAmount * (1 - (booking.discountPercent / 100));
+                    }
+                } else {
+                    // Pour les non-VIP, le prix d'origine est en EUR
+                    originalAmount = booking.originalPrice || booking.priceEUR || booking.price;
+                    originalCurrency = booking.originalCurrency || 'EUR';
+                }
+                
+                // Convertir dans la devise courante
+                amountToDisplay = window.currencyManager.convert(
+                    originalAmount,
+                    originalCurrency,
+                    currentCurrency
+                );
+            }
             
             const formattedPrice = window.currencyManager ? 
-                window.currencyManager.formatPriceInCurrency(amount, currency) : 
-                `${amount.toFixed(2)} ${currency}`;
+                window.currencyManager.formatPriceInCurrency(amountToDisplay, currentCurrency) : 
+                `${amountToDisplay.toFixed(2)} ${currentCurrency}`;
             
             const startDate = new Date(booking.startTime);
             const formattedDate = startDate.toLocaleDateString('fr-FR', {
@@ -1673,6 +1672,9 @@
                     break;
                 case 'curriculum':
                     courseName = window.translationManager?.getTranslation('courses.curriculum') || 'Curriculum complet';
+                    break;
+                case 'examen':
+                    courseName = window.translationManager?.getTranslation('courses.exam') || 'Préparation d\'examen';
                     break;
                 default:
                     courseName = booking.courseType;
@@ -1756,26 +1758,96 @@
             `;
         }
         
-        function generatePaymentLinks(booking, revolutLink, wiseLink, paypalUsername, amount, currency) {
-            // Utiliser le montant et la devise déjà présents dans l'objet booking
-            const bookingAmount = booking.price;
-            const bookingCurrency = booking.currency || 'EUR';
-            const refNumber = Date.now().toString().slice(-6);
-            
-            const revolutFullLink = `${revolutLink}?amount=${bookingAmount}&currency=${bookingCurrency}&reference=COURS-${refNumber}`;
-            const wiseFullLink = `${wiseLink}?amount=${bookingAmount}&currency=${bookingCurrency}`;
-            const paypalFullLink = `https://www.paypal.com/paypalme/${paypalUsername}/${bookingAmount}${bookingCurrency}`;
-            
-            document.getElementById('revolutQrCode').dataset.link = revolutFullLink;
-            document.getElementById('revolutLinkItem').dataset.link = revolutFullLink;
-            
-            document.getElementById('wiseQrCode').dataset.link = wiseFullLink;
-            document.getElementById('wiseLinkItem').dataset.link = wiseFullLink;
-            
-            document.getElementById('paypalQrCode').dataset.link = paypalFullLink;
-            document.getElementById('paypalLinkItem').dataset.link = paypalFullLink;
+        // Mettre à jour l'affichage de la devise
+        function updateCurrencyDisplay() {
+            if (window.currencyManager) {
+                const currentCurrencySpan = document.getElementById('currentCurrency');
+                if (currentCurrencySpan) {
+                    currentCurrencySpan.textContent = window.currencyManager.currentCurrency;
+                }
+                
+                // Mettre à jour le sélecteur de devise
+                const desktopSelector = document.getElementById('currencySelector');
+                if (desktopSelector && desktopSelector.value !== window.currencyManager.currentCurrency) {
+                    desktopSelector.value = window.currencyManager.currentCurrency;
+                }
+                
+                const mobileSelector = document.getElementById('currencySelectorMobile');
+                if (mobileSelector && mobileSelector.value !== window.currencyManager.currentCurrency) {
+                    mobileSelector.value = window.currencyManager.currentCurrency;
+                }
+            }
         }
         
+        // Gestion des boutons de méthode de paiement
+        function setupPaymentMethodButtons() {
+            document.querySelectorAll('.payment-method-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const method = this.getAttribute('data-method');
+                    
+                    togglePaymentMethod(method);
+                    
+                    // Gestion spéciale pour Interac
+                    if (method === 'interac' && window.currencyManager) {
+                        const interacNotice = document.getElementById('interacCurrencyNotice');
+                        
+                        console.log(`💱 Sélection Interac détectée. Devise actuelle: ${currentCurrency}`);
+                        
+                        if (currentCurrency !== 'CAD') {
+                            if (interacNotice) {
+                                interacNotice.style.display = 'block';
+                            }
+                            
+                            try {
+                                console.log('💱 Forçage de la devise CAD pour Interac...');
+                                
+                                // Sauvegarder la devise précédente
+                                const previousCurrency = currentCurrency;
+                                localStorage.setItem('previousCurrency', previousCurrency);
+                                
+                                // Changer la devise en CAD
+                                if (window.currencyManager.setCurrency('CAD')) {
+                                    currentCurrency = 'CAD';
+                                    console.log('✅ Devise changée en CAD avec succès');
+                                    
+                                    // Mettre à jour l'affichage
+                                    updatePaymentDisplay();
+                                } else {
+                                    console.error('❌ Échec du changement de devise en CAD');
+                                }
+                            } catch (error) {
+                                console.error('❌ Erreur lors du forçage CAD:', error);
+                            }
+                        } else {
+                            if (interacNotice) {
+                                interacNotice.style.display = 'none';
+                            }
+                            console.log('✅ Déjà en CAD, pas de changement nécessaire');
+                        }
+                    } else {
+                        const interacNotice = document.getElementById('interacCurrencyNotice');
+                        if (interacNotice) {
+                            interacNotice.style.display = 'none';
+                        }
+                        
+                        // Restaurer la devise précédente si on quitte Interac
+                        if (method !== 'interac') {
+                            const previousCurrency = localStorage.getItem('previousCurrency');
+                            if (previousCurrency && previousCurrency !== currentCurrency && window.currencyManager) {
+                                console.log(`💱 Restauration devise précédente: ${previousCurrency}`);
+                                if (window.currencyManager.setCurrency(previousCurrency)) {
+                                    currentCurrency = previousCurrency;
+                                    updatePaymentDisplay();
+                                    localStorage.removeItem('previousCurrency');
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Gestion des clics sur les QR codes et liens cliquables
         function setupClickableElements() {
             document.querySelectorAll('.qr-code-img').forEach(img => {
                 img.addEventListener('click', function() {
@@ -1822,6 +1894,7 @@
             });
         }
         
+        // Basculer entre les méthodes de paiement
         function togglePaymentMethod(method) {
             document.querySelectorAll('.payment-method-details').forEach(details => {
                 details.style.display = 'none';
@@ -1858,27 +1931,73 @@
             }
         }
         
-        function updateCurrencySelectorDisplay() {
-            if (!window.currencyManager) return;
-            
-            const currentCurrency = window.currencyManager.currentCurrency;
-            
-            document.querySelectorAll('select[id^="currencySelector"]').forEach(selector => {
-                if (selector.value !== currentCurrency) {
-                    selector.value = currentCurrency;
-                    console.log(`💱 Sélecteur mis à jour: ${selector.value} → ${currentCurrency}`);
-                }
+        // Gestion des boutons de confirmation de paiement
+        function setupPaymentConfirmationButtons() {
+            document.querySelectorAll('.btn-confirm-payment').forEach(button => {
+                button.addEventListener('click', async function() {
+                    if (this.disabled) return;
+                    
+                    const method = this.getAttribute('data-method');
+                    console.log('💳 Confirmation paiement:', method);
+                    
+                    // Validation pour Interac
+                    if (method === 'interac' && window.currencyManager && !window.currencyManager.isInteracCurrency()) {
+                        showPaymentError('Les paiements Interac doivent être effectués en dollars canadiens (CAD). Veuillez sélectionner CAD comme devise.');
+                        return;
+                    }
+                    
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (window.translationManager?.getTranslation('payment.processing') || 'Traitement en cours...');
+                    this.disabled = true;
+                    
+                    hidePaymentError();
+                    
+                    try {
+                        if (window.paymentManager) {
+                            // Mettre à jour le prix dans la réservation avec la devise courante
+                            const updatedBooking = { ...currentBooking };
+                            updatedBooking.currency = currentCurrency;
+                            
+                            // Recalculer le prix si nécessaire
+                            if (window.currencyManager && currentCurrency !== currentBooking.currency) {
+                                let originalAmount, originalCurrency;
+                                
+                                if (currentBooking.isVip && currentBooking.vipPriceData) {
+                                    originalAmount = currentBooking.vipPriceData.price * (currentBooking.packageQuantity || 1);
+                                    originalCurrency = currentBooking.vipPriceData.currency || 'USD';
+                                    
+                                    if (currentBooking.discountPercent && currentBooking.discountPercent > 0) {
+                                        originalAmount = originalAmount * (1 - (currentBooking.discountPercent / 100));
+                                    }
+                                } else {
+                                    originalAmount = currentBooking.originalPrice || currentBooking.priceEUR || currentBooking.price;
+                                    originalCurrency = currentBooking.originalCurrency || 'EUR';
+                                }
+                                
+                                updatedBooking.price = window.currencyManager.convert(
+                                    originalAmount,
+                                    originalCurrency,
+                                    currentCurrency
+                                );
+                            }
+                            
+                            window.paymentManager.currentBooking = updatedBooking;
+                            await window.paymentManager.handlePaymentMethod(method);
+                        } else {
+                            throw new Error('PaymentManager non disponible');
+                        }
+                    } catch (error) {
+                        console.error('❌ Erreur paiement:', error);
+                        showPaymentError('Erreur lors du traitement : ' + error.message);
+                        
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    }
+                });
             });
-            
-            const mobileSelector = document.getElementById('currencySelectorMobile');
-            if (mobileSelector && mobileSelector.value !== currentCurrency) {
-                mobileSelector.value = currentCurrency;
-                console.log(`💱 Sélecteur mobile mis à jour: ${mobileSelector.value} → ${currentCurrency}`);
-            }
-            
-            updateCurrencyDisplay();
         }
         
+        // Afficher une erreur de paiement
         function showPaymentError(message) {
             const errorDiv = document.getElementById('paymentError');
             const errorText = document.getElementById('errorText');
@@ -1893,6 +2012,7 @@
             }
         }
         
+        // Cacher l'erreur de paiement
         function hidePaymentError() {
             const errorDiv = document.getElementById('paymentError');
             if (errorDiv) {
@@ -1900,32 +2020,49 @@
             }
         }
         
-        function updateCurrencyDisplay() {
-            if (window.currencyManager) {
-                const currentCurrencySpan = document.getElementById('currentCurrency');
-                if (currentCurrencySpan) {
-                    currentCurrencySpan.textContent = window.currencyManager.currentCurrency;
+        // Fermer les menus en cliquant en dehors
+        function setupOutsideClickHandlers() {
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.payment-method-btn') && !event.target.closest('.payment-method-details')) {
+                    document.querySelectorAll('.payment-method-details').forEach(details => {
+                        details.style.display = 'none';
+                    });
+                    
+                    document.querySelectorAll('.payment-method-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
                 }
-            }
+            });
         }
         
-        // Fermer les menus en cliquant en dehors
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('.payment-method-btn') && !event.target.closest('.payment-method-details')) {
-                document.querySelectorAll('.payment-method-details').forEach(details => {
-                    details.style.display = 'none';
-                });
-                
-                document.querySelectorAll('.payment-method-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-            }
-        });
+        // Initialiser toutes les fonctionnalités
+        function initializeAll() {
+            console.log('🔧 Initialisation des fonctionnalités...');
+            
+            initMobileMenu();
+            initCurrencySelectors();
+            updateUserInterface();
+            setupPaymentMethodButtons();
+            setupClickableElements();
+            setupPaymentConfirmationButtons();
+            setupOutsideClickHandlers();
+            
+            // Écouter les événements d'authentification
+            window.addEventListener('auth:login', updateUserInterface);
+            window.addEventListener('auth:logout', updateUserInterface);
+            
+            // Écouter les changements de devise
+            window.addEventListener('currency:changed', function(e) {
+                console.log('💱 Événement currency:changed reçu', e.detail);
+                currentCurrency = window.currencyManager.currentCurrency;
+                updatePaymentDisplay();
+            });
+            
+            console.log('✅ Page paiement complètement initialisée');
+        }
         
-        // Mettre à jour l'affichage de la devise au chargement
-        updateCurrencyDisplay();
-        
-        console.log('✅ Page paiement initialisée');
+        // Démarrer l'initialisation
+        initializeAll();
     });
     </script>
 </body>
