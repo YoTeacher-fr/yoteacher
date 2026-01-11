@@ -1,4 +1,4 @@
-// booking.js - Gestion des réservations avec Cal.com (API v2) - LOGIQUE VIP COMPLÈTE
+// booking.js - Gestion des réservations avec Cal.com (API v2) - VERSION CORRIGÉE
 
 class BookingManager {
     constructor() {
@@ -29,6 +29,8 @@ class BookingManager {
             remaining: 120,
             reset: null
         };
+        
+        console.log('📅 BookingManager initialisé');
     }
 
     checkCalcomConfig() {
@@ -273,7 +275,7 @@ class BookingManager {
         const selectedDuration = duration || this.getDefaultDuration(eventType);
         
         for (let hour = 9; hour <= 18; hour++) {
-            const slotTime = `${baseDate}T${hour.toString().padStart(2, '0')}:00:00Z';
+            const slotTime = `${baseDate}T${hour.toString().padStart(2, '0')}:00:00Z`;
             slots.push({
                 id: `mock_${hour}`,
                 start: slotTime,
@@ -973,6 +975,115 @@ class BookingManager {
     }
 }
 
+// Fonction globale pour être appelée depuis booking.html
+window.loadAvailableSlots = async function() {
+    console.log('📅 Chargement des créneaux disponibles...');
+    
+    // Vérifier si bookingManager est disponible
+    if (!window.bookingManager) {
+        console.error('❌ BookingManager non disponible');
+        
+        // Essayer de réinitialiser
+        try {
+            window.bookingManager = new BookingManager();
+            console.log('✅ BookingManager réinitialisé');
+        } catch (error) {
+            console.error('❌ Impossible d\'initialiser BookingManager:', error);
+            return;
+        }
+    }
+    
+    try {
+        // Récupérer les paramètres depuis l'interface
+        const courseType = document.getElementById('courseType')?.value || 'conversation';
+        const durationSelect = document.getElementById('durationSelect');
+        const selectedDate = document.getElementById('datePicker')?.value;
+        
+        let duration = null;
+        if (durationSelect && durationSelect.value) {
+            duration = parseInt(durationSelect.value);
+        }
+        
+        // Charger les créneaux
+        const slots = await window.bookingManager.getAvailableSlots(courseType, selectedDate, duration);
+        
+        // Mettre à jour l'interface
+        updateSlotsDisplay(slots);
+        
+        console.log(`✅ ${slots.length} créneaux chargés`);
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement des créneaux:', error);
+        alert('Erreur lors du chargement des créneaux: ' + error.message);
+    }
+};
+
+// Fonction pour mettre à jour l'affichage des créneaux
+function updateSlotsDisplay(slots) {
+    const container = document.getElementById('availableSlots');
+    if (!container) return;
+    
+    if (slots.length === 0) {
+        container.innerHTML = '<p class="no-slots">Aucun créneau disponible pour cette date.</p>';
+        return;
+    }
+    
+    container.innerHTML = slots.map(slot => `
+        <div class="slot-card" data-slot-id="${slot.id}" data-start="${slot.start}">
+            <div class="slot-time">${slot.time}</div>
+            <div class="slot-duration">${slot.duration}</div>
+            <button class="btn-select-slot" onclick="selectSlot('${slot.id}', '${slot.start}', '${slot.duration}')">
+                Choisir
+            </button>
+        </div>
+    `).join('');
+}
+
+// Fonction pour sélectionner un créneau
+window.selectSlot = function(slotId, startTime, duration) {
+    console.log('🎯 Créneau sélectionné:', { slotId, startTime, duration });
+    
+    // Mettre à jour l'interface
+    document.querySelectorAll('.slot-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    const selectedCard = document.querySelector(`[data-slot-id="${slotId}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+    }
+    
+    // Stocker la sélection
+    window.selectedSlot = { slotId, startTime, duration };
+    
+    // Mettre à jour le récapitulatif
+    updateSummaryWithSlot(startTime, duration);
+};
+
+// Initialisation sécurisée
+function initializeBookingManager() {
+    try {
+        if (!window.bookingManager) {
+            window.bookingManager = new BookingManager();
+            console.log('✅ BookingManager initialisé avec succès');
+        }
+        return window.bookingManager;
+    } catch (error) {
+        console.error('❌ Erreur initialisation BookingManager:', error);
+        return null;
+    }
+}
+
+// Attendre que tout soit chargé avant d'initialiser
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('📄 DOM chargé, initialisation BookingManager...');
+        initializeBookingManager();
+    });
+} else {
+    console.log('📄 DOM déjà chargé, initialisation BookingManager...');
+    initializeBookingManager();
+}
+
 // TEST VIP COMPLET
 window.testVipAllCases = async function() {
     console.group('🧪 TEST COMPLET PRIX VIP - TOUS LES CAS');
@@ -1013,4 +1124,5 @@ window.testVipAllCases = async function() {
     console.groupEnd();
 };
 
-window.bookingManager = new BookingManager();
+// Initialiser globalement
+window.bookingManager = initializeBookingManager();
