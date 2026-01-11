@@ -113,31 +113,48 @@ class PackagesManager {
         if (!window.supabase || !userId) return { success: false, error: 'Supabase ou utilisateur non disponible' };
         
         try {
-            // Trouver un package actif avec des crédits restants dans la table packages
-            const { data: activePackage, error: findError } = await supabase
+            console.log(`💰 Recherche package pour utilisation crédit: userId=${userId}, courseType=${courseType}`);
+            
+            // Trouver TOUS les packages actifs avec des crédits restants dans la table packages
+            // Trier par date d'expiration (les plus anciens d'abord) pour utiliser les crédits qui expirent d'abord
+            const { data: activePackages, error: findError } = await supabase
                 .from('packages')
-                .select('id, remaining_credits, expires_at')
+                .select('id, remaining_credits, expires_at, total_credits, purchased_at')
                 .eq('user_id', userId)
                 .eq('course_type', courseType)
                 .eq('status', 'active')
                 .gt('remaining_credits', 0)
                 .gt('expires_at', new Date().toISOString())
-                .order('expires_at', { ascending: true })
-                .limit(1)
-                .single();
+                .order('expires_at', { ascending: true }); // Utiliser d'abord les crédits qui expirent en premier
 
             if (findError) {
                 console.error('Erreur recherche package actif:', findError);
                 throw new Error('Erreur lors de la recherche de forfait actif');
             }
 
-            if (!activePackage) {
+            if (!activePackages || activePackages.length === 0) {
+                console.log(`❌ Aucun package actif trouvé pour ${courseType}`);
+                // Vérifier si l'utilisateur a des packages (même inactifs)
+                const { data: allPackages } = await supabase
+                    .from('packages')
+                    .select('id, remaining_credits, status, expires_at')
+                    .eq('user_id', userId)
+                    .eq('course_type', courseType);
+                
+                console.log(`📦 Tous les packages de l'utilisateur:`, allPackages);
                 throw new Error('Aucun forfait actif avec des crédits disponibles');
             }
 
-            console.log('✅ Package actif trouvé pour utilisation de crédit:', {
+            console.log(`📦 Packages actifs trouvés:`, activePackages);
+
+            // Utiliser le package le plus ancien (qui expire en premier)
+            const activePackage = activePackages[0];
+            
+            console.log('✅ Package sélectionné pour utilisation de crédit:', {
                 id: activePackage.id,
-                credits_avant: activePackage.remaining_credits
+                credits_avant: activePackage.remaining_credits,
+                expires_at: activePackage.expires_at,
+                purchased_at: activePackage.purchased_at
             });
 
             // Décrémenter les crédits restants
@@ -145,8 +162,8 @@ class PackagesManager {
             const { error: updateError } = await supabase
                 .from('packages')
                 .update({ 
-                    remaining_credits: newRemainingCredits,
-                    updated_at: new Date().toISOString()
+                    remaining_credits: newRemainingCredits
+                    // NOTE: Pas de colonne 'updated_at' dans la table
                 })
                 .eq('id', activePackage.id);
 
@@ -235,7 +252,8 @@ class PackagesManager {
                 user_id: newPackage.user_id,
                 course_type: newPackage.course_type,
                 total_credits: newPackage.total_credits,
-                remaining_credits: newPackage.remaining_credits
+                remaining_credits: newPackage.remaining_credits,
+                expires_at: newPackage.expires_at
             });
 
             // Créer une transaction de crédit si la table existe
