@@ -116,89 +116,103 @@ class CurrencyManager {
     }
     
     async loadExchangeRates() {
-        try {
-            this.isLoading = true;
-            
-            console.log('💱 Début du chargement des taux de change');
-            
-            // FORCER les taux statiques d'abord (solution d'urgence)
-            const staticRates = this.getStaticRates();
-            staticRates['EUR'] = 1;
-            this.exchangeRates = staticRates;
-            
-            console.log('💰 Taux statiques chargés (fallback):', staticRates);
-            
-            // Essayer ensuite les API en parallèle
-            const apiSources = [
-                'https://api.frankfurter.app/latest?from=EUR',
-                'https://api.exchangerate-api.com/v4/latest/EUR',
-                'https://open.er-api.com/v6/latest/EUR'
-            ];
-            
-            // Tenter les API sans bloquer
-            for (const apiUrl of apiSources) {
+    try {
+        this.isLoading = true;
+        
+        console.log('💱 Début du chargement des taux de change');
+        
+        // FORCER les taux statiques d'abord (solution d'urgence)
+        const staticRates = this.getStaticRates();
+        staticRates['EUR'] = 1;
+        this.exchangeRates = staticRates;
+        
+        console.log('💰 Taux statiques chargés (fallback):', staticRates);
+        
+        // Essayer ensuite les API en parallèle
+        const apiSources = [
+            'https://api.frankfurter.app/latest?from=EUR',
+            'https://api.exchangerate-api.com/v4/latest/EUR',
+            'https://open.er-api.com/v6/latest/EUR'
+        ];
+        
+        // Tenter les API sans bloquer
+        for (const apiUrl of apiSources) {
+            try {
+                console.log(`🔗 Tentative API: ${apiUrl}`);
+                
+                // CORRECTION : Utiliser AbortController pour timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
                 try {
-                    console.log(`🔗 Tentative API: ${apiUrl}`);
-                    const response = await fetch(apiUrl, { timeout: 5000 });
+                    const response = await fetch(apiUrl, { signal: controller.signal });
+                    clearTimeout(timeoutId);
                     
                     if (response && response.ok) {
                         const data = await response.json();
                         
                         if (data.rates && data.rates['USD'] && data.rates['EUR']) {
-                            // Fusionner avec les taux statiques (les taux API remplacent les statiques)
+                            // Fusionner avec les taux statiques
                             this.exchangeRates = { ...staticRates, ...data.rates };
-                            this.exchangeRates['EUR'] = 1; // Toujours 1
+                            this.exchangeRates['EUR'] = 1;
                             
                             console.log(`✅ Taux API chargés de ${apiUrl.split('/')[2]}`);
                             console.log('💰 Taux fusionnés:', this.exchangeRates);
-                            break; // Sortir dès qu'une API réussit
+                            break;
                         }
                     }
-                } catch (apiError) {
-                    console.log(`⚠️ API ${apiUrl} échouée, continuation avec taux statiques`);
+                } catch (fetchError) {
+                    clearTimeout(timeoutId);
+                    if (fetchError.name === 'AbortError') {
+                        console.log(`⏰ Timeout pour ${apiUrl}`);
+                    } else {
+                        console.log(`⚠️ API ${apiUrl} échouée:`, fetchError.message);
+                    }
                     continue;
                 }
+            } catch (apiError) {
+                console.log(`⚠️ API ${apiUrl} échouée, continuation avec taux statiques`);
+                continue;
             }
-            
-            // Vérifier que les taux essentiels sont présents
-            if (!this.exchangeRates['USD']) {
-                this.exchangeRates['USD'] = 1.08;
-                console.warn('⚠️ USD manquant, valeur par défaut ajoutée');
-            }
-            
-            if (!this.exchangeRates['EUR']) {
-                this.exchangeRates['EUR'] = 1;
-            }
-            
-            this.isLoading = false;
-            
-            // Sauvegarder dans localStorage (valide 1h)
-            localStorage.setItem('exchangeRates', JSON.stringify({
-                rates: this.exchangeRates,
-                timestamp: Date.now(),
-                expiresAt: Date.now() + 3600000 // 1 heure
-            }));
-            
-            console.log('✅ Taux de change finalisés:', this.exchangeRates);
-            
-            // Émettre un événement
-            window.dispatchEvent(new CustomEvent('exchangeRates:loaded', {
-                detail: { rates: this.exchangeRates }
-            }));
-            
-            return this.exchangeRates;
-            
-        } catch (error) {
-            console.error('❌ Erreur critique chargement taux:', error);
-            
-            // Fallback absolu
-            this.exchangeRates = this.getStaticRates();
-            this.exchangeRates['EUR'] = 1;
-            this.isLoading = false;
-            
-            return this.exchangeRates;
         }
+        
+        // Vérifier que les taux essentiels sont présents
+        if (!this.exchangeRates['USD']) {
+            this.exchangeRates['USD'] = 1.08;
+            console.warn('⚠️ USD manquant, valeur par défaut ajoutée');
+        }
+        
+        if (!this.exchangeRates['EUR']) {
+            this.exchangeRates['EUR'] = 1;
+        }
+        
+        this.isLoading = false;
+        
+        // Sauvegarder dans localStorage
+        localStorage.setItem('exchangeRates', JSON.stringify({
+            rates: this.exchangeRates,
+            timestamp: Date.now(),
+            expiresAt: Date.now() + 3600000
+        }));
+        
+        console.log('✅ Taux de change finalisés:', this.exchangeRates);
+        
+        window.dispatchEvent(new CustomEvent('exchangeRates:loaded', {
+            detail: { rates: this.exchangeRates }
+        }));
+        
+        return this.exchangeRates;
+        
+    } catch (error) {
+        console.error('❌ Erreur critique chargement taux:', error);
+        
+        this.exchangeRates = this.getStaticRates();
+        this.exchangeRates['EUR'] = 1;
+        this.isLoading = false;
+        
+        return this.exchangeRates;
     }
+}
     
     getStaticRates() {
         // Taux approximatifs MAINTENU À JOUR
