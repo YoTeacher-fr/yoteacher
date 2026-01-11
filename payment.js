@@ -532,10 +532,12 @@ class PaymentManager {
                 message: resultMessage,
                 booking: this.currentBooking
             }));
-                        
-            setTimeout(() => {
-    window.location.href = 'payment-success.html';
-            }, 1000);
+            const bookingEncoded = encodeURIComponent(JSON.stringify(this.currentBooking));
+const redirectUrl = `payment-success.html?booking=${bookingEncoded}&warning=${hasWarning}`;
+
+setTimeout(() => {
+    window.location.href = redirectUrl;
+}, 1000);
             
         } catch (error) {
             console.error('❌ Erreur finalisation:', error);
