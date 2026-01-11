@@ -243,7 +243,7 @@ class PackagesManager {
             } catch (emailError) {
                 console.warn('Erreur récupération email:', emailError);
             }
-
+	    /*
             // Créer une notification d'email (seulement si on a un email)
             if (userEmail) {
                 try {
@@ -252,7 +252,7 @@ class PackagesManager {
                         .insert({
                             user_id: userId,
                             email_to: userEmail,
-                            notification_type: 'package_purchase',
+                            notification_type: 'booking_purchase',
                             subject: `Confirmation d'achat - Forfait ${courseType}`,
                             body: `Vous avez acheté un forfait de ${quantity} cours ${courseType}. Les crédits ont été ajoutés à votre compte.`,
                             scheduled_for: new Date().toISOString(),
@@ -272,7 +272,7 @@ class PackagesManager {
                     // Continuer même si l'email échoue
                 }
             }
-
+*/
             return { success: true, package: newPackage };
         } catch (error) {
             console.error('❌ Erreur ajout crédits:', error);
