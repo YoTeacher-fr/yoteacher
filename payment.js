@@ -532,11 +532,9 @@ class PaymentManager {
                 message: resultMessage,
                 booking: this.currentBooking
             }));
-            
-            const redirectUrl = `payment-success.html`;
-            
+                        
             setTimeout(() => {
-                window.location.href = redirectUrl;
+    window.location.href = 'payment-success.html';
             }, 1000);
             
         } catch (error) {
