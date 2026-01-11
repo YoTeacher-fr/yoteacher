@@ -217,18 +217,6 @@ async addCredits(userId, courseType, quantity, price, currency, paymentMethod, t
 
         if (transactionError) console.warn('Erreur transaction crédit:', transactionError);
 
-        // Mettre à jour le profil pour VIP si nécessaire
-        if (quantity >= 5) {
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .update({ 
-                    is_vip: true,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', userId);
-
-            if (profileError) console.warn('Erreur mise à jour profil VIP:', profileError);
-        }
 
         // CORRECTION: Utiliser bookingData si disponible, sinon chaîne vide
         const userEmail = bookingData?.email || '';
