@@ -751,10 +751,12 @@ class BookingManager {
                 }
             }
             
-            // Créer une notification d'email
+            // Créer une notification d'email (DÉSACTIVÉE)
+            /*
             if (user?.id && bookingData.email) {
                 await this.createBookingEmailNotification(user.id, bookingData.email, data[0]);
             }
+            */
             
             return data[0].id;
             
@@ -764,43 +766,39 @@ class BookingManager {
         }
     }
 
-    async createBookingEmailNotification(userId, emailTo, booking) {
+    async createBookingEmailNotification(bookingData) {
         try {
-            if (!window.supabase) return;
+            console.log('📧 Création notification email pour réservation...');
             
-            const startTime = new Date(booking.start_time);
-            const formattedDate = startTime.toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
-            const formattedTime = startTime.toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            // DÉSACTIVER TEMPORAIREMENT - Cal.com envoie déjà les emails
+            /*
+            if (!window.supabase) return;
             
             const { error } = await supabase
                 .from('email_notifications')
                 .insert({
-                    user_id: userId,
-                    email_to: emailTo,
-                    notification_type: 'booking_confirmation',
-                    subject: `Confirmation de réservation - ${booking.booking_number}`,
-                    body: `Votre réservation pour un cours ${booking.course_type} est confirmée pour le ${formattedDate} à ${formattedTime}.`,
+                    user_id: bookingData.user_id,
+                    email_to: bookingData.email,
+                    notification_type: 'booking_confirmed',
+                    subject: `Confirmation de réservation - ${bookingData.course_type}`,
+                    body: `Votre réservation de ${bookingData.course_type} est confirmée pour le ${new Date(bookingData.start_time).toLocaleDateString('fr-FR')}.`,
                     scheduled_for: new Date().toISOString(),
                     status: 'pending',
-                    booking_id: booking.id,
+                    booking_id: bookingData.id,
                     created_at: new Date().toISOString()
                 });
-            
+
             if (error) {
-                console.warn('Erreur création notification email:', error);
+                console.warn('⚠️ Erreur création notification email:', error);
             } else {
                 console.log('✅ Notification email créée');
             }
+            */
+            
+            console.log('📧 Email notification désactivée (Cal.com gère les emails)');
+            
         } catch (error) {
-            console.warn('Exception création notification:', error);
+            console.warn('Exception création notification email:', error);
         }
     }
 
@@ -1155,7 +1153,7 @@ window.testCalcomSlots = async function(date = null, eventType = 'essai', durati
     console.log(`🧪 Test Cal.com slots pour ${eventType}${durationText} le ${date || 'aujourd\'hui'}`);
     try {
         const slots = await window.bookingManager.getAvailableSlots(eventType, date, duration);
-        console.log(`✅ ${slots.length} créneau(x) trouvé(s):`);
+        console.log(`✅ ${slots.length} créneau(s) trouvé(s):`);
         if (slots.length > 0) {
             slots.slice(0, 5).forEach(slot => {
                 console.log(`  • ${window.bookingManager.formatTime(slot.start)} (${slot.duration})`);
