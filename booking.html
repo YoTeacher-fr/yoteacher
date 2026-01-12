@@ -1075,7 +1075,7 @@
         <div class="booking-container">
             <div class="booking-header">
                 <h1 class="booking-title" data-i18n="booking.title">Réserver un cours</h1>
-                <p class="booking-subtitle" data-i18n="booking.subtitle">Choisissez la date, l\'heure et le type de cours qui vous convient</p>
+                <p class="booking-subtitle" data-i18n="booking.subtitle">Choisissez la date, l'heure et le type de cours qui vous convient</p>
             </div>
 
             <div class="error-message" id="errorMessage">
@@ -1127,10 +1127,10 @@
                             <label class="form-label" for="courseType" data-i18n="booking.course_type">Type de cours</label>
                             <select id="courseType" class="form-select" required>
                                 <option value="" data-i18n="booking.select_course">Sélectionnez un type de cours</option>
-                                <option value="essai" data-i18n="courses.trial">Cours d\'essai (15 min)</option>
+                                <option value="essai" data-i18n="courses.trial">Cours d'essai (15 min)</option>
                                 <option value="conversation" data-i18n="courses.conversation">Conversation</option>
                                 <option value="curriculum" data-i18n="courses.curriculum">Curriculum complet</option>
-                                <option value="examen" data-i18n="courses.exam">Préparation d\'examen</option>
+                                <option value="examen" data-i18n="courses.exam">Préparation d'examen</option>
                             </select>
                         </div>
 
@@ -1268,7 +1268,7 @@
         let currentYear = new Date().getFullYear();
         let vipPriceInfo = null;
         
-        // Variable pour suivre si c\'est VIP
+        // Variable pour suivre si c'est VIP
         let isVipUser = false;
 
         // Éléments DOM
@@ -1304,7 +1304,7 @@
             const submitBtn = document.getElementById('submitBooking');
             
             if (!submitBtn || !user || courseType === 'essai' || coursesCount > 1) {
-                // Réinitialiser à l\'état normal
+                // Réinitialiser à l'état normal
                 submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
                 submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
                 return;
@@ -1313,14 +1313,17 @@
             try {
                 if (window.packagesManager) {
                     const credits = await window.packagesManager.getUserCredits(user.id);
+                    console.log('💳 Crédits disponibles pour bouton:', credits);
                     const hasCredits = credits[courseType] && credits[courseType] > 0;
                     
                     if (hasCredits) {
                         submitBtn.innerHTML = '<i class="fas fa-ticket-alt"></i> Réserver avec un crédit';
                         submitBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+                        console.log('✅ Bouton changé: "Réserver avec un crédit"');
                     } else {
                         submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
                         submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
+                        console.log('❌ Pas de crédits, bouton normal');
                     }
                 }
             } catch (error) {
@@ -1328,7 +1331,7 @@
             }
         }
 
-        // FORCER L\'INITIALISATION DE CURRENCYMANAGER SI NÉCESSAIRE
+        // FORCER L'INITIALISATION DE CURRENCYMANAGER SI NÉCESSAIRE
         function ensureCurrencyManager() {
             return new Promise(async (resolve, reject) => {
                 console.log('💰 Vérification de CurrencyManager...');
@@ -1500,8 +1503,14 @@
             e.preventDefault();
             
             console.log('💰 Début de la préparation du paiement/credit');
+            console.log('📊 Détails:', {
+                selectedDate,
+                selectedTime,
+                courseType: document.getElementById('courseType').value,
+                coursesCount: coursesCountInput.value
+            });
             
-            // FORCER l\'initialisation de currencyManager
+            // FORCER l'initialisation de currencyManager
             try {
                 await ensureCurrencyManager();
                 console.log('✅ CurrencyManager prêt');
@@ -1531,7 +1540,7 @@
                 return;
             }
 
-            // Vérifier si l\'utilisateur doit être connecté
+            // Vérifier si l'utilisateur doit être connecté
             if ((courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') && !window.authManager?.getCurrentUser()) {
                 showError('Veuillez vous connecter pour réserver ce type de cours');
                 return;
@@ -1542,20 +1551,35 @@
             
             // Changer le texte du bouton selon le type
             const user = window.authManager?.getCurrentUser();
-            const hasCredits = user && coursesCount === 1 && courseType !== 'essai';
+            console.log('👤 Utilisateur:', user?.email);
             
-            if (hasCredits) {
+            // Vérifier explicitement les crédits
+            if (user && coursesCount === 1 && courseType !== 'essai') {
                 try {
-                    const credits = await window.packagesManager.getUserCredits(user.id);
-                    if (credits[courseType] && credits[courseType] > 0) {
-                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation avec crédit...';
-                    } else {
-                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+                    if (window.packagesManager) {
+                        const credits = await window.packagesManager.getUserCredits(user.id);
+                        console.log('💳 Crédits disponibles:', credits);
+                        const hasCredits = credits[courseType] && credits[courseType] > 0;
+                        
+                        if (hasCredits) {
+                            console.log('✅ Crédits disponibles pour', courseType);
+                            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation avec crédit...';
+                        } else {
+                            console.log('❌ Pas de crédits disponibles pour', courseType);
+                            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+                        }
                     }
                 } catch (error) {
+                    console.warn('Erreur vérification crédits:', error);
                     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
                 }
             } else {
+                console.log('❌ Conditions crédit non remplies:', {
+                    user: !!user,
+                    coursesCount,
+                    courseType,
+                    isEssai: courseType === 'essai'
+                });
                 submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
             }
 
@@ -1579,8 +1603,12 @@
                     discountPercent: discountPercent
                 };
 
+                console.log('📤 Appel à bookingManager.createBooking avec:', bookingData);
+                
                 // Appeler la méthode qui prépare les données
                 const result = await window.bookingManager.createBooking(bookingData);
+                
+                console.log('📥 Résultat de createBooking:', result);
                 
                 if (result.success) {
                     showSuccess('Redirection...');
@@ -1594,13 +1622,14 @@
                 }
 
             } catch (error) {
+                console.error('❌ Erreur lors de la préparation :', error);
                 showError('Erreur lors de la préparation : ' + error.message);
                 submitButton.disabled = false;
                 updateSubmitButtonText();
             }
         });
 
-        // Écouter les événements d\'authentification
+        // Écouter les événements d'authentification
         window.addEventListener('auth:login', function() {
             console.log('Utilisateur connecté, mise à jour de l\'interface');
             updateUserInterface();
@@ -1673,7 +1702,7 @@
         async function initializePage() {
             console.log('🚀 Initialisation de la page booking...');
             
-            // FORCER l\'initialisation de currencyManager d\'abord
+            // FORCER l'initialisation de currencyManager d'abord
             try {
                 await ensureCurrencyManager();
                 console.log('✅ CurrencyManager initialisé avec succès');
@@ -1686,7 +1715,7 @@
                 console.warn('⚠️ CurrencyManager non disponible, continuation en mode EUR');
             }
             
-            // Récupérer le type de cours depuis l\'URL
+            // Récupérer le type de cours depuis l'URL
             const urlParams = new URLSearchParams(window.location.search);
             let courseTypeParam = urlParams.get('type');
             
@@ -1706,7 +1735,7 @@
             document.getElementById('courseType').value = courseTypeParam;
             preLoginCourseType = courseTypeParam;
             
-            // Stocker aussi dans l\'URL si ce n\'est pas déjà fait
+            // Stocker aussi dans l'URL si ce n'est pas déjà fait
             if (!urlParams.has('type')) {
                 const newUrl = new URL(window.location);
                 newUrl.searchParams.set('type', courseTypeParam);
@@ -1719,14 +1748,14 @@
             // Initialiser le calendrier
             initCalendar();
             
-            // Charger les créneaux pour aujourd\'hui par défaut
+            // Charger les créneaux pour aujourd'hui par défaut
             const today = new Date().toISOString().split('T')[0];
             selectToday(today);
             
-            // Mettre à jour l\'interface
+            // Mettre à jour l'interface
             updateUIForCourseType(document.getElementById('courseType').value, false);
             
-            // Mettre à jour l\'interface utilisateur
+            // Mettre à jour l'interface utilisateur
             updateUserInterface();
             
             // Initialiser le sélecteur de devise mobile
@@ -2210,7 +2239,7 @@
                                             price = window.currencyManager.formatPrice(totalVipPrice);
                                         }
                                     } else {
-                                        price = window.currencyManager.formatPrice(vipPriceInfo.price * coursesCount * (1 - discountPercent / 100));
+                                        price = window.currencyManager.formatPrice(totalVipPrice);
                                     }
                                 }
                             } else {
@@ -2386,6 +2415,46 @@
             const currentCourseType = document.getElementById('courseType').value;
             updateUIForCourseType(currentCourseType, true);
         }
+        
+        // Fonction de débogage pour tester les crédits
+        window.testCredits = async function() {
+            const authMgr = window.authManager;
+            const packagesMgr = window.packagesManager;
+            
+            if (!authMgr || !packagesMgr) {
+                console.error('❌ Managers non disponibles');
+                return;
+            }
+            
+            const user = authMgr.getCurrentUser();
+            if (!user) {
+                console.error('❌ Utilisateur non connecté');
+                return;
+            }
+            
+            console.group('🧪 Test des crédits');
+            console.log('User ID:', user.id);
+            
+            try {
+                const credits = await packagesMgr.getUserCredits(user.id);
+                console.log('💰 Crédits disponibles:', credits);
+                
+                // Tester canUseCredit
+                const testBookingData = {
+                    courseType: 'conversation',
+                    packageQuantity: 1,
+                    duration: 60
+                };
+                
+                const canUse = await window.bookingManager?.canUseCredit(testBookingData);
+                console.log('✅ Peut utiliser crédit pour conversation?', canUse);
+                
+            } catch (error) {
+                console.error('❌ Erreur test crédits:', error);
+            }
+            
+            console.groupEnd();
+        };
     });
     </script>
 </body>
