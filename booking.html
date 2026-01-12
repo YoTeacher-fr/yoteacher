@@ -1075,7 +1075,7 @@
         <div class="booking-container">
             <div class="booking-header">
                 <h1 class="booking-title" data-i18n="booking.title">Réserver un cours</h1>
-                <p class="booking-subtitle" data-i18n="booking.subtitle">Choisissez la date, l'heure et le type de cours qui vous convient</p>
+                <p class="booking-subtitle" data-i18n="booking.subtitle">Choisissez la date, l\'heure et le type de cours qui vous convient</p>
             </div>
 
             <div class="error-message" id="errorMessage">
@@ -1127,10 +1127,10 @@
                             <label class="form-label" for="courseType" data-i18n="booking.course_type">Type de cours</label>
                             <select id="courseType" class="form-select" required>
                                 <option value="" data-i18n="booking.select_course">Sélectionnez un type de cours</option>
-                                <option value="essai" data-i18n="courses.trial">Cours d'essai (15 min)</option>
+                                <option value="essai" data-i18n="courses.trial">Cours d\'essai (15 min)</option>
                                 <option value="conversation" data-i18n="courses.conversation">Conversation</option>
                                 <option value="curriculum" data-i18n="courses.curriculum">Curriculum complet</option>
-                                <option value="examen" data-i18n="courses.exam">Préparation d'examen</option>
+                                <option value="examen" data-i18n="courses.exam">Préparation d\'examen</option>
                             </select>
                         </div>
 
@@ -1268,7 +1268,7 @@
         let currentYear = new Date().getFullYear();
         let vipPriceInfo = null;
         
-        // Variable pour suivre si c'est VIP
+        // Variable pour suivre si c\'est VIP
         let isVipUser = false;
 
         // Éléments DOM
@@ -1304,7 +1304,7 @@
             const submitBtn = document.getElementById('submitBooking');
             
             if (!submitBtn || !user || courseType === 'essai' || coursesCount > 1) {
-                // Réinitialiser à l'état normal
+                // Réinitialiser à l\'état normal
                 submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
                 submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
                 return;
@@ -1328,7 +1328,7 @@
             }
         }
 
-        // FORCER L'INITIALISATION DE CURRENCYMANAGER SI NÉCESSAIRE
+        // FORCER L\'INITIALISATION DE CURRENCYMANAGER SI NÉCESSAIRE
         function ensureCurrencyManager() {
             return new Promise(async (resolve, reject) => {
                 console.log('💰 Vérification de CurrencyManager...');
@@ -1501,7 +1501,7 @@
             
             console.log('💰 Début de la préparation du paiement/credit');
             
-            // FORCER l'initialisation de currencyManager
+            // FORCER l\'initialisation de currencyManager
             try {
                 await ensureCurrencyManager();
                 console.log('✅ CurrencyManager prêt');
@@ -1531,7 +1531,7 @@
                 return;
             }
 
-            // Vérifier si l'utilisateur doit être connecté
+            // Vérifier si l\'utilisateur doit être connecté
             if ((courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') && !window.authManager?.getCurrentUser()) {
                 showError('Veuillez vous connecter pour réserver ce type de cours');
                 return;
@@ -1600,7 +1600,7 @@
             }
         });
 
-        // Écouter les événements d'authentification
+        // Écouter les événements d\'authentification
         window.addEventListener('auth:login', function() {
             console.log('Utilisateur connecté, mise à jour de l\'interface');
             updateUserInterface();
@@ -1673,7 +1673,7 @@
         async function initializePage() {
             console.log('🚀 Initialisation de la page booking...');
             
-            // FORCER l'initialisation de currencyManager d'abord
+            // FORCER l\'initialisation de currencyManager d\'abord
             try {
                 await ensureCurrencyManager();
                 console.log('✅ CurrencyManager initialisé avec succès');
@@ -1686,7 +1686,7 @@
                 console.warn('⚠️ CurrencyManager non disponible, continuation en mode EUR');
             }
             
-            // Récupérer le type de cours depuis l'URL
+            // Récupérer le type de cours depuis l\'URL
             const urlParams = new URLSearchParams(window.location.search);
             let courseTypeParam = urlParams.get('type');
             
@@ -1706,7 +1706,7 @@
             document.getElementById('courseType').value = courseTypeParam;
             preLoginCourseType = courseTypeParam;
             
-            // Stocker aussi dans l'URL si ce n'est pas déjà fait
+            // Stocker aussi dans l\'URL si ce n\'est pas déjà fait
             if (!urlParams.has('type')) {
                 const newUrl = new URL(window.location);
                 newUrl.searchParams.set('type', courseTypeParam);
@@ -1719,14 +1719,14 @@
             // Initialiser le calendrier
             initCalendar();
             
-            // Charger les créneaux pour aujourd'hui par défaut
+            // Charger les créneaux pour aujourd\'hui par défaut
             const today = new Date().toISOString().split('T')[0];
             selectToday(today);
             
-            // Mettre à jour l'interface
+            // Mettre à jour l\'interface
             updateUIForCourseType(document.getElementById('courseType').value, false);
             
-            // Mettre à jour l'interface utilisateur
+            // Mettre à jour l\'interface utilisateur
             updateUserInterface();
             
             // Initialiser le sélecteur de devise mobile
@@ -2132,8 +2132,8 @@
 
             // COURS D'ESSAI
             if (courseType === 'essai') {
-                console.log('🎫 Cours d'essai détecté');
-                courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d'essai';
+                console.log('🎫 Cours d\'essai détecté');
+                courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
                 duration = '15 min';
                 
                 let unitPriceEUR = 5;
@@ -2154,7 +2154,7 @@
                 } else if (courseType === 'curriculum') {
                     courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
                 } else if (courseType === 'examen') {
-                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d'examen';
+                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
                 }
                 
                 if (user && durationGroup.classList.contains('visible')) {
