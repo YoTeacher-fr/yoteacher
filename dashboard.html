@@ -191,12 +191,12 @@
             gap: 25px;
         }
 
-        /* Carte cours à venir (4 colonnes) - REDUIT */
+        /* Carte cours à venir (4 colonnes) */
         .card-upcoming {
             grid-column: span 4;
             background: white;
             border-radius: 16px;
-            padding: 25px;
+            padding: 20px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
             height: 100%;
@@ -204,17 +204,18 @@
             flex-direction: column;
         }
 
-        /* Carte forfaits (4 colonnes) */
+        /* Carte forfaits (4 colonnes) - HAUTEUR RÉDUITE */
         .card-packages {
             grid-column: span 4;
             background: white;
             border-radius: 16px;
-            padding: 25px;
+            padding: 20px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
             height: 100%;
             display: flex;
             flex-direction: column;
+            min-height: 400px; /* Hauteur réduite */
         }
 
         /* Carte profil (4 colonnes) */
@@ -222,7 +223,7 @@
             grid-column: span 4;
             background: white;
             border-radius: 16px;
-            padding: 25px;
+            padding: 20px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
             height: 100%;
@@ -240,23 +241,23 @@
             align-items: center;
             justify-content: space-between;
             gap: 15px;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 15px; /* Réduit */
+            padding-bottom: 12px; /* Réduit */
             border-bottom: 2px solid #f0f0f0;
         }
 
         .card-header-left {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px; /* Réduit */
         }
 
         .card-header i {
-            font-size: 1.4rem;
+            font-size: 1.3rem; /* Réduit */
             color: #3c84f6;
             background: rgba(60, 132, 246, 0.1);
-            width: 50px;
-            height: 50px;
+            width: 45px; /* Réduit */
+            height: 45px; /* Réduit */
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -264,23 +265,23 @@
         }
 
         .card-header h2 {
-            font-size: 1.3rem;
+            font-size: 1.2rem; /* Réduit */
             color: #333;
             margin: 0;
         }
 
-        /* Navigation des cours - NOUVEAU */
+        /* Navigation des cours */
         .lesson-nav {
             display: flex;
-            gap: 10px;
+            gap: 8px; /* Réduit */
             align-items: center;
         }
 
         .nav-arrow {
             background: #f0f0f0;
             border: none;
-            width: 36px;
-            height: 36px;
+            width: 32px; /* Réduit */
+            height: 32px; /* Réduit */
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -301,10 +302,10 @@
         }
 
         .lesson-counter {
-            font-size: 0.85rem;
+            font-size: 0.8rem; /* Réduit */
             color: #666;
             font-weight: 500;
-            min-width: 70px;
+            min-width: 60px; /* Réduit */
             text-align: center;
         }
 
@@ -312,31 +313,31 @@
         .upcoming-lesson-card {
             background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
             border: 2px solid #4caf50;
-            padding: 20px;
+            padding: 15px; /* Réduit */
             border-radius: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 15px; /* Réduit */
             flex-grow: 1;
         }
 
         .lesson-date {
-            font-size: 1.3rem;
+            font-size: 1.1rem; /* Réduit */
             font-weight: 700;
             color: #2e7d32;
-            margin-bottom: 15px;
+            margin-bottom: 12px; /* Réduit */
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px; /* Réduit */
         }
 
         .lesson-info {
-            margin-bottom: 15px;
+            margin-bottom: 12px; /* Réduit */
         }
 
         .lesson-info-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            font-size: 0.95rem;
+            padding: 6px 0; /* Réduit */
+            font-size: 0.9rem; /* Réduit */
             border-bottom: 1px solid rgba(0,0,0,0.1);
         }
 
@@ -356,20 +357,20 @@
 
         .lesson-actions {
             display: flex;
-            gap: 10px;
-            margin-top: 15px;
+            gap: 8px; /* Réduit */
+            margin-top: 12px; /* Réduit */
         }
 
         .btn-small {
-            padding: 10px 18px;
+            padding: 8px 15px; /* Réduit */
             border-radius: 50px;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
+            gap: 6px; /* Réduit */
+            font-size: 0.85rem; /* Réduit */
             flex: 1;
             justify-content: center;
             cursor: pointer;
@@ -398,102 +399,104 @@
             color: white;
         }
 
-        /* Section Forfaits - NOUVELLE STRUCTURE */
+        /* Section Forfaits - NOUVELLE STRUCTURE COMPACTE */
         .packages-container {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-top: 15px;
+            gap: 12px; /* Réduit */
+            margin-top: 10px; /* Réduit */
             flex-grow: 1;
         }
 
         .package-internal-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #e9ecef;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 10px; /* Réduit */
+            padding: 15px; /* Réduit */
+            border: 1px solid #e0e0e0;
             transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .package-internal-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .package-internal-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e0e0e0;
+            gap: 10px; /* Réduit */
+            margin-bottom: 15px; /* Réduit */
+            padding-bottom: 10px; /* Réduit */
+            border-bottom: 1px solid #ddd;
         }
 
         .package-internal-icon {
-            font-size: 1.3rem;
-            width: 45px;
-            height: 45px;
-            border-radius: 10px;
+            font-size: 1.1rem; /* Réduit */
+            width: 38px; /* Réduit */
+            height: 38px; /* Réduit */
+            border-radius: 8px; /* Réduit */
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
         }
 
         .package-internal-title {
             font-weight: 700;
             color: #333;
-            font-size: 1.1rem;
+            font-size: 1rem; /* Réduit */
             flex-grow: 1;
         }
 
         .package-durations {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 15px;
+            gap: 8px; /* Réduit */
+            margin-bottom: 12px; /* Réduit */
         }
 
         .duration-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 15px;
+            padding: 8px 12px; /* Réduit */
             background: white;
-            border-radius: 8px;
+            border-radius: 6px; /* Réduit */
             border: 1px solid #e0e0e0;
+            font-size: 0.9rem; /* Réduit */
         }
 
         .duration-label {
             font-weight: 600;
             color: #333;
-            font-size: 0.95rem;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px; /* Réduit */
         }
 
         .duration-credits {
-            font-size: 1.2rem;
+            font-size: 1.1rem; /* Réduit */
             font-weight: 700;
             color: #3c84f6;
         }
 
         .package-expiry {
-            margin-top: 15px;
-            padding-top: 15px;
+            margin-top: 12px; /* Réduit */
+            padding-top: 10px; /* Réduit */
             border-top: 1px solid #e0e0e0;
             text-align: center;
         }
 
         .expiry-label {
-            font-size: 0.85rem;
+            font-size: 0.8rem; /* Réduit */
             color: #666;
-            margin-bottom: 5px;
+            margin-bottom: 4px; /* Réduit */
         }
 
         .expiry-date {
-            font-size: 0.95rem;
+            font-size: 0.9rem; /* Réduit */
             font-weight: 600;
             color: #e91e63;
         }
@@ -503,11 +506,11 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px; /* Réduit */
         }
 
         .profile-field {
-            padding-bottom: 15px;
+            padding-bottom: 12px; /* Réduit */
             border-bottom: 1px solid #f0f0f0;
         }
 
@@ -519,33 +522,33 @@
         .profile-label {
             font-weight: 600;
             color: #333;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
+            font-size: 0.85rem; /* Réduit */
+            margin-bottom: 4px; /* Réduit */
             display: block;
         }
 
         .profile-value {
             color: #666;
-            font-size: 1rem;
+            font-size: 0.95rem; /* Réduit */
             line-height: 1.4;
             word-break: break-word;
         }
 
         .btn-profile {
             width: 100%;
-            padding: 14px;
+            padding: 12px; /* Réduit */
             background: #3c84f6;
             color: white;
             border: none;
             border-radius: 50px;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.95rem; /* Réduit */
             cursor: pointer;
             transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px; /* Réduit */
             text-decoration: none;
             margin-top: auto;
         }
@@ -560,7 +563,7 @@
         .course-buttons-row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 25px;
+            gap: 20px; /* Réduit */
             margin-top: 20px;
         }
 
@@ -574,7 +577,7 @@
             text-align: center;
             text-decoration: none;
             color: inherit;
-            height: 100px;
+            height: 90px; /* Réduit */
             cursor: pointer;
             border: none;
             width: 100%;
@@ -588,7 +591,7 @@
 
         .course-button-content {
             color: white;
-            padding: 25px 20px;
+            padding: 20px 15px; /* Réduit */
             border-radius: 16px;
             height: 100%;
             display: flex;
@@ -599,20 +602,20 @@
         }
 
         .course-button-title {
-            font-size: 1.3rem;
+            font-size: 1.2rem; /* Réduit */
             font-weight: 700;
             margin-bottom: 5px;
         }
 
         .course-button-subtitle {
-            font-size: 0.9rem;
+            font-size: 0.85rem; /* Réduit */
             opacity: 0.9;
         }
 
         /* Messages vides */
         .no-upcoming, .no-packages {
             text-align: center;
-            padding: 40px 30px;
+            padding: 30px 20px; /* Réduit */
             color: #666;
             flex-grow: 1;
             display: flex;
@@ -622,53 +625,28 @@
         }
 
         .no-upcoming i, .no-packages i {
-            font-size: 3rem;
+            font-size: 2.5rem; /* Réduit */
             color: #ddd;
-            margin-bottom: 15px;
+            margin-bottom: 10px; /* Réduit */
         }
 
         .loading {
             text-align: center;
-            padding: 60px 20px;
+            padding: 50px 20px; /* Réduit */
             color: #666;
         }
 
         .loading i {
-            font-size: 2.5rem;
-            margin-bottom: 25px;
+            font-size: 2.2rem; /* Réduit */
+            margin-bottom: 20px; /* Réduit */
             color: #3c84f6;
-        }
-
-        /* Bouton Acheter des crédits */
-        .btn-buy-credits {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            text-decoration: none;
-            margin-top: 20px;
-        }
-
-        .btn-buy-credits:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
         }
 
         /* Responsive */
         @media (max-width: 1200px) {
             .course-buttons-row {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 20px;
+                gap: 15px; /* Réduit */
             }
             
             .card-upcoming, .card-packages, .card-profile {
@@ -699,6 +677,10 @@
             .welcome-message {
                 min-width: 100%;
             }
+            
+            .card-packages {
+                min-height: auto; /* Supprime la hauteur fixe sur tablette */
+            }
         }
 
         @media (max-width: 768px) {
@@ -712,40 +694,40 @@
             
             .course-buttons-row {
                 grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 12px; /* Réduit */
             }
             
             .dashboard-header {
-                padding: 20px 15px;
+                padding: 18px 15px; /* Réduit */
             }
             
             .welcome-message h1 {
-                font-size: 1.5rem;
+                font-size: 1.4rem; /* Réduit */
             }
             
             .dashboard-action-btn {
-                padding: 8px 16px;
-                font-size: 0.85rem;
+                padding: 7px 14px; /* Réduit */
+                font-size: 0.8rem; /* Réduit */
             }
             
             .card-header {
                 flex-direction: column;
                 text-align: center;
-                gap: 10px;
+                gap: 8px; /* Réduit */
             }
             
             .card-header-left {
                 flex-direction: column;
-                gap: 10px;
+                gap: 8px; /* Réduit */
             }
             
             .card-header i {
-                width: 45px;
-                height: 45px;
+                width: 40px; /* Réduit */
+                height: 40px; /* Réduit */
             }
             
             .card-header h2 {
-                font-size: 1.2rem;
+                font-size: 1.1rem; /* Réduit */
             }
             
             .lesson-actions {
@@ -756,9 +738,9 @@
                 display: block !important;
                 background-color: #4f9ad1;
                 color: white;
-                padding: 6px 12px;
+                padding: 5px 10px; /* Réduit */
                 border-radius: 20px;
-                font-size: 0.85rem;
+                font-size: 0.8rem; /* Réduit */
                 font-weight: 500;
                 text-decoration: none;
                 margin-left: auto;
@@ -775,11 +757,11 @@
             }
             
             .logo {
-                font-size: 1.3rem !important;
+                font-size: 1.2rem !important; /* Réduit */
             }
             
             .flag {
-                font-size: 1.2rem;
+                font-size: 1.1rem; /* Réduit */
             }
             
             .header-right-group {
@@ -787,23 +769,27 @@
             }
             
             .main-header {
-                min-height: 55px !important;
+                min-height: 50px !important; /* Réduit */
             }
             
             body {
-                padding-top: 65px !important;
+                padding-top: 60px !important; /* Réduit */
             }
             
             .dashboard {
-                min-height: calc(100vh - 65px);
+                min-height: calc(100vh - 60px); /* Réduit */
             }
             
             .course-button {
-                height: 90px;
+                height: 80px; /* Réduit */
             }
             
             .course-button-content {
-                padding: 20px 15px;
+                padding: 15px 12px; /* Réduit */
+            }
+            
+            .course-button-title {
+                font-size: 1.1rem; /* Réduit */
             }
         }
         
@@ -819,19 +805,19 @@
             }
             
             .course-button {
-                height: 85px;
+                height: 75px; /* Réduit */
             }
             
             .course-button-title {
-                font-size: 1.1rem;
+                font-size: 1rem; /* Réduit */
             }
             
             .course-button-subtitle {
-                font-size: 0.8rem;
+                font-size: 0.8rem; /* Réduit */
             }
             
             .card-upcoming, .card-packages, .card-profile {
-                padding: 20px 15px;
+                padding: 15px; /* Réduit */
             }
             
             .lesson-nav {
@@ -842,28 +828,29 @@
             .package-internal-header {
                 flex-direction: column;
                 text-align: center;
-                gap: 10px;
+                gap: 8px; /* Réduit */
             }
             
             .package-internal-icon {
-                width: 40px;
-                height: 40px;
+                width: 35px; /* Réduit */
+                height: 35px; /* Réduit */
             }
             
             .package-internal-title {
-                font-size: 1rem;
+                font-size: 0.95rem; /* Réduit */
             }
             
             .duration-row {
-                padding: 8px 12px;
+                padding: 6px 10px; /* Réduit */
+                font-size: 0.85rem; /* Réduit */
             }
             
             .duration-label {
-                font-size: 0.9rem;
+                font-size: 0.85rem; /* Réduit */
             }
             
             .duration-credits {
-                font-size: 1.1rem;
+                font-size: 1rem; /* Réduit */
             }
         }
         
@@ -1093,7 +1080,7 @@
                         </div>
                     </div>
 
-                    <!-- Carte 2 : Mes forfaits -->
+                    <!-- Carte 2 : Mes forfaits (compacte) -->
                     <div class="card-packages fade-in">
                         <div class="card-header">
                             <div class="card-header-left">
@@ -1104,10 +1091,7 @@
                         <div class="packages-container" id="packagesContainer">
                             <!-- Le contenu sera chargé dynamiquement avec 3 cartes internes -->
                         </div>
-                        <a href="packages.html" class="btn-buy-credits">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span>Acheter des forfaits</span>
-                        </a>
+                        <!-- Bouton "Acheter des forfaits" ENLEVÉ -->
                     </div>
 
                     <!-- Carte 3 : Mon profil -->
@@ -1469,8 +1453,8 @@
                         expiryHtml = `
                             <div class="expiry-label">Expire le</div>
                             <div class="expiry-date">${formattedExpiry}</div>
-                            <div style="font-size: 0.8rem; color: #666; margin-top: 3px;">
-                                (dans ${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''})
+                            <div style="font-size: 0.75rem; color: #888; margin-top: 2px;">
+                                (${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''})
                             </div>
                         `;
                     } else {
@@ -1533,25 +1517,25 @@
                                     <i class="far fa-clock"></i>
                                     <span>30min</span>
                                 </div>
-                                <div class="duration-credits">Erreur</div>
+                                <div class="duration-credits">-</div>
                             </div>
                             <div class="duration-row">
                                 <div class="duration-label">
                                     <i class="far fa-clock"></i>
                                     <span>45min</span>
                                 </div>
-                                <div class="duration-credits">Erreur</div>
+                                <div class="duration-credits">-</div>
                             </div>
                             <div class="duration-row">
                                 <div class="duration-label">
                                     <i class="far fa-clock"></i>
                                     <span>60min</span>
                                 </div>
-                                <div class="duration-credits">Erreur</div>
+                                <div class="duration-credits">-</div>
                             </div>
                         </div>
                         <div class="package-expiry">
-                            <div class="expiry-label">Erreur de chargement</div>
+                            <div class="expiry-label">Erreur</div>
                         </div>
                     </div>
                     <div class="package-internal-card">
@@ -1567,25 +1551,25 @@
                                     <i class="far fa-clock"></i>
                                     <span>30min</span>
                                 </div>
-                                <div class="duration-credits">Erreur</div>
+                                <div class="duration-credits">-</div>
                             </div>
                             <div class="duration-row">
                                 <div class="duration-label">
                                     <i class="far fa-clock"></i>
                                     <span>45min</span>
                                 </div>
-                                <div class="duration-credits">Erreur</div>
+                                <div class="duration-credits">-</div>
                             </div>
                             <div class="duration-row">
                                 <div class="duration-label">
                                     <i class="far fa-clock"></i>
                                     <span>60min</span>
                                 </div>
-                                <div class="duration-credits">Erreur</div>
+                                <div class="duration-credits">-</div>
                             </div>
                         </div>
                         <div class="package-expiry">
-                            <div class="expiry-label">Erreur de chargement</div>
+                            <div class="expiry-label">Erreur</div>
                         </div>
                     </div>
                     <div class="package-internal-card">
@@ -1601,25 +1585,25 @@
                                     <i class="far fa-clock"></i>
                                     <span>30min</span>
                                 </div>
-                                <div class="duration-credits">Erreur</div>
+                                <div class="duration-credits">-</div>
                             </div>
                             <div class="duration-row">
                                 <div class="duration-label">
                                     <i class="far fa-clock"></i>
                                     <span>45min</span>
                                 </div>
-                                <div class="duration-credits">Erreur</div>
+                                <div class="duration-credits">-</div>
                             </div>
                             <div class="duration-row">
                                 <div class="duration-label">
                                     <i class="far fa-clock"></i>
                                     <span>60min</span>
                                 </div>
-                                <div class="duration-credits">Erreur</div>
+                                <div class="duration-credits">-</div>
                             </div>
                         </div>
                         <div class="package-expiry">
-                            <div class="expiry-label">Erreur de chargement</div>
+                            <div class="expiry-label">Erreur</div>
                         </div>
                     </div>
                 `;
@@ -1646,10 +1630,6 @@
                         <div class="no-upcoming">
                             <i class="far fa-calendar"></i>
                             <p>Aucun cours programmé</p>
-                            <a href="booking.html?type=conversation" class="btn-buy-credits" style="margin-top: 20px; width: auto; display: inline-block; padding: 10px 20px;">
-                                <i class="fas fa-plus-circle"></i>
-                                <span>Réserver maintenant</span>
-                            </a>
                         </div>
                     `;
                     lessonNav.style.display = 'none';
