@@ -351,23 +351,32 @@ class BookingManager {
     }
 
     async canUseCredit(bookingData) {
+        console.log('🔍 Vérification si on peut utiliser un crédit:', bookingData);
+        
         const user = window.authManager?.getCurrentUser();
-        if (!user || !window.packagesManager) return false;
+        if (!user || !window.packagesManager) {
+            console.log('❌ Pas d\'utilisateur ou packagesManager');
+            return false;
+        }
         
         // Uniquement pour 1 cours (pas les forfaits)
         if (bookingData.packageQuantity && bookingData.packageQuantity > 1) {
+            console.log('❌ PackageQuantity > 1');
             return false;
         }
         
         // Uniquement pour les cours payants (pas essai)
         if (bookingData.courseType === 'essai') {
+            console.log('❌ Cours d\'essai');
             return false;
         }
         
         try {
             const credits = await window.packagesManager.getUserCredits(user.id);
             console.log(`🔍 Crédits disponibles pour ${bookingData.courseType}:`, credits[bookingData.courseType]);
-            return credits[bookingData.courseType] > 0;
+            const hasCredits = credits[bookingData.courseType] > 0;
+            console.log('✅ Peut utiliser crédit?', hasCredits);
+            return hasCredits;
         } catch (error) {
             console.warn('Erreur vérification crédits:', error);
             return false;
@@ -376,14 +385,17 @@ class BookingManager {
 
     async createBookingWithCredit(bookingData) {
         try {
-            console.log('🎫 Création réservation AVEC CRÉDIT');
+            console.log('🎫 Début création réservation AVEC CRÉDIT');
             
             const user = window.authManager?.getCurrentUser();
             if (!user) {
                 throw new Error('Utilisateur non connecté');
             }
             
+            console.log('👤 Utilisateur:', user.email);
+            
             // 1. Utiliser un crédit
+            console.log('💰 Utilisation d\'un crédit...');
             const creditResult = await window.packagesManager.useCredit(
                 user.id,
                 bookingData.courseType,
@@ -392,6 +404,8 @@ class BookingManager {
                     duration: bookingData.duration || 60 
                 }
             );
+            
+            console.log('📦 Résultat utilisation crédit:', creditResult);
             
             if (!creditResult.success) {
                 throw new Error(`Impossible d'utiliser un crédit: ${creditResult.error}`);
@@ -424,8 +438,12 @@ class BookingManager {
                 isCreditBooking: true
             };
             
+            console.log('📤 Données pour Cal.com:', bookingForCalcom);
+            
             // 3. Créer la réservation sur Cal.com et dans Supabase
             const bookingResult = await this.createBookingAfterPayment(bookingForCalcom);
+            
+            console.log('📥 Résultat création réservation:', bookingResult);
             
             if (!bookingResult.success) {
                 console.error('❌ Échec création réservation après utilisation crédit');
@@ -441,6 +459,8 @@ class BookingManager {
                 confirmedAt: new Date().toISOString(),
                 supabaseBookingId: bookingResult.supabaseBookingId
             };
+            
+            console.log('✅ Réservation avec crédit créée avec succès');
             
             return {
                 success: true,
@@ -471,12 +491,22 @@ class BookingManager {
             console.groupEnd();
             
             // VÉRIFIER SI ON PEUT UTILISER UN CRÉDIT
+            console.log('🔍 Vérification crédit...');
             const canUseCredit = await this.canUseCredit(bookingData);
-            console.log('Peut utiliser crédit?', canUseCredit);
+            console.log('✅ Peut utiliser crédit?', canUseCredit);
             
             if (canUseCredit) {
-                // FLUX CRÉDIT
-                return await this.createBookingWithCredit(bookingData);
+                // FLUX CRÉDIT - CORRECTION: Appeler correctement la méthode
+                console.log('🚀 Début du flux crédit...');
+                const creditResult = await this.createBookingWithCredit(bookingData);
+                
+                if (creditResult.success) {
+                    console.log('✅ Flux crédit réussi');
+                    return creditResult;
+                } else {
+                    console.warn('⚠️ Échec du flux crédit, tentative paiement normal:', creditResult.error);
+                    // Continuer avec le flux paiement normal
+                }
             }
             
             // FLUX PAIEMENT NORMAL (existant)
@@ -1033,18 +1063,6 @@ class BookingManager {
         }
     }
 
-    async createBookingEmailNotification(bookingData) {
-        try {
-            console.log('📧 Création notification email pour réservation...');
-            
-            // DÉSACTIVER TEMPORAIREMENT - Cal.com envoie déjà les emails
-            console.log('📧 Email notification désactivée (Cal.com gère les emails)');
-            
-        } catch (error) {
-            console.warn('Exception création notification email:', error);
-        }
-    }
-
     getPlatformName(location) {
         if (!location) {
             console.log('⚠️ Location est null/undefined, retourne "zoom"');
@@ -1168,80 +1186,6 @@ class BookingManager {
     }
 }
 
-// Fonction globale pour être appelée depuis booking.html
-window.loadAvailableSlots = async function() {
-    console.log('📅 Chargement des créneaux disponibles...');
-    
-    if (!window.bookingManager) {
-        try {
-            window.bookingManager = new BookingManager();
-            console.log('✅ BookingManager réinitialisé');
-        } catch (error) {
-            console.error('❌ Impossible d\'initialiser BookingManager:', error);
-            return;
-        }
-    }
-    
-    try {
-        const courseType = document.getElementById('courseType')?.value || 'conversation';
-        const durationSelect = document.getElementById('durationSelect');
-        const selectedDate = document.getElementById('datePicker')?.value;
-        
-        let duration = null;
-        if (durationSelect && durationSelect.value) {
-            duration = parseInt(durationSelect.value);
-        }
-        
-        const slots = await window.bookingManager.getAvailableSlots(courseType, selectedDate, duration);
-        
-        updateSlotsDisplay(slots);
-        
-        console.log(`✅ ${slots.length} créneaux chargés`);
-    } catch (error) {
-        console.error('❌ Erreur lors du chargement des créneaux:', error);
-        alert('Erreur lors du chargement des créneaux: ' + error.message);
-    }
-};
-
-// Fonction pour mettre à jour l'affichage des créneaux
-function updateSlotsDisplay(slots) {
-    const container = document.getElementById('availableSlots');
-    if (!container) return;
-    
-    if (slots.length === 0) {
-        container.innerHTML = '<p class="no-slots">Aucun créneau disponible pour cette date.</p>';
-        return;
-    }
-    
-    container.innerHTML = slots.map(slot => `
-        <div class="slot-card" data-slot-id="${slot.id}" data-start="${slot.start}">
-            <div class="slot-time">${slot.time}</div>
-            <div class="slot-duration">${slot.duration}</div>
-            <button class="btn-select-slot" onclick="selectSlot('${slot.id}', '${slot.start}', '${slot.duration}')">
-                Choisir
-            </button>
-        </div>
-    `).join('');
-}
-
-// Fonction pour sélectionner un créneau
-window.selectSlot = function(slotId, startTime, duration) {
-    console.log('🎯 Créneau sélectionné:', { slotId, startTime, duration });
-    
-    document.querySelectorAll('.slot-card').forEach(card => {
-        card.classList.remove('selected');
-    });
-    
-    const selectedCard = document.querySelector(`[data-slot-id="${slotId}"]`);
-    if (selectedCard) {
-        selectedCard.classList.add('selected');
-    }
-    
-    window.selectedSlot = { slotId, startTime, duration };
-    
-    updateSummaryWithSlot(startTime, duration);
-};
-
 // Initialisation sécurisée
 function initializeBookingManager() {
     try {
@@ -1270,4 +1214,4 @@ if (document.readyState === 'loading') {
 // Initialiser globalement
 window.bookingManager = initializeBookingManager();
 
-console.log('✅ booking.js chargé - Version finale avec gestion des crédits');
+console.log('✅ booking.js chargé - Version finale avec gestion des crédits corrigée');
