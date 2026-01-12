@@ -1409,6 +1409,7 @@ class AuthManager {
                 end_time: bookingData.endTime,
                 price_paid: bookingData.price,
                 currency: bookingData.currency,
+                // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK
                 platform: this.getPlatformName(bookingData.location),
                 status: bookingData.status || 'pending',
                 booking_number: bookingNumber,
@@ -1442,12 +1443,17 @@ class AuthManager {
         }
     }
 
+    // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK
     getPlatformName(location) {
-        if (!location) return 'zoom';
-        if (location.includes('google')) return 'google_meet';
-        if (location.includes('teams')) return 'microsoft_teams';
-        if (location.includes('zoom')) return 'zoom';
-        return location;
+        if (!location) return 'zoom'; // valeur par défaut
+        
+        // Convertir les valeurs Cal.com en valeurs autorisées par la contrainte CHECK
+        if (location.includes('google')) return 'meet';      // 'meet' pour Google Meet
+        if (location.includes('teams')) return 'teams';     // 'teams' pour Microsoft Teams
+        if (location.includes('zoom')) return 'zoom';       // 'zoom' pour Zoom
+        
+        // Pour les autres plateformes ou valeurs inconnues
+        return 'other'; // valeur autorisée par la contrainte
     }
 
     // MÉTHODE : Obtenir les statistiques de l'utilisateur
