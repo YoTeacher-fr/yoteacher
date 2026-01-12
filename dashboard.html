@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="dashboard.title">Mon Dashboard - YoTeach</title>
+    <title>Mon Dashboard - YoTeach</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
@@ -204,9 +204,9 @@
             flex-direction: column;
         }
 
-        /* Carte forfaits (8 colonnes) pour contenir les 3 sous-cartes */
+        /* Carte forfaits (4 colonnes) */
         .card-packages {
-            grid-column: span 8;
+            grid-column: span 4;
             background: white;
             border-radius: 16px;
             padding: 25px;
@@ -217,119 +217,9 @@
             flex-direction: column;
         }
 
-        /* Grille interne pour les 3 types de forfaits */
-        .packages-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-top: 15px;
-            flex-grow: 1;
-        }
-
-        /* Sous-carte pour chaque type de forfait */
-        .package-type-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .package-type-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .package-type-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        .package-type-title {
-            font-weight: 700;
-            color: #333;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .package-type-icon {
-            font-size: 1.3rem;
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        .package-total {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #3c84f6;
-        }
-
-        /* Liste des durées dans chaque type de forfait */
-        .duration-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            flex-grow: 1;
-        }
-
-        .duration-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 15px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .duration-label {
-            font-weight: 600;
-            color: #333;
-            font-size: 0.95rem;
-        }
-
-        .duration-credits {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #4CAF50;
-        }
-
-        /* Date d'expiration */
-        .package-expiry {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #e0e0e0;
-            text-align: center;
-        }
-
-        .expiry-label {
-            font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .expiry-date {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #e91e63;
-        }
-
-        /* Carte profil (12 colonnes en dessous) */
+        /* Carte profil (4 colonnes) */
         .card-profile {
-            grid-column: span 12;
+            grid-column: span 4;
             background: white;
             border-radius: 16px;
             padding: 25px;
@@ -508,6 +398,69 @@
             color: white;
         }
 
+        /* Section Forfaits - SIMPLIFIÉE */
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+            flex-grow: 1;
+        }
+
+        .package-type-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .package-type-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .package-type-icon {
+            font-size: 1.5rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .package-type-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .package-credits {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #3c84f6;
+            line-height: 1;
+            margin: 10px 0;
+        }
+
+        .package-expiry {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            width: 100%;
+        }
+
         /* Section Profil */
         .profile-info {
             flex-grow: 1;
@@ -681,16 +634,8 @@
                 gap: 20px;
             }
             
-            .card-upcoming {
+            .card-upcoming, .card-packages, .card-profile {
                 grid-column: span 6;
-            }
-            
-            .card-packages {
-                grid-column: span 6;
-            }
-            
-            .packages-grid {
-                grid-template-columns: repeat(2, 1fr);
             }
         }
 
@@ -700,7 +645,7 @@
                 gap: 20px;
             }
             
-            .card-upcoming, .card-packages {
+            .card-upcoming, .card-packages, .card-profile {
                 grid-column: span 6;
             }
             
@@ -726,11 +671,6 @@
             
             .card-upcoming, .card-packages, .card-profile {
                 grid-column: span 12;
-            }
-            
-            .packages-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
             }
             
             .course-buttons-row {
@@ -829,14 +769,8 @@
                 padding: 20px 15px;
             }
             
-            .package-type-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .package-total {
-                align-self: flex-end;
+            .packages-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
         
@@ -870,6 +804,34 @@
             .lesson-nav {
                 justify-content: center;
                 width: 100%;
+            }
+            
+            .packages-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .package-type-card {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+                padding: 15px;
+            }
+            
+            .package-type-icon {
+                width: 50px;
+                height: 50px;
+                margin-bottom: 0;
+                margin-right: 15px;
+            }
+            
+            .package-type-name {
+                margin-bottom: 0;
+                flex-grow: 1;
+            }
+            
+            .package-credits {
+                margin: 0;
+                font-size: 2rem;
             }
         }
         
@@ -1075,9 +1037,9 @@
 
             <!-- Contenu principal du dashboard -->
             <div id="dashboardContent" style="display: none;">
-                <!-- Grille principale - 2 cartes en ligne (cours à venir + forfaits) -->
+                <!-- Grille principale - 3 cartes en ligne -->
                 <div class="dashboard-grid">
-                    <!-- Carte 1 : Cours à venir (réduite) -->
+                    <!-- Carte 1 : Cours à venir -->
                     <div class="card-upcoming fade-in">
                         <div class="card-header">
                             <div class="card-header-left">
@@ -1099,7 +1061,7 @@
                         </div>
                     </div>
 
-                    <!-- Carte 2 : Mes forfaits (avec 3 sous-cartes) -->
+                    <!-- Carte 2 : Mes forfaits -->
                     <div class="card-packages fade-in">
                         <div class="card-header">
                             <div class="card-header-left">
@@ -1115,23 +1077,23 @@
                             <span>Acheter des forfaits</span>
                         </a>
                     </div>
-                </div>
 
-                <!-- Carte 3 : Mon profil (pleine largeur en dessous) -->
-                <div class="card-profile fade-in" style="margin-top: 25px;">
-                    <div class="card-header">
-                        <div class="card-header-left">
-                            <i class="fas fa-user-circle"></i>
-                            <h2>Mon Profil</h2>
+                    <!-- Carte 3 : Mon profil -->
+                    <div class="card-profile fade-in">
+                        <div class="card-header">
+                            <div class="card-header-left">
+                                <i class="fas fa-user-circle"></i>
+                                <h2>Mon Profil</h2>
+                            </div>
                         </div>
+                        <div class="profile-info" id="profileInfo">
+                            <!-- Le contenu sera chargé dynamiquement -->
+                        </div>
+                        <a href="profile.html" class="btn-profile">
+                            <i class="fas fa-edit"></i>
+                            <span>Modifier mon profil</span>
+                        </a>
                     </div>
-                    <div class="profile-info" id="profileInfo">
-                        <!-- Le contenu sera chargé dynamiquement -->
-                    </div>
-                    <a href="profile.html" class="btn-profile">
-                        <i class="fas fa-edit"></i>
-                        <span>Modifier mon profil</span>
-                    </a>
                 </div>
 
                 <!-- Section : Réserver un cours -->
@@ -1308,9 +1270,29 @@
             
             if (!window.packagesManager) {
                 container.innerHTML = `
-                    <div class="no-packages" style="grid-column: span 3; text-align: center;">
-                        <i class="fas fa-gift"></i>
-                        <p>Aucun forfait actif</p>
+                    <div class="package-type-card">
+                        <div class="package-type-icon" style="background: #ff9800;">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="package-type-name">Conversation</div>
+                        <div class="package-credits">0</div>
+                        <div class="package-expiry">Pas de forfait</div>
+                    </div>
+                    <div class="package-type-card">
+                        <div class="package-type-icon" style="background: #4caf50;">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="package-type-name">Cours</div>
+                        <div class="package-credits">0</div>
+                        <div class="package-expiry">Pas de forfait</div>
+                    </div>
+                    <div class="package-type-card">
+                        <div class="package-type-icon" style="background: #9c27b0;">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="package-type-name">Examen</div>
+                        <div class="package-credits">0</div>
+                        <div class="package-expiry">Pas de forfait</div>
                     </div>
                 `;
                 return;
@@ -1319,16 +1301,6 @@
             try {
                 // Charger les forfaits actifs
                 const packages = await window.packagesManager.getUserActivePackages(userId);
-                
-                if (!packages || packages.length === 0) {
-                    container.innerHTML = `
-                        <div class="no-packages" style="grid-column: span 3; text-align: center;">
-                            <i class="fas fa-gift"></i>
-                            <p>Aucun forfait actif</p>
-                        </div>
-                    `;
-                    return;
-                }
                 
                 // Organiser les forfaits par type
                 const packagesByType = {
@@ -1345,11 +1317,11 @@
                 
                 let html = '';
                 
-                // Créer une carte pour chaque type de forfait
+                // Types de forfaits avec leurs couleurs
                 const types = [
+                    { key: 'conversation', name: 'Conversation', icon: 'fas fa-comments', color: '#ff9800' },
                     { key: 'curriculum', name: 'Cours', icon: 'fas fa-book', color: '#4caf50' },
-                    { key: 'examen', name: 'Examen', icon: 'fas fa-graduation-cap', color: '#9c27b0' },
-                    { key: 'conversation', name: 'Conversation', icon: 'fas fa-comments', color: '#ff9800' }
+                    { key: 'examen', name: 'Examen', icon: 'fas fa-graduation-cap', color: '#9c27b0' }
                 ];
                 
                 types.forEach(type => {
@@ -1358,32 +1330,12 @@
                     if (!typePackages || typePackages.length === 0) {
                         html += `
                             <div class="package-type-card">
-                                <div class="package-type-header">
-                                    <div class="package-type-title">
-                                        <div class="package-type-icon" style="background: ${type.color};">
-                                            <i class="${type.icon}"></i>
-                                        </div>
-                                        <span>${type.name}</span>
-                                    </div>
-                                    <div class="package-total">0</div>
+                                <div class="package-type-icon" style="background: ${type.color};">
+                                    <i class="${type.icon}"></i>
                                 </div>
-                                <div class="duration-list">
-                                    <div class="duration-item">
-                                        <span class="duration-label">30min</span>
-                                        <span class="duration-credits">0/10</span>
-                                    </div>
-                                    <div class="duration-item">
-                                        <span class="duration-label">45min</span>
-                                        <span class="duration-credits">0</span>
-                                    </div>
-                                    <div class="duration-item">
-                                        <span class="duration-label">60min</span>
-                                        <span class="duration-credits">0</span>
-                                    </div>
-                                </div>
-                                <div class="package-expiry">
-                                    <div class="expiry-label">Pas de forfait actif</div>
-                                </div>
+                                <div class="package-type-name">${type.name}</div>
+                                <div class="package-credits">0</div>
+                                <div class="package-expiry">Pas de forfait</div>
                             </div>
                         `;
                         return;
@@ -1392,27 +1344,11 @@
                     // Calculer le total des crédits pour ce type
                     let totalCredits = 0;
                     
-                    // Organiser par durée
-                    const creditsByDuration = {
-                        30: { total: 0, used: 0 },
-                        45: { total: 0, used: 0 },
-                        60: { total: 0, used: 0 }
-                    };
-                    
                     // Trouver la date d'expiration la plus proche
                     let nearestExpiry = null;
                     
                     typePackages.forEach(pkg => {
-                        // Calculer les crédits utilisés
-                        const usedCredits = (pkg.total_credits || 0) - (pkg.remaining_credits || 0);
                         totalCredits += (pkg.remaining_credits || 0);
-                        
-                        // Pour simplifier, nous supposons que la durée est stockée
-                        const duration = pkg.duration_minutes || 60;
-                        if (creditsByDuration[duration]) {
-                            creditsByDuration[duration].total += (pkg.total_credits || 0);
-                            creditsByDuration[duration].used += usedCredits;
-                        }
                         
                         // Vérifier la date d'expiration la plus proche
                         const expiryDate = new Date(pkg.expires_at);
@@ -1422,53 +1358,24 @@
                     });
                     
                     // Formater la date d'expiration
-                    let expiryHtml = '';
+                    let expiryHtml = 'Pas de forfait';
                     if (nearestExpiry) {
                         const formattedExpiry = nearestExpiry.toLocaleDateString('fr-FR', {
                             day: 'numeric',
-                            month: 'short',
-                            year: 'numeric'
+                            month: 'short'
                         });
                         
-                        const daysUntilExpiration = Math.ceil((nearestExpiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                        
-                        expiryHtml = `
-                            <div class="expiry-label">Expire le</div>
-                            <div class="expiry-date">${formattedExpiry}</div>
-                            <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">
-                                (dans ${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''})
-                            </div>
-                        `;
+                        expiryHtml = `Exp: ${formattedExpiry}`;
                     }
                     
                     html += `
                         <div class="package-type-card">
-                            <div class="package-type-header">
-                                <div class="package-type-title">
-                                    <div class="package-type-icon" style="background: ${type.color};">
-                                        <i class="${type.icon}"></i>
-                                    </div>
-                                    <span>${type.name}</span>
-                                </div>
-                                <div class="package-total">${totalCredits}</div>
+                            <div class="package-type-icon" style="background: ${type.color};">
+                                <i class="${type.icon}"></i>
                             </div>
-                            <div class="duration-list">
-                                <div class="duration-item">
-                                    <span class="duration-label">30min</span>
-                                    <span class="duration-credits">${creditsByDuration[30].used}/${creditsByDuration[30].total || 10}</span>
-                                </div>
-                                <div class="duration-item">
-                                    <span class="duration-label">45min</span>
-                                    <span class="duration-credits">${creditsByDuration[45].used}/${creditsByDuration[45].total || 0}</span>
-                                </div>
-                                <div class="duration-item">
-                                    <span class="duration-label">60min</span>
-                                    <span class="duration-credits">${creditsByDuration[60].used}/${creditsByDuration[60].total || 0}</span>
-                                </div>
-                            </div>
-                            <div class="package-expiry">
-                                ${expiryHtml}
-                            </div>
+                            <div class="package-type-name">${type.name}</div>
+                            <div class="package-credits">${totalCredits}</div>
+                            <div class="package-expiry">${expiryHtml}</div>
                         </div>
                     `;
                 });
@@ -1478,9 +1385,29 @@
             } catch (error) {
                 console.error('Erreur chargement forfaits:', error);
                 container.innerHTML = `
-                    <div class="no-packages" style="grid-column: span 3; text-align: center;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Erreur de chargement des forfaits</p>
+                    <div class="package-type-card">
+                        <div class="package-type-icon" style="background: #ff9800;">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="package-type-name">Conversation</div>
+                        <div class="package-credits">0</div>
+                        <div class="package-expiry">Erreur</div>
+                    </div>
+                    <div class="package-type-card">
+                        <div class="package-type-icon" style="background: #4caf50;">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="package-type-name">Cours</div>
+                        <div class="package-credits">0</div>
+                        <div class="package-expiry">Erreur</div>
+                    </div>
+                    <div class="package-type-card">
+                        <div class="package-type-icon" style="background: #9c27b0;">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="package-type-name">Examen</div>
+                        <div class="package-credits">0</div>
+                        <div class="package-expiry">Erreur</div>
                     </div>
                 `;
             }
