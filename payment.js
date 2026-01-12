@@ -104,7 +104,7 @@ class PaymentManager {
                 
                 // Rediriger vers la page de confirmation
                 setTimeout(() => {
-                    window.location.href = `confirmation.html?booking=${encodeURIComponent(JSON.stringify(result.bookingData))}`;
+                    window.location.href = `payment-success.html?booking=${encodeURIComponent(JSON.stringify(result.bookingData))}`;
                 }, 1000);
             } else {
                 throw new Error(result.error || 'Erreur de traitement');
