@@ -184,48 +184,15 @@
             transform: translateY(-2px);
         }
 
-        /* Grille principale */
+        /* Grille principale - MODIFIÉE pour 3 cartes en ligne */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
             gap: 25px;
         }
 
-        /* Carte large (12 colonnes) */
-        .card-wide {
-            grid-column: span 12;
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .card-wide:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-        }
-
-        /* Carte moyenne (6 colonnes) */
-        .card-medium {
-            grid-column: span 6;
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card-medium:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-        }
-
-        /* Carte petite (4 colonnes) */
-        .card-small {
+        /* Carte cours à venir (4 colonnes) - REDUIT */
+        .card-upcoming {
             grid-column: span 4;
             background: white;
             border-radius: 16px;
@@ -237,7 +204,33 @@
             flex-direction: column;
         }
 
-        .card-small:hover {
+        /* Carte forfaits (4 colonnes) */
+        .card-packages {
+            grid-column: span 4;
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Carte profil (4 colonnes) */
+        .card-profile {
+            grid-column: span 4;
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-upcoming:hover, .card-packages:hover, .card-profile:hover {
             transform: translateY(-3px);
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
         }
@@ -245,10 +238,17 @@
         .card-header {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 15px;
             margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .card-header i {
@@ -269,6 +269,45 @@
             margin: 0;
         }
 
+        /* Navigation des cours - NOUVEAU */
+        .lesson-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-arrow {
+            background: #f0f0f0;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .nav-arrow:hover:not(:disabled) {
+            background: #3c84f6;
+            color: white;
+        }
+
+        .nav-arrow:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .lesson-counter {
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: 500;
+            min-width: 70px;
+            text-align: center;
+        }
+
         /* Section Cours à venir */
         .upcoming-lesson-card {
             background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
@@ -276,10 +315,11 @@
             padding: 20px;
             border-radius: 12px;
             margin-bottom: 20px;
+            flex-grow: 1;
         }
 
         .lesson-date {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: #2e7d32;
             margin-bottom: 15px;
@@ -358,53 +398,69 @@
             color: white;
         }
 
-        /* Section Crédits et Forfaits */
-        .credits-list, .packages-list {
+        /* Section Forfaits - MODIFIÉE */
+        .packages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+            flex-grow: 1;
+        }
+
+        .package-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-top: 15px;
         }
 
-        .credit-item, .package-item {
+        .package-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-            font-size: 0.95rem;
         }
 
-        .credit-type, .package-name {
-            font-weight: 600;
+        .package-type {
+            font-weight: 700;
             color: #333;
             display: flex;
             align-items: center;
             gap: 10px;
+            font-size: 1.1rem;
         }
 
-        .credit-count, .package-credits {
-            font-size: 1.5rem;
-            font-weight: 700;
+        .package-credits {
+            font-size: 1.8rem;
+            font-weight: 800;
             color: #3c84f6;
         }
 
         .package-details {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            width: 100%;
-            margin-top: 10px;
+            gap: 8px;
+            padding-top: 12px;
+            border-top: 1px solid #e0e0e0;
         }
 
-        .package-expiry {
-            font-size: 0.85rem;
-            color: #666;
+        .package-detail {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .detail-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: #333;
+            font-weight: 600;
         }
 
         /* Section Profil */
@@ -519,13 +575,18 @@
         }
 
         /* Messages vides */
-        .no-upcoming, .no-credits, .no-packages {
+        .no-upcoming, .no-packages {
             text-align: center;
             padding: 40px 30px;
             color: #666;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
-        .no-upcoming i, .no-credits i, .no-packages i {
+        .no-upcoming i, .no-packages i {
             font-size: 3rem;
             color: #ddd;
             margin-bottom: 15px;
@@ -575,12 +636,7 @@
                 gap: 20px;
             }
             
-            .card-medium {
-                grid-column: span 12;
-                margin-bottom: 25px;
-            }
-            
-            .card-small {
+            .card-upcoming, .card-packages, .card-profile {
                 grid-column: span 6;
             }
         }
@@ -591,7 +647,7 @@
                 gap: 20px;
             }
             
-            .card-wide, .card-medium, .card-small {
+            .card-upcoming, .card-packages, .card-profile {
                 grid-column: span 6;
             }
             
@@ -615,7 +671,7 @@
                 padding: 15px 15px 30px;
             }
             
-            .card-wide, .card-medium, .card-small {
+            .card-upcoming, .card-packages, .card-profile {
                 grid-column: span 12;
             }
             
@@ -640,6 +696,11 @@
             .card-header {
                 flex-direction: column;
                 text-align: center;
+                gap: 10px;
+            }
+            
+            .card-header-left {
+                flex-direction: column;
                 gap: 10px;
             }
             
@@ -734,8 +795,13 @@
                 font-size: 0.8rem;
             }
             
-            .card-wide, .card-medium, .card-small {
+            .card-upcoming, .card-packages, .card-profile {
                 padding: 20px 15px;
+            }
+            
+            .lesson-nav {
+                justify-content: center;
+                width: 100%;
             }
         }
         
@@ -941,40 +1007,54 @@
 
             <!-- Contenu principal du dashboard -->
             <div id="dashboardContent" style="display: none;">
-                <!-- Grille principale -->
+                <!-- Grille principale - 3 cartes en ligne -->
                 <div class="dashboard-grid">
-                    <!-- Carte 1 : Cours à venir (large) -->
-                    <div class="card-wide fade-in">
+                    <!-- Carte 1 : Cours à venir (réduite) -->
+                    <div class="card-upcoming fade-in">
                         <div class="card-header">
-                            <i class="fas fa-calendar-check"></i>
-                            <h2 data-i18n="dashboard.upcoming_lessons">Cours à venir</h2>
+                            <div class="card-header-left">
+                                <i class="fas fa-calendar-check"></i>
+                                <h2 data-i18n="dashboard.upcoming_lessons">Cours à venir</h2>
+                            </div>
+                            <div class="lesson-nav" id="lessonNav" style="display: none;">
+                                <button class="nav-arrow" id="prevLessonBtn" disabled>
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span class="lesson-counter" id="lessonCounter">1/1</span>
+                                <button class="nav-arrow" id="nextLessonBtn" disabled>
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
                         </div>
                         <div id="nextLessonContent">
                             <!-- Le contenu sera chargé dynamiquement -->
                         </div>
-                        <div id="upcomingBookings" style="display: none;"></div>
                     </div>
 
-                    <!-- Carte 2 : Mes crédits et forfaits (moyenne) -->
-                    <div class="card-medium fade-in">
+                    <!-- Carte 2 : Mes forfaits (modifiée) -->
+                    <div class="card-packages fade-in">
                         <div class="card-header">
-                            <i class="fas fa-ticket-alt"></i>
-                            <h2 data-i18n="dashboard.my_credits_packages">Mes crédits et forfaits</h2>
+                            <div class="card-header-left">
+                                <i class="fas fa-gift"></i>
+                                <h2 data-i18n="dashboard.my_packages">Mes forfaits</h2>
+                            </div>
                         </div>
-                        <div id="creditsAndPackagesContainer">
+                        <div id="packagesContainer">
                             <!-- Le contenu sera chargé dynamiquement -->
                         </div>
-                        <a href="booking.html?type=conversation&package=5" class="btn-buy-credits">
+                        <a href="packages.html" class="btn-buy-credits">
                             <i class="fas fa-shopping-cart"></i>
-                            <span data-i18n="dashboard.buy_credits">Acheter des crédits</span>
+                            <span data-i18n="dashboard.buy_packages">Acheter des forfaits</span>
                         </a>
                     </div>
 
-                    <!-- Carte 3 : Mon profil (petite) -->
-                    <div class="card-small fade-in">
+                    <!-- Carte 3 : Mon profil -->
+                    <div class="card-profile fade-in">
                         <div class="card-header">
-                            <i class="fas fa-user-circle"></i>
-                            <h2 data-i18n="dashboard.my_profile">Mon Profil</h2>
+                            <div class="card-header-left">
+                                <i class="fas fa-user-circle"></i>
+                                <h2 data-i18n="dashboard.my_profile">Mon Profil</h2>
+                            </div>
                         </div>
                         <div class="profile-info" id="profileInfo">
                             <!-- Le contenu sera chargé dynamiquement -->
@@ -987,10 +1067,12 @@
                 </div>
 
                 <!-- Section : Réserver un cours -->
-                <div class="card-wide fade-in" style="margin-top: 25px;">
+                <div class="card-upcoming fade-in" style="margin-top: 25px; grid-column: span 12;">
                     <div class="card-header">
-                        <i class="fas fa-clock"></i>
-                        <h2 data-i18n="dashboard.book_lesson">Réserver un cours</h2>
+                        <div class="card-header-left">
+                            <i class="fas fa-clock"></i>
+                            <h2 data-i18n="dashboard.book_lesson">Réserver un cours</h2>
+                        </div>
                     </div>
                     <div class="course-buttons-row">
                         <!-- Cours d'essai -->
@@ -1041,6 +1123,10 @@
     <script src="translation.js"></script>
 
     <script>
+        // Variables pour la navigation des cours
+        let upcomingLessons = [];
+        let currentLessonIndex = 0;
+        
         async function loadDashboard() {
             try {
                 const user = window.authManager?.getCurrentUser();
@@ -1106,14 +1192,11 @@
             
             if (window.supabase) {
                 try {
-                    // Charger les crédits et forfaits
-                    await loadUserCreditsAndPackages(user.id);
-                    
-                    // Charger la prochaine réservation
-                    await loadNextLesson(user.id);
+                    // Charger les forfaits
+                    await loadUserPackages(user.id);
                     
                     // Charger les réservations à venir
-                    await loadUpcomingBookings(user.id);
+                    await loadUpcomingLessons(user.id);
                     
                 } catch (error) {
                     console.error('Erreur chargement données:', error);
@@ -1132,7 +1215,7 @@
             const emailLabel = window.translationManager?.getTranslation('dashboard.email') || 'Email';
             const memberSinceLabel = window.translationManager?.getTranslation('dashboard.member_since') || 'Membre depuis';
             const timezoneLabel = window.translationManager?.getTranslation('dashboard.timezone') || 'Fuseau horaire';
-            const levelLabel = window.translationManager?.getTranslation('dashboard.french_level') || 'Niveau de français';
+            const levelLabel = window.translationManager?.getTranslation('dashboard.french_level') || 'Niveau';
             
             const timezone = user.profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
             const frenchLevel = user.profile?.french_level || 'Non spécifié';
@@ -1157,150 +1240,104 @@
             `;
         }
         
-        async function loadUserCreditsAndPackages(userId) {
-            const container = document.getElementById('creditsAndPackagesContainer');
+        async function loadUserPackages(userId) {
+            const container = document.getElementById('packagesContainer');
             
             if (!window.packagesManager) {
                 container.innerHTML = `
-                    <div class="no-credits">
-                        <i class="fas fa-ticket-alt"></i>
-                        <p data-i18n="dashboard.no_credits">Aucun crédit ou forfait disponible</p>
+                    <div class="no-packages">
+                        <i class="fas fa-gift"></i>
+                        <p data-i18n="dashboard.no_packages">Aucun forfait actif</p>
                     </div>
                 `;
                 return;
             }
             
             try {
-                // Charger les crédits
-                const credits = await window.packagesManager.getUserCredits(userId);
-                
                 // Charger les forfaits actifs
                 const packages = await window.packagesManager.getUserActivePackages(userId);
                 
-                if ((!credits || (credits.conversation === 0 && credits.curriculum === 0 && credits.examen === 0)) && 
-                    (!packages || packages.length === 0)) {
+                if (!packages || packages.length === 0) {
                     container.innerHTML = `
-                        <div class="no-credits">
-                            <i class="fas fa-ticket-alt"></i>
-                            <p data-i18n="dashboard.no_credits">Aucun crédit ou forfait disponible</p>
+                        <div class="no-packages">
+                            <i class="fas fa-gift"></i>
+                            <p data-i18n="dashboard.no_packages">Aucun forfait actif</p>
                         </div>
                     `;
                     return;
                 }
                 
-                let html = '';
+                let html = '<div class="packages-list">';
                 
-                // Afficher les crédits
-                if (credits && (credits.conversation > 0 || credits.curriculum > 0 || credits.examen > 0)) {
-                    html += '<h3 style="margin-bottom: 15px; color: #333; font-size: 1rem;">Crédits disponibles :</h3>';
-                    html += '<div class="credits-list">';
+                packages.forEach(pkg => {
+                    const courseTypeName = {
+                        'conversation': window.translationManager?.getTranslation('courses.conversation') || 'Conversation',
+                        'curriculum': window.translationManager?.getTranslation('courses.curriculum') || 'Curriculum',
+                        'examen': window.translationManager?.getTranslation('courses.exam') || 'Préparation d\'examen'
+                    }[pkg.course_type] || pkg.course_type;
                     
-                    const conversationLabel = window.translationManager?.getTranslation('courses.conversation') || 'Conversation';
-                    const curriculumLabel = window.translationManager?.getTranslation('courses.curriculum') || 'Curriculum';
-                    const examLabel = window.translationManager?.getTranslation('courses.exam') || 'Préparation d\'examen';
+                    const expiresDate = new Date(pkg.expires_at);
+                    const daysUntilExpiration = pkg.days_until_expiration || 
+                        Math.ceil((expiresDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                     
-                    if (credits.conversation > 0) {
-                        html += `
-                            <div class="credit-item">
-                                <div class="credit-type">
-                                    <i class="fas fa-comments" style="color: #ff9800;"></i>
-                                    ${conversationLabel}
-                                </div>
-                                <div class="credit-count">${credits.conversation}</div>
-                            </div>
-                        `;
-                    }
-                    
-                    if (credits.curriculum > 0) {
-                        html += `
-                            <div class="credit-item">
-                                <div class="credit-type">
-                                    <i class="fas fa-book" style="color: #4caf50;"></i>
-                                    ${curriculumLabel}
-                                </div>
-                                <div class="credit-count">${credits.curriculum}</div>
-                            </div>
-                        `;
-                    }
-                    
-                    if (credits.examen > 0) {
-                        html += `
-                            <div class="credit-item">
-                                <div class="credit-type">
-                                    <i class="fas fa-graduation-cap" style="color: #9c27b0;"></i>
-                                    ${examLabel}
-                                </div>
-                                <div class="credit-count">${credits.examen}</div>
-                            </div>
-                        `;
-                    }
-                    
-                    html += '</div>';
-                }
-                
-                // Afficher les forfaits
-                if (packages && packages.length > 0) {
-                    if (html) html += '<br>';
-                    html += '<h3 style="margin-bottom: 15px; color: #333; font-size: 1rem;">Forfaits actifs :</h3>';
-                    html += '<div class="packages-list">';
-                    
-                    packages.forEach(pkg => {
-                        const courseTypeName = {
-                            'conversation': window.translationManager?.getTranslation('courses.conversation') || 'Conversation',
-                            'curriculum': window.translationManager?.getTranslation('courses.curriculum') || 'Curriculum',
-                            'examen': window.translationManager?.getTranslation('courses.exam') || 'Préparation d\'examen'
-                        }[pkg.course_type] || pkg.course_type;
-                        
-                        const expiresDate = new Date(pkg.expires_at);
-                        const daysUntilExpiration = pkg.days_until_expiration || 
-                            Math.ceil((expiresDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                        
-                        const formattedExpiryDate = expiresDate.toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric'
-                        });
-                        
-                        html += `
-                            <div class="package-item">
-                                <div style="width: 100%;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                        <div class="package-name">
-                                            <i class="fas fa-gift" style="color: #e91e63;"></i>
-                                            ${courseTypeName}
-                                        </div>
-                                        <div class="package-credits">
-                                            ${pkg.remaining_credits}/${pkg.total_credits || pkg.remaining_credits}
-                                        </div>
-                                    </div>
-                                    <div class="package-details">
-                                        <span class="package-expiry">
-                                            <i class="far fa-calendar-alt"></i>
-                                            Expire le ${formattedExpiryDate} (dans ${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''})
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                    const formattedExpiryDate = expiresDate.toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
                     });
                     
-                    html += '</div>';
-                }
+                    // Calcul de la durée (en semaines)
+                    const createdAt = new Date(pkg.created_at || pkg.purchased_at);
+                    const durationWeeks = Math.ceil((expiresDate.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24 * 7));
+                    
+                    html += `
+                        <div class="package-item">
+                            <div class="package-header">
+                                <div class="package-type">
+                                    <i class="fas fa-gift" style="color: #e91e63;"></i>
+                                    ${courseTypeName}
+                                </div>
+                                <div class="package-credits">
+                                    ${pkg.remaining_credits || 0}
+                                </div>
+                            </div>
+                            <div class="package-details">
+                                <div class="package-detail">
+                                    <span class="detail-label" data-i18n="dashboard.credits_available">Crédits disponibles</span>
+                                    <span class="detail-value">${pkg.remaining_credits || 0}/${pkg.total_credits || pkg.remaining_credits}</span>
+                                </div>
+                                <div class="package-detail">
+                                    <span class="detail-label" data-i18n="dashboard.duration">Durée</span>
+                                    <span class="detail-value">${durationWeeks} semaine${durationWeeks > 1 ? 's' : ''}</span>
+                                </div>
+                                <div class="package-detail">
+                                    <span class="detail-label" data-i18n="dashboard.expiry_date">Date d'expiration</span>
+                                    <span class="detail-value">${formattedExpiryDate}</span>
+                                </div>
+                                <div class="package-detail">
+                                    <span class="detail-label" data-i18n="dashboard.days_left">Jours restants</span>
+                                    <span class="detail-value">${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
                 
+                html += '</div>';
                 container.innerHTML = html;
                 
             } catch (error) {
-                console.error('Erreur chargement crédits et forfaits:', error);
+                console.error('Erreur chargement forfaits:', error);
                 container.innerHTML = `
-                    <div class="no-credits">
+                    <div class="no-packages">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <p>Erreur de chargement des crédits et forfaits</p>
+                        <p>Erreur de chargement des forfaits</p>
                     </div>
                 `;
             }
         }
         
-        async function loadNextLesson(userId) {
+        async function loadUpcomingLessons(userId) {
             if (!window.supabase) return;
             
             try {
@@ -1308,94 +1345,41 @@
                     .from('upcoming_bookings')
                     .select('*')
                     .eq('user_id', userId)
-                    .order('start_time', { ascending: true })
-                    .limit(1);
+                    .order('start_time', { ascending: true });
                     
                 if (error) throw error;
                 
                 const nextLessonContent = document.getElementById('nextLessonContent');
+                const lessonNav = document.getElementById('lessonNav');
                 
                 if (!bookings || bookings.length === 0) {
                     nextLessonContent.innerHTML = `
                         <div class="no-upcoming">
                             <i class="far fa-calendar"></i>
                             <p data-i18n="dashboard.no_lessons">Aucun cours programmé</p>
-                            <a href="booking.html?type=conversation" class="btn-buy-credits" style="margin-top: 20px; width: auto; display: inline-block;">
+                            <a href="booking.html?type=conversation" class="btn-buy-credits" style="margin-top: 20px; width: auto; display: inline-block; padding: 10px 20px;">
                                 <i class="fas fa-plus-circle"></i>
                                 <span data-i18n="dashboard.book_now">Réserver maintenant</span>
                             </a>
                         </div>
                     `;
+                    lessonNav.style.display = 'none';
                     return;
                 }
                 
-                const lesson = bookings[0];
-                const lessonDate = new Date(lesson.start_time);
+                upcomingLessons = bookings;
+                currentLessonIndex = 0;
                 
-                const timeLabel = window.translationManager?.getTranslation('dashboard.time') || 'Heure';
-                const durationLabel = window.translationManager?.getTranslation('dashboard.duration') || 'Durée';
-                const typeLabel = window.translationManager?.getTranslation('dashboard.type') || 'Type';
-                const referenceLabel = window.translationManager?.getTranslation('dashboard.reference') || 'Référence';
-                const platformLabel = window.translationManager?.getTranslation('dashboard.platform') || 'Plateforme';
-                const cancelLabel = window.translationManager?.getTranslation('dashboard.cancel') || 'Annuler';
-                const rescheduleLabel = window.translationManager?.getTranslation('dashboard.reschedule') || 'Reporter';
+                // Afficher la navigation si plus d'un cours
+                if (bookings.length > 1) {
+                    lessonNav.style.display = 'flex';
+                    updateLessonNavigation();
+                } else {
+                    lessonNav.style.display = 'none';
+                }
                 
-                const platformNames = {
-                    'zoom': 'Zoom',
-                    'google_meet': 'Google Meet',
-                    'microsoft_teams': 'Microsoft Teams'
-                };
+                displayCurrentLesson();
                 
-                const platformName = platformNames[lesson.platform] || lesson.platform || 'Zoom';
-                
-                nextLessonContent.innerHTML = `
-                    <div class="upcoming-lesson-card">
-                        <div class="lesson-date">
-                            <i class="fas fa-calendar-alt"></i>
-                            ${lessonDate.toLocaleDateString('fr-FR', { 
-                                weekday: 'long', 
-                                day: 'numeric', 
-                                month: 'long',
-                                year: 'numeric'
-                            })}
-                        </div>
-                        <div class="lesson-info">
-                            <div class="lesson-info-item">
-                                <span class="lesson-info-label">${timeLabel}</span>
-                                <span class="lesson-info-value">${lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-                            </div>
-                            <div class="lesson-info-item">
-                                <span class="lesson-info-label">${durationLabel}</span>
-                                <span class="lesson-info-value">${lesson.duration_minutes || 60} min</span>
-                            </div>
-                            <div class="lesson-info-item">
-                                <span class="lesson-info-label">${typeLabel}</span>
-                                <span class="lesson-info-value">${lesson.course_type || 'Cours'}</span>
-                            </div>
-                            <div class="lesson-info-item">
-                                <span class="lesson-info-label">${platformLabel}</span>
-                                <span class="lesson-info-value">${platformName}</span>
-                            </div>
-                            <div class="lesson-info-item">
-                                <span class="lesson-info-label">${referenceLabel}</span>
-                                <span class="lesson-info-value">${lesson.booking_number || '#' + (lesson.id ? lesson.id.substring(0, 8) : '')}</span>
-                            </div>
-                        </div>
-                        <div class="lesson-actions">
-                            <button class="btn-small btn-cancel" onclick="cancelLesson('${lesson.id}')">
-                                <i class="fas fa-times"></i> ${cancelLabel}
-                            </button>
-                            <button class="btn-small btn-reschedule" onclick="rescheduleLesson('${lesson.id}')">
-                                <i class="fas fa-calendar-alt"></i> ${rescheduleLabel}
-                            </button>
-                            ${lesson.meeting_link ? `
-                            <a href="${lesson.meeting_link}" target="_blank" class="btn-small" style="background: #4CAF50; color: white; border: none; text-decoration: none;">
-                                <i class="fas fa-video"></i> Rejoindre
-                            </a>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
             } catch (error) {
                 console.error('Erreur chargement cours:', error);
                 document.getElementById('nextLessonContent').innerHTML = `
@@ -1407,57 +1391,90 @@
             }
         }
         
-        async function loadUpcomingBookings(userId) {
-            if (!window.supabase) return;
+        function displayCurrentLesson() {
+            if (upcomingLessons.length === 0) return;
             
-            try {
-                const { data: bookings, error } = await supabase
-                    .from('upcoming_bookings')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('start_time', { ascending: true })
-                    .limit(5);
-                    
-                if (error) throw error;
-                
-                const upcomingBookings = document.getElementById('upcomingBookings');
-                
-                if (!bookings || bookings.length <= 1) {
-                    upcomingBookings.style.display = 'none';
-                    return;
-                }
-                
-                upcomingBookings.style.display = 'block';
-                let html = '<h3 style="margin-top: 25px; margin-bottom: 15px; color: #333; font-size: 1.1rem;">Autres cours à venir :</h3><div class="bookings-list">';
-                
-                bookings.slice(1).forEach(booking => {
-                    const bookingDate = new Date(booking.start_time);
-                    const formattedDate = bookingDate.toLocaleDateString('fr-FR', { 
-                        day: 'numeric',
-                        month: 'short'
-                    });
-                    const formattedTime = bookingDate.toLocaleTimeString('fr-FR', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                    });
-                    
-                    html += `
-                        <div class="booking-item">
-                            <div>
-                                <div class="booking-date">${formattedDate} à ${formattedTime}</div>
-                                <div class="booking-type">${booking.course_type} - ${booking.duration_minutes || 60} min</div>
-                            </div>
-                            <div class="booking-status status-${booking.status}">${booking.status}</div>
+            const lesson = upcomingLessons[currentLessonIndex];
+            const nextLessonContent = document.getElementById('nextLessonContent');
+            const lessonCounter = document.getElementById('lessonCounter');
+            
+            // Mettre à jour le compteur
+            lessonCounter.textContent = `${currentLessonIndex + 1}/${upcomingLessons.length}`;
+            
+            const lessonDate = new Date(lesson.start_time);
+            
+            const timeLabel = window.translationManager?.getTranslation('dashboard.time') || 'Heure';
+            const durationLabel = window.translationManager?.getTranslation('dashboard.duration') || 'Durée';
+            const typeLabel = window.translationManager?.getTranslation('dashboard.type') || 'Type';
+            const referenceLabel = window.translationManager?.getTranslation('dashboard.reference') || 'Référence';
+            const platformLabel = window.translationManager?.getTranslation('dashboard.platform') || 'Plateforme';
+            const cancelLabel = window.translationManager?.getTranslation('dashboard.cancel') || 'Annuler';
+            const rescheduleLabel = window.translationManager?.getTranslation('dashboard.reschedule') || 'Reporter';
+            
+            const platformNames = {
+                'zoom': 'Zoom',
+                'google_meet': 'Google Meet',
+                'microsoft_teams': 'Microsoft Teams'
+            };
+            
+            const platformName = platformNames[lesson.platform] || lesson.platform || 'Zoom';
+            
+            nextLessonContent.innerHTML = `
+                <div class="upcoming-lesson-card">
+                    <div class="lesson-date">
+                        <i class="fas fa-calendar-alt"></i>
+                        ${lessonDate.toLocaleDateString('fr-FR', { 
+                            weekday: 'long', 
+                            day: 'numeric', 
+                            month: 'long',
+                            year: 'numeric'
+                        })}
+                    </div>
+                    <div class="lesson-info">
+                        <div class="lesson-info-item">
+                            <span class="lesson-info-label">${timeLabel}</span>
+                            <span class="lesson-info-value">${lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-                    `;
-                });
-                
-                html += '</div>';
-                upcomingBookings.innerHTML = html;
-                
-            } catch (error) {
-                console.error('Erreur chargement cours à venir:', error);
-            }
+                        <div class="lesson-info-item">
+                            <span class="lesson-info-label">${durationLabel}</span>
+                            <span class="lesson-info-value">${lesson.duration_minutes || 60} min</span>
+                        </div>
+                        <div class="lesson-info-item">
+                            <span class="lesson-info-label">${typeLabel}</span>
+                            <span class="lesson-info-value">${lesson.course_type || 'Cours'}</span>
+                        </div>
+                        <div class="lesson-info-item">
+                            <span class="lesson-info-label">${platformLabel}</span>
+                            <span class="lesson-info-value">${platformName}</span>
+                        </div>
+                        <div class="lesson-info-item">
+                            <span class="lesson-info-label">${referenceLabel}</span>
+                            <span class="lesson-info-value">${lesson.booking_number || '#' + (lesson.id ? lesson.id.substring(0, 8) : '')}</span>
+                        </div>
+                    </div>
+                    <div class="lesson-actions">
+                        <button class="btn-small btn-cancel" onclick="cancelLesson('${lesson.id}')">
+                            <i class="fas fa-times"></i> ${cancelLabel}
+                        </button>
+                        <button class="btn-small btn-reschedule" onclick="rescheduleLesson('${lesson.id}')">
+                            <i class="fas fa-calendar-alt"></i> ${rescheduleLabel}
+                        </button>
+                        ${lesson.meeting_link ? `
+                        <a href="${lesson.meeting_link}" target="_blank" class="btn-small" style="background: #4CAF50; color: white; border: none; text-decoration: none;">
+                            <i class="fas fa-video"></i> Rejoindre
+                        </a>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function updateLessonNavigation() {
+            const prevBtn = document.getElementById('prevLessonBtn');
+            const nextBtn = document.getElementById('nextLessonBtn');
+            
+            prevBtn.disabled = currentLessonIndex === 0;
+            nextBtn.disabled = currentLessonIndex === upcomingLessons.length - 1;
         }
         
         function cancelLesson(lessonId) {
@@ -1478,6 +1495,8 @@
             const logoutBtn = document.getElementById('logoutBtn');
             const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
             const refreshBtn = document.getElementById('refreshDashboardBtn');
+            const prevLessonBtn = document.getElementById('prevLessonBtn');
+            const nextLessonBtn = document.getElementById('nextLessonBtn');
             
             async function handleLogout() {
                 try {
@@ -1517,6 +1536,26 @@
                                 card.style.animation = 'fadeIn 0.5s ease forwards';
                             }, 10);
                         });
+                    }
+                });
+            }
+            
+            if (prevLessonBtn) {
+                prevLessonBtn.addEventListener('click', function() {
+                    if (currentLessonIndex > 0) {
+                        currentLessonIndex--;
+                        displayCurrentLesson();
+                        updateLessonNavigation();
+                    }
+                });
+            }
+            
+            if (nextLessonBtn) {
+                nextLessonBtn.addEventListener('click', function() {
+                    if (currentLessonIndex < upcomingLessons.length - 1) {
+                        currentLessonIndex++;
+                        displayCurrentLesson();
+                        updateLessonNavigation();
                     }
                 });
             }
