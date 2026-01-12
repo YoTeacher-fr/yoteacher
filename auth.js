@@ -215,7 +215,7 @@ class AuthManager {
                 .maybeSingle();
             
             if (!existingProfile) {
-                console.log('📝 Création du profil VIP pour l'utilisateur...');
+                console.log('📝 Création du profil VIP pour l\'utilisateur...');
                 
                 // Structure pour votre table profiles (sans colonne email)
                 const profileData = {
@@ -352,7 +352,7 @@ class AuthManager {
 
     async loadUserProfile() {
         if (!this.user) {
-            console.log('❌ Pas d'utilisateur à charger');
+            console.log('❌ Pas d\'utilisateur à charger');
             return;
         }
         
@@ -453,7 +453,7 @@ class AuthManager {
             });
             window.dispatchEvent(event);
         } catch (error) {
-            console.warn('Erreur lors de l'émission d'événement:', error);
+            console.warn('Erreur lors de l\'émission d\'événement:', error);
         }
     }
 
@@ -679,7 +679,7 @@ class AuthManager {
                 const invitationCode = this.invitationCode || sessionStorage.getItem('invitation_code');
                 
                 if (invitationCode) {
-                    console.log('🎟️ Code VIP détecté lors de l'inscription:', invitationCode);
+                    console.log('🎟️ Code VIP détecté lors de l\'inscription:', invitationCode);
                     
                     // Attendre un peu que le profil soit bien créé
                     await new Promise(resolve => setTimeout(resolve, 800));
@@ -702,7 +702,7 @@ class AuthManager {
                     this.user = oldUser;
                     
                     if (result.success) {
-                        console.log('✅ Code VIP appliqué automatiquement lors de l'inscription');
+                        console.log('✅ Code VIP appliqué automatiquement lors de l\'inscription');
                     } else {
                         console.warn('⚠️ Échec application code VIP:', result.error);
                     }
@@ -1167,7 +1167,7 @@ class AuthManager {
         }
 
         try {
-            console.log('👑 Chargement des prix VIP pour l'utilisateur:', this.user.id);
+            console.log('👑 Chargement des prix VIP pour l\'utilisateur:', this.user.id);
             
             const { data, error } = await supabase
                 .from('vip_pricing')
@@ -1273,7 +1273,7 @@ class AuthManager {
             'Email not confirmed': 'Veuillez confirmer votre adresse email',
             'User already registered': 'Un compte existe déjà avec cette adresse email',
             'Password should be at least 6 characters': 'Le mot de passe doit contenir au moins 6 caractères',
-            'Unable to validate email address: invalid format': 'Format d'email invalide',
+            'Unable to validate email address: invalid format': 'Format d\'email invalide',
             'Auth session missing': 'Session expirée, veuillez vous reconnecter',
             'Invalid Refresh Token': 'Session expirée, veuillez vous reconnecter',
             'Email address is invalid': 'Adresse email invalide',
@@ -1659,4 +1659,4 @@ window.debugVipPrices = async function() {
     console.groupEnd();
 };
 
-console.log('✅ auth.js chargé avec système de codes d'invitation VIP - Version finale corrigée pour votre schéma');
+console.log('✅ auth.js chargé avec système de codes d\'invitation VIP - Version finale corrigée pour votre schéma');
