@@ -1,4 +1,4 @@
-// booking.js - Gestion des réservations avec Cal.com (API v2) - VERSION CORRIGÉE CONTRE DOUBLE DÉDUCTION
+// booking.js - Gestion des réservations avec Cal.com (API v2) - VERSION CORRIGÉE
 class BookingManager {
     constructor() {
         const config = window.YOTEACHER_CONFIG || {};
@@ -22,7 +22,7 @@ class BookingManager {
         this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         this.rateLimitInfo = { limit: 120, remaining: 120, reset: null };
         
-        console.log('📅 BookingManager initialisé - Version corrigée contre double déduction');
+        console.log('📅 BookingManager initialisé - Version corrigée');
     }
 
     checkCalcomConfig() {
@@ -339,7 +339,7 @@ class BookingManager {
             
             console.log('👤 Utilisateur:', user.email);
             
-            // 1. Utiliser un crédit (DÉDUCTION UNIQUE)
+            // 1. Utiliser un crédit
             console.log('💰 Utilisation d\'un crédit...');
             const creditResult = await window.packagesManager.useCredit(
                 user.id,
@@ -358,7 +358,7 @@ class BookingManager {
             
             console.log('✅ Crédit utilisé, package_id:', creditResult.package_id);
             
-            // 2. Préparer les données pour la réservation avec FLAGS DE SÉCURITÉ
+            // 2. Préparer les données pour la réservation
             const bookingForCalcom = {
                 startTime: bookingData.startTime,
                 endTime: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, bookingData.duration),
@@ -380,29 +380,20 @@ class BookingManager {
                 transactionId: `CREDIT-${Date.now()}`,
                 packageId: creditResult.package_id,
                 status: 'confirmed',
-                isCreditBooking: true,
+                isCreditBooking: true, // ← IMPORTANT
                 isPackage: false,
-                packageQuantity: 1,
-                
-                // 🔴 CRITIQUE : FLAGS POUR EMPÊCHER LA DOUBLE DÉDUCTION
-                creditAlreadyDeducted: true,
-                skipCreditDeduction: true
+                packageQuantity: 1
             };
             
-            console.log('📤 Données pour Cal.com (crédit déjà déduit):', bookingForCalcom);
+            console.log('📤 Données pour Cal.com:', bookingForCalcom);
             
-            // 3. Créer la réservation sur Cal.com (SANS DÉDUIRE À NOUVEAU)
+            // 3. Créer la réservation sur Cal.com
             const bookingResult = await this.createBookingAfterPayment(bookingForCalcom);
             
             console.log('📥 Résultat création réservation:', bookingResult);
             
             if (!bookingResult.success) {
                 console.error('❌ Échec création réservation après utilisation crédit');
-                
-                // TODO: Implémenter le remboursement du crédit
-                console.error('⚠️ URGENT: Le crédit a été déduit mais la réservation a échoué !');
-                console.error('⚠️ Implémenter la logique de remboursement dans packages.js');
-                
                 throw new Error(`Échec création réservation: ${bookingResult.error}`);
             }
             
@@ -472,7 +463,7 @@ class BookingManager {
             price: finalPrice,
             currency: currentCurrency,
             priceEUR: priceEUR,
-            isPackagePurchase: true,
+            isPackagePurchase: true, // ← IMPORTANT
             isCreditBooking: false,
             packageQuantity: quantity,
             discountPercent: discount,
@@ -599,8 +590,7 @@ class BookingManager {
                     isVip: String(window.authManager?.isUserVip() || 'false'),
                     quantity: String(bookingData.packageQuantity || '1'),
                     discount: String(bookingData.discountPercent || '0'),
-                    isCreditBooking: String(bookingData.isCreditBooking || 'false'),
-                    creditAlreadyDeducted: String(bookingData.creditAlreadyDeducted || 'false')
+                    isCreditBooking: String(bookingData.isCreditBooking || 'false')
                 }
             };
 
@@ -706,12 +696,6 @@ class BookingManager {
             if (!window.supabase) {
                 console.warn('Supabase non disponible pour sauvegarde');
                 return null;
-            }
-
-            // 🔴 VÉRIFICATION CRITIQUE : Si crédit déjà déduit, on ne fait rien de plus
-            if (bookingData.creditAlreadyDeducted || bookingData.skipCreditDeduction) {
-                console.log('⏭️ Déduction de crédit ignorée (crédit déjà déduit dans createBookingWithCredit)');
-                // On continue juste pour sauvegarder la réservation, PAS de déduction supplémentaire
             }
 
             // Générer un numéro de réservation
@@ -934,4 +918,4 @@ if (document.readyState === 'loading') {
 // Initialiser globalement
 window.bookingManager = initializeBookingManager();
 
-console.log('✅ booking.js chargé - Version corrigée contre double déduction');
+console.log('✅ booking.js chargé - Version corrigée avec les 3 flux');
