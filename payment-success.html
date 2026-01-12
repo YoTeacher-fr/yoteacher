@@ -192,12 +192,24 @@
             color: white;
             border: 1px solid #97d498;
         }
-.status-confirmed i {
-    color: #4CAF50;
-    background: white;
-    border-radius: 50%;
-    padding: 2px;
-}
+        .status-confirmed i {
+            color: #4CAF50;
+            background: white;
+            border-radius: 50%;
+            padding: 2px;
+        }
+        
+        .status-credit {
+            background: rgba(40, 167, 69, 0.8);
+            color: white;
+            border: 1px solid #28a745;
+        }
+        .status-credit i {
+            color: #28a745;
+            background: white;
+            border-radius: 50%;
+            padding: 2px;
+        }
         
         .status-pending {
             background: rgba(211, 79, 45, 0.7);
@@ -234,9 +246,9 @@
                 <i class="fas fa-check"></i>
             </div>
             
-            <h1 class="success-title" data-i18n="payment.success_title_main">Paiement Réussi !</h1>
+            <h1 class="success-title" id="successTitle" data-i18n="payment.success_title_main">Paiement Réussi !</h1>
             
-            <div class="success-message" data-i18n="payment.success_message">
+            <div class="success-message" id="successMessageText">
                 Votre paiement a été accepté et votre réservation est en cours de confirmation.
             </div>
             
@@ -278,6 +290,12 @@
                     const bookingData = JSON.parse(decodeURIComponent(bookingParam));
                     displayBookingDetails(bookingData);
                     updateReservationStatus(bookingData, warning === 'true');
+                    
+                    // Mettre à jour le titre et message pour les réservations avec crédit
+                    if (bookingData.isCreditBooking) {
+                        document.getElementById('successTitle').textContent = 'Réservation confirmée !';
+                        document.getElementById('successMessageText').textContent = 'Votre réservation avec crédit a été confirmée.';
+                    }
                 } catch (error) {
                     console.error('Erreur parsing booking:', error);
                     showErrorMessage();
@@ -324,18 +342,25 @@
                 case 'curriculum':
                     courseType = window.translationManager?.getTranslation('courses.curriculum') || 'Curriculum complet';
                     break;
+                case 'examen':
+                    courseType = window.translationManager?.getTranslation('courses.exam') || 'Préparation d\'examen';
+                    break;
                 default:
                     courseType = booking.courseType;
             }
             
             // Formatage du prix
-            let priceDisplay = `${booking.price} ${booking.currency}`;
-            if (booking.isPackage && booking.packageQuantity > 1) {
+            let priceDisplay = '';
+            if (booking.isCreditBooking) {
+                priceDisplay = '0 € (avec crédit)';
+            } else if (booking.isPackage && booking.packageQuantity > 1) {
                 const pricePerCourse = booking.price / booking.packageQuantity;
                 priceDisplay = `${booking.price} ${booking.currency} (${pricePerCourse.toFixed(2)} ${booking.currency}/cours)`;
+            } else {
+                priceDisplay = `${booking.price} ${booking.currency}`;
             }
             
-            detailsDiv.innerHTML = `
+            let html = `
                 <h3>${summaryLabel}</h3>
                 <div class="detail-item">
                     <span>${courseLabel}</span>
@@ -358,6 +383,23 @@
                     <span>${priceDisplay}</span>
                 </div>
             `;
+            
+            // Ajouter une section spéciale pour les réservations avec crédit
+            if (booking.isCreditBooking) {
+                html += `
+                    <div class="detail-item" style="background: rgba(40, 167, 69, 0.15); border-radius: 8px; padding: 12px; margin-top: 15px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-ticket-alt" style="color: #28a745; font-size: 1.2rem;"></i>
+                            <div>
+                                <div style="font-weight: bold; color: #28a745;">Réservation avec crédit</div>
+                                <div style="font-size: 0.9rem; opacity: 0.8;">1 crédit utilisé pour cette réservation</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            detailsDiv.innerHTML = html;
         }
         
         function updateReservationStatus(booking, hasWarning) {
@@ -365,6 +407,7 @@
             const warningDiv = document.getElementById('warningNotice');
             
             const confirmedText = window.translationManager?.getTranslation('payment.reservation_confirmed') || 'Réservation confirmée';
+            const creditText = window.translationManager?.getTranslation('payment.credit_reservation_confirmed') || 'Réservation avec crédit confirmée';
             const pendingText = window.translationManager?.getTranslation('payment.reservation_error') || 'Erreur lors de la réservation. Veuillez me contacter';
             const processingText = window.translationManager?.getTranslation('payment.confirmation_processing') || 'Confirmation de réservation en cours...';
             
@@ -376,11 +419,19 @@
                 `;
                 warningDiv.style.display = 'block';
             } else if (booking.calcomId) {
-                statusDiv.innerHTML = `
-                    <div class="reservation-status status-confirmed">
-                        <i class="fas fa-check-circle"></i> ${confirmedText}
-                    </div>
-                `;
+                if (booking.isCreditBooking) {
+                    statusDiv.innerHTML = `
+                        <div class="reservation-status status-credit">
+                            <i class="fas fa-ticket-alt"></i> ${creditText}
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="reservation-status status-confirmed">
+                            <i class="fas fa-check-circle"></i> ${confirmedText}
+                        </div>
+                    `;
+                }
                 warningDiv.style.display = 'none';
             } else {
                 statusDiv.innerHTML = `

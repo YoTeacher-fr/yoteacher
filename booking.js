@@ -350,11 +350,151 @@ class BookingManager {
         }
     }
 
+    async canUseCredit(bookingData) {
+        const user = window.authManager?.getCurrentUser();
+        if (!user || !window.packagesManager) return false;
+        
+        // Uniquement pour 1 cours (pas les forfaits)
+        if (bookingData.packageQuantity && bookingData.packageQuantity > 1) {
+            return false;
+        }
+        
+        // Uniquement pour les cours payants (pas essai)
+        if (bookingData.courseType === 'essai') {
+            return false;
+        }
+        
+        try {
+            const credits = await window.packagesManager.getUserCredits(user.id);
+            console.log(`🔍 Crédits disponibles pour ${bookingData.courseType}:`, credits[bookingData.courseType]);
+            return credits[bookingData.courseType] > 0;
+        } catch (error) {
+            console.warn('Erreur vérification crédits:', error);
+            return false;
+        }
+    }
+
+    async createBookingWithCredit(bookingData) {
+        try {
+            console.log('🎫 Création réservation AVEC CRÉDIT');
+            
+            const user = window.authManager?.getCurrentUser();
+            if (!user) {
+                throw new Error('Utilisateur non connecté');
+            }
+            
+            // 1. Utiliser un crédit
+            const creditResult = await window.packagesManager.useCredit(
+                user.id,
+                bookingData.courseType,
+                { 
+                    id: `temp_${Date.now()}`,
+                    duration: bookingData.duration || 60 
+                }
+            );
+            
+            if (!creditResult.success) {
+                throw new Error(`Impossible d'utiliser un crédit: ${creditResult.error}`);
+            }
+            
+            console.log('✅ Crédit utilisé, package_id:', creditResult.package_id);
+            
+            // 2. Préparer les données pour la réservation
+            const bookingForCalcom = {
+                startTime: bookingData.startTime,
+                endTime: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, bookingData.duration),
+                eventType: bookingData.courseType,
+                courseType: bookingData.courseType,
+                duration: bookingData.duration || 60,
+                location: bookingData.location || 'integrations:google:meet',
+                name: bookingData.name,
+                email: bookingData.email,
+                notes: bookingData.notes || '',
+                userId: user.id,
+                timeZone: this.timeZone,
+                language: 'fr',
+                
+                // Informations spécifiques crédit
+                price: 0,
+                currency: null,
+                paymentMethod: 'credit',
+                transactionId: `CREDIT-${Date.now()}`,
+                packageId: creditResult.package_id,
+                status: 'confirmed',
+                isCreditBooking: true
+            };
+            
+            // 3. Créer la réservation sur Cal.com et dans Supabase
+            const bookingResult = await this.createBookingAfterPayment(bookingForCalcom);
+            
+            if (!bookingResult.success) {
+                console.error('❌ Échec création réservation après utilisation crédit');
+                throw new Error(`Échec création réservation: ${bookingResult.error}`);
+            }
+            
+            // 4. Préparer les données pour la page de succès
+            const finalBookingData = {
+                ...bookingForCalcom,
+                calcomId: bookingResult.data?.id || bookingResult.data?.uid,
+                meetingLink: bookingResult.data?.location,
+                bookingNumber: `BK-CREDIT-${Date.now().toString().slice(-8)}`,
+                confirmedAt: new Date().toISOString(),
+                supabaseBookingId: bookingResult.supabaseBookingId
+            };
+            
+            return {
+                success: true,
+                bookingData: finalBookingData,
+                redirectTo: `payment-success.html?booking=${encodeURIComponent(JSON.stringify(finalBookingData))}`,
+                message: 'Réservation avec crédit confirmée'
+            };
+            
+        } catch (error) {
+            console.error('❌ Erreur création réservation avec crédit:', error);
+            return { 
+                success: false, 
+                error: error.message 
+            };
+        }
+    }
+
     async createBooking(bookingData) {
         try {
             const user = window.authManager?.getCurrentUser();
             if (!bookingData) {
                 throw new Error('Données de réservation manquantes');
+            }
+            
+            console.group('🎯 DÉBUT createBooking');
+            console.log('Données reçues:', bookingData);
+            console.log('Utilisateur:', user?.email);
+            console.groupEnd();
+            
+            // VÉRIFIER SI ON PEUT UTILISER UN CRÉDIT
+            const canUseCredit = await this.canUseCredit(bookingData);
+            console.log('Peut utiliser crédit?', canUseCredit);
+            
+            if (canUseCredit) {
+                // FLUX CRÉDIT
+                return await this.createBookingWithCredit(bookingData);
+            }
+            
+            // FLUX PAIEMENT NORMAL (existant)
+            console.log('💰 Début de la préparation du paiement');
+            
+            // FORCER l'initialisation de currencyManager
+            let currencyManagerReady = false;
+            if (window.currencyManager) {
+                try {
+                    if (!window.currencyManager.currentCurrency || 
+                        !window.currencyManager.exchangeRates || 
+                        Object.keys(window.currencyManager.exchangeRates).length === 0) {
+                        await window.currencyManager.init();
+                    }
+                    currencyManagerReady = true;
+                } catch (error) {
+                    console.error('❌ Impossible d\'initialiser CurrencyManager:', error);
+                }
             }
             
             const requiredFields = ['startTime', 'courseType'];
@@ -364,7 +504,7 @@ class BookingManager {
                 }
             }
             
-            console.group('💰 Calcul prix réservation - LOGIQUE VIP CORRIGÉE POUR TOUS LES CAS');
+            console.group('💰 Calcul prix réservation');
             console.log('Type de cours:', bookingData.courseType);
             console.log('Durée:', bookingData.duration);
             console.log('Quantité:', bookingData.packageQuantity || 1);
@@ -373,7 +513,7 @@ class BookingManager {
             
             let finalPrice = 0;
             let priceEUR = 0;
-            let unitPriceEUR = 0; // CORRECTION: Déclaré ici pour être accessible dans toute la fonction
+            let unitPriceEUR = 0;
             
             const isVIP = window.authManager?.isUserVip();
             const duration = bookingData.duration || 60;
@@ -386,27 +526,19 @@ class BookingManager {
             console.log('Est un package:', isPackage);
             console.log('Quantité de cours:', quantity);
             
-            // Vérifier que les taux de change sont chargés
-            if (window.currencyManager && 
-                (!window.currencyManager.exchangeRates || 
-                 Object.keys(window.currencyManager.exchangeRates).length === 0)) {
-                console.log('💱 Chargement des taux de change...');
-                await window.currencyManager.loadExchangeRates();
-            }
-            
             // COURS D'ESSAI - Toujours 5€
             if (bookingData.courseType === 'essai') {
                 console.log('🎫 Cours d\'essai détecté');
                 priceEUR = 5;
-                unitPriceEUR = 5; // CORRECTION: Défini pour cours d'essai
-                finalPrice = window.currencyManager ? 
+                unitPriceEUR = 5;
+                finalPrice = currencyManagerReady ? 
                     window.currencyManager.convert(5, 'EUR', currentCurrency) : 5;
                 
                 console.log(`Prix essai: ${priceEUR}€ → ${finalPrice} ${currentCurrency}`);
             }
             // COURS PAYANTS
             else {
-                // PRIX VIP - LOGIQUE CORRECTE POUR TOUS LES CAS
+                // PRIX VIP
                 if (isVIP) {
                     console.log('👑 Recherche prix VIP...');
                     
@@ -443,7 +575,7 @@ class BookingManager {
                             const originalPrice = totalVipPrice;
                             
                             // 4. Calculer le prix final DANS LA DEVISE COURANTE
-                            if (window.currencyManager) {
+                            if (currencyManagerReady) {
                                 if (originalCurrency === currentCurrency) {
                                     finalPrice = totalVipPrice;
                                     console.log(`💳 Même devise: ${finalPrice} ${currentCurrency}`);
@@ -456,9 +588,8 @@ class BookingManager {
                                 finalPrice = totalVipPrice;
                             }
                             
-                            // 5. NE PAS UTILISER priceEUR pour les VIP (c'est en USD, pas en EUR)
                             priceEUR = null;
-                            unitPriceEUR = 0; // CORRECTION: Défini même pour VIP
+                            unitPriceEUR = 0;
                             
                         } else {
                             console.log('⚠️ Prix VIP invalide, utilisation prix normal');
@@ -474,8 +605,7 @@ class BookingManager {
                 if (!isVIP || !useVipPrice) {
                     console.log('👤 Utilisation prix normal');
                     
-                    // Calcul en EUR d'abord
-                    unitPriceEUR = 0; // CORRECTION: Réaffecté ici
+                    unitPriceEUR = 0;
                     
                     if (window.packagesManager) {
                         unitPriceEUR = window.packagesManager.calculatePrice(
@@ -507,7 +637,7 @@ class BookingManager {
                     }
                     
                     // Conversion vers devise courante
-                    if (window.currencyManager) {
+                    if (currencyManagerReady) {
                         finalPrice = window.currencyManager.convert(priceEUR, 'EUR', currentCurrency);
                     } else {
                         finalPrice = priceEUR;
@@ -547,7 +677,7 @@ class BookingManager {
                 
                 // Pour référence
                 priceEUR: isVIP && useVipPrice ? null : priceEUR, // Prix en EUR seulement pour non-VIP
-                originalPrice: vipPriceData?.price || unitPriceEUR, // CORRECTION: unitPriceEUR est maintenant toujours défini
+                originalPrice: vipPriceData?.price || unitPriceEUR,
                 originalCurrency: vipPriceData?.currency || 'EUR', // Devise d'origine
                 
                 duration: duration,
@@ -557,7 +687,7 @@ class BookingManager {
                 email: bookingData.email,
                 notes: bookingData.notes,
                 userId: user?.id || null,
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                timeZone: this.timeZone,
                 language: 'fr',
                 
                 // Informations package
@@ -595,9 +725,7 @@ class BookingManager {
         }
     }
 
-    // NOUVELLE MÉTHODE : Obtenir un prix par défaut en cas d'échec
     getDefaultPrice(courseType, duration = 60) {
-        // Prix par défaut si tout échoue
         const basePrices = {
             'essai': 5,
             'conversation': 20,
@@ -607,7 +735,6 @@ class BookingManager {
         
         let price = basePrices[courseType] || 20;
         
-        // Ajuster selon la durée
         if (courseType !== 'essai') {
             const ratio = duration / 60;
             price = price * ratio;
@@ -617,14 +744,12 @@ class BookingManager {
         return price;
     }
 
-    // MÉTHODE : Formater un prix VIP pour les logs
     formatVipPriceForLog(vipPriceData) {
         if (!vipPriceData || !vipPriceData.price) return 'N/A';
         
         let formatted = `${vipPriceData.price} ${vipPriceData.currency || 'EUR'}`;
         
         if (window.currencyManager) {
-            // Afficher la conversion en devise courante
             const converted = window.currencyManager.convertVIPPrice(vipPriceData);
             if (converted) {
                 formatted += ` → ${converted.display}`;
@@ -634,14 +759,12 @@ class BookingManager {
         return formatted;
     }
 
-    // MÉTHODE : Calculer le prix avec conversion de devise
     calculatePriceWithCurrencyConversion(price, fromCurrency, toCurrency) {
         if (!window.currencyManager) return price;
         
         return window.currencyManager.convert(price, fromCurrency, toCurrency);
     }
 
-    // MÉTHODE : Créer la réservation sur Cal.com APRÈS paiement
     async createBookingAfterPayment(bookingData) {
         try {
             this.checkCalcomConfig();
@@ -675,7 +798,8 @@ class BookingManager {
                     isVip: String(bookingData.isVip || 'false'),
                     vipPriceData: bookingData.vipPriceData ? JSON.stringify(bookingData.vipPriceData) : '',
                     quantity: String(bookingData.packageQuantity || '1'),
-                    discount: String(bookingData.discountPercent || '0')
+                    discount: String(bookingData.discountPercent || '0'),
+                    isCreditBooking: String(bookingData.isCreditBooking || 'false')
                 }
             };
 
@@ -696,7 +820,7 @@ class BookingManager {
                 }
             }
 
-            console.log('📤 Création réservation Cal.com après paiement:', JSON.stringify(bookingPayload, null, 2));
+            console.log('📤 Création réservation Cal.com:', JSON.stringify(bookingPayload, null, 2));
 
             const response = await fetch(
                 `${this.apiBaseUrl}/bookings`,
@@ -776,7 +900,6 @@ class BookingManager {
         }
     }
 
-    // Méthode mock pour le développement
     async mockBookingAfterPayment(bookingData) {
         return new Promise((resolve) => {
             setTimeout(() => {
@@ -799,7 +922,6 @@ class BookingManager {
         });
     }
 
-    // FONCTION CORRIGÉE : Sauvegarder la réservation dans Supabase selon votre schéma
     async saveBookingToSupabase(calcomBooking, user, bookingData, status = 'confirmed') {
         try {
             if (!window.supabase) {
@@ -810,14 +932,8 @@ class BookingManager {
             // Générer un numéro de réservation
             const bookingNumber = `BK-${Date.now().toString().slice(-8)}`;
 
-            // DÉBOGAGE DÉTAILLÉ : Vérifier toutes les valeurs
-            console.log('🔍 DÉBOGAGE COMPLET - Valeurs à insérer:');
-            console.log('- Location reçue:', bookingData.location);
-            console.log('- Type de location:', typeof bookingData.location);
-            
             // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK avec nettoyage
             let platformValue = this.getPlatformName(bookingData.location);
-            console.log('- Platform calculée:', platformValue);
             
             // Vérifier si c'est une valeur autorisée
             const allowedPlatforms = ['meet', 'zoom', 'teams', 'other'];
@@ -834,12 +950,11 @@ class BookingManager {
                 start_time: bookingData.startTime,
                 end_time: bookingData.endTime,
                 status: status,
-                price_paid: bookingData.packageId ? 0 : bookingData.price, // Si forfait, prix 0
-                currency: bookingData.packageId ? null : bookingData.currency, // Si forfait, pas de devise
-                // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK
+                price_paid: bookingData.packageId ? 0 : bookingData.price,
+                currency: bookingData.packageId ? null : bookingData.currency,
                 platform: platformValue,
                 booking_number: bookingNumber,
-                payment_method: bookingData.paymentMethod,
+                payment_method: bookingData.paymentMethod || 'credit',
                 payment_reference: bookingData.transactionId,
                 calcom_booking_id: calcomBooking.id || calcomBooking.uid,
                 calcom_uid: calcomBooking.uid,
@@ -852,15 +967,7 @@ class BookingManager {
                 bookingRecord.package_id = bookingData.packageId;
             }
 
-            console.log('💾 Insertion dans Supabase bookings (structure corrigée):', JSON.stringify(bookingRecord, null, 2));
-            
-            // DÉBOGAGE : Vérifier chaque champ individuellement
-            console.log('🔍 Vérification des champs critiques:');
-            console.log('- platform:', bookingRecord.platform, '(type:', typeof bookingRecord.platform + ')');
-            console.log('- status:', bookingRecord.status, '(doit être dans: pending, pending_payment, confirmed, completed, cancelled, lost, refunded)');
-            console.log('- currency:', bookingRecord.currency, '(doit être dans: EUR, USD, CAD, GBP)');
-            console.log('- payment_method:', bookingRecord.payment_method, '(doit être dans: stripe, revolut, wise, interac, paypal, credit)');
-            console.log('- course_type:', bookingRecord.course_type, '(doit être: essai, conversation, curriculum, examen)');
+            console.log('💾 Insertion dans Supabase bookings:', JSON.stringify(bookingRecord, null, 2));
 
             try {
                 const { data, error } = await supabase
@@ -870,11 +977,6 @@ class BookingManager {
 
                 if (error) {
                     console.error('❌ Erreur insertion dans bookings:', error);
-                    console.error('❌ Détails de l\'erreur:');
-                    console.error('- Code:', error.code);
-                    console.error('- Message:', error.message);
-                    console.error('- Détails:', error.details);
-                    console.error('- Hint:', error.hint);
                     
                     // Tentative 2: Essayer avec platform = NULL
                     console.log('🔄 Tentative 2: avec platform = NULL...');
@@ -919,21 +1021,6 @@ class BookingManager {
                 }
 
                 console.log('✅ Réservation sauvegardée dans bookings avec ID:', data[0].id);
-                
-                // Si c'est une réservation utilisant un crédit (forfait) et que l'utilisateur a un package, on ne fait pas useCredit ici.
-                // C'est le rôle de payment.js de décrémenter le crédit après avoir ajouté le forfait.
-                if (!bookingData.isPackage && !bookingData.packageId && user?.id && window.packagesManager) {
-                    const creditResult = await window.packagesManager.useCredit(
-                        user.id, 
-                        bookingData.courseType, 
-                        { id: data[0].id } // Passer l'ID de la réservation
-                    );
-                    
-                    if (creditResult.success) {
-                        console.log('✅ Crédit utilisé pour la réservation');
-                    }
-                }
-                
                 return data[0].id;
                 
             } catch (dbError) {
@@ -958,7 +1045,6 @@ class BookingManager {
         }
     }
 
-    // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK avec nettoyage robuste
     getPlatformName(location) {
         if (!location) {
             console.log('⚠️ Location est null/undefined, retourne "zoom"');
@@ -967,37 +1053,29 @@ class BookingManager {
         
         // Nettoyer la chaîne
         const cleanLocation = String(location).trim().toLowerCase();
-        console.log(`🔍 Analyse location nettoyée: "${cleanLocation}"`);
         
         // Vérifier les patterns connus
         if (cleanLocation.includes('google') || cleanLocation.includes('meet')) {
-            console.log('✅ Location identifiée comme Google Meet, retourne "meet"');
             return 'meet';
         }
         if (cleanLocation.includes('teams') || cleanLocation.includes('microsoft')) {
-            console.log('✅ Location identifiée comme Microsoft Teams, retourne "teams"');
             return 'teams';
         }
         if (cleanLocation.includes('zoom')) {
-            console.log('✅ Location identifiée comme Zoom, retourne "zoom"');
             return 'zoom';
         }
         
         // Vérifier les valeurs intégrations de Cal.com
         if (cleanLocation.includes('integrations:google:meet')) {
-            console.log('✅ Location identifiée comme integrations:google:meet, retourne "meet"');
             return 'meet';
         }
         if (cleanLocation.includes('integrations:microsoft:teams')) {
-            console.log('✅ Location identifiée comme integrations:microsoft:teams, retourne "teams"');
             return 'teams';
         }
         if (cleanLocation.includes('integrations:zoom')) {
-            console.log('✅ Location identifiée comme integrations:zoom, retourne "zoom"');
             return 'zoom';
         }
         
-        console.log(`⚠️ Location non reconnue: "${cleanLocation}", retourne "other"`);
         return 'other';
     }
 
@@ -1041,7 +1119,6 @@ class BookingManager {
         return date.toISOString();
     }
     
-    // MÉTHODE: Vérifier les durées disponibles pour un event type
     async checkEventTypeDurations(eventTypeId) {
         try {
             console.log(`🔍 Vérification des durées pour event type ID: ${eventTypeId}`);
@@ -1095,11 +1172,7 @@ class BookingManager {
 window.loadAvailableSlots = async function() {
     console.log('📅 Chargement des créneaux disponibles...');
     
-    // Vérifier si bookingManager est disponible
     if (!window.bookingManager) {
-        console.error('❌ BookingManager non disponible');
-        
-        // Essayer de réinitialiser
         try {
             window.bookingManager = new BookingManager();
             console.log('✅ BookingManager réinitialisé');
@@ -1110,7 +1183,6 @@ window.loadAvailableSlots = async function() {
     }
     
     try {
-        // Récupérer les paramètres depuis l'interface
         const courseType = document.getElementById('courseType')?.value || 'conversation';
         const durationSelect = document.getElementById('durationSelect');
         const selectedDate = document.getElementById('datePicker')?.value;
@@ -1120,10 +1192,8 @@ window.loadAvailableSlots = async function() {
             duration = parseInt(durationSelect.value);
         }
         
-        // Charger les créneaux
         const slots = await window.bookingManager.getAvailableSlots(courseType, selectedDate, duration);
         
-        // Mettre à jour l'interface
         updateSlotsDisplay(slots);
         
         console.log(`✅ ${slots.length} créneaux chargés`);
@@ -1158,7 +1228,6 @@ function updateSlotsDisplay(slots) {
 window.selectSlot = function(slotId, startTime, duration) {
     console.log('🎯 Créneau sélectionné:', { slotId, startTime, duration });
     
-    // Mettre à jour l'interface
     document.querySelectorAll('.slot-card').forEach(card => {
         card.classList.remove('selected');
     });
@@ -1168,10 +1237,8 @@ window.selectSlot = function(slotId, startTime, duration) {
         selectedCard.classList.add('selected');
     }
     
-    // Stocker la sélection
     window.selectedSlot = { slotId, startTime, duration };
     
-    // Mettre à jour le récapitulatif
     updateSummaryWithSlot(startTime, duration);
 };
 
@@ -1200,139 +1267,7 @@ if (document.readyState === 'loading') {
     initializeBookingManager();
 }
 
-// TEST DE VERIFICATION DES PRIX VIP
-window.testVipPriceCalculation = async function() {
-    console.group('🧪 TEST CALCUL PRIX VIP');
-    
-    // Simuler un forfait 10 cours VIP avec 5% réduction
-    const vipPrice = 3; // USD
-    const quantity = 10;
-    const discount = 5;
-    const currentCurrency = window.currencyManager?.currentCurrency || 'EUR';
-    
-    console.log('📊 Données test:');
-    console.log('- Prix unitaire VIP:', vipPrice, 'USD');
-    console.log('- Quantité:', quantity, 'cours');
-    console.log('- Réduction:', discount, '%');
-    console.log('- Devise courante:', currentCurrency);
-    
-    // Calcul attendu
-    const totalVipUSD = vipPrice * quantity * (1 - discount/100);
-    console.log('💰 Total attendu en USD:', totalVipUSD.toFixed(2), 'USD');
-    
-    if (window.currencyManager && currentCurrency !== 'USD') {
-        const converted = window.currencyManager.convert(totalVipUSD, 'USD', currentCurrency);
-        console.log('💱 Conversion USD →', currentCurrency + ':', converted.toFixed(2));
-        
-        // Vérifier le taux de change
-        const rate = window.currencyManager.exchangeRates['USD'];
-        console.log('📈 Taux USD/EUR:', rate);
-        console.log('💱 Taux implicite:', converted / totalVipUSD);
-    }
-    
-    console.groupEnd();
-};
-
-// TEST VIP COMPLET
-window.testVipAllCases = async function() {
-    console.group('🧪 TEST COMPLET PRIX VIP - TOUS LES CAS');
-    
-    // Prix VIP: 3 USD par cours
-    const vipPrice = 3;
-    const vipCurrency = 'USD';
-    
-    const testCases = [
-        { quantity: 1, discount: 0, expected: 3.00, description: '1 cours - pas de réduction' },
-        { quantity: 5, discount: 2, expected: 14.70, description: '5 cours - 2% réduction' },
-        { quantity: 10, discount: 5, expected: 28.50, description: '10 cours - 5% réduction' }
-    ];
-    
-    for (const testCase of testCases) {
-        console.log(`\n📊 ${testCase.description}`);
-        console.log(`📦 Calcul: ${vipPrice}$ × ${testCase.quantity} × (1 - ${testCase.discount}%)`);
-        
-        const totalVip = vipPrice * testCase.quantity * (1 - testCase.discount/100);
-        console.log(`💰 Total VIP: ${totalVip.toFixed(2)} ${vipCurrency}`);
-        
-        if (Math.abs(totalVip - testCase.expected) > 0.01) {
-            console.error(`❌ ERREUR: Attendu ${testCase.expected}$, obtenu ${totalVip.toFixed(2)}$`);
-        } else {
-            console.log(`✅ CORRECT: ${totalVip.toFixed(2)} ${vipCurrency}`);
-        }
-        
-        // Test avec conversion
-        if (window.currencyManager) {
-            const currentCurrency = window.currencyManager.currentCurrency;
-            if (currentCurrency !== vipCurrency) {
-                const converted = window.currencyManager.convert(totalVip, vipCurrency, currentCurrency);
-                console.log(`💱 Conversion: ${totalVip.toFixed(2)} ${vipCurrency} → ${converted.toFixed(2)} ${currentCurrency}`);
-            }
-        }
-    }
-    
-    console.groupEnd();
-};
-
-// FONCTION DE DEBUG GLOBALE
-window.debugVIPPriceIssue = function() {
-    console.group('🔍 DEBUG PRIX VIP');
-    
-    // 1. Vérifier CurrencyManager
-    if (window.currencyManager) {
-        console.log('💱 CurrencyManager:');
-        console.log('- Devise courante:', window.currencyManager.currentCurrency);
-        console.log('- Symbole:', window.currencyManager.getSymbol());
-        console.log('- Taux USD:', window.currencyManager.exchangeRates['USD']);
-        console.log('- Taux EUR:', window.currencyManager.exchangeRates['EUR']);
-    }
-    
-    // 2. Vérifier AuthManager
-    if (window.authManager) {
-        console.log('🔐 AuthManager:');
-        console.log('- Utilisateur VIP:', window.authManager.isUserVip());
-        console.log('- Utilisateur:', window.authManager.user?.email);
-        console.log('- Prix VIP chargés:', window.authManager.user?.vipPrices);
-    }
-    
-    // 3. Test de conversion
-    console.log('🧪 Test conversion 28.50 USD:');
-    const testAmount = 28.50;
-    if (window.currencyManager) {
-        const converted = window.currencyManager.convert(testAmount, 'USD', window.currencyManager.currentCurrency);
-        console.log(`${testAmount} USD → ${converted.toFixed(2)} ${window.currencyManager.currentCurrency}`);
-        
-        // Taux implicite
-        const implicitRate = converted / testAmount;
-        console.log(`Taux implicite USD→${window.currencyManager.currentCurrency}:`, implicitRate.toFixed(4));
-    }
-    
-    // 4. Calcul manuel
-    console.log('🧮 Calcul manuel:');
-    const vipPrice = 3; // USD
-    const quantity = 10;
-    const discount = 5; // %
-    
-    const totalUSD = vipPrice * quantity * (1 - discount/100);
-    console.log(`3 USD × 10 × (1 - 5%) = ${totalUSD.toFixed(2)} USD`);
-    
-    if (window.currencyManager) {
-        const convertedTotal = window.currencyManager.convert(totalUSD, 'USD', window.currencyManager.currentCurrency);
-        console.log(`→ ${convertedTotal.toFixed(2)} ${window.currencyManager.currentCurrency}`);
-    }
-    
-    console.groupEnd();
-};
-
 // Initialiser globalement
 window.bookingManager = initializeBookingManager();
 
-// Test automatique au chargement
-if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
-    setTimeout(() => {
-        console.log('🧪 Test automatique des calculs de prix VIP');
-        window.testVipPriceCalculation();
-        window.testVipAllCases();
-    }, 3000);
-}
-
-console.log('✅ booking.js chargé - Version finale corrigée avec débogage complet');
+console.log('✅ booking.js chargé - Version finale avec gestion des crédits');

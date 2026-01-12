@@ -501,7 +501,6 @@
         .btn-booking {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #3c84f6, #1e88e5);
             color: white;
             border: none;
             border-radius: 8px;
@@ -1163,8 +1162,8 @@
                                     <span class="discount-badge" data-i18n="booking.discount_badge_5">-5%</span>
                                 </button>
                             </div>
-                            <input type="hidden" id="coursesCount" value="10">
-                            <input type="hidden" id="discountPercent" value="5">
+                            <input type="hidden" id="coursesCount" value="1">
+                            <input type="hidden" id="discountPercent" value="0">
                         </div>
 
                         <!-- Sélecteur de moyen de communication -->
@@ -1235,7 +1234,7 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn-booking" id="submitBooking" disabled>
+                        <button type="submit" class="btn-booking" id="submitBooking" disabled style="background: linear-gradient(135deg, #3c84f6, #1e88e5);">
                             <i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>
                         </button>
                         
@@ -1260,7 +1259,7 @@
     <script src="common.js"></script>
 
     <script>
-    // SCRIPT JAVASCRIPT POUR BOOKING.HTML - CORRIGÉ AVEC GESTION CURRENCYMANAGER
+    // SCRIPT JAVASCRIPT POUR BOOKING.HTML - CORRIGÉ AVEC GESTION CRÉDITS
     document.addEventListener('DOMContentLoaded', function() {
         let selectedDate = null;
         let selectedTime = null;
@@ -1297,6 +1296,38 @@
         // Stocker le type de cours avant redirection
         let preLoginCourseType = null;
 
+        // Fonction pour mettre à jour le texte du bouton
+        async function updateSubmitButtonText() {
+            const user = window.authManager?.getCurrentUser();
+            const courseType = document.getElementById('courseType').value;
+            const coursesCount = parseInt(coursesCountInput.value) || 1;
+            const submitBtn = document.getElementById('submitBooking');
+            
+            if (!submitBtn || !user || courseType === 'essai' || coursesCount > 1) {
+                // Réinitialiser à l'état normal
+                submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
+                submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
+                return;
+            }
+            
+            try {
+                if (window.packagesManager) {
+                    const credits = await window.packagesManager.getUserCredits(user.id);
+                    const hasCredits = credits[courseType] && credits[courseType] > 0;
+                    
+                    if (hasCredits) {
+                        submitBtn.innerHTML = '<i class="fas fa-ticket-alt"></i> Réserver avec un crédit';
+                        submitBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+                    } else {
+                        submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
+                        submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
+                    }
+                }
+            } catch (error) {
+                console.warn('Erreur vérification crédits:', error);
+            }
+        }
+
         // FORCER L'INITIALISATION DE CURRENCYMANAGER SI NÉCESSAIRE
         function ensureCurrencyManager() {
             return new Promise(async (resolve, reject) => {
@@ -1305,7 +1336,6 @@
                 if (!window.currencyManager) {
                     console.log('💱 CurrencyManager non trouvé, création...');
                     try {
-                        // Vérifier si la classe existe
                         if (typeof CurrencyManager === 'undefined') {
                             console.error('❌ Classe CurrencyManager non définie');
                             reject(new Error('CurrencyManager non disponible'));
@@ -1385,6 +1415,7 @@
                 loadAvailableSlots(selectedDate);
             }
             updateSummary();
+            updateSubmitButtonText();
         });
 
         // Gestion des boutons de durée
@@ -1439,6 +1470,7 @@
                 discountPercentInput.value = discount;
                 
                 updateSummary();
+                updateSubmitButtonText();
             });
         });
 
@@ -1467,12 +1499,12 @@
         bookingForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            console.log('💰 Début de la préparation du paiement');
+            console.log('💰 Début de la préparation du paiement/credit');
             
             // FORCER l'initialisation de currencyManager
             try {
                 await ensureCurrencyManager();
-                console.log('✅ CurrencyManager prêt pour le paiement');
+                console.log('✅ CurrencyManager prêt');
             } catch (error) {
                 console.error('❌ Impossible d\'initialiser CurrencyManager:', error);
                 showError('Système de devise temporairement indisponible. Veuillez réessayer dans quelques instants.');
@@ -1491,6 +1523,7 @@
             const location = selectedLocationInput.value;
             const coursesCount = parseInt(coursesCountInput.value);
             const discountPercent = parseFloat(discountPercentInput.value);
+            const duration = parseInt(durationInput.value) || 60;
 
             // Validation
             if (!courseType || !name || !email) {
@@ -1506,7 +1539,25 @@
 
             hideMessages();
             submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+            
+            // Changer le texte du bouton selon le type
+            const user = window.authManager?.getCurrentUser();
+            const hasCredits = user && coursesCount === 1 && courseType !== 'essai';
+            
+            if (hasCredits) {
+                try {
+                    const credits = await window.packagesManager.getUserCredits(user.id);
+                    if (credits[courseType] && credits[courseType] > 0) {
+                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation avec crédit...';
+                    } else {
+                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+                    }
+                } catch (error) {
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+                }
+            } else {
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+            }
 
             try {
                 // Utiliser les données du créneau sélectionné
@@ -1528,13 +1579,13 @@
                     discountPercent: discountPercent
                 };
 
-                // Appeler la méthode qui prépare les données SANS créer sur Cal.com
+                // Appeler la méthode qui prépare les données
                 const result = await window.bookingManager.createBooking(bookingData);
                 
                 if (result.success) {
-                    showSuccess('Redirection vers le paiement...');
+                    showSuccess('Redirection...');
                     
-                    // Redirection vers la page de paiement
+                    // Redirection vers la page appropriée
                     setTimeout(() => {
                         window.location.href = result.redirectTo;
                     }, 1000);
@@ -1545,7 +1596,7 @@
             } catch (error) {
                 showError('Erreur lors de la préparation : ' + error.message);
                 submitButton.disabled = false;
-                submitButton.innerHTML = '<i class="fas fa-calendar-check"></i> Réserver et payer';
+                updateSubmitButtonText();
             }
         });
 
@@ -1553,11 +1604,13 @@
         window.addEventListener('auth:login', function() {
             console.log('Utilisateur connecté, mise à jour de l\'interface');
             updateUserInterface();
+            setTimeout(updateSubmitButtonText, 500);
         });
 
         window.addEventListener('auth:logout', function() {
             console.log('Utilisateur déconnecté, mise à jour de l\'interface');
             updateUserInterface();
+            updateSubmitButtonText();
         });
         
         // Écouter les changements de devise
@@ -1575,6 +1628,7 @@
         window.addEventListener('language:changed', function() {
             initCalendar();
             updateSummary();
+            updateSubmitButtonText();
         });
         
         // Écouter les événements VIP
@@ -1659,7 +1713,7 @@
                 window.history.replaceState({}, '', newUrl);
             }
             
-            // Pré-sélectionner 60min, 10 cours, Google Meet
+            // Pré-sélectionner 60min, 1 cours, Google Meet
             preselectDefaults();
             
             // Initialiser le calendrier
@@ -1687,6 +1741,9 @@
             
             // Gestion du menu mobile
             initMobileMenu();
+            
+            // Mettre à jour le bouton
+            setTimeout(updateSubmitButtonText, 1000);
         }
         
         function initMobileMenu() {
@@ -1753,15 +1810,15 @@
                 basePriceInput.value = duration60Btn.getAttribute('data-price-eur') || '20';
             }
             
-            // Pré-sélectionner 10 cours
-            const courses10Btn = document.querySelector('.courses-count-option[data-count="10"]');
-            if (courses10Btn) {
+            // Pré-sélectionner 1 cours
+            const courses1Btn = document.querySelector('.courses-count-option[data-count="1"]');
+            if (courses1Btn) {
                 document.querySelectorAll('.courses-count-option').forEach(btn => {
                     btn.classList.remove('selected');
                 });
-                courses10Btn.classList.add('selected');
-                coursesCountInput.value = '10';
-                discountPercentInput.value = courses10Btn.getAttribute('data-discount') || '5';
+                courses1Btn.classList.add('selected');
+                coursesCountInput.value = '1';
+                discountPercentInput.value = courses1Btn.getAttribute('data-discount') || '0';
             }
             
             // Pré-sélectionner Google Meet
@@ -2075,8 +2132,8 @@
 
             // COURS D'ESSAI
             if (courseType === 'essai') {
-                console.log('🎫 Cours d\'essai détecté');
-                courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
+                console.log('🎫 Cours d'essai détecté');
+                courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d'essai';
                 duration = '15 min';
                 
                 let unitPriceEUR = 5;
@@ -2097,7 +2154,7 @@
                 } else if (courseType === 'curriculum') {
                     courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
                 } else if (courseType === 'examen') {
-                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
+                    courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d'examen';
                 }
                 
                 if (user && durationGroup.classList.contains('visible')) {
