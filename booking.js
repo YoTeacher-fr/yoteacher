@@ -1,5 +1,4 @@
-// booking.js - Gestion des réservations avec Cal.com (API v2) - VERSION CORRIGÉE POUR VOTRE BASE DE DONNÉES
-
+// booking.js - Gestion des réservations avec Cal.com (API v2) - VERSION CORRIGÉE POUR VOTRE SCHÉMA
 class BookingManager {
     constructor() {
         const config = window.YOTEACHER_CONFIG || {};
@@ -30,7 +29,7 @@ class BookingManager {
             reset: null
         };
         
-        console.log('📅 BookingManager initialisé - Version corrigée');
+        console.log('📅 BookingManager initialisé - Version corrigée pour votre schéma');
     }
 
     checkCalcomConfig() {
@@ -39,7 +38,7 @@ class BookingManager {
         }
         
         if (!this.calcomApiKey.startsWith('cal_live_') && !this.calcomApiKey.startsWith('cal_test_')) {
-            console.warn('Format de clé API Cal.com inhabituel. Vérifiez qu\'elle est correcte.');
+            console.warn('Format de clé API Cal.com inhabituel. Vérifiez qu'elle est correcte.');
         }
         
         return true;
@@ -137,7 +136,7 @@ class BookingManager {
                     console.error('Détails erreur:', errorData);
                     
                     if (errorData.message && errorData.message.includes('invalid_type')) {
-                        throw new Error('Paramètres invalides pour l\'API Cal.com');
+                        throw new Error('Paramètres invalides pour l'API Cal.com');
                     }
                     
                     if (errorData.message && (errorData.message.includes('Unauthorized') || errorData.message.includes('unauthorized'))) {
@@ -397,7 +396,7 @@ class BookingManager {
             
             // COURS D'ESSAI - Toujours 5€
             if (bookingData.courseType === 'essai') {
-                console.log('🎫 Cours d\'essai détecté');
+                console.log('🎫 Cours d'essai détecté');
                 priceEUR = 5;
                 unitPriceEUR = 5; // CORRECTION: Défini pour cours d'essai
                 finalPrice = window.currencyManager ? 
@@ -754,7 +753,7 @@ class BookingManager {
             const data = result.data || result;
             console.log('✅ Réservation créée sur Cal.com:', data);
             
-            // Sauvegarder dans Supabase AVEC LA STRUCTURE CORRIGÉE
+            // Sauvegarder dans Supabase AVEC LA STRUCTURE CORRIGÉE POUR VOTRE SCHÉMA
             await this.saveBookingToSupabase(data, user, bookingData, 'confirmed');
             
             return { 
@@ -810,7 +809,7 @@ class BookingManager {
             // Générer un numéro de réservation
             const bookingNumber = `BK-${Date.now().toString().slice(-8)}`;
 
-            // STRUCTURE EXACTE selon votre table 'bookings'
+            // STRUCTURE EXACTE selon votre table 'bookings' - CORRIGÉE
             const bookingRecord = {
                 user_id: user?.id || bookingData.userId,
                 course_type: bookingData.courseType,
@@ -830,22 +829,14 @@ class BookingManager {
                 created_at: new Date().toISOString()
             };
 
-            // Ajouter les champs VIP si disponibles
-            if (bookingData.isVip !== undefined) {
-                bookingRecord.is_vip_booking = bookingData.isVip;
-                if (bookingData.vipPriceData?.price) {
-                    bookingRecord.original_price = bookingData.vipPriceData.price;
-                    bookingRecord.original_currency = bookingData.vipPriceData.currency || 'USD';
-                }
-            }
+            // IMPORTANT : Les colonnes suivantes n'existent PAS dans votre schéma et ont été RETIRÉES :
+            // - is_vip_booking
+            // - original_price
+            // - original_currency
+            // - package_quantity
+            // - discount_percent
 
-            // Ajouter les informations de forfait si disponibles
-            if (bookingData.packageQuantity && bookingData.packageQuantity > 1) {
-                bookingRecord.package_quantity = bookingData.packageQuantity;
-                bookingRecord.discount_percent = bookingData.discountPercent || 0;
-            }
-
-            console.log('💾 Insertion dans Supabase bookings:', bookingRecord);
+            console.log('💾 Insertion dans Supabase bookings (structure corrigée):', bookingRecord);
 
             try {
                 const { data, error } = await supabase
@@ -1008,7 +999,7 @@ window.loadAvailableSlots = async function() {
             window.bookingManager = new BookingManager();
             console.log('✅ BookingManager réinitialisé');
         } catch (error) {
-            console.error('❌ Impossible d\'initialiser BookingManager:', error);
+            console.error('❌ Impossible d'initialiser BookingManager:', error);
             return;
         }
     }
@@ -1238,3 +1229,5 @@ if (window.location.hostname === 'localhost' || window.location.hostname.include
         window.testVipAllCases();
     }, 3000);
 }
+
+console.log('✅ booking.js chargé - Version finale corrigée pour votre schéma');
