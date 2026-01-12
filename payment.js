@@ -1,11 +1,11 @@
-// payment.js - Gestion des paiements uniquement - VERSION CORRIGÉE
+// payment.js - Gestion des paiements uniquement - VERSION CORRIGÉE CONTRE DOUBLE DÉDUCTION
 class PaymentManager {
     constructor() {
         this.stripe = null;
         this.elements = null;
         this.cardElement = null;
         this.currentBooking = null;
-        console.log('💳 PaymentManager initialisé');
+        console.log('💳 PaymentManager initialisé - Version corrigée');
     }
 
     async setupStripeForm() {
@@ -86,20 +86,20 @@ class PaymentManager {
 
             const user = window.authManager?.getCurrentUser();
             
-            // CAS 1: Réservation avec crédit → NE DEVRAIT PAS ÊTRE ICI
+            // 🔴 CAS 1: Réservation avec crédit → NE DEVRAIT JAMAIS ARRIVER ICI
             if (this.currentBooking?.isCreditBooking) {
                 console.error('❌ ERREUR CRITIQUE: Réservation crédit dans payment.js!');
                 console.error('Cette réservation devrait être traitée directement dans booking.js');
                 throw new Error('Flux incorrect: réservation crédit dans payment.js');
             }
             
-            // CAS 2: Achat de forfait + réservation
+            // 🔴 CAS 2: Achat de forfait + réservation
             if (this.currentBooking?.isPackagePurchase) {
                 console.log('📦 CAS 2: Achat forfait + réservation immédiate');
                 return await this.processPackagePurchase(method, user);
             }
             
-            // CAS 3: Réservation simple
+            // 🔴 CAS 3: Réservation simple (payer maintenant)
             console.log('📅 CAS 3: Réservation simple');
             return await this.processSingleBooking(method, user);
             
@@ -231,7 +231,8 @@ class PaymentManager {
                 }
             }
             
-            // ÉTAPE 3: Utiliser 1 crédit pour la réservation immédiate
+            // 🔴 ÉTAPE 3: Déduire 1 crédit pour la réservation immédiate (UNIQUEMENT ICI)
+            // C'est la SEULE déduction pour le flux 2 (achat forfait)
             if (packageId && calcomResult?.supabaseBookingId && window.packagesManager) {
                 console.log('💳 Déduction 1 crédit pour la réservation immédiate');
                 const useResult = await window.packagesManager.useCredit(
@@ -239,7 +240,8 @@ class PaymentManager {
                     updatedBooking.courseType,
                     { 
                         id: calcomResult.supabaseBookingId,
-                        type: 'package_purchase_reservation' 
+                        type: 'package_purchase_reservation',
+                        bookingData: updatedBooking
                     }
                 );
                 
@@ -302,6 +304,9 @@ class PaymentManager {
                     updatedBooking.calcomErrorMessage = calcomResult.error;
                 }
             }
+            
+            // 🔴 IMPORTANT: PAS DE DÉDUCTION DE CRÉDIT ICI !
+            // C'est une réservation payante simple, pas de crédit impliqué
             
             // Sauvegarder localement (pas de table payments dans votre schéma)
             this.savePaymentToLocalStorage({
@@ -390,4 +395,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PaymentManager chargé - Version corrigée');
+console.log('✅ PaymentManager chargé - Version corrigée contre double déduction');
