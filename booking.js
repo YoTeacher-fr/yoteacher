@@ -678,7 +678,7 @@ class BookingManager {
             const data = result.data || result;
             console.log('✅ Réservation créée sur Cal.com:', data);
             
-            // Sauvegarder dans Supabase (SANS DÉDUIRE DE CRÉDIT)
+            // Sauvegarder dans Supabase
             const bookingId = await this.saveBookingToSupabase(data, user, bookingData, 'confirmed');
             
             return { 
@@ -711,7 +711,7 @@ class BookingManager {
             // 🔴 VÉRIFICATION CRITIQUE : Si crédit déjà déduit, on ne fait rien de plus
             if (bookingData.creditAlreadyDeducted || bookingData.skipCreditDeduction) {
                 console.log('⏭️ Déduction de crédit ignorée (crédit déjà déduit dans createBookingWithCredit)');
-                // On continue juste pour sauvegarder la réservation, PAS de déduction
+                // On continue juste pour sauvegarder la réservation, PAS de déduction supplémentaire
             }
 
             // Générer un numéro de réservation
