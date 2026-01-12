@@ -204,9 +204,9 @@
             flex-direction: column;
         }
 
-        /* Carte forfaits (4 colonnes) */
+        /* Carte forfaits (8 colonnes) pour contenir les 3 sous-cartes */
         .card-packages {
-            grid-column: span 4;
+            grid-column: span 8;
             background: white;
             border-radius: 16px;
             padding: 25px;
@@ -217,9 +217,119 @@
             flex-direction: column;
         }
 
-        /* Carte profil (4 colonnes) */
+        /* Grille interne pour les 3 types de forfaits */
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 15px;
+            flex-grow: 1;
+        }
+
+        /* Sous-carte pour chaque type de forfait */
+        .package-type-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .package-type-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .package-type-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .package-type-title {
+            font-weight: 700;
+            color: #333;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .package-type-icon {
+            font-size: 1.3rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .package-total {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #3c84f6;
+        }
+
+        /* Liste des durées dans chaque type de forfait */
+        .duration-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-grow: 1;
+        }
+
+        .duration-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .duration-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .duration-credits {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #4CAF50;
+        }
+
+        /* Date d'expiration */
+        .package-expiry {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+        }
+
+        .expiry-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .expiry-date {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #e91e63;
+        }
+
+        /* Carte profil (12 colonnes en dessous) */
         .card-profile {
-            grid-column: span 4;
+            grid-column: span 12;
             background: white;
             border-radius: 16px;
             padding: 25px;
@@ -398,71 +508,6 @@
             color: white;
         }
 
-        /* Section Forfaits - MODIFIÉE */
-        .packages-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 15px;
-            flex-grow: 1;
-        }
-
-        .package-item {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .package-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .package-type {
-            font-weight: 700;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.1rem;
-        }
-
-        .package-credits {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #3c84f6;
-        }
-
-        .package-details {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-top: 12px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .package-detail {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-        }
-
-        .detail-label {
-            color: #666;
-            font-weight: 500;
-        }
-
-        .detail-value {
-            color: #333;
-            font-weight: 600;
-        }
-
         /* Section Profil */
         .profile-info {
             flex-grow: 1;
@@ -636,8 +681,16 @@
                 gap: 20px;
             }
             
-            .card-upcoming, .card-packages, .card-profile {
+            .card-upcoming {
                 grid-column: span 6;
+            }
+            
+            .card-packages {
+                grid-column: span 6;
+            }
+            
+            .packages-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
@@ -647,7 +700,7 @@
                 gap: 20px;
             }
             
-            .card-upcoming, .card-packages, .card-profile {
+            .card-upcoming, .card-packages {
                 grid-column: span 6;
             }
             
@@ -673,6 +726,11 @@
             
             .card-upcoming, .card-packages, .card-profile {
                 grid-column: span 12;
+            }
+            
+            .packages-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
             }
             
             .course-buttons-row {
@@ -769,6 +827,16 @@
             
             .course-button-content {
                 padding: 20px 15px;
+            }
+            
+            .package-type-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .package-total {
+                align-self: flex-end;
             }
         }
         
@@ -952,18 +1020,18 @@
                 </div>
                 
                 <!-- Bouton Déconnexion Mobile -->
-                <a href="#" id="mobileLogoutBtn" class="mobile-login-btn-header" data-i18n="dashboard.logout">Déconnexion</a>
+                <a href="#" id="mobileLogoutBtn" class="mobile-login-btn-header">Déconnexion</a>
                 
                 <!-- Groupe des boutons de droite -->
                 <div class="header-right-group">
                     <!-- Sélecteur de langue -->
                     <div class="language-switcher" id="languageSwitcherDesktop">
                         <span class="flag">🌐</span>
-                        <span data-i18n="header.language">EN</span>
+                        <span>EN</span>
                     </div>
                     
                     <!-- Bouton Déconnexion Desktop -->
-                    <a href="#" id="logoutBtn" class="login-btn" data-i18n="dashboard.logout">Déconnexion</a>
+                    <a href="#" id="logoutBtn" class="login-btn">Déconnexion</a>
                 </div>
             </div>
         </div>
@@ -975,26 +1043,26 @@
             <!-- En-tête du dashboard -->
             <div class="dashboard-header" id="welcomeMessage">
                 <div class="welcome-message">
-                    <h1 data-i18n="dashboard.loading">Chargement...</h1>
-                    <p data-i18n="dashboard.loading_message">Veuillez patienter pendant le chargement de votre dashboard.</p>
+                    <h1>Chargement...</h1>
+                    <p>Veuillez patienter pendant le chargement de votre dashboard.</p>
                     <div id="vipBadge" style="display: none;" class="vip-badge">
                         <i class="fas fa-crown"></i>
-                        <span data-i18n="dashboard.vip_member">Membre VIP</span>
+                        <span>Membre VIP</span>
                     </div>
                 </div>
                 
                 <div class="dashboard-actions" id="dashboardActions" style="display: none;">
                     <a href="booking.html?type=essai" class="dashboard-action-btn">
                         <i class="fas fa-plus-circle"></i>
-                        <span data-i18n="dashboard.book_trial">Réserver un essai</span>
+                        <span>Réserver un essai</span>
                     </a>
                     <a href="profile.html" class="dashboard-action-btn">
                         <i class="fas fa-user-edit"></i>
-                        <span data-i18n="dashboard.edit_profile">Modifier mon profil</span>
+                        <span>Modifier mon profil</span>
                     </a>
                     <button class="dashboard-action-btn" id="refreshDashboardBtn">
                         <i class="fas fa-sync-alt"></i>
-                        <span data-i18n="dashboard.refresh">Actualiser</span>
+                        <span>Actualiser</span>
                     </button>
                 </div>
             </div>
@@ -1002,19 +1070,19 @@
             <!-- Section de chargement -->
             <div class="loading" id="loadingSection">
                 <i class="fas fa-spinner fa-spin"></i>
-                <p data-i18n="dashboard.loading_data">Chargement de vos données...</p>
+                <p>Chargement de vos données...</p>
             </div>
 
             <!-- Contenu principal du dashboard -->
             <div id="dashboardContent" style="display: none;">
-                <!-- Grille principale - 3 cartes en ligne -->
+                <!-- Grille principale - 2 cartes en ligne (cours à venir + forfaits) -->
                 <div class="dashboard-grid">
                     <!-- Carte 1 : Cours à venir (réduite) -->
                     <div class="card-upcoming fade-in">
                         <div class="card-header">
                             <div class="card-header-left">
                                 <i class="fas fa-calendar-check"></i>
-                                <h2 data-i18n="dashboard.upcoming_lessons">Cours à venir</h2>
+                                <h2>Cours à venir</h2>
                             </div>
                             <div class="lesson-nav" id="lessonNav" style="display: none;">
                                 <button class="nav-arrow" id="prevLessonBtn" disabled>
@@ -1031,39 +1099,39 @@
                         </div>
                     </div>
 
-                    <!-- Carte 2 : Mes forfaits (modifiée) -->
+                    <!-- Carte 2 : Mes forfaits (avec 3 sous-cartes) -->
                     <div class="card-packages fade-in">
                         <div class="card-header">
                             <div class="card-header-left">
                                 <i class="fas fa-gift"></i>
-                                <h2 data-i18n="dashboard.my_packages">Mes forfaits</h2>
+                                <h2>Mes forfaits</h2>
                             </div>
                         </div>
-                        <div id="packagesContainer">
-                            <!-- Le contenu sera chargé dynamiquement -->
+                        <div class="packages-grid" id="packagesContainer">
+                            <!-- Le contenu sera chargé dynamiquement avec 3 cartes -->
                         </div>
                         <a href="packages.html" class="btn-buy-credits">
                             <i class="fas fa-shopping-cart"></i>
-                            <span data-i18n="dashboard.buy_packages">Acheter des forfaits</span>
+                            <span>Acheter des forfaits</span>
                         </a>
                     </div>
+                </div>
 
-                    <!-- Carte 3 : Mon profil -->
-                    <div class="card-profile fade-in">
-                        <div class="card-header">
-                            <div class="card-header-left">
-                                <i class="fas fa-user-circle"></i>
-                                <h2 data-i18n="dashboard.my_profile">Mon Profil</h2>
-                            </div>
+                <!-- Carte 3 : Mon profil (pleine largeur en dessous) -->
+                <div class="card-profile fade-in" style="margin-top: 25px;">
+                    <div class="card-header">
+                        <div class="card-header-left">
+                            <i class="fas fa-user-circle"></i>
+                            <h2>Mon Profil</h2>
                         </div>
-                        <div class="profile-info" id="profileInfo">
-                            <!-- Le contenu sera chargé dynamiquement -->
-                        </div>
-                        <a href="profile.html" class="btn-profile">
-                            <i class="fas fa-edit"></i>
-                            <span data-i18n="dashboard.edit_profile">Modifier mon profil</span>
-                        </a>
                     </div>
+                    <div class="profile-info" id="profileInfo">
+                        <!-- Le contenu sera chargé dynamiquement -->
+                    </div>
+                    <a href="profile.html" class="btn-profile">
+                        <i class="fas fa-edit"></i>
+                        <span>Modifier mon profil</span>
+                    </a>
                 </div>
 
                 <!-- Section : Réserver un cours -->
@@ -1071,39 +1139,39 @@
                     <div class="card-header">
                         <div class="card-header-left">
                             <i class="fas fa-clock"></i>
-                            <h2 data-i18n="dashboard.book_lesson">Réserver un cours</h2>
+                            <h2>Réserver un cours</h2>
                         </div>
                     </div>
                     <div class="course-buttons-row">
                         <!-- Cours d'essai -->
                         <a href="booking.html?type=essai" class="course-button">
                             <div class="course-button-content" style="background: linear-gradient(135deg, #2d8de2, #2d8de2);">
-                                <div class="course-button-title" data-i18n="courses.trial">Cours d'essai</div>
-                                <div class="course-button-subtitle" data-i18n="dashboard.discover_method">Découvrez ma méthode</div>
+                                <div class="course-button-title">Cours d'essai</div>
+                                <div class="course-button-subtitle">Découvrez ma méthode</div>
                             </div>
                         </a>
 
                         <!-- Conversation -->
                         <a href="booking.html?type=conversation" class="course-button">
                             <div class="course-button-content" style="background: linear-gradient(135deg, #636dcd, #636dcd);">
-                                <div class="course-button-title" data-i18n="courses.conversation">Conversation</div>
-                                <div class="course-button-subtitle" data-i18n="dashboard.practice_speaking">Pratiquez l'oral</div>
+                                <div class="course-button-title">Conversation</div>
+                                <div class="course-button-subtitle">Pratiquez l'oral</div>
                             </div>
                         </a>
 
                         <!-- Curriculum -->
                         <a href="booking.html?type=curriculum" class="course-button">
                             <div class="course-button-content" style="background: linear-gradient(135deg, #135cb7, #135cb7);">
-                                <div class="course-button-title" data-i18n="courses.curriculum">Curriculum</div>
-                                <div class="course-button-subtitle" data-i18n="dashboard.complete_learning">Apprentissage complet</div>
+                                <div class="course-button-title">Curriculum</div>
+                                <div class="course-button-subtitle">Apprentissage complet</div>
                             </div>
                         </a>
 
                         <!-- Examen -->
                         <a href="booking.html?type=examen" class="course-button">
                             <div class="course-button-content" style="background: linear-gradient(135deg, #9c27b0, #7b1fa2);">
-                                <div class="course-button-title" data-i18n="courses.exam">Préparation d'examen</div>
-                                <div class="course-button-subtitle" data-i18n="dashboard.exam_prep">DELF, DALF, TCF</div>
+                                <div class="course-button-title">Préparation d'examen</div>
+                                <div class="course-button-subtitle">DELF, DALF, TCF</div>
                             </div>
                         </a>
                     </div>
@@ -1169,7 +1237,7 @@
                 greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
             }
             
-            const welcomeTitle = window.translationManager?.getTranslation('dashboard.welcome') || 'Bienvenue sur votre dashboard YoTeacher';
+            const welcomeTitle = 'Bienvenue sur votre dashboard YoTeacher';
             
             welcomeDiv.innerHTML = `
                 <div class="welcome-message">
@@ -1177,7 +1245,7 @@
                     <p>${welcomeTitle}</p>
                     <div id="vipBadge" style="display: none;" class="vip-badge">
                         <i class="fas fa-crown"></i>
-                        <span data-i18n="dashboard.vip_member">Membre VIP</span>
+                        <span>Membre VIP</span>
                     </div>
                 </div>
             `;
@@ -1212,29 +1280,24 @@
                 year: 'numeric'
             });
             
-            const emailLabel = window.translationManager?.getTranslation('dashboard.email') || 'Email';
-            const memberSinceLabel = window.translationManager?.getTranslation('dashboard.member_since') || 'Membre depuis';
-            const timezoneLabel = window.translationManager?.getTranslation('dashboard.timezone') || 'Fuseau horaire';
-            const levelLabel = window.translationManager?.getTranslation('dashboard.french_level') || 'Niveau';
-            
             const timezone = user.profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
             const frenchLevel = user.profile?.french_level || 'Non spécifié';
             
             profileInfo.innerHTML = `
                 <div class="profile-field">
-                    <span class="profile-label">${emailLabel}</span>
+                    <span class="profile-label">Email</span>
                     <span class="profile-value">${user.email}</span>
                 </div>
                 <div class="profile-field">
-                    <span class="profile-label">${memberSinceLabel}</span>
+                    <span class="profile-label">Membre depuis</span>
                     <span class="profile-value">${joinDate}</span>
                 </div>
                 <div class="profile-field">
-                    <span class="profile-label">${timezoneLabel}</span>
+                    <span class="profile-label">Fuseau horaire</span>
                     <span class="profile-value">${timezone}</span>
                 </div>
                 <div class="profile-field">
-                    <span class="profile-label">${levelLabel}</span>
+                    <span class="profile-label">Niveau</span>
                     <span class="profile-value">${frenchLevel}</span>
                 </div>
             `;
@@ -1245,9 +1308,9 @@
             
             if (!window.packagesManager) {
                 container.innerHTML = `
-                    <div class="no-packages">
+                    <div class="no-packages" style="grid-column: span 3; text-align: center;">
                         <i class="fas fa-gift"></i>
-                        <p data-i18n="dashboard.no_packages">Aucun forfait actif</p>
+                        <p>Aucun forfait actif</p>
                     </div>
                 `;
                 return;
@@ -1259,77 +1322,163 @@
                 
                 if (!packages || packages.length === 0) {
                     container.innerHTML = `
-                        <div class="no-packages">
+                        <div class="no-packages" style="grid-column: span 3; text-align: center;">
                             <i class="fas fa-gift"></i>
-                            <p data-i18n="dashboard.no_packages">Aucun forfait actif</p>
+                            <p>Aucun forfait actif</p>
                         </div>
                     `;
                     return;
                 }
                 
-                let html = '<div class="packages-list">';
+                // Organiser les forfaits par type
+                const packagesByType = {
+                    conversation: [],
+                    curriculum: [],
+                    examen: []
+                };
                 
                 packages.forEach(pkg => {
-                    const courseTypeName = {
-                        'conversation': window.translationManager?.getTranslation('courses.conversation') || 'Conversation',
-                        'curriculum': window.translationManager?.getTranslation('courses.curriculum') || 'Curriculum',
-                        'examen': window.translationManager?.getTranslation('courses.exam') || 'Préparation d\'examen'
-                    }[pkg.course_type] || pkg.course_type;
+                    if (packagesByType[pkg.course_type]) {
+                        packagesByType[pkg.course_type].push(pkg);
+                    }
+                });
+                
+                let html = '';
+                
+                // Créer une carte pour chaque type de forfait
+                const types = [
+                    { key: 'curriculum', name: 'Cours', icon: 'fas fa-book', color: '#4caf50' },
+                    { key: 'examen', name: 'Examen', icon: 'fas fa-graduation-cap', color: '#9c27b0' },
+                    { key: 'conversation', name: 'Conversation', icon: 'fas fa-comments', color: '#ff9800' }
+                ];
+                
+                types.forEach(type => {
+                    const typePackages = packagesByType[type.key];
                     
-                    const expiresDate = new Date(pkg.expires_at);
-                    const daysUntilExpiration = pkg.days_until_expiration || 
-                        Math.ceil((expiresDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                    
-                    const formattedExpiryDate = expiresDate.toLocaleDateString('fr-FR', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric'
-                    });
-                    
-                    // Calcul de la durée (en semaines)
-                    const createdAt = new Date(pkg.created_at || pkg.purchased_at);
-                    const durationWeeks = Math.ceil((expiresDate.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24 * 7));
-                    
-                    html += `
-                        <div class="package-item">
-                            <div class="package-header">
-                                <div class="package-type">
-                                    <i class="fas fa-gift" style="color: #e91e63;"></i>
-                                    ${courseTypeName}
+                    if (!typePackages || typePackages.length === 0) {
+                        html += `
+                            <div class="package-type-card">
+                                <div class="package-type-header">
+                                    <div class="package-type-title">
+                                        <div class="package-type-icon" style="background: ${type.color};">
+                                            <i class="${type.icon}"></i>
+                                        </div>
+                                        <span>${type.name}</span>
+                                    </div>
+                                    <div class="package-total">0</div>
                                 </div>
-                                <div class="package-credits">
-                                    ${pkg.remaining_credits || 0}
+                                <div class="duration-list">
+                                    <div class="duration-item">
+                                        <span class="duration-label">30min</span>
+                                        <span class="duration-credits">0/10</span>
+                                    </div>
+                                    <div class="duration-item">
+                                        <span class="duration-label">45min</span>
+                                        <span class="duration-credits">0</span>
+                                    </div>
+                                    <div class="duration-item">
+                                        <span class="duration-label">60min</span>
+                                        <span class="duration-credits">0</span>
+                                    </div>
+                                </div>
+                                <div class="package-expiry">
+                                    <div class="expiry-label">Pas de forfait actif</div>
                                 </div>
                             </div>
-                            <div class="package-details">
-                                <div class="package-detail">
-                                    <span class="detail-label" data-i18n="dashboard.credits_available">Crédits disponibles</span>
-                                    <span class="detail-value">${pkg.remaining_credits || 0}/${pkg.total_credits || pkg.remaining_credits}</span>
+                        `;
+                        return;
+                    }
+                    
+                    // Calculer le total des crédits pour ce type
+                    let totalCredits = 0;
+                    
+                    // Organiser par durée
+                    const creditsByDuration = {
+                        30: { total: 0, used: 0 },
+                        45: { total: 0, used: 0 },
+                        60: { total: 0, used: 0 }
+                    };
+                    
+                    // Trouver la date d'expiration la plus proche
+                    let nearestExpiry = null;
+                    
+                    typePackages.forEach(pkg => {
+                        // Calculer les crédits utilisés
+                        const usedCredits = (pkg.total_credits || 0) - (pkg.remaining_credits || 0);
+                        totalCredits += (pkg.remaining_credits || 0);
+                        
+                        // Pour simplifier, nous supposons que la durée est stockée
+                        const duration = pkg.duration_minutes || 60;
+                        if (creditsByDuration[duration]) {
+                            creditsByDuration[duration].total += (pkg.total_credits || 0);
+                            creditsByDuration[duration].used += usedCredits;
+                        }
+                        
+                        // Vérifier la date d'expiration la plus proche
+                        const expiryDate = new Date(pkg.expires_at);
+                        if (!nearestExpiry || expiryDate < nearestExpiry) {
+                            nearestExpiry = expiryDate;
+                        }
+                    });
+                    
+                    // Formater la date d'expiration
+                    let expiryHtml = '';
+                    if (nearestExpiry) {
+                        const formattedExpiry = nearestExpiry.toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                        });
+                        
+                        const daysUntilExpiration = Math.ceil((nearestExpiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                        
+                        expiryHtml = `
+                            <div class="expiry-label">Expire le</div>
+                            <div class="expiry-date">${formattedExpiry}</div>
+                            <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+                                (dans ${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''})
+                            </div>
+                        `;
+                    }
+                    
+                    html += `
+                        <div class="package-type-card">
+                            <div class="package-type-header">
+                                <div class="package-type-title">
+                                    <div class="package-type-icon" style="background: ${type.color};">
+                                        <i class="${type.icon}"></i>
+                                    </div>
+                                    <span>${type.name}</span>
                                 </div>
-                                <div class="package-detail">
-                                    <span class="detail-label" data-i18n="dashboard.duration">Durée</span>
-                                    <span class="detail-value">${durationWeeks} semaine${durationWeeks > 1 ? 's' : ''}</span>
+                                <div class="package-total">${totalCredits}</div>
+                            </div>
+                            <div class="duration-list">
+                                <div class="duration-item">
+                                    <span class="duration-label">30min</span>
+                                    <span class="duration-credits">${creditsByDuration[30].used}/${creditsByDuration[30].total || 10}</span>
                                 </div>
-                                <div class="package-detail">
-                                    <span class="detail-label" data-i18n="dashboard.expiry_date">Date d'expiration</span>
-                                    <span class="detail-value">${formattedExpiryDate}</span>
+                                <div class="duration-item">
+                                    <span class="duration-label">45min</span>
+                                    <span class="duration-credits">${creditsByDuration[45].used}/${creditsByDuration[45].total || 0}</span>
                                 </div>
-                                <div class="package-detail">
-                                    <span class="detail-label" data-i18n="dashboard.days_left">Jours restants</span>
-                                    <span class="detail-value">${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''}</span>
+                                <div class="duration-item">
+                                    <span class="duration-label">60min</span>
+                                    <span class="duration-credits">${creditsByDuration[60].used}/${creditsByDuration[60].total || 0}</span>
                                 </div>
+                            </div>
+                            <div class="package-expiry">
+                                ${expiryHtml}
                             </div>
                         </div>
                     `;
                 });
                 
-                html += '</div>';
                 container.innerHTML = html;
                 
             } catch (error) {
                 console.error('Erreur chargement forfaits:', error);
                 container.innerHTML = `
-                    <div class="no-packages">
+                    <div class="no-packages" style="grid-column: span 3; text-align: center;">
                         <i class="fas fa-exclamation-triangle"></i>
                         <p>Erreur de chargement des forfaits</p>
                     </div>
@@ -1356,10 +1505,10 @@
                     nextLessonContent.innerHTML = `
                         <div class="no-upcoming">
                             <i class="far fa-calendar"></i>
-                            <p data-i18n="dashboard.no_lessons">Aucun cours programmé</p>
+                            <p>Aucun cours programmé</p>
                             <a href="booking.html?type=conversation" class="btn-buy-credits" style="margin-top: 20px; width: auto; display: inline-block; padding: 10px 20px;">
                                 <i class="fas fa-plus-circle"></i>
-                                <span data-i18n="dashboard.book_now">Réserver maintenant</span>
+                                <span>Réserver maintenant</span>
                             </a>
                         </div>
                     `;
@@ -1403,14 +1552,6 @@
             
             const lessonDate = new Date(lesson.start_time);
             
-            const timeLabel = window.translationManager?.getTranslation('dashboard.time') || 'Heure';
-            const durationLabel = window.translationManager?.getTranslation('dashboard.duration') || 'Durée';
-            const typeLabel = window.translationManager?.getTranslation('dashboard.type') || 'Type';
-            const referenceLabel = window.translationManager?.getTranslation('dashboard.reference') || 'Référence';
-            const platformLabel = window.translationManager?.getTranslation('dashboard.platform') || 'Plateforme';
-            const cancelLabel = window.translationManager?.getTranslation('dashboard.cancel') || 'Annuler';
-            const rescheduleLabel = window.translationManager?.getTranslation('dashboard.reschedule') || 'Reporter';
-            
             const platformNames = {
                 'zoom': 'Zoom',
                 'google_meet': 'Google Meet',
@@ -1432,32 +1573,32 @@
                     </div>
                     <div class="lesson-info">
                         <div class="lesson-info-item">
-                            <span class="lesson-info-label">${timeLabel}</span>
+                            <span class="lesson-info-label">Heure</span>
                             <span class="lesson-info-value">${lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <div class="lesson-info-item">
-                            <span class="lesson-info-label">${durationLabel}</span>
+                            <span class="lesson-info-label">Durée</span>
                             <span class="lesson-info-value">${lesson.duration_minutes || 60} min</span>
                         </div>
                         <div class="lesson-info-item">
-                            <span class="lesson-info-label">${typeLabel}</span>
+                            <span class="lesson-info-label">Type</span>
                             <span class="lesson-info-value">${lesson.course_type || 'Cours'}</span>
                         </div>
                         <div class="lesson-info-item">
-                            <span class="lesson-info-label">${platformLabel}</span>
+                            <span class="lesson-info-label">Plateforme</span>
                             <span class="lesson-info-value">${platformName}</span>
                         </div>
                         <div class="lesson-info-item">
-                            <span class="lesson-info-label">${referenceLabel}</span>
+                            <span class="lesson-info-label">Référence</span>
                             <span class="lesson-info-value">${lesson.booking_number || '#' + (lesson.id ? lesson.id.substring(0, 8) : '')}</span>
                         </div>
                     </div>
                     <div class="lesson-actions">
                         <button class="btn-small btn-cancel" onclick="cancelLesson('${lesson.id}')">
-                            <i class="fas fa-times"></i> ${cancelLabel}
+                            <i class="fas fa-times"></i> Annuler
                         </button>
                         <button class="btn-small btn-reschedule" onclick="rescheduleLesson('${lesson.id}')">
-                            <i class="fas fa-calendar-alt"></i> ${rescheduleLabel}
+                            <i class="fas fa-calendar-alt"></i> Reporter
                         </button>
                         ${lesson.meeting_link ? `
                         <a href="${lesson.meeting_link}" target="_blank" class="btn-small" style="background: #4CAF50; color: white; border: none; text-decoration: none;">
@@ -1478,15 +1619,14 @@
         }
         
         function cancelLesson(lessonId) {
-            const confirmMessage = window.translationManager?.getTranslation('dashboard.cancel_confirm') || 'Êtes-vous sûr de vouloir annuler ce cours ?';
-            if (confirm(confirmMessage)) {
-                alert(window.translationManager?.getTranslation('dashboard.cancel_function') || 'Fonction d\'annulation à implémenter');
+            if (confirm('Êtes-vous sûr de vouloir annuler ce cours ?')) {
+                alert('Fonction d\'annulation à implémenter');
                 // Ici, vous ajouteriez l'appel à l'API pour annuler le cours
             }
         }
         
         function rescheduleLesson(lessonId) {
-            alert(window.translationManager?.getTranslation('dashboard.reschedule_function') || 'Fonction de report à implémenter');
+            alert('Fonction de report à implémenter');
             // Ici, vous ajouteriez l'appel à l'API pour reporter le cours
         }
         
@@ -1562,13 +1702,6 @@
         });
         
         window.loadDashboard = loadDashboard;
-        
-        // Initialiser les traductions après le chargement
-        setTimeout(() => {
-            if (window.translationManager) {
-                window.translationManager.translatePage();
-            }
-        }, 1000);
     </script>
 </body>
 </html>
