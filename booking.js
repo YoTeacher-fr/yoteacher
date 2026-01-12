@@ -754,11 +754,12 @@ class BookingManager {
             console.log('✅ Réservation créée sur Cal.com:', data);
             
             // Sauvegarder dans Supabase AVEC LA STRUCTURE CORRIGÉE POUR VOTRE SCHÉMA
-            await this.saveBookingToSupabase(data, user, bookingData, 'confirmed');
+            const bookingId = await this.saveBookingToSupabase(data, user, bookingData, 'confirmed');
             
             return { 
                 success: true, 
                 data,
+                supabaseBookingId: bookingId,
                 message: 'Réservation confirmée sur Cal.com' 
             };
             
@@ -793,7 +794,7 @@ class BookingManager {
                 };
                 
                 console.log('✅ Réservation Cal.com simulée:', mockBooking);
-                resolve({ success: true, data: mockBooking });
+                resolve({ success: true, data: mockBooking, supabaseBookingId: `mock_${Date.now()}` });
             }, 1000);
         });
     }
@@ -815,7 +816,7 @@ class BookingManager {
             console.log('- Type de location:', typeof bookingData.location);
             
             // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK avec nettoyage
-            const platformValue = this.getPlatformName(bookingData.location);
+            let platformValue = this.getPlatformName(bookingData.location);
             console.log('- Platform calculée:', platformValue);
             
             // Vérifier si c'est une valeur autorisée
@@ -833,8 +834,8 @@ class BookingManager {
                 start_time: bookingData.startTime,
                 end_time: bookingData.endTime,
                 status: status,
-                price_paid: bookingData.price,
-                currency: bookingData.currency,
+                price_paid: bookingData.packageId ? 0 : bookingData.price, // Si forfait, prix 0
+                currency: bookingData.packageId ? null : bookingData.currency, // Si forfait, pas de devise
                 // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK
                 platform: platformValue,
                 booking_number: bookingNumber,
@@ -846,12 +847,10 @@ class BookingManager {
                 created_at: new Date().toISOString()
             };
 
-            // IMPORTANT : Les colonnes suivantes n'existent PAS dans votre schéma et ont été RETIRÉES :
-            // - is_vip_booking
-            // - original_price
-            // - original_currency
-            // - package_quantity
-            // - discount_percent
+            // Ajouter package_id si présent
+            if (bookingData.packageId) {
+                bookingRecord.package_id = bookingData.packageId;
+            }
 
             console.log('💾 Insertion dans Supabase bookings (structure corrigée):', JSON.stringify(bookingRecord, null, 2));
             
@@ -921,12 +920,13 @@ class BookingManager {
 
                 console.log('✅ Réservation sauvegardée dans bookings avec ID:', data[0].id);
                 
-                // Si c'est une réservation utilisant un crédit, utiliser le crédit
-                if (!bookingData.isPackage && user?.id && window.packagesManager) {
+                // Si c'est une réservation utilisant un crédit (forfait) et que l'utilisateur a un package, on ne fait pas useCredit ici.
+                // C'est le rôle de payment.js de décrémenter le crédit après avoir ajouté le forfait.
+                if (!bookingData.isPackage && !bookingData.packageId && user?.id && window.packagesManager) {
                     const creditResult = await window.packagesManager.useCredit(
                         user.id, 
                         bookingData.courseType, 
-                        data[0]
+                        { id: data[0].id } // Passer l'ID de la réservation
                     );
                     
                     if (creditResult.success) {

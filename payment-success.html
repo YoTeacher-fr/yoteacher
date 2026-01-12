@@ -247,7 +247,7 @@
             <div id="warningNotice" class="warning-notice" style="display: none;">
                 <h4><i class="fas fa-exclamation-triangle"></i> <span data-i18n="payment.reservation_pending">Réservation en attente</span></h4>
                 <p data-i18n="payment.technical_issue">Votre paiement a été accepté mais nous avons rencontré un problème technique avec la réservation automatique.</p>
-                <p><strong data-i18n="payment.contact_me">Contactez moi</strong> 
+                <p><strong data-i18n="payment.contact_me">Contactez-moi directement à yoann@yoteacher.com pour finaliser manuellement votre réservation.</strong></p>
             </div>
             
             <div class="success-details" id="bookingDetails"></div>
@@ -328,6 +328,13 @@
                     courseType = booking.courseType;
             }
             
+            // Formatage du prix
+            let priceDisplay = `${booking.price} ${booking.currency}`;
+            if (booking.isPackage && booking.packageQuantity > 1) {
+                const pricePerCourse = booking.price / booking.packageQuantity;
+                priceDisplay = `${booking.price} ${booking.currency} (${pricePerCourse.toFixed(2)} ${booking.currency}/cours)`;
+            }
+            
             detailsDiv.innerHTML = `
                 <h3>${summaryLabel}</h3>
                 <div class="detail-item">
@@ -348,7 +355,7 @@
                 </div>
                 <div class="detail-item">
                     <span>${amountLabel}</span>
-                    <span>${booking.price}€</span>
+                    <span>${priceDisplay}</span>
                 </div>
             `;
         }
@@ -361,7 +368,7 @@
             const pendingText = window.translationManager?.getTranslation('payment.reservation_error') || 'Erreur lors de la réservation. Veuillez me contacter';
             const processingText = window.translationManager?.getTranslation('payment.confirmation_processing') || 'Confirmation de réservation en cours...';
             
-            if (hasWarning || booking.status === 'payment_ok_reservation_failed') {
+            if (hasWarning || !booking.calcomId) {
                 statusDiv.innerHTML = `
                     <div class="reservation-status status-pending">
                         <i class="fas fa-clock"></i> ${pendingText}

@@ -232,17 +232,8 @@ class PaymentManager {
                 confirmedAt: new Date().toISOString()
             };
 
-            // Sauvegarder la réservation dans Supabase via bookingManager
-            if (window.bookingManager && typeof window.bookingManager.createBookingAfterPayment === 'function') {
-                const bookingResult = await window.bookingManager.createBookingAfterPayment(updatedBooking);
-                
-                if (!bookingResult.success) {
-                    console.warn('⚠️ Réservation Cal.com échouée:', bookingResult.error);
-                    // Continuer malgré l'erreur Cal.com
-                }
-            }
-
             // Si c'est un forfait, ajouter des crédits
+            let packageId = null;
             if (updatedBooking.isPackage && updatedBooking.packageQuantity > 1 && user?.id && window.packagesManager) {
                 console.log(`📦 Ajout de ${updatedBooking.packageQuantity} crédits pour ${updatedBooking.courseType}`);
                 
@@ -259,8 +250,46 @@ class PaymentManager {
                 
                 if (creditResult.success) {
                     console.log('✅ Crédits ajoutés avec succès');
+                    packageId = creditResult.package.id;
+                    
+                    // Marquer la réservation comme utilisant un crédit
+                    updatedBooking.packageId = packageId;
+                    updatedBooking.price = 0; // Le cours est couvert par le forfait
                 } else {
                     console.warn('⚠️ Échec ajout crédits:', creditResult.error);
+                }
+            }
+
+            // Sauvegarder la réservation dans Supabase via bookingManager
+            if (window.bookingManager && typeof window.bookingManager.createBookingAfterPayment === 'function') {
+                const bookingResult = await window.bookingManager.createBookingAfterPayment(updatedBooking);
+                
+                if (!bookingResult.success) {
+                    console.warn('⚠️ Réservation Cal.com échouée:', bookingResult.error);
+                    updatedBooking.calcomError = true;
+                    updatedBooking.calcomErrorMessage = bookingResult.error;
+                } else {
+                    // Ajouter l'ID Cal.com à la réservation
+                    updatedBooking.calcomId = bookingResult.data?.id || bookingResult.data?.uid;
+                    // Ajouter également le meeting_link si disponible
+                    if (bookingResult.data?.location) {
+                        updatedBooking.meetingLink = bookingResult.data.location;
+                    }
+                }
+                
+                // Si forfait, utiliser un crédit pour cette réservation
+                if (packageId && user?.id && window.packagesManager && bookingResult.supabaseBookingId) {
+                    const useCreditResult = await window.packagesManager.useCredit(
+                        user.id,
+                        updatedBooking.courseType,
+                        { id: bookingResult.supabaseBookingId } // On passe l'ID de la réservation Supabase
+                    );
+                    
+                    if (useCreditResult.success) {
+                        console.log('✅ 1 crédit déduit pour cette réservation');
+                    } else {
+                        console.warn('⚠️ Échec déduction crédit:', useCreditResult.error);
+                    }
                 }
             }
 
@@ -268,11 +297,15 @@ class PaymentManager {
             localStorage.setItem('confirmedBooking', JSON.stringify(updatedBooking));
             localStorage.removeItem('pendingBooking');
 
+            // Déterminer si nous avons un avertissement
+            const hasWarning = updatedBooking.calcomError || !updatedBooking.calcomId;
+
             return {
                 success: true,
                 bookingData: updatedBooking,
                 paymentData: paymentData,
-                message: `Paiement ${method} confirmé`
+                message: `Paiement ${method} confirmé`,
+                redirectTo: `payment-success.html?booking=${encodeURIComponent(JSON.stringify(updatedBooking))}&warning=${hasWarning}`
             };
         } catch (error) {
             console.error(`❌ Erreur traitement paiement ${method}:`, error);
