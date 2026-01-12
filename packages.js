@@ -294,7 +294,7 @@ class PackagesManager {
                     credits_before: activePackage.remaining_credits || 0,
                     credits_change: -1,
                     credits_after: newRemainingCredits,
-                    transaction_type: 'usage',
+                    transaction_type: 'use',
                     reason: `Réservation de cours ${courseType}`,
                     created_at: new Date().toISOString()
                 };
