@@ -31,8 +31,9 @@ class AuthManager {
                     this.updateUI();
                     // Événement : utilisateur déjà connecté
                     this.emitAuthEvent('login', this.user);
-                    console.log('✅ Session restaurée pour:', this.user.email);
-                    // Ne PAS appliquer le code ici, c'est fait pendant signUp
+                    
+                    // Appliquer code VIP si présent
+                    await this.applyPendingInvitation();
                 }
 
                 // Écouter les changements d'authentification
@@ -159,14 +160,29 @@ class AuthManager {
 
     async applyInvitationCode(code) {
         if (!this.supabaseReady || !this.user) {
-            console.error('❌ Conditions non remplies pour appliquer le code');
+            console.error('❌ Conditions non remplies pour appliquer le code VIP');
             return { success: false };
         }
         
         try {
             console.log(`🔍 Vérification du code VIP: ${code}`);
             
-            // 1. Vérifier que le code existe dans la table (au moins 1 prix template)
+            // 1. Vérifier si l'utilisateur a déjà des prix VIP avec ce code
+            const { data: existingPricing, error: checkError } = await supabase
+                .from('vip_pricing')
+                .select('id')
+                .eq('user_id', this.user.id)
+                .eq('invitation_code', code.toUpperCase())
+                .limit(1);
+            
+            if (existingPricing && existingPricing.length > 0) {
+                console.log('ℹ️ Code VIP déjà appliqué');
+                sessionStorage.removeItem('invitation_code');
+                this.invitationCode = null;
+                return { success: true, message: 'Déjà appliqué' };
+            }
+            
+            // 2. Récupérer les prix VIP "template" (user_id = NULL) pour ce code
             const { data: templatePrices, error: pricesError } = await supabase
                 .from('vip_pricing')
                 .select('*')
@@ -174,37 +190,19 @@ class AuthManager {
                 .is('user_id', null);
             
             if (pricesError) {
-                console.error('❌ Erreur récupération template:', pricesError);
-                this.showError('Erreur lors de la vérification du code');
+                console.error('❌ Erreur récupération template VIP:', pricesError);
                 return { success: false, error: pricesError.message };
             }
             
             if (!templatePrices || templatePrices.length === 0) {
-                console.warn('⚠️ Code VIP invalide (aucun prix configuré)');
-                this.showError('Code d\'invitation invalide');
-                sessionStorage.removeItem('invitation_code');
-                this.invitationCode = null;
+                console.warn('⚠️ Aucun prix VIP template pour ce code');
+                this.showError('Code d\'invitation VIP invalide');
                 return { success: false, error: 'Code invalide' };
             }
             
-            console.log(`✅ Code valide trouvé avec ${templatePrices.length} prix VIP`);
+            console.log(`📋 ${templatePrices.length} prix VIP à copier`);
             
-            // 2. Vérifier si l'utilisateur a déjà des prix VIP avec ce code
-            const { data: existingPrices } = await supabase
-                .from('vip_pricing')
-                .select('id')
-                .eq('user_id', this.user.id)
-                .eq('invitation_code', code.toUpperCase())
-                .limit(1);
-            
-            if (existingPrices && existingPrices.length > 0) {
-                console.log('ℹ️ Prix VIP déjà appliqués pour cet utilisateur');
-                sessionStorage.removeItem('invitation_code');
-                this.invitationCode = null;
-                return { success: true, message: 'Déjà appliqué' };
-            }
-            
-            // 3. Copier TOUS les prix VIP template pour cet utilisateur
+            // 3. Copier les prix pour l'utilisateur
             const newPrices = templatePrices.map(price => ({
                 user_id: this.user.id,
                 course_type: price.course_type,
@@ -214,8 +212,6 @@ class AuthManager {
                 invitation_code: code.toUpperCase(),
                 created_at: new Date().toISOString()
             }));
-            
-            console.log(`📋 Insertion de ${newPrices.length} prix VIP...`);
             
             const { data: insertedPrices, error: insertError } = await supabase
                 .from('vip_pricing')
@@ -228,11 +224,9 @@ class AuthManager {
                 return { success: false, error: insertError.message };
             }
             
-            console.log(`✅ ${insertedPrices.length} prix VIP copiés pour l'utilisateur`);
+            console.log('✅ Prix VIP insérés:', insertedPrices);
             
-            // 4. Mettre à jour le profil → is_vip = true
-            console.log('🔄 Mise à jour du profil : is_vip = true');
-            
+            // 4. Mettre à jour le profil (is_vip = true)
             const { error: profileError } = await supabase
                 .from('profiles')
                 .update({ 
@@ -242,39 +236,29 @@ class AuthManager {
                 .eq('id', this.user.id);
             
             if (profileError) {
-                console.error('⚠️ Erreur mise à jour profil VIP:', profileError);
-            } else {
-                console.log('✅ Profil mis à jour : is_vip = true');
+                console.warn('⚠️ Erreur mise à jour profil VIP:', profileError);
             }
             
-            // 5. Recharger le profil pour mettre à jour this.user
+            // 5. Recharger le profil
             await this.loadUserProfile();
             
             // 6. Nettoyer
             sessionStorage.removeItem('invitation_code');
             this.invitationCode = null;
             
-            // 7. Afficher message de succès
-            this.showSuccess(`🎉 Bienvenue en tant que membre VIP ! Vous bénéficiez de ${insertedPrices.length} prix préférentiels.`);
+            // 7. Afficher succès
+            this.showSuccess('🎉 Bienvenue en tant que membre VIP ! Vous bénéficiez de prix préférentiels.');
             
             // 8. Émettre événement
             window.dispatchEvent(new CustomEvent('vip:applied', {
-                detail: { 
-                    code: code, 
-                    prices: insertedPrices,
-                    nb_prix: insertedPrices.length 
-                }
+                detail: { code: code, prices: insertedPrices }
             }));
             
-            return { 
-                success: true, 
-                prices: insertedPrices,
-                nb_prix: insertedPrices.length 
-            };
+            return { success: true, prices: insertedPrices };
             
         } catch (error) {
             console.error('❌ Exception application code VIP:', error);
-            this.showError('Une erreur est survenue lors de l\'application du code');
+            this.showError('Une erreur est survenue');
             return { success: false, error: error.message };
         }
     }
@@ -527,8 +511,6 @@ class AuthManager {
                 return this.mockSignUp(email, password, fullName);
             }
 
-            console.log('📝 Inscription en cours pour:', email);
-
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
@@ -542,23 +524,24 @@ class AuthManager {
             });
 
             if (error) {
-                console.error('Supabase signUp error:', error);
+                console.error('Supabase signUp error details:', {
+                    message: error.message,
+                    status: error.status,
+                    name: error.name
+                });
                 throw error;
             }
 
             if (data.user) {
-                console.log('✅ Utilisateur créé dans auth.users:', data.user.id);
-                
-                // ÉTAPE 1 : Créer le profil IMMÉDIATEMENT
+                // Créer le profil dans la table profiles
                 try {
-                    console.log('📋 Création du profil...');
-                    
                     const { error: profileError } = await supabase
                         .from('profiles')
                         .insert({
                             id: data.user.id,
+                            email: email,
                             full_name: fullName,
-                            is_vip: false,  // On met false pour l'instant
+                            is_vip: false,
                             preferred_currency: 'EUR',
                             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                             created_at: new Date().toISOString(),
@@ -566,45 +549,17 @@ class AuthManager {
                         });
 
                     if (profileError) {
-                        console.error('❌ Erreur création profil:', profileError);
-                    } else {
-                        console.log('✅ Profil créé avec succès');
+                        console.warn('Erreur création profil:', profileError);
                     }
                 } catch (profileErr) {
-                    console.error('❌ Exception création profil:', profileErr);
+                    console.warn('Exception création profil:', profileErr);
                 }
-                
-                // ÉTAPE 2 : Appliquer le code VIP si présent
-                const invitationCode = this.invitationCode || sessionStorage.getItem('invitation_code');
-                
-                if (invitationCode) {
-                    console.log('🎟️ Code VIP détecté lors de l\'inscription:', invitationCode);
-                    
-                    // Attendre un peu que le profil soit bien créé
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                    // Créer un objet user temporaire pour applyInvitationCode
-                    const tempUser = {
-                        id: data.user.id,
-                        email: email,
-                        user_metadata: { full_name: fullName }
-                    };
-                    
-                    // Sauvegarder temporairement
-                    const oldUser = this.user;
-                    this.user = tempUser;
-                    
-                    // Appliquer le code
-                    const result = await this.applyInvitationCode(invitationCode);
-                    
-                    // Restaurer
-                    this.user = oldUser;
-                    
-                    if (result.success) {
-                        console.log('✅ Code VIP appliqué automatiquement lors de l\'inscription');
-                    } else {
-                        console.warn('⚠️ Échec application code VIP:', result.error);
-                    }
+
+                // Appliquer code d'invitation VIP si présent
+                if (this.invitationCode || sessionStorage.getItem('invitation_code')) {
+                    console.log('🎟️ Application code VIP après inscription');
+                    this.user = data.user;
+                    await this.applyPendingInvitation();
                 }
             }
 
