@@ -809,6 +809,22 @@ class BookingManager {
             // Générer un numéro de réservation
             const bookingNumber = `BK-${Date.now().toString().slice(-8)}`;
 
+            // DÉBOGAGE DÉTAILLÉ : Vérifier toutes les valeurs
+            console.log('🔍 DÉBOGAGE COMPLET - Valeurs à insérer:');
+            console.log('- Location reçue:', bookingData.location);
+            console.log('- Type de location:', typeof bookingData.location);
+            
+            // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK avec nettoyage
+            const platformValue = this.getPlatformName(bookingData.location);
+            console.log('- Platform calculée:', platformValue);
+            
+            // Vérifier si c'est une valeur autorisée
+            const allowedPlatforms = ['meet', 'zoom', 'teams', 'other'];
+            if (!allowedPlatforms.includes(platformValue)) {
+                console.warn(`⚠️ Platform "${platformValue}" non autorisée, utilisation de "zoom"`);
+                platformValue = 'zoom';
+            }
+
             // STRUCTURE EXACTE selon votre table 'bookings' - CORRIGÉE
             const bookingRecord = {
                 user_id: user?.id || bookingData.userId,
@@ -819,7 +835,8 @@ class BookingManager {
                 status: status,
                 price_paid: bookingData.price,
                 currency: bookingData.currency,
-                platform: this.getPlatformName(bookingData.location),
+                // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK
+                platform: platformValue,
                 booking_number: bookingNumber,
                 payment_method: bookingData.paymentMethod,
                 payment_reference: bookingData.transactionId,
@@ -836,7 +853,15 @@ class BookingManager {
             // - package_quantity
             // - discount_percent
 
-            console.log('💾 Insertion dans Supabase bookings (structure corrigée):', bookingRecord);
+            console.log('💾 Insertion dans Supabase bookings (structure corrigée):', JSON.stringify(bookingRecord, null, 2));
+            
+            // DÉBOGAGE : Vérifier chaque champ individuellement
+            console.log('🔍 Vérification des champs critiques:');
+            console.log('- platform:', bookingRecord.platform, '(type:', typeof bookingRecord.platform + ')');
+            console.log('- status:', bookingRecord.status, '(doit être dans: pending, pending_payment, confirmed, completed, cancelled, lost, refunded)');
+            console.log('- currency:', bookingRecord.currency, '(doit être dans: EUR, USD, CAD, GBP)');
+            console.log('- payment_method:', bookingRecord.payment_method, '(doit être dans: stripe, revolut, wise, interac, paypal, credit)');
+            console.log('- course_type:', bookingRecord.course_type, '(doit être: essai, conversation, curriculum, examen)');
 
             try {
                 const { data, error } = await supabase
@@ -846,7 +871,52 @@ class BookingManager {
 
                 if (error) {
                     console.error('❌ Erreur insertion dans bookings:', error);
-                    return null;
+                    console.error('❌ Détails de l\'erreur:');
+                    console.error('- Code:', error.code);
+                    console.error('- Message:', error.message);
+                    console.error('- Détails:', error.details);
+                    console.error('- Hint:', error.hint);
+                    
+                    // Tentative 2: Essayer avec platform = NULL
+                    console.log('🔄 Tentative 2: avec platform = NULL...');
+                    const bookingRecordWithoutPlatform = { ...bookingRecord };
+                    delete bookingRecordWithoutPlatform.platform;
+                    
+                    const { data: data2, error: error2 } = await supabase
+                        .from('bookings')
+                        .insert([bookingRecordWithoutPlatform])
+                        .select();
+                        
+                    if (error2) {
+                        console.error('❌ Même erreur avec platform = NULL:', error2);
+                        
+                        // Tentative 3: Essayer avec des valeurs minimales obligatoires seulement
+                        console.log('🔄 Tentative 3: avec valeurs minimales...');
+                        const minimalRecord = {
+                            user_id: bookingRecord.user_id,
+                            course_type: bookingRecord.course_type,
+                            start_time: bookingRecord.start_time,
+                            status: bookingRecord.status,
+                            booking_number: bookingRecord.booking_number,
+                            created_at: bookingRecord.created_at
+                        };
+                        
+                        const { data: data3, error: error3 } = await supabase
+                            .from('bookings')
+                            .insert([minimalRecord])
+                            .select();
+                            
+                        if (error3) {
+                            console.error('❌ Échec même avec valeurs minimales:', error3);
+                            return null;
+                        } else {
+                            console.log('✅ Insertion réussie avec valeurs minimales');
+                            return data3[0].id;
+                        }
+                    } else {
+                        console.log('✅ Insertion réussie avec platform = NULL');
+                        return data2[0].id;
+                    }
                 }
 
                 console.log('✅ Réservation sauvegardée dans bookings avec ID:', data[0].id);
@@ -888,12 +958,47 @@ class BookingManager {
         }
     }
 
+    // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK avec nettoyage robuste
     getPlatformName(location) {
-        if (!location) return 'zoom';
-        if (location.includes('google')) return 'google_meet';
-        if (location.includes('teams')) return 'microsoft_teams';
-        if (location.includes('zoom')) return 'zoom';
-        return location;
+        if (!location) {
+            console.log('⚠️ Location est null/undefined, retourne "zoom"');
+            return 'zoom';
+        }
+        
+        // Nettoyer la chaîne
+        const cleanLocation = String(location).trim().toLowerCase();
+        console.log(`🔍 Analyse location nettoyée: "${cleanLocation}"`);
+        
+        // Vérifier les patterns connus
+        if (cleanLocation.includes('google') || cleanLocation.includes('meet')) {
+            console.log('✅ Location identifiée comme Google Meet, retourne "meet"');
+            return 'meet';
+        }
+        if (cleanLocation.includes('teams') || cleanLocation.includes('microsoft')) {
+            console.log('✅ Location identifiée comme Microsoft Teams, retourne "teams"');
+            return 'teams';
+        }
+        if (cleanLocation.includes('zoom')) {
+            console.log('✅ Location identifiée comme Zoom, retourne "zoom"');
+            return 'zoom';
+        }
+        
+        // Vérifier les valeurs intégrations de Cal.com
+        if (cleanLocation.includes('integrations:google:meet')) {
+            console.log('✅ Location identifiée comme integrations:google:meet, retourne "meet"');
+            return 'meet';
+        }
+        if (cleanLocation.includes('integrations:microsoft:teams')) {
+            console.log('✅ Location identifiée comme integrations:microsoft:teams, retourne "teams"');
+            return 'teams';
+        }
+        if (cleanLocation.includes('integrations:zoom')) {
+            console.log('✅ Location identifiée comme integrations:zoom, retourne "zoom"');
+            return 'zoom';
+        }
+        
+        console.log(`⚠️ Location non reconnue: "${cleanLocation}", retourne "other"`);
+        return 'other';
     }
 
     getToday() {
@@ -1230,4 +1335,4 @@ if (window.location.hostname === 'localhost' || window.location.hostname.include
     }, 3000);
 }
 
-console.log('✅ booking.js chargé - Version finale corrigée pour votre schéma');
+console.log('✅ booking.js chargé - Version finale corrigée avec débogage complet');
