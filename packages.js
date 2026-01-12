@@ -1,47 +1,157 @@
-// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - VERSION FINALE
+// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - VERSION DYNAMIQUE
 
 class PackagesManager {
     constructor() {
-        this.packages = {
-            'conversation': {
-                single: { price: 20, duration: 60 },
-                package5: { price: 98, discount_percent: 2, total_credits: 5 },
-                package10: { price: 190, discount_percent: 5, total_credits: 10 }
-            },
-            'curriculum': {
-                single: { price: 35, duration: 60 },
-                package5: { price: 171.50, discount_percent: 2, total_credits: 5 },
-                package10: { price: 332.50, discount_percent: 5, total_credits: 10 }
-            },
-            'examen': {
-                single: { price: 30, duration: 60 },
-                package5: { price: 147, discount_percent: 2, total_credits: 5 },
-                package10: { price: 285, discount_percent: 5, total_credits: 10 }
-            },
-            'essai': {
-                single: { price: 5, duration: 15 }
-            }
-        };
+        this.packages = null;
+        this.basePrices = null;
+        this.isInitialized = false;
+        console.log('📦 PackagesManager initialisé');
+    }
+
+    async initialize() {
+        if (this.isInitialized) return true;
         
-        console.log('📦 PackagesManager initialisé avec réductions: 5 cours (-2%), 10 cours (-5%)');
+        try {
+            await this.loadBasePrices();
+            this.calculatePackagePrices();
+            this.isInitialized = true;
+            console.log('✅ PackagesManager initialisé avec succès');
+            return true;
+        } catch (error) {
+            console.error('❌ Erreur initialisation PackagesManager:', error);
+            this.loadDefaultPrices();
+            this.isInitialized = true;
+            return false;
+        }
+    }
+
+    async loadBasePrices() {
+        try {
+            // Tenter de charger depuis Supabase si disponible
+            if (window.supabase) {
+                const { data, error } = await supabase
+                    .from('vip_pricing')
+                    .select('course_type, duration_minutes, price, currency')
+                    .is('user_id', null)
+                    .eq('duration_minutes', 60)
+                    .eq('currency', 'USD');
+
+                if (data && data.length > 0) {
+                    this.basePrices = {};
+                    data.forEach(price => {
+                        if (!this.basePrices[price.course_type]) {
+                            this.basePrices[price.course_type] = price.price;
+                        }
+                    });
+                    console.log('✅ Prix de base chargés depuis Supabase:', this.basePrices);
+                    return;
+                }
+            }
+            
+            // Fallback: charger depuis localStorage ou config
+            const savedPrices = localStorage.getItem('base_course_prices');
+            if (savedPrices) {
+                this.basePrices = JSON.parse(savedPrices);
+                console.log('✅ Prix de base chargés depuis localStorage:', this.basePrices);
+            } else {
+                throw new Error('Aucun prix de base trouvé');
+            }
+        } catch (error) {
+            console.warn('⚠️ Impossible de charger les prix:', error);
+            throw error;
+        }
+    }
+
+    loadDefaultPrices() {
+        // Prix par défaut basés sur la structure VIP standard
+        this.basePrices = {
+            'conversation': 20,
+            'curriculum': 35,
+            'examen': 30,
+            'essai': 5
+        };
+        console.log('📋 Prix par défaut chargés:', this.basePrices);
+    }
+
+    calculatePackagePrices() {
+        if (!this.basePrices) {
+            console.error('❌ Impossible de calculer les prix sans prix de base');
+            return;
+        }
+
+        this.packages = {};
+        
+        // Pour chaque type de cours
+        for (const [courseType, basePrice] of Object.entries(this.basePrices)) {
+            this.packages[courseType] = {
+                single: { 
+                    price: basePrice, 
+                    duration: courseType === 'essai' ? 15 : 60 
+                }
+            };
+
+            // Ajouter les forfaits pour les cours non-essai
+            if (courseType !== 'essai') {
+                // Forfait 5 cours: -2%
+                const package5Price = basePrice * 5 * 0.98;
+                this.packages[courseType].package5 = {
+                    price: package5Price,
+                    discount_percent: 2,
+                    total_credits: 5
+                };
+
+                // Forfait 10 cours: -5%
+                const package10Price = basePrice * 10 * 0.95;
+                this.packages[courseType].package10 = {
+                    price: package10Price,
+                    discount_percent: 5,
+                    total_credits: 10
+                };
+            }
+        }
+        
+        console.log('🧮 Prix des forfaits calculés:', this.packages);
+    }
+
+    async getBasePrice(courseType, duration = 60) {
+        await this.initialize();
+        
+        if (!this.basePrices || !this.basePrices[courseType]) {
+            console.warn(`⚠️ Prix non trouvé pour ${courseType}, retour au prix par défaut`);
+            const defaultPrices = {
+                'conversation': 20,
+                'curriculum': 35,
+                'examen': 30,
+                'essai': 5
+            };
+            return defaultPrices[courseType] || 20;
+        }
+
+        let basePrice = this.basePrices[courseType];
+        
+        // Ajuster selon la durée pour les cours non-essai
+        if (courseType !== 'essai' && duration !== 60) {
+            basePrice = basePrice * (duration / 60);
+        }
+        
+        return basePrice;
     }
 
     calculatePrice(courseType, quantity = 1, duration = 60) {
+        if (!this.packages) {
+            console.warn('⚠️ Packages non initialisés, utilisation des prix par défaut');
+            this.loadDefaultPrices();
+            this.calculatePackagePrices();
+        }
+
         const packageType = this.packages[courseType];
         if (!packageType) return 0;
 
         if (quantity === 1) {
             // Cours unique - ajuster selon la durée
             let basePrice = packageType.single.price;
-            if (courseType === 'conversation') {
-                if (duration === 30) basePrice = 10;
-                else if (duration === 45) basePrice = 15;
-            } else if (courseType === 'curriculum') {
-                if (duration === 30) basePrice = 17.5;
-                else if (duration === 45) basePrice = 26.25;
-            } else if (courseType === 'examen') {
-                if (duration === 30) basePrice = 15;
-                else if (duration === 45) basePrice = 22.5;
+            if (courseType !== 'essai' && duration !== 60) {
+                basePrice = basePrice * (duration / 60);
             }
             return basePrice;
         } else if (quantity === 5 && packageType.package5) {
@@ -54,31 +164,36 @@ class PackagesManager {
         return packageType.single.price * quantity;
     }
 
-    getPackageInfo(courseType, quantity) {
+    async getPackageInfo(courseType, quantity) {
+        await this.initialize();
+        
         const packageType = this.packages[courseType];
         if (!packageType) return null;
 
         if (quantity === 5 && packageType.package5) {
+            const basePrice = await this.getBasePrice(courseType);
             return {
                 total_credits: packageType.package5.total_credits,
                 discount_percent: packageType.package5.discount_percent,
                 pricePerCourse: packageType.package5.price / quantity,
-                basePricePerCourse: packageType.single.price
+                basePricePerCourse: basePrice
             };
         } else if (quantity === 10 && packageType.package10) {
+            const basePrice = await this.getBasePrice(courseType);
             return {
                 total_credits: packageType.package10.total_credits,
                 discount_percent: packageType.package10.discount_percent,
                 pricePerCourse: packageType.package10.price / quantity,
-                basePricePerCourse: packageType.single.price
+                basePricePerCourse: basePrice
             };
         }
 
+        const basePrice = await this.getBasePrice(courseType);
         return { 
             total_credits: 1, 
             discount_percent: 0, 
             pricePerCourse: this.calculatePrice(courseType, 1, 60),
-            basePricePerCourse: this.calculatePrice(courseType, 1, 60)
+            basePricePerCourse: basePrice
         };
     }
 
@@ -86,7 +201,6 @@ class PackagesManager {
         if (!window.supabase || !userId) return { conversation: 0, curriculum: 0, examen: 0 };
         
         try {
-            // Récupérer les packages actifs de l'utilisateur depuis la table packages
             const { data: packages, error } = await supabase
                 .from('packages')
                 .select('course_type, remaining_credits, expires_at')
@@ -100,7 +214,6 @@ class PackagesManager {
                 return { conversation: 0, curriculum: 0, examen: 0 };
             }
 
-            // Compter les crédits par type de cours
             const credits = { conversation: 0, curriculum: 0, examen: 0 };
             
             packages?.forEach(pkg => {
@@ -122,8 +235,6 @@ class PackagesManager {
         try {
             console.log(`💰 Recherche package pour utilisation crédit: userId=${userId}, courseType=${courseType}`);
             
-            // Trouver TOUS les packages actifs avec des crédits restants dans la table packages
-            // Trier par date d'expiration (les plus anciens d'abord) pour utiliser les crédits qui expirent d'abord
             const { data: activePackages, error: findError } = await supabase
                 .from('packages')
                 .select('id, remaining_credits, expires_at, total_credits, purchased_at')
@@ -132,7 +243,7 @@ class PackagesManager {
                 .eq('status', 'active')
                 .gt('remaining_credits', 0)
                 .gt('expires_at', new Date().toISOString())
-                .order('expires_at', { ascending: true }); // Utiliser d'abord les crédits qui expirent en premier
+                .order('expires_at', { ascending: true });
 
             if (findError) {
                 console.error('Erreur recherche package actif:', findError);
@@ -141,20 +252,10 @@ class PackagesManager {
 
             if (!activePackages || activePackages.length === 0) {
                 console.log(`❌ Aucun package actif trouvé pour ${courseType}`);
-                // Vérifier si l'utilisateur a des packages (même inactifs)
-                const { data: allPackages } = await supabase
-                    .from('packages')
-                    .select('id, remaining_credits, status, expires_at')
-                    .eq('user_id', userId)
-                    .eq('course_type', courseType);
-                
-                console.log(`📦 Tous les packages de l'utilisateur:`, allPackages);
                 throw new Error('Aucun forfait actif avec des crédits disponibles');
             }
 
             console.log(`📦 Packages actifs trouvés:`, activePackages);
-
-            // Utiliser le package le plus ancien (qui expire en premier)
             const activePackage = activePackages[0];
             
             console.log('✅ Package sélectionné pour utilisation de crédit:', {
@@ -164,13 +265,12 @@ class PackagesManager {
                 purchased_at: activePackage.purchased_at
             });
 
-            // Décrémenter les crédits restants
             const newRemainingCredits = (activePackage.remaining_credits || 0) - 1;
             const { error: updateError } = await supabase
                 .from('packages')
                 .update({ 
                     remaining_credits: newRemainingCredits,
-                    updated_at: new Date().toISOString()
+                    status: newRemainingCredits === 0 ? 'depleted' : 'active'
                 })
                 .eq('id', activePackage.id);
 
@@ -202,13 +302,11 @@ class PackagesManager {
 
                 if (transactionError) {
                     console.warn('Erreur création transaction crédit:', transactionError);
-                    // Ne pas arrêter le processus si l'insertion de transaction échoue
                 } else {
                     console.log('✅ Transaction crédit créée');
                 }
             } catch (transactionErr) {
                 console.warn('Exception création transaction crédit:', transactionErr);
-                // Continuer même si la transaction échoue
             }
 
             return { success: true, package_id: activePackage.id };
@@ -222,17 +320,14 @@ class PackagesManager {
         if (!window.supabase || !userId) return { success: false, error: 'Supabase ou utilisateur non disponible' };
         
         try {
-            // Calculer la date d'expiration (1 an)
             const expiresAt = new Date();
             expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
-            // Obtenir les informations du forfait
-            const packageInfo = this.getPackageInfo(courseType, quantity);
+            const packageInfo = await this.getPackageInfo(courseType, quantity);
             if (!packageInfo) {
                 throw new Error('Type de forfait non valide');
             }
 
-            // Calculer le prix par cours pour le forfait
             const pricePerCourse = price / quantity;
             
             console.log('📦 Création package avec détails:', {
@@ -242,32 +337,25 @@ class PackagesManager {
                 total_price: price,
                 currency: currency,
                 price_per_course: pricePerCourse,
-                discount_percent: packageInfo.discount_percent || 0,
-                base_price_per_course: packageInfo.basePricePerCourse || 0
+                discount_percent: packageInfo.discount_percent || 0
             });
 
-            // CORRECTION: Préparer les données d'insertion SANS base_price_per_course
+            // CORRECTION: Données d'insertion sans colonnes inexistantes
             const packageData = {
                 user_id: userId,
                 course_type: courseType,
-                duration_minutes: 60,
+                duration_minutes: courseType === 'essai' ? 15 : 60,
                 total_credits: packageInfo.total_credits,
                 remaining_credits: packageInfo.total_credits,
                 price_paid: price,
-                price_per_course: pricePerCourse,
-                // SUPPRIMÉ: base_price_per_course: packageInfo.basePricePerCourse || 0,
                 discount_percent: packageInfo.discount_percent || 0,
                 currency: currency,
                 status: 'active',
                 purchased_at: new Date().toISOString(),
                 expires_at: expiresAt.toISOString(),
-                expiration_alert_sent: false,
-                payment_method: paymentMethod,
-                transaction_id: transactionId,
-                created_at: new Date().toISOString()
+                expiration_alert_sent: false
             };
 
-            // Créer un nouveau package
             console.log('📤 Insertion dans packages avec données:', packageData);
             
             const { data: newPackage, error: packageError } = await supabase
@@ -287,12 +375,11 @@ class PackagesManager {
                 course_type: newPackage.course_type,
                 total_credits: newPackage.total_credits,
                 remaining_credits: newPackage.remaining_credits,
-                price_per_course: newPackage.price_per_course,
                 discount_percent: newPackage.discount_percent,
                 expires_at: newPackage.expires_at
             });
 
-            // Créer une transaction de crédit si la table existe
+            // Créer une transaction de crédit
             try {
                 const { error: transactionError } = await supabase
                     .from('credit_transactions')
@@ -314,7 +401,6 @@ class PackagesManager {
                 }
             } catch (transactionErr) {
                 console.warn('⚠️ Exception création transaction crédit:', transactionErr);
-                // Continuer même si la transaction échoue
             }
 
             return { success: true, package: newPackage };
@@ -351,11 +437,16 @@ class PackagesManager {
 
     formatPackageDisplay(courseType, quantity, currency = 'EUR') {
         const price = this.calculatePrice(courseType, quantity);
-        const packageInfo = this.getPackageInfo(courseType, quantity);
         
         let display = `Forfait ${quantity} cours`;
-        if (packageInfo?.discount_percent && packageInfo.discount_percent > 0) {
-            display += ` (${packageInfo.discount_percent}% de réduction)`;
+        
+        if (quantity > 1) {
+            const packageInfo = this.packages[courseType];
+            if (quantity === 5 && packageInfo?.package5?.discount_percent) {
+                display += ` (${packageInfo.package5.discount_percent}% de réduction)`;
+            } else if (quantity === 10 && packageInfo?.package10?.discount_percent) {
+                display += ` (${packageInfo.package10.discount_percent}% de réduction)`;
+            }
         }
         
         if (window.currencyManager) {
@@ -388,22 +479,24 @@ class PackagesManager {
         };
         
         if (packageInfo.package5) {
+            const basePrice = packageInfo.single.price;
             info.package5 = {
                 price: packageInfo.package5.price,
                 discount_percent: packageInfo.package5.discount_percent,
                 total_credits: packageInfo.package5.total_credits,
                 pricePerCourse: packageInfo.package5.price / packageInfo.package5.total_credits,
-                savings: (packageInfo.single.price * 5) - packageInfo.package5.price
+                savings: (basePrice * 5) - packageInfo.package5.price
             };
         }
         
         if (packageInfo.package10) {
+            const basePrice = packageInfo.single.price;
             info.package10 = {
                 price: packageInfo.package10.price,
                 discount_percent: packageInfo.package10.discount_percent,
                 total_credits: packageInfo.package10.total_credits,
                 pricePerCourse: packageInfo.package10.price / packageInfo.package10.total_credits,
-                savings: (packageInfo.single.price * 10) - packageInfo.package10.price
+                savings: (basePrice * 10) - packageInfo.package10.price
             };
         }
         
@@ -414,10 +507,8 @@ class PackagesManager {
         return quantity === 5 || quantity === 10;
     }
     
-    // MÉTHODE : Calculer l'économie pour un forfait
     calculateSavings(courseType, quantity) {
-        const packageInfo = this.getPackageInfo(courseType, quantity);
-        if (!packageInfo || quantity === 1) return 0;
+        if (quantity === 1) return 0;
         
         const singlePrice = this.calculatePrice(courseType, 1, 60);
         const packagePrice = this.calculatePrice(courseType, quantity, 60);
@@ -425,84 +516,24 @@ class PackagesManager {
         return (singlePrice * quantity) - packagePrice;
     }
     
-    // NOUVELLE MÉTHODE : Obtenir les détails de prix VIP
     getVipPriceInfo(courseType, duration = 60, quantity = 1, discount = 0) {
-        // Cette méthode est utilisée pour obtenir les informations de prix VIP
-        // pour l'affichage dans l'interface
         return {
             courseType: courseType,
             duration: duration,
             quantity: quantity,
-            discountPercent: discount,
-            // Le prix réel est géré par AuthManager
+            discountPercent: discount
         };
     }
 }
 
-// Fonctions de test
-window.testPackagePrices = function() {
-    console.group('🧪 TEST PRIX FORFAITS');
-    
-    const manager = window.packagesManager || new PackagesManager();
-    const courseTypes = ['conversation', 'curriculum', 'examen'];
-    
-    for (const courseType of courseTypes) {
-        console.log(`\n📚 ${courseType.toUpperCase()}:`);
-        
-        for (const quantity of [1, 5, 10]) {
-            const price = manager.calculatePrice(courseType, quantity);
-            const packageInfo = manager.getPackageInfo(courseType, quantity);
-            
-            console.log(`  ${quantity} cours: ${price}€ (réduction: ${packageInfo?.discount_percent || 0}%)`);
-            
-            if (quantity > 1) {
-                const pricePerCourse = price / quantity;
-                const singlePrice = manager.calculatePrice(courseType, 1);
-                const savings = (singlePrice * quantity) - price;
-                
-                console.log(`    → ${pricePerCourse.toFixed(2)}€/cours (économie: ${savings.toFixed(2)}€)`);
-            }
-        }
-    }
-    
-    console.groupEnd();
-};
-
-// Test des prix VIP
-window.testVipPackagePrices = function() {
-    console.group('👑 TEST PRIX VIP FORFAITS');
-    
-    // Prix VIP: 24.5 USD pour curriculum 60min
-    const vipPrice = 24.5;
-    const vipCurrency = 'USD';
-    
-    const testCases = [
-        { quantity: 1, discount: 0, description: '1 cours VIP curriculum' },
-        { quantity: 5, discount: 2, description: '5 cours VIP curriculum (-2%)' },
-        { quantity: 10, discount: 5, description: '10 cours VIP curriculum (-5%)' }
-    ];
-    
-    testCases.forEach(testCase => {
-        console.log(`\n📊 ${testCase.description}`);
-        const total = vipPrice * testCase.quantity * (1 - testCase.discount/100);
-        console.log(`Calcul: ${vipPrice}${vipCurrency} × ${testCase.quantity} × (1 - ${testCase.discount}%) = ${total.toFixed(2)}${vipCurrency}`);
-        
-        if (window.currencyManager && window.currencyManager.currentCurrency !== vipCurrency) {
-            const converted = window.currencyManager.convert(total, vipCurrency, window.currencyManager.currentCurrency);
-            console.log(`Conversion: ${total.toFixed(2)}${vipCurrency} → ${converted.toFixed(2)}${window.currencyManager.currentCurrency}`);
-        }
-    });
-    
-    console.groupEnd();
-};
-
+// Initialisation
 window.packagesManager = new PackagesManager();
 
-// Test automatique au chargement
-if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
-    setTimeout(() => {
-        console.log('🧪 Test automatique des prix de forfaits');
-        window.testPackagePrices();
-        window.testVipPackagePrices();
-    }, 2000);
-}
+// Initialiser au chargement de la page
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.packagesManager && !window.packagesManager.isInitialized) {
+        await window.packagesManager.initialize();
+    }
+});
+
+console.log('✅ PackagesManager chargé - Version dynamique');
