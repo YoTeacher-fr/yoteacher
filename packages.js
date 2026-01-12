@@ -1,4 +1,4 @@
-// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - VERSION DYNAMIQUE
+// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - VERSION CORRIGÉE
 
 class PackagesManager {
     constructor() {
@@ -20,6 +20,7 @@ class PackagesManager {
         } catch (error) {
             console.error('❌ Erreur initialisation PackagesManager:', error);
             this.loadDefaultPrices();
+            this.calculatePackagePrices();
             this.isInitialized = true;
             return false;
         }
@@ -284,21 +285,23 @@ class PackagesManager {
                 credits_apres: newRemainingCredits
             });
 
-            // Créer une transaction de crédit si la table existe
+            // Créer une transaction de crédit dans la table 'credit_transactions'
             try {
+                const transactionData = {
+                    user_id: userId,
+                    package_id: activePackage.id,
+                    booking_id: bookingData.id || null,
+                    credits_before: activePackage.remaining_credits || 0,
+                    credits_change: -1,
+                    credits_after: newRemainingCredits,
+                    transaction_type: 'usage',
+                    reason: `Réservation de cours ${courseType}`,
+                    created_at: new Date().toISOString()
+                };
+
                 const { error: transactionError } = await supabase
                     .from('credit_transactions')
-                    .insert({
-                        user_id: userId,
-                        package_id: activePackage.id,
-                        booking_id: bookingData.id || `temp_${Date.now()}`,
-                        credits_before: activePackage.remaining_credits || 0,
-                        credits_change: -1,
-                        credits_after: newRemainingCredits,
-                        transaction_type: 'usage',
-                        reason: `Réservation de cours ${courseType}`,
-                        created_at: new Date().toISOString()
-                    });
+                    .insert(transactionData);
 
                 if (transactionError) {
                     console.warn('Erreur création transaction crédit:', transactionError);
@@ -340,7 +343,7 @@ class PackagesManager {
                 discount_percent: packageInfo.discount_percent || 0
             });
 
-            // CORRECTION: Données d'insertion sans colonnes inexistantes
+            // STRUCTURE CORRIGÉE selon votre schéma de table 'packages'
             const packageData = {
                 user_id: userId,
                 course_type: courseType,
@@ -379,20 +382,23 @@ class PackagesManager {
                 expires_at: newPackage.expires_at
             });
 
-            // Créer une transaction de crédit
+            // Créer une transaction de crédit dans la table 'credit_transactions'
             try {
+                const transactionData = {
+                    user_id: userId,
+                    package_id: newPackage.id,
+                    booking_id: bookingData?.id || null,
+                    credits_before: 0,
+                    credits_change: packageInfo.total_credits,
+                    credits_after: packageInfo.total_credits,
+                    transaction_type: 'purchase',
+                    reason: `Achat forfait ${quantity} ${courseType} (${packageInfo.discount_percent || 0}% de réduction)`,
+                    created_at: new Date().toISOString()
+                };
+
                 const { error: transactionError } = await supabase
                     .from('credit_transactions')
-                    .insert({
-                        user_id: userId,
-                        package_id: newPackage.id,
-                        credits_before: 0,
-                        credits_change: packageInfo.total_credits,
-                        credits_after: packageInfo.total_credits,
-                        transaction_type: 'purchase',
-                        reason: `Achat forfait ${quantity} ${courseType} (${packageInfo.discount_percent || 0}% de réduction)`,
-                        created_at: new Date().toISOString()
-                    });
+                    .insert(transactionData);
 
                 if (transactionError) {
                     console.warn('⚠️ Erreur transaction crédit:', transactionError);
@@ -536,4 +542,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PackagesManager chargé - Version dynamique');
+console.log('✅ PackagesManager chargé - Version corrigée');

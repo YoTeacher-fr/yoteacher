@@ -1,4 +1,4 @@
-// payment.js - Gestion des paiements uniquement
+// payment.js - Gestion des paiements uniquement - VERSION CORRIGÉE
 
 class PaymentManager {
     constructor() {
@@ -215,7 +215,7 @@ class PaymentManager {
                 created_at: new Date().toISOString()
             };
 
-            // Sauvegarder le paiement
+            // Sauvegarder le paiement (localement car pas de table payments)
             const paymentResult = await this.savePaymentRecord(paymentData);
             
             if (!paymentResult.success) {
@@ -232,13 +232,35 @@ class PaymentManager {
                 confirmedAt: new Date().toISOString()
             };
 
-            // Sauvegarder la réservation dans Supabase
+            // Sauvegarder la réservation dans Supabase via bookingManager
             if (window.bookingManager && typeof window.bookingManager.createBookingAfterPayment === 'function') {
                 const bookingResult = await window.bookingManager.createBookingAfterPayment(updatedBooking);
                 
                 if (!bookingResult.success) {
                     console.warn('⚠️ Réservation Cal.com échouée:', bookingResult.error);
                     // Continuer malgré l'erreur Cal.com
+                }
+            }
+
+            // Si c'est un forfait, ajouter des crédits
+            if (updatedBooking.isPackage && updatedBooking.packageQuantity > 1 && user?.id && window.packagesManager) {
+                console.log(`📦 Ajout de ${updatedBooking.packageQuantity} crédits pour ${updatedBooking.courseType}`);
+                
+                const creditResult = await window.packagesManager.addCredits(
+                    user.id,
+                    updatedBooking.courseType,
+                    updatedBooking.packageQuantity,
+                    updatedBooking.price,
+                    updatedBooking.currency,
+                    method,
+                    transactionId,
+                    updatedBooking
+                );
+                
+                if (creditResult.success) {
+                    console.log('✅ Crédits ajoutés avec succès');
+                } else {
+                    console.warn('⚠️ Échec ajout crédits:', creditResult.error);
                 }
             }
 
@@ -258,24 +280,11 @@ class PaymentManager {
         }
     }
 
+    // FONCTION CORRIGÉE : Pas de table payments dans votre schéma
     async savePaymentRecord(paymentData) {
         try {
-            // Tenter de sauvegarder dans Supabase
-            if (window.supabase && window.supabaseReady) {
-                const { error } = await window.supabase
-                    .from('payments')
-                    .insert([paymentData]);
-
-                if (error) {
-                    console.warn('⚠️ Table payments non disponible, sauvegarde locale');
-                    return this.savePaymentToLocalStorage(paymentData);
-                }
-
-                console.log('✅ Paiement sauvegardé dans Supabase');
-                return { success: true };
-            }
-
-            // Sauvegarde locale
+            // Comme vous n'avez pas de table 'payments', sauvegarder localement
+            console.log('💾 Sauvegarde du paiement en mode local...');
             return this.savePaymentToLocalStorage(paymentData);
         } catch (error) {
             console.warn('⚠️ Erreur sauvegarde paiement:', error);
@@ -335,4 +344,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PaymentManager chargé');
+console.log('✅ PaymentManager chargé - Version corrigée');

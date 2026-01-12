@@ -1,4 +1,4 @@
-// booking.js - Gestion des réservations avec Cal.com (API v2) - VERSION CORRIGÉE POUR PRIX VIP
+// booking.js - Gestion des réservations avec Cal.com (API v2) - VERSION CORRIGÉE POUR VOTRE BASE DE DONNÉES
 
 class BookingManager {
     constructor() {
@@ -30,7 +30,7 @@ class BookingManager {
             reset: null
         };
         
-        console.log('📅 BookingManager initialisé');
+        console.log('📅 BookingManager initialisé - Version corrigée');
     }
 
     checkCalcomConfig() {
@@ -754,7 +754,7 @@ class BookingManager {
             const data = result.data || result;
             console.log('✅ Réservation créée sur Cal.com:', data);
             
-            // Sauvegarder dans Supabase
+            // Sauvegarder dans Supabase AVEC LA STRUCTURE CORRIGÉE
             await this.saveBookingToSupabase(data, user, bookingData, 'confirmed');
             
             return { 
@@ -799,6 +799,7 @@ class BookingManager {
         });
     }
 
+    // FONCTION CORRIGÉE : Sauvegarder la réservation dans Supabase selon votre schéma
     async saveBookingToSupabase(calcomBooking, user, bookingData, status = 'confirmed') {
         try {
             if (!window.supabase) {
@@ -809,6 +810,7 @@ class BookingManager {
             // Générer un numéro de réservation
             const bookingNumber = `BK-${Date.now().toString().slice(-8)}`;
 
+            // STRUCTURE EXACTE selon votre table 'bookings'
             const bookingRecord = {
                 user_id: user?.id || bookingData.userId,
                 course_type: bookingData.courseType,
@@ -818,49 +820,65 @@ class BookingManager {
                 status: status,
                 price_paid: bookingData.price,
                 currency: bookingData.currency,
-                // Ajouter la devise et prix d'origine pour les VIP
-                original_price: bookingData.vipPriceData?.price || bookingData.originalPrice,
-                original_currency: bookingData.vipPriceData?.currency || bookingData.originalCurrency,
-                is_vip_booking: bookingData.isVip || false,
                 platform: this.getPlatformName(bookingData.location),
                 booking_number: bookingNumber,
+                payment_method: bookingData.paymentMethod,
+                payment_reference: bookingData.transactionId,
                 calcom_booking_id: calcomBooking.id || calcomBooking.uid,
                 calcom_uid: calcomBooking.uid,
                 meeting_link: calcomBooking.location || calcomBooking.meetingUrl,
-                package_quantity: bookingData.packageQuantity || 1,
-                discount_percent: bookingData.discountPercent || 0,
                 created_at: new Date().toISOString()
             };
 
-            console.log('💾 Sauvegarde dans Supabase bookings:', bookingRecord);
-
-            const { data, error } = await supabase
-                .from('bookings')
-                .insert([bookingRecord])
-                .select();
-
-            if (error) {
-                console.warn('Erreur sauvegarde Supabase:', error);
-                return null;
-            }
-            
-            console.log('✅ Réservation sauvegardée dans Supabase avec ID:', data[0].id);
-            
-            // Si c'est une réservation utilisant un crédit, utiliser le crédit
-            if (!bookingData.isPackage && user?.id && window.packagesManager) {
-                const creditResult = await window.packagesManager.useCredit(
-                    user.id, 
-                    bookingData.courseType, 
-                    data[0]
-                );
-                
-                if (creditResult.success) {
-                    console.log('✅ Crédit utilisé pour la réservation');
+            // Ajouter les champs VIP si disponibles
+            if (bookingData.isVip !== undefined) {
+                bookingRecord.is_vip_booking = bookingData.isVip;
+                if (bookingData.vipPriceData?.price) {
+                    bookingRecord.original_price = bookingData.vipPriceData.price;
+                    bookingRecord.original_currency = bookingData.vipPriceData.currency || 'USD';
                 }
             }
-            
-            return data[0].id;
-            
+
+            // Ajouter les informations de forfait si disponibles
+            if (bookingData.packageQuantity && bookingData.packageQuantity > 1) {
+                bookingRecord.package_quantity = bookingData.packageQuantity;
+                bookingRecord.discount_percent = bookingData.discountPercent || 0;
+            }
+
+            console.log('💾 Insertion dans Supabase bookings:', bookingRecord);
+
+            try {
+                const { data, error } = await supabase
+                    .from('bookings')
+                    .insert([bookingRecord])
+                    .select();
+
+                if (error) {
+                    console.error('❌ Erreur insertion dans bookings:', error);
+                    return null;
+                }
+
+                console.log('✅ Réservation sauvegardée dans bookings avec ID:', data[0].id);
+                
+                // Si c'est une réservation utilisant un crédit, utiliser le crédit
+                if (!bookingData.isPackage && user?.id && window.packagesManager) {
+                    const creditResult = await window.packagesManager.useCredit(
+                        user.id, 
+                        bookingData.courseType, 
+                        data[0]
+                    );
+                    
+                    if (creditResult.success) {
+                        console.log('✅ Crédit utilisé pour la réservation');
+                    }
+                }
+                
+                return data[0].id;
+                
+            } catch (dbError) {
+                console.error('❌ Exception base de données:', dbError);
+                return null;
+            }
         } catch (error) {
             console.error('Exception sauvegarde Supabase:', error);
             return null;
