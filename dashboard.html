@@ -309,47 +309,6 @@
             text-align: center;
         }
 
-        /* Navigation des forfaits - NOUVEAU */
-        .package-nav {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            padding: 0 5px;
-        }
-
-        .package-nav-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #333;
-            text-align: center;
-            flex-grow: 1;
-        }
-
-        .package-nav-arrow {
-            background: #f0f0f0;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: #666;
-            transition: all 0.3s;
-        }
-
-        .package-nav-arrow:hover:not(:disabled) {
-            background: #3c84f6;
-            color: white;
-        }
-
-        .package-nav-arrow:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
         /* Section Cours à venir */
         .upcoming-lesson-card {
             background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
@@ -396,48 +355,50 @@
             font-weight: 600;
         }
 
-        .lesson-actions {
+        /* Boutons de cours EN DEHORS de la carte */
+        .lesson-external-actions {
             display: flex;
-            gap: 8px; /* Réduit */
-            margin-top: 12px; /* Réduit */
+            gap: 10px;
+            margin-top: 15px;
+            width: 100%;
         }
 
-        .btn-small {
-            padding: 8px 15px; /* Réduit */
+        .btn-external {
+            padding: 10px 18px;
             border-radius: 50px;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s;
             display: inline-flex;
             align-items: center;
-            gap: 6px; /* Réduit */
-            font-size: 0.85rem; /* Réduit */
+            gap: 8px;
+            font-size: 0.9rem;
             flex: 1;
             justify-content: center;
             cursor: pointer;
             border: none;
         }
 
-        .btn-cancel {
+        .btn-cancel-external {
             background: transparent;
             border: 1px solid #e74c3c;
             color: #e74c3c;
         }
 
-        .btn-cancel:hover {
+        .btn-cancel-external:hover {
             background: #e74c3c;
             color: white;
         }
 
-        .btn-reschedule {
-            background: transparent;
-            border: 1px solid #3c84f6;
-            color: #3c84f6;
+        .btn-join-external {
+            background: #4CAF50;
+            border: 1px solid #4CAF50;
+            color: white;
         }
 
-        .btn-reschedule:hover {
-            background: #3c84f6;
-            color: white;
+        .btn-join-external:hover {
+            background: #45a049;
+            border-color: #45a049;
         }
 
         /* Section Forfaits - UNE SEULE CARTE VISIBLE */
@@ -457,6 +418,7 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .package-internal-card:hover {
@@ -492,6 +454,38 @@
             flex-grow: 1;
         }
 
+        /* Flèches de navigation DANS la carte */
+        .package-nav-internal {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .package-nav-arrow-internal {
+            background: #f0f0f0;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .package-nav-arrow-internal:hover:not(:disabled) {
+            background: #3c84f6;
+            color: white;
+        }
+
+        .package-nav-arrow-internal:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
         .package-durations {
             display: flex;
             flex-direction: column;
@@ -525,23 +519,32 @@
             color: #3c84f6;
         }
 
-        .package-expiry {
+        /* Date d'expiration sur une ligne en plus petit */
+        .package-expiry-single-line {
             margin-top: 15px;
-            padding-top: 15px;
+            padding-top: 10px;
             border-top: 1px solid #e0e0e0;
             text-align: center;
-        }
-
-        .expiry-label {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #666;
-            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
 
-        .expiry-date {
-            font-size: 0.95rem;
-            font-weight: 600;
+        .expiry-icon {
             color: #e91e63;
+        }
+
+        .expiry-text {
+            color: #e91e63;
+            font-weight: 600;
+        }
+
+        .expiry-days {
+            color: #888;
+            font-style: italic;
         }
 
         /* Section Profil */
@@ -773,7 +776,7 @@
                 font-size: 1.1rem; /* Réduit */
             }
             
-            .lesson-actions {
+            .lesson-external-actions {
                 flex-direction: column;
             }
             
@@ -868,13 +871,10 @@
                 width: 100%;
             }
             
-            .package-nav-arrow {
-                width: 32px;
-                height: 32px;
-            }
-            
-            .package-nav-title {
-                font-size: 1rem;
+            .package-nav-arrow-internal {
+                width: 28px;
+                height: 28px;
+                font-size: 0.8rem;
             }
             
             .package-internal-card {
@@ -902,6 +902,10 @@
             
             .duration-credits {
                 font-size: 1.1rem;
+            }
+            
+            .package-expiry-single-line {
+                font-size: 0.75rem;
             }
         }
         
@@ -1129,6 +1133,10 @@
                         <div id="nextLessonContent">
                             <!-- Le contenu sera chargé dynamiquement -->
                         </div>
+                        <!-- Boutons EN DEHORS de la carte -->
+                        <div class="lesson-external-actions" id="lessonExternalActions" style="display: none;">
+                            <!-- Boutons seront ajoutés dynamiquement -->
+                        </div>
                     </div>
 
                     <!-- Carte 2 : Mes forfaits (compacte avec navigation) -->
@@ -1138,16 +1146,6 @@
                                 <i class="fas fa-gift"></i>
                                 <h2>Mes forfaits</h2>
                             </div>
-                        </div>
-                        <!-- Navigation des forfaits -->
-                        <div class="package-nav">
-                            <button class="package-nav-arrow" id="packagePrevBtn" disabled>
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <div class="package-nav-title" id="packageNavTitle">Conversation</div>
-                            <button class="package-nav-arrow" id="packageNextBtn">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
                         </div>
                         <!-- Conteneur des cartes de forfaits (une seule visible) -->
                         <div class="packages-container" id="packagesContainer">
@@ -1419,10 +1417,6 @@
         
         function showPackageCard(type, typeData) {
             const container = document.getElementById('packagesContainer');
-            const titleElement = document.getElementById('packageNavTitle');
-            
-            // Mettre à jour le titre de navigation
-            titleElement.textContent = packageNames[type];
             
             // Formater la date d'expiration
             let expiryHtml = '';
@@ -1430,21 +1424,20 @@
                 const expiryDate = new Date(typeData.expiry);
                 const formattedExpiry = expiryDate.toLocaleDateString('fr-FR', {
                     day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
+                    month: 'short'
                 });
                 
                 const daysUntilExpiration = Math.ceil((expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                 
                 expiryHtml = `
-                    <div class="expiry-label">Expire le</div>
-                    <div class="expiry-date">${formattedExpiry}</div>
-                    <div style="font-size: 0.8rem; color: #888; margin-top: 3px;">
-                        (${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''})
+                    <div class="package-expiry-single-line">
+                        <i class="fas fa-calendar-alt expiry-icon"></i>
+                        <span class="expiry-text">Expire le ${formattedExpiry}</span>
+                        <span class="expiry-days">(${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''})</span>
                     </div>
                 `;
             } else {
-                expiryHtml = '<div class="expiry-label">Pas de forfait actif</div>';
+                expiryHtml = '<div class="package-expiry-single-line">Pas de forfait actif</div>';
             }
             
             container.innerHTML = `
@@ -1454,6 +1447,14 @@
                             <i class="${packageIcons[type]}"></i>
                         </div>
                         <div class="package-internal-title">${packageNames[type]}</div>
+                        <div class="package-nav-internal">
+                            <button class="package-nav-arrow-internal" id="packagePrevBtnInternal" ${currentPackageIndex === 0 ? 'disabled' : ''}>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button class="package-nav-arrow-internal" id="packageNextBtnInternal" ${currentPackageIndex === packageTypes.length - 1 ? 'disabled' : ''}>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="package-durations">
                         <div class="duration-row">
@@ -1478,22 +1479,21 @@
                             <div class="duration-credits">${typeData[60] || 0}</div>
                         </div>
                     </div>
-                    <div class="package-expiry">
-                        ${expiryHtml}
-                    </div>
+                    ${expiryHtml}
                 </div>
             `;
             
-            // Mettre à jour l'état des boutons de navigation
-            updatePackageNavigation();
-        }
-        
-        function updatePackageNavigation() {
-            const prevBtn = document.getElementById('packagePrevBtn');
-            const nextBtn = document.getElementById('packageNextBtn');
+            // Ajouter les écouteurs d'événements pour les flèches internes
+            const prevBtnInternal = document.getElementById('packagePrevBtnInternal');
+            const nextBtnInternal = document.getElementById('packageNextBtnInternal');
             
-            prevBtn.disabled = currentPackageIndex === 0;
-            nextBtn.disabled = currentPackageIndex === packageTypes.length - 1;
+            if (prevBtnInternal) {
+                prevBtnInternal.addEventListener('click', navigateToPrevPackage);
+            }
+            
+            if (nextBtnInternal) {
+                nextBtnInternal.addEventListener('click', navigateToNextPackage);
+            }
         }
         
         function navigateToNextPackage() {
@@ -1503,7 +1503,6 @@
                 if (window.packagesData) {
                     showPackageCard(nextType, window.packagesData[nextType] || { 30: 0, 45: 0, 60: 0, expiry: null });
                 }
-                updatePackageNavigation();
             }
         }
         
@@ -1514,7 +1513,6 @@
                 if (window.packagesData) {
                     showPackageCard(prevType, window.packagesData[prevType] || { 30: 0, 45: 0, 60: 0, expiry: null });
                 }
-                updatePackageNavigation();
             }
         }
         
@@ -1532,6 +1530,7 @@
                 
                 const nextLessonContent = document.getElementById('nextLessonContent');
                 const lessonNav = document.getElementById('lessonNav');
+                const externalActions = document.getElementById('lessonExternalActions');
                 
                 if (!bookings || bookings.length === 0) {
                     nextLessonContent.innerHTML = `
@@ -1541,6 +1540,7 @@
                         </div>
                     `;
                     lessonNav.style.display = 'none';
+                    externalActions.style.display = 'none';
                     return;
                 }
                 
@@ -1574,6 +1574,7 @@
             const lesson = upcomingLessons[currentLessonIndex];
             const nextLessonContent = document.getElementById('nextLessonContent');
             const lessonCounter = document.getElementById('lessonCounter');
+            const externalActions = document.getElementById('lessonExternalActions');
             
             // Mettre à jour le compteur
             lessonCounter.textContent = `${currentLessonIndex + 1}/${upcomingLessons.length}`;
@@ -1621,20 +1622,20 @@
                             <span class="lesson-info-value">${lesson.booking_number || '#' + (lesson.id ? lesson.id.substring(0, 8) : '')}</span>
                         </div>
                     </div>
-                    <div class="lesson-actions">
-                        <button class="btn-small btn-cancel" onclick="cancelLesson('${lesson.id}')">
-                            <i class="fas fa-times"></i> Annuler
-                        </button>
-                        <button class="btn-small btn-reschedule" onclick="rescheduleLesson('${lesson.id}')">
-                            <i class="fas fa-calendar-alt"></i> Reporter
-                        </button>
-                        ${lesson.meeting_link ? `
-                        <a href="${lesson.meeting_link}" target="_blank" class="btn-small" style="background: #4CAF50; color: white; border: none; text-decoration: none;">
-                            <i class="fas fa-video"></i> Rejoindre
-                        </a>
-                        ` : ''}
-                    </div>
                 </div>
+            `;
+            
+            // Afficher les boutons en dehors de la carte
+            externalActions.style.display = 'flex';
+            externalActions.innerHTML = `
+                <button class="btn-external btn-cancel-external" onclick="cancelLesson('${lesson.id}')">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+                ${lesson.meeting_link ? `
+                <a href="${lesson.meeting_link}" target="_blank" class="btn-external btn-join-external">
+                    <i class="fas fa-video"></i> Rejoindre
+                </a>
+                ` : ''}
             `;
         }
         
@@ -1653,11 +1654,6 @@
             }
         }
         
-        function rescheduleLesson(lessonId) {
-            alert('Fonction de report à implémenter');
-            // Ici, vous ajouteriez l'appel à l'API pour reporter le cours
-        }
-        
         // Gestion de la déconnexion
         document.addEventListener('DOMContentLoaded', function() {
             const logoutBtn = document.getElementById('logoutBtn');
@@ -1665,8 +1661,6 @@
             const refreshBtn = document.getElementById('refreshDashboardBtn');
             const prevLessonBtn = document.getElementById('prevLessonBtn');
             const nextLessonBtn = document.getElementById('nextLessonBtn');
-            const packagePrevBtn = document.getElementById('packagePrevBtn');
-            const packageNextBtn = document.getElementById('packageNextBtn');
             
             async function handleLogout() {
                 try {
@@ -1728,14 +1722,6 @@
                         updateLessonNavigation();
                     }
                 });
-            }
-            
-            if (packagePrevBtn) {
-                packagePrevBtn.addEventListener('click', navigateToPrevPackage);
-            }
-            
-            if (packageNextBtn) {
-                packageNextBtn.addEventListener('click', navigateToNextPackage);
             }
         });
         
