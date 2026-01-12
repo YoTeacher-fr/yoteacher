@@ -374,6 +374,7 @@ class BookingManager {
             
             let finalPrice = 0;
             let priceEUR = 0;
+            let unitPriceEUR = 0; // CORRECTION: Déclaré ici pour être accessible dans toute la fonction
             
             const isVIP = window.authManager?.isUserVip();
             const duration = bookingData.duration || 60;
@@ -398,6 +399,7 @@ class BookingManager {
             if (bookingData.courseType === 'essai') {
                 console.log('🎫 Cours d\'essai détecté');
                 priceEUR = 5;
+                unitPriceEUR = 5; // CORRECTION: Défini pour cours d'essai
                 finalPrice = window.currencyManager ? 
                     window.currencyManager.convert(5, 'EUR', currentCurrency) : 5;
                 
@@ -457,6 +459,7 @@ class BookingManager {
                             
                             // 5. NE PAS UTILISER priceEUR pour les VIP (c'est en USD, pas en EUR)
                             priceEUR = null;
+                            unitPriceEUR = 0; // CORRECTION: Défini même pour VIP
                             
                         } else {
                             console.log('⚠️ Prix VIP invalide, utilisation prix normal');
@@ -473,7 +476,7 @@ class BookingManager {
                     console.log('👤 Utilisation prix normal');
                     
                     // Calcul en EUR d'abord
-                    let unitPriceEUR = 0;
+                    unitPriceEUR = 0; // CORRECTION: Réaffecté ici
                     
                     if (window.packagesManager) {
                         unitPriceEUR = window.packagesManager.calculatePrice(
@@ -545,7 +548,7 @@ class BookingManager {
                 
                 // Pour référence
                 priceEUR: isVIP && useVipPrice ? null : priceEUR, // Prix en EUR seulement pour non-VIP
-                originalPrice: vipPriceData?.price || unitPriceEUR, // Prix unitaire dans devise d'origine
+                originalPrice: vipPriceData?.price || unitPriceEUR, // CORRECTION: unitPriceEUR est maintenant toujours défini
                 originalCurrency: vipPriceData?.currency || 'EUR', // Devise d'origine
                 
                 duration: duration,
@@ -1155,6 +1158,7 @@ window.testVipAllCases = async function() {
     
     console.groupEnd();
 };
+
 // FONCTION DE DEBUG GLOBALE
 window.debugVIPPriceIssue = function() {
     console.group('🔍 DEBUG PRIX VIP');
@@ -1204,6 +1208,7 @@ window.debugVIPPriceIssue = function() {
     
     console.groupEnd();
 };
+
 // Initialiser globalement
 window.bookingManager = initializeBookingManager();
 
