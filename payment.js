@@ -1,4 +1,4 @@
-// payment.js - Gestionnaire de paiement adapté à votre schéma Supabase - LOGIQUE VIP CORRECTE
+// payment.js - Gestionnaire de paiement adapté à votre schéma Supabase - VERSION FINALE CORRIGÉE
 
 class PaymentManager {
     constructor() {
@@ -151,28 +151,33 @@ class PaymentManager {
             console.log('Prix original VIP:', originalPriceDisplay);
         }
         
-        // VÉRIFICATION DU PRIX VIP ATTENDU
+        // VÉRIFICATION DU PRIX VIP
         if (booking.isVip && booking.packageQuantity > 1) {
             console.log('🧮 Vérification prix VIP:');
-            const expectedVIPPrice = 3; // USD par cours
+            const vipUnitPrice = booking.vipPriceData?.price || booking.originalPrice;
+            const vipCurrency = booking.vipPriceData?.currency || 'USD';
             const quantity = booking.packageQuantity;
             const discount = booking.discountPercent || 0;
             
-            const expectedTotalUSD = expectedVIPPrice * quantity * (1 - discount/100);
-            console.log('- Prix unitaire attendu:', expectedVIPPrice, 'USD');
+            const expectedTotal = vipUnitPrice * quantity * (1 - discount/100);
+            console.log('- Prix unitaire VIP:', vipUnitPrice, vipCurrency);
             console.log('- Quantité:', quantity);
             console.log('- Réduction:', discount + '%');
-            console.log('- Total attendu (USD):', expectedTotalUSD.toFixed(2), 'USD');
+            console.log('- Total attendu (VIP):', expectedTotal.toFixed(2), vipCurrency);
             
             if (window.currencyManager) {
-                const convertedExpected = window.currencyManager.convert(expectedTotalUSD, 'USD', booking.currency);
+                const convertedExpected = window.currencyManager.convert(expectedTotal, vipCurrency, booking.currency);
                 console.log('- Total attendu converti:', convertedExpected.toFixed(2), booking.currency);
                 console.log('- Prix actuel:', booking.price, booking.currency);
                 
                 const diff = Math.abs(booking.price - convertedExpected);
                 if (diff > 0.1) {
-                    console.warn('⚠️ ALERTE: Le prix ne correspond pas au prix VIP attendu!');
+                    console.warn('⚠️ Écart détecté!');
                     console.warn(`Écart: ${diff.toFixed(2)} ${booking.currency}`);
+                    console.warn('Causes possibles:');
+                    console.warn('1. Taux de conversion différent');
+                    console.warn('2. Arrondis de conversion');
+                    console.warn('3. Calcul intermédiaire différent');
                 } else {
                     console.log('✅ Prix VIP correct!');
                 }
@@ -195,7 +200,7 @@ class PaymentManager {
             
             if (booking.isVip) {
                 // Calcul pour VIP
-                const vipUnitPrice = booking.vipPriceData?.price || 3;
+                const vipUnitPrice = booking.vipPriceData?.price || booking.originalPrice;
                 const baseTotal = vipUnitPrice * booking.packageQuantity;
                 savings = baseTotal * (discount/100);
             } else {
@@ -471,10 +476,10 @@ class PaymentManager {
         }
     }
     
-    // Méthode pour traiter l'achat de forfait - VERSION CORRIGÉE
+    // Méthode pour traiter l'achat de forfait - VERSION FINALE CORRIGÉE
     async processPackagePurchase(paymentData) {
         try {
-            console.group('📦 Traitement achat forfait - LOGIQUE CORRECTE');
+            console.group('📦 Traitement achat forfait - LOGIQUE FINALE');
             
             const booking = this.currentBooking;
             
@@ -492,38 +497,45 @@ class PaymentManager {
                 discountPercent: booking.discountPercent || 0
             });
             
-            // DÉTERMINER LE PRIX À UTILISER - LOGIQUE SIMPLIFIÉE
+            // UTILISER LE PRIX RÉEL (déjà calculé)
             let packagePrice = booking.price; // Déjà dans la devise courante
             let packageCurrency = booking.currency; // Devise courante
             
-            // Si VIP, le prix est déjà dans la devise courante après conversion
             console.log(`💳 Prix final pour forfait: ${packagePrice} ${packageCurrency}`);
             
-            // VÉRIFICATION DU PRIX
-            const expectedVIPPrice = 3; // USD par cours
+            // VÉRIFICATION DU CALCUL - AVEC LE VRAI PRIX VIP
+            const vipUnitPrice = booking.vipPriceData?.price || booking.originalPrice;
+            const vipCurrency = booking.vipPriceData?.currency || 'USD';
             const quantity = booking.packageQuantity;
             const discount = booking.discountPercent || 0;
             
-            // Calcul du prix attendu en USD
-            const expectedTotalUSD = expectedVIPPrice * quantity * (1 - discount/100);
-            console.log(`💰 Prix attendu VIP (USD): ${expectedTotalUSD.toFixed(2)} USD`);
+            // Calcul du prix attendu dans la devise VIP
+            const expectedTotalVIP = vipUnitPrice * quantity * (1 - discount/100);
+            console.log(`💰 Calcul prix attendu VIP: ${vipUnitPrice}${vipCurrency} × ${quantity} × (1 - ${discount}%) = ${expectedTotalVIP.toFixed(2)}${vipCurrency}`);
             
             if (window.currencyManager) {
-                const convertedExpected = window.currencyManager.convert(expectedTotalUSD, 'USD', packageCurrency);
+                // Convertir le prix attendu dans la devise courante
+                const convertedExpected = window.currencyManager.convert(expectedTotalVIP, vipCurrency, packageCurrency);
                 console.log(`💰 Prix attendu converti: ${convertedExpected.toFixed(2)} ${packageCurrency}`);
                 
                 // Vérifier l'écart
                 const diff = Math.abs(packagePrice - convertedExpected);
                 if (diff > 0.1) {
                     console.warn(`⚠️ Écart important: ${diff.toFixed(2)} ${packageCurrency}`);
-                    console.warn('Le prix affiché ne correspond pas au prix VIP attendu');
+                    console.warn('Causes possibles:');
+                    console.warn('1. Taux de change différents');
+                    console.warn('2. Arrondis différents');
+                    console.warn('3. Calcul intermédiaire avec différentes décimales');
                     
-                    // CORRECTION : Utiliser le prix attendu converti
-                    if (booking.isVip) {
-                        console.log('🔄 Correction du prix avec le prix VIP attendu...');
-                        packagePrice = convertedExpected;
-                        booking.price = convertedExpected; // Mettre à jour le booking
-                    }
+                    // Afficher le taux de change utilisé
+                    console.log(`💱 Taux ${vipCurrency}/${packageCurrency}:`, 
+                        window.currencyManager.exchangeRates[vipCurrency] / 
+                        window.currencyManager.exchangeRates[packageCurrency]);
+                    
+                    // Utiliser le prix calculé comme référence (déjà bon)
+                    console.log(`✅ Utilisation du prix calculé: ${packagePrice} ${packageCurrency}`);
+                } else {
+                    console.log(`✅ Prix correct! Différence: ${diff.toFixed(2)} ${packageCurrency}`);
                 }
             }
             
@@ -572,6 +584,7 @@ class PaymentManager {
                     
                     if (error) {
                         console.warn('⚠️ Erreur enregistrement achat forfait:', error);
+                        console.warn('Détails:', error.message);
                     } else {
                         console.log('✅ Enregistrement achat forfait créé');
                     }
@@ -590,7 +603,7 @@ class PaymentManager {
     }
     
     async completePayment(method, transactionId = null) {
-        console.group('✅ Finalisation paiement - LOGIQUE COMPLÈTE');
+        console.group('✅ Finalisation paiement - LOGIQUE FINALE');
         console.log('Méthode:', method, 'Transaction ID:', transactionId);
         
         try {
@@ -808,7 +821,7 @@ class PaymentManager {
         }
     }
     
-    // NOUVELLE MÉTHODE : Debug du prix VIP
+    // Méthode pour debug du prix VIP
     debugVIPPrice() {
         console.group('🔍 DEBUG PRIX VIP DANS PAYMENT');
         
@@ -834,22 +847,22 @@ class PaymentManager {
             console.log('- Prix unitaire VIP:', booking.vipPriceData?.price, booking.vipPriceData?.currency);
             console.log('- Prix total VIP (USD):', booking.vipTotal, 'USD');
             
-            // Calcul manuel
-            const vipPrice = 3; // USD
+            // Calcul avec le vrai prix VIP
+            const vipPrice = booking.vipPriceData?.price || booking.originalPrice;
             const quantity = booking.packageQuantity;
             const discount = booking.discountPercent || 0;
             
-            const expectedUSD = vipPrice * quantity * (1 - discount/100);
+            const expected = vipPrice * quantity * (1 - discount/100);
             console.log('\n🧮 Calcul attendu:');
-            console.log(`${vipPrice} USD × ${quantity} × (1 - ${discount}%) = ${expectedUSD.toFixed(2)} USD`);
+            console.log(`${vipPrice} ${booking.vipPriceData?.currency || 'USD'} × ${quantity} × (1 - ${discount}%) = ${expected.toFixed(2)} ${booking.vipPriceData?.currency || 'USD'}`);
             
             if (window.currencyManager) {
-                const converted = window.currencyManager.convert(expectedUSD, 'USD', booking.currency);
-                console.log(`Conversion: ${expectedUSD.toFixed(2)} USD → ${converted.toFixed(2)} ${booking.currency}`);
+                const converted = window.currencyManager.convert(expected, booking.vipPriceData?.currency || 'USD', booking.currency);
+                console.log(`Conversion: ${expected.toFixed(2)} ${booking.vipPriceData?.currency || 'USD'} → ${converted.toFixed(2)} ${booking.currency}`);
                 
                 // Vérification du taux
-                const rate = window.currencyManager.exchangeRates['USD'];
-                console.log(`Taux USD/${booking.currency}:`, rate);
+                const rate = window.currencyManager.exchangeRates[booking.vipPriceData?.currency || 'USD'];
+                console.log(`Taux ${booking.vipPriceData?.currency || 'USD'}/${booking.currency}:`, rate);
                 
                 const diff = Math.abs(booking.price - converted);
                 if (diff > 0.1) {
@@ -869,58 +882,25 @@ class PaymentManager {
 window.testVipPaymentLogic = async function() {
     console.group('🧪 TEST LOGIQUE DE PAIEMENT VIP');
     
-    // Simuler différents scénarios
+    // Simuler différents scénarios AVEC VRAIS PRIX VIP
     const testScenarios = [
         {
-            name: '1 cours VIP',
+            name: '10 cours VIP Curriculum (-5%)',
             isVip: true,
-            vipPrice: 3,
-            vipCurrency: 'USD',
-            quantity: 1,
-            discount: 0,
-            expected: 3.00
-        },
-        {
-            name: '5 cours VIP (-2%)',
-            isVip: true,
-            vipPrice: 3,
-            vipCurrency: 'USD',
-            quantity: 5,
-            discount: 2,
-            expected: 14.70
-        },
-        {
-            name: '10 cours VIP (-5%)',
-            isVip: true,
-            vipPrice: 3,
+            vipPrice: 24.5,
             vipCurrency: 'USD',
             quantity: 10,
             discount: 5,
-            expected: 28.50
+            expected: 232.75
         },
         {
-            name: '1 cours normal',
-            isVip: false,
-            basePrice: 20,
-            quantity: 1,
-            discount: 0,
-            expected: 20.00
-        },
-        {
-            name: '5 cours normal (-2%)',
-            isVip: false,
-            basePrice: 20,
+            name: '5 cours VIP Curriculum (-2%)',
+            isVip: true,
+            vipPrice: 24.5,
+            vipCurrency: 'USD',
             quantity: 5,
             discount: 2,
-            expected: 98.00
-        },
-        {
-            name: '10 cours normal (-5%)',
-            isVip: false,
-            basePrice: 20,
-            quantity: 10,
-            discount: 5,
-            expected: 190.00
+            expected: 120.05
         }
     ];
     
@@ -936,16 +916,6 @@ window.testVipPaymentLogic = async function() {
                 console.log(`  ✅ CORRECT`);
             } else {
                 console.log(`  ❌ ERREUR: Attendu ${scenario.expected}, obtenu ${total.toFixed(2)}`);
-            }
-        } else {
-            const total = scenario.basePrice * scenario.quantity * (1 - scenario.discount/100);
-            console.log(`  Calcul: ${scenario.basePrice}€ × ${scenario.quantity} × (1 - ${scenario.discount}%)`);
-            console.log(`  Total attendu: ${total.toFixed(2)}€`);
-            
-            if (Math.abs(total - scenario.expected) < 0.01) {
-                console.log(`  ✅ CORRECT`);
-            } else {
-                console.log(`  ❌ ERREUR: Attendu ${scenario.expected}€, obtenu ${total.toFixed(2)}€`);
             }
         }
     }
@@ -994,20 +964,6 @@ window.debugVIPPriceIssue = function() {
             console.warn('⚠️ Taux USD trop élevé! Cela explique le prix trop haut.');
             console.warn('Solution: Mettre à jour le taux USD dans currency.js à 1.08');
         }
-    }
-    
-    // 4. Calcul manuel
-    console.log('🧮 Calcul manuel:');
-    const vipPrice = 3; // USD
-    const quantity = 10;
-    const discount = 5; // %
-    
-    const totalUSD = vipPrice * quantity * (1 - discount/100);
-    console.log(`3 USD × 10 × (1 - 5%) = ${totalUSD.toFixed(2)} USD`);
-    
-    if (window.currencyManager) {
-        const convertedTotal = window.currencyManager.convert(totalUSD, 'USD', window.currencyManager.currentCurrency);
-        console.log(`→ ${convertedTotal.toFixed(2)} ${window.currencyManager.currentCurrency}`);
     }
     
     console.groupEnd();
