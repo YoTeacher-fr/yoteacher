@@ -398,67 +398,104 @@
             color: white;
         }
 
-        /* Section Forfaits - SIMPLIFIÉE */
-        .packages-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+        /* Section Forfaits - NOUVELLE STRUCTURE */
+        .packages-container {
+            display: flex;
+            flex-direction: column;
             gap: 15px;
             margin-top: 15px;
             flex-grow: 1;
         }
 
-        .package-type-card {
+        .package-internal-card {
             background: #f8f9fa;
             border-radius: 12px;
             padding: 20px;
             border: 1px solid #e9ecef;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
             transition: transform 0.3s, box-shadow 0.3s;
         }
 
-        .package-type-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        .package-internal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         }
 
-        .package-type-icon {
-            font-size: 1.5rem;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
+        .package-internal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .package-internal-icon {
+            font-size: 1.3rem;
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
+        }
+
+        .package-internal-title {
+            font-weight: 700;
+            color: #333;
+            font-size: 1.1rem;
+            flex-grow: 1;
+        }
+
+        .package-durations {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
             margin-bottom: 15px;
         }
 
-        .package-type-name {
-            font-weight: 600;
-            color: #333;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
+        .duration-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
         }
 
-        .package-credits {
-            font-size: 2.5rem;
-            font-weight: 800;
+        .duration-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .duration-credits {
+            font-size: 1.2rem;
+            font-weight: 700;
             color: #3c84f6;
-            line-height: 1;
-            margin: 10px 0;
         }
 
         .package-expiry {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 10px;
-            padding-top: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
             border-top: 1px solid #e0e0e0;
-            width: 100%;
+            text-align: center;
+        }
+
+        .expiry-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .expiry-date {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #e91e63;
         }
 
         /* Section Profil */
@@ -768,10 +805,6 @@
             .course-button-content {
                 padding: 20px 15px;
             }
-            
-            .packages-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
         }
         
         @media (max-width: 480px) {
@@ -806,32 +839,31 @@
                 width: 100%;
             }
             
-            .packages-grid {
-                grid-template-columns: 1fr;
+            .package-internal-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
             }
             
-            .package-type-card {
-                flex-direction: row;
-                justify-content: space-between;
-                text-align: left;
-                padding: 15px;
+            .package-internal-icon {
+                width: 40px;
+                height: 40px;
             }
             
-            .package-type-icon {
-                width: 50px;
-                height: 50px;
-                margin-bottom: 0;
-                margin-right: 15px;
+            .package-internal-title {
+                font-size: 1rem;
             }
             
-            .package-type-name {
-                margin-bottom: 0;
-                flex-grow: 1;
+            .duration-row {
+                padding: 8px 12px;
             }
             
-            .package-credits {
-                margin: 0;
-                font-size: 2rem;
+            .duration-label {
+                font-size: 0.9rem;
+            }
+            
+            .duration-credits {
+                font-size: 1.1rem;
             }
         }
         
@@ -1069,8 +1101,8 @@
                                 <h2>Mes forfaits</h2>
                             </div>
                         </div>
-                        <div class="packages-grid" id="packagesContainer">
-                            <!-- Le contenu sera chargé dynamiquement avec 3 cartes -->
+                        <div class="packages-container" id="packagesContainer">
+                            <!-- Le contenu sera chargé dynamiquement avec 3 cartes internes -->
                         </div>
                         <a href="packages.html" class="btn-buy-credits">
                             <i class="fas fa-shopping-cart"></i>
@@ -1270,29 +1302,107 @@
             
             if (!window.packagesManager) {
                 container.innerHTML = `
-                    <div class="package-type-card">
-                        <div class="package-type-icon" style="background: #ff9800;">
-                            <i class="fas fa-comments"></i>
+                    <div class="package-internal-card">
+                        <div class="package-internal-header">
+                            <div class="package-internal-icon" style="background: #ff9800;">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <div class="package-internal-title">Conversation</div>
                         </div>
-                        <div class="package-type-name">Conversation</div>
-                        <div class="package-credits">0</div>
-                        <div class="package-expiry">Pas de forfait</div>
+                        <div class="package-durations">
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>30min</span>
+                                </div>
+                                <div class="duration-credits">0</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>45min</span>
+                                </div>
+                                <div class="duration-credits">0</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>60min</span>
+                                </div>
+                                <div class="duration-credits">0</div>
+                            </div>
+                        </div>
+                        <div class="package-expiry">
+                            <div class="expiry-label">Pas de forfait actif</div>
+                        </div>
                     </div>
-                    <div class="package-type-card">
-                        <div class="package-type-icon" style="background: #4caf50;">
-                            <i class="fas fa-book"></i>
+                    <div class="package-internal-card">
+                        <div class="package-internal-header">
+                            <div class="package-internal-icon" style="background: #4caf50;">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="package-internal-title">Cours</div>
                         </div>
-                        <div class="package-type-name">Cours</div>
-                        <div class="package-credits">0</div>
-                        <div class="package-expiry">Pas de forfait</div>
+                        <div class="package-durations">
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>30min</span>
+                                </div>
+                                <div class="duration-credits">0</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>45min</span>
+                                </div>
+                                <div class="duration-credits">0</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>60min</span>
+                                </div>
+                                <div class="duration-credits">0</div>
+                            </div>
+                        </div>
+                        <div class="package-expiry">
+                            <div class="expiry-label">Pas de forfait actif</div>
+                        </div>
                     </div>
-                    <div class="package-type-card">
-                        <div class="package-type-icon" style="background: #9c27b0;">
-                            <i class="fas fa-graduation-cap"></i>
+                    <div class="package-internal-card">
+                        <div class="package-internal-header">
+                            <div class="package-internal-icon" style="background: #9c27b0;">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div class="package-internal-title">Examen</div>
                         </div>
-                        <div class="package-type-name">Examen</div>
-                        <div class="package-credits">0</div>
-                        <div class="package-expiry">Pas de forfait</div>
+                        <div class="package-durations">
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>30min</span>
+                                </div>
+                                <div class="duration-credits">0</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>45min</span>
+                                </div>
+                                <div class="duration-credits">0</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>60min</span>
+                                </div>
+                                <div class="duration-credits">0</div>
+                            </div>
+                        </div>
+                        <div class="package-expiry">
+                            <div class="expiry-label">Pas de forfait actif</div>
+                        </div>
                     </div>
                 `;
                 return;
@@ -1302,16 +1412,33 @@
                 // Charger les forfaits actifs
                 const packages = await window.packagesManager.getUserActivePackages(userId);
                 
-                // Organiser les forfaits par type
+                // Organiser les forfaits par type et par durée
                 const packagesByType = {
-                    conversation: [],
-                    curriculum: [],
-                    examen: []
+                    conversation: { 30: 0, 45: 0, 60: 0, expiry: null },
+                    curriculum: { 30: 0, 45: 0, 60: 0, expiry: null },
+                    examen: { 30: 0, 45: 0, 60: 0, expiry: null }
                 };
                 
                 packages.forEach(pkg => {
-                    if (packagesByType[pkg.course_type]) {
-                        packagesByType[pkg.course_type].push(pkg);
+                    const type = pkg.course_type;
+                    const duration = pkg.duration_minutes || 60;
+                    const remainingCredits = pkg.remaining_credits || 0;
+                    
+                    if (packagesByType[type]) {
+                        // Ajouter les crédits pour la durée appropriée
+                        if (duration === 30) {
+                            packagesByType[type][30] += remainingCredits;
+                        } else if (duration === 45) {
+                            packagesByType[type][45] += remainingCredits;
+                        } else {
+                            packagesByType[type][60] += remainingCredits;
+                        }
+                        
+                        // Mettre à jour la date d'expiration la plus proche
+                        const expiryDate = new Date(pkg.expires_at);
+                        if (!packagesByType[type].expiry || expiryDate < new Date(packagesByType[type].expiry)) {
+                            packagesByType[type].expiry = pkg.expires_at;
+                        }
                     }
                 });
                 
@@ -1325,57 +1452,65 @@
                 ];
                 
                 types.forEach(type => {
-                    const typePackages = packagesByType[type.key];
-                    
-                    if (!typePackages || typePackages.length === 0) {
-                        html += `
-                            <div class="package-type-card">
-                                <div class="package-type-icon" style="background: ${type.color};">
-                                    <i class="${type.icon}"></i>
-                                </div>
-                                <div class="package-type-name">${type.name}</div>
-                                <div class="package-credits">0</div>
-                                <div class="package-expiry">Pas de forfait</div>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    // Calculer le total des crédits pour ce type
-                    let totalCredits = 0;
-                    
-                    // Trouver la date d'expiration la plus proche
-                    let nearestExpiry = null;
-                    
-                    typePackages.forEach(pkg => {
-                        totalCredits += (pkg.remaining_credits || 0);
-                        
-                        // Vérifier la date d'expiration la plus proche
-                        const expiryDate = new Date(pkg.expires_at);
-                        if (!nearestExpiry || expiryDate < nearestExpiry) {
-                            nearestExpiry = expiryDate;
-                        }
-                    });
+                    const typeData = packagesByType[type.key];
                     
                     // Formater la date d'expiration
-                    let expiryHtml = 'Pas de forfait';
-                    if (nearestExpiry) {
-                        const formattedExpiry = nearestExpiry.toLocaleDateString('fr-FR', {
+                    let expiryHtml = '';
+                    if (typeData.expiry) {
+                        const expiryDate = new Date(typeData.expiry);
+                        const formattedExpiry = expiryDate.toLocaleDateString('fr-FR', {
                             day: 'numeric',
-                            month: 'short'
+                            month: 'short',
+                            year: 'numeric'
                         });
                         
-                        expiryHtml = `Exp: ${formattedExpiry}`;
+                        const daysUntilExpiration = Math.ceil((expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                        
+                        expiryHtml = `
+                            <div class="expiry-label">Expire le</div>
+                            <div class="expiry-date">${formattedExpiry}</div>
+                            <div style="font-size: 0.8rem; color: #666; margin-top: 3px;">
+                                (dans ${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''})
+                            </div>
+                        `;
+                    } else {
+                        expiryHtml = '<div class="expiry-label">Pas de forfait actif</div>';
                     }
                     
                     html += `
-                        <div class="package-type-card">
-                            <div class="package-type-icon" style="background: ${type.color};">
-                                <i class="${type.icon}"></i>
+                        <div class="package-internal-card">
+                            <div class="package-internal-header">
+                                <div class="package-internal-icon" style="background: ${type.color};">
+                                    <i class="${type.icon}"></i>
+                                </div>
+                                <div class="package-internal-title">${type.name}</div>
                             </div>
-                            <div class="package-type-name">${type.name}</div>
-                            <div class="package-credits">${totalCredits}</div>
-                            <div class="package-expiry">${expiryHtml}</div>
+                            <div class="package-durations">
+                                <div class="duration-row">
+                                    <div class="duration-label">
+                                        <i class="far fa-clock"></i>
+                                        <span>30min</span>
+                                    </div>
+                                    <div class="duration-credits">${typeData[30]}</div>
+                                </div>
+                                <div class="duration-row">
+                                    <div class="duration-label">
+                                        <i class="far fa-clock"></i>
+                                        <span>45min</span>
+                                    </div>
+                                    <div class="duration-credits">${typeData[45]}</div>
+                                </div>
+                                <div class="duration-row">
+                                    <div class="duration-label">
+                                        <i class="far fa-clock"></i>
+                                        <span>60min</span>
+                                    </div>
+                                    <div class="duration-credits">${typeData[60]}</div>
+                                </div>
+                            </div>
+                            <div class="package-expiry">
+                                ${expiryHtml}
+                            </div>
                         </div>
                     `;
                 });
@@ -1385,29 +1520,107 @@
             } catch (error) {
                 console.error('Erreur chargement forfaits:', error);
                 container.innerHTML = `
-                    <div class="package-type-card">
-                        <div class="package-type-icon" style="background: #ff9800;">
-                            <i class="fas fa-comments"></i>
+                    <div class="package-internal-card">
+                        <div class="package-internal-header">
+                            <div class="package-internal-icon" style="background: #ff9800;">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <div class="package-internal-title">Conversation</div>
                         </div>
-                        <div class="package-type-name">Conversation</div>
-                        <div class="package-credits">0</div>
-                        <div class="package-expiry">Erreur</div>
+                        <div class="package-durations">
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>30min</span>
+                                </div>
+                                <div class="duration-credits">Erreur</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>45min</span>
+                                </div>
+                                <div class="duration-credits">Erreur</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>60min</span>
+                                </div>
+                                <div class="duration-credits">Erreur</div>
+                            </div>
+                        </div>
+                        <div class="package-expiry">
+                            <div class="expiry-label">Erreur de chargement</div>
+                        </div>
                     </div>
-                    <div class="package-type-card">
-                        <div class="package-type-icon" style="background: #4caf50;">
-                            <i class="fas fa-book"></i>
+                    <div class="package-internal-card">
+                        <div class="package-internal-header">
+                            <div class="package-internal-icon" style="background: #4caf50;">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="package-internal-title">Cours</div>
                         </div>
-                        <div class="package-type-name">Cours</div>
-                        <div class="package-credits">0</div>
-                        <div class="package-expiry">Erreur</div>
+                        <div class="package-durations">
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>30min</span>
+                                </div>
+                                <div class="duration-credits">Erreur</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>45min</span>
+                                </div>
+                                <div class="duration-credits">Erreur</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>60min</span>
+                                </div>
+                                <div class="duration-credits">Erreur</div>
+                            </div>
+                        </div>
+                        <div class="package-expiry">
+                            <div class="expiry-label">Erreur de chargement</div>
+                        </div>
                     </div>
-                    <div class="package-type-card">
-                        <div class="package-type-icon" style="background: #9c27b0;">
-                            <i class="fas fa-graduation-cap"></i>
+                    <div class="package-internal-card">
+                        <div class="package-internal-header">
+                            <div class="package-internal-icon" style="background: #9c27b0;">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div class="package-internal-title">Examen</div>
                         </div>
-                        <div class="package-type-name">Examen</div>
-                        <div class="package-credits">0</div>
-                        <div class="package-expiry">Erreur</div>
+                        <div class="package-durations">
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>30min</span>
+                                </div>
+                                <div class="duration-credits">Erreur</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>45min</span>
+                                </div>
+                                <div class="duration-credits">Erreur</div>
+                            </div>
+                            <div class="duration-row">
+                                <div class="duration-label">
+                                    <i class="far fa-clock"></i>
+                                    <span>60min</span>
+                                </div>
+                                <div class="duration-credits">Erreur</div>
+                            </div>
+                        </div>
+                        <div class="package-expiry">
+                            <div class="expiry-label">Erreur de chargement</div>
+                        </div>
                     </div>
                 `;
             }
