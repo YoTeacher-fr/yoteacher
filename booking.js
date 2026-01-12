@@ -38,7 +38,7 @@ class BookingManager {
         }
         
         if (!this.calcomApiKey.startsWith('cal_live_') && !this.calcomApiKey.startsWith('cal_test_')) {
-            console.warn('Format de clé API Cal.com inhabituel. Vérifiez qu'elle est correcte.');
+            console.warn('Format de clé API Cal.com inhabituel. Vérifiez qu\'elle est correcte.');
         }
         
         return true;
@@ -136,7 +136,7 @@ class BookingManager {
                     console.error('Détails erreur:', errorData);
                     
                     if (errorData.message && errorData.message.includes('invalid_type')) {
-                        throw new Error('Paramètres invalides pour l'API Cal.com');
+                        throw new Error('Paramètres invalides pour l\'API Cal.com');
                     }
                     
                     if (errorData.message && (errorData.message.includes('Unauthorized') || errorData.message.includes('unauthorized'))) {
@@ -396,7 +396,7 @@ class BookingManager {
             
             // COURS D'ESSAI - Toujours 5€
             if (bookingData.courseType === 'essai') {
-                console.log('🎫 Cours d'essai détecté');
+                console.log('🎫 Cours d\'essai détecté');
                 priceEUR = 5;
                 unitPriceEUR = 5; // CORRECTION: Défini pour cours d'essai
                 finalPrice = window.currencyManager ? 
@@ -999,7 +999,7 @@ window.loadAvailableSlots = async function() {
             window.bookingManager = new BookingManager();
             console.log('✅ BookingManager réinitialisé');
         } catch (error) {
-            console.error('❌ Impossible d'initialiser BookingManager:', error);
+            console.error('❌ Impossible d\'initialiser BookingManager:', error);
             return;
         }
     }
