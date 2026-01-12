@@ -1,4 +1,4 @@
-// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - LOGIQUE RÉDUCTION CORRECTE
+// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - VERSION FINALE
 
 class PackagesManager {
     constructor() {
@@ -169,8 +169,8 @@ class PackagesManager {
             const { error: updateError } = await supabase
                 .from('packages')
                 .update({ 
-                    remaining_credits: newRemainingCredits
-                    // NOTE: Pas de colonne 'updated_at' dans la table
+                    remaining_credits: newRemainingCredits,
+                    updated_at: new Date().toISOString()
                 })
                 .eq('id', activePackage.id);
 
@@ -246,31 +246,40 @@ class PackagesManager {
                 base_price_per_course: packageInfo.basePricePerCourse || 0
             });
 
+            // CORRECTION: Préparer les données d'insertion SANS base_price_per_course
+            const packageData = {
+                user_id: userId,
+                course_type: courseType,
+                duration_minutes: 60,
+                total_credits: packageInfo.total_credits,
+                remaining_credits: packageInfo.total_credits,
+                price_paid: price,
+                price_per_course: pricePerCourse,
+                // SUPPRIMÉ: base_price_per_course: packageInfo.basePricePerCourse || 0,
+                discount_percent: packageInfo.discount_percent || 0,
+                currency: currency,
+                status: 'active',
+                purchased_at: new Date().toISOString(),
+                expires_at: expiresAt.toISOString(),
+                expiration_alert_sent: false,
+                payment_method: paymentMethod,
+                transaction_id: transactionId,
+                created_at: new Date().toISOString()
+            };
+
             // Créer un nouveau package
+            console.log('📤 Insertion dans packages avec données:', packageData);
+            
             const { data: newPackage, error: packageError } = await supabase
                 .from('packages')
-                .insert({
-                    user_id: userId,
-                    course_type: courseType,
-                    duration_minutes: 60,
-                    total_credits: packageInfo.total_credits,
-                    remaining_credits: packageInfo.total_credits,
-                    price_paid: price,
-                    price_per_course: pricePerCourse,
-                    base_price_per_course: packageInfo.basePricePerCourse || 0,
-                    discount_percent: packageInfo.discount_percent || 0,
-                    currency: currency,
-                    status: 'active',
-                    purchased_at: new Date().toISOString(),
-                    expires_at: expiresAt.toISOString(),
-                    expiration_alert_sent: false,
-                    payment_method: paymentMethod,
-                    transaction_id: transactionId
-                })
+                .insert(packageData)
                 .select()
                 .single();
 
-            if (packageError) throw packageError;
+            if (packageError) {
+                console.error('❌ Erreur création package:', packageError);
+                throw packageError;
+            }
 
             console.log('✅ Nouveau package créé:', {
                 id: newPackage.id,
@@ -415,6 +424,19 @@ class PackagesManager {
         
         return (singlePrice * quantity) - packagePrice;
     }
+    
+    // NOUVELLE MÉTHODE : Obtenir les détails de prix VIP
+    getVipPriceInfo(courseType, duration = 60, quantity = 1, discount = 0) {
+        // Cette méthode est utilisée pour obtenir les informations de prix VIP
+        // pour l'affichage dans l'interface
+        return {
+            courseType: courseType,
+            duration: duration,
+            quantity: quantity,
+            discountPercent: discount,
+            // Le prix réel est géré par AuthManager
+        };
+    }
 }
 
 // Fonctions de test
@@ -446,6 +468,34 @@ window.testPackagePrices = function() {
     console.groupEnd();
 };
 
+// Test des prix VIP
+window.testVipPackagePrices = function() {
+    console.group('👑 TEST PRIX VIP FORFAITS');
+    
+    // Prix VIP: 24.5 USD pour curriculum 60min
+    const vipPrice = 24.5;
+    const vipCurrency = 'USD';
+    
+    const testCases = [
+        { quantity: 1, discount: 0, description: '1 cours VIP curriculum' },
+        { quantity: 5, discount: 2, description: '5 cours VIP curriculum (-2%)' },
+        { quantity: 10, discount: 5, description: '10 cours VIP curriculum (-5%)' }
+    ];
+    
+    testCases.forEach(testCase => {
+        console.log(`\n📊 ${testCase.description}`);
+        const total = vipPrice * testCase.quantity * (1 - testCase.discount/100);
+        console.log(`Calcul: ${vipPrice}${vipCurrency} × ${testCase.quantity} × (1 - ${testCase.discount}%) = ${total.toFixed(2)}${vipCurrency}`);
+        
+        if (window.currencyManager && window.currencyManager.currentCurrency !== vipCurrency) {
+            const converted = window.currencyManager.convert(total, vipCurrency, window.currencyManager.currentCurrency);
+            console.log(`Conversion: ${total.toFixed(2)}${vipCurrency} → ${converted.toFixed(2)}${window.currencyManager.currentCurrency}`);
+        }
+    });
+    
+    console.groupEnd();
+};
+
 window.packagesManager = new PackagesManager();
 
 // Test automatique au chargement
@@ -453,5 +503,6 @@ if (window.location.hostname === 'localhost' || window.location.hostname.include
     setTimeout(() => {
         console.log('🧪 Test automatique des prix de forfaits');
         window.testPackagePrices();
+        window.testVipPackagePrices();
     }, 2000);
 }
