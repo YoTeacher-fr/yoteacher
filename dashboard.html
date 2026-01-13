@@ -1294,21 +1294,28 @@
                 
                 await loadUserData(user);
                 
-                document.getElementById('loadingSection').style.display = 'none';
-                document.getElementById('dashboardContent').style.display = 'block';
-                document.getElementById('dashboardActions').style.display = 'flex';
+                const loadingSection = document.getElementById('loadingSection');
+                const dashboardContent = document.getElementById('dashboardContent');
+                const dashboardActions = document.getElementById('dashboardActions');
+                
+                if (loadingSection) loadingSection.style.display = 'none';
+                if (dashboardContent) dashboardContent.style.display = 'block';
+                if (dashboardActions) dashboardActions.style.display = 'flex';
                 
             } catch (error) {
                 console.error('Erreur chargement dashboard:', error);
-                document.getElementById('loadingSection').innerHTML = `
-                    <div style="color: #e74c3c;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Erreur lors du chargement du dashboard. Veuillez rafraîchir la page.</p>
-                        <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: #3c84f6; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            Rafraîchir
-                        </button>
-                    </div>
-                `;
+                const loadingSection = document.getElementById('loadingSection');
+                if (loadingSection) {
+                    loadingSection.innerHTML = `
+                        <div style="color: #e74c3c;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Erreur lors du chargement du dashboard. Veuillez rafraîchir la page.</p>
+                            <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: #3c84f6; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Rafraîchir
+                            </button>
+                        </div>
+                    `;
+                }
             }
         }
         
@@ -1705,6 +1712,12 @@
                 return;
             }
             
+            // Vérifier si le système d'annulation est disponible
+            if (!window.bookingCancellation) {
+                alert('Le système d\'annulation n\'est pas disponible. Veuillez rafraîchir la page.');
+                return;
+            }
+            
             // Trouver la leçon pour afficher des infos dans la confirmation
             const lesson = upcomingLessons.find(l => l.id === bookingId);
             if (!lesson) {
@@ -1734,11 +1747,6 @@
             }
             
             try {
-                // Utiliser le système d'annulation
-                if (!window.bookingCancellation) {
-                    throw new Error('Système d\'annulation non disponible');
-                }
-                
                 const result = await window.bookingCancellation.cancelBooking(bookingId, user.id);
                 
                 if (result.success) {

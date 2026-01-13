@@ -1,16 +1,49 @@
-// booking-cancel.js - Gestion de l'annulation des réservations
+// booking-cancel.js - Gestion de l'annulation des réservations - VERSION CORRIGÉE
 class BookingCancellation {
     constructor() {
         this.cancellationWindowHours = 24;
+        console.log('🎫 BookingCancellation initialisé');
     }
 
     // Vérifier si l'annulation est possible (plus de 24h avant)
     canCancelBooking(startTime) {
-        const now = new Date();
-        const bookingStart = new Date(startTime);
-        const hoursUntilStart = (bookingStart - now) / (1000 * 60 * 60);
-        
-        return hoursUntilStart > this.cancellationWindowHours;
+        try {
+            const now = new Date();
+            const bookingStart = new Date(startTime);
+            const hoursUntilStart = (bookingStart - now) / (1000 * 60 * 60);
+            
+            return hoursUntilStart > this.cancellationWindowHours;
+        } catch (error) {
+            console.error('Erreur dans canCancelBooking:', error);
+            return false;
+        }
+    }
+
+    // Récupérer les détails de la réservation depuis la table bookings
+    async getBookingDetails(bookingId, userId) {
+        try {
+            if (!window.supabase) {
+                console.error('Supabase non disponible');
+                return null;
+            }
+
+            const { data: booking, error } = await supabase
+                .from('bookings')
+                .select('calcom_booking_id, package_id, start_time, status, booking_number')
+                .eq('id', bookingId)
+                .eq('user_id', userId)
+                .single();
+                
+            if (error) {
+                console.warn('⚠️ Erreur récupération détails de la réservation:', error);
+                return null;
+            }
+            
+            return booking;
+        } catch (error) {
+            console.error('Exception récupération détails de la réservation:', error);
+            return null;
+        }
     }
 
     // Annuler une réservation complètement
@@ -20,42 +53,36 @@ class BookingCancellation {
                 throw new Error('Supabase non disponible');
             }
 
-            // 1. Récupérer les détails de la réservation
-            const { data: booking, error: bookingError } = await supabase
-                .from('bookings')
-                .select('*, packages(*)')
-                .eq('id', bookingId)
-                .eq('user_id', userId)
-                .single();
-
-            if (bookingError) throw bookingError;
-            if (!booking) throw new Error('Réservation non trouvée');
+            // 1. Récupérer les détails de la réservation depuis la table bookings
+            const bookingDetails = await this.getBookingDetails(bookingId, userId);
+            if (!bookingDetails) {
+                throw new Error('Réservation non trouvée');
+            }
 
             // 2. Vérifier si l'annulation est possible
-            if (!this.canCancelBooking(booking.start_time)) {
+            if (!this.canCancelBooking(bookingDetails.start_time)) {
                 throw new Error('Annulation impossible : le cours commence dans moins de 24h');
             }
 
             // 3. Vérifier le statut
-            if (booking.status === 'cancelled') {
+            if (bookingDetails.status === 'cancelled') {
                 throw new Error('Cette réservation est déjà annulée');
             }
 
-            // 4. Annuler côté Cal.com (API v2)
+            // 4. Annuler côté Cal.com (API v2) si calcom_booking_id existe
             let calcomCancelled = false;
-            if (booking.calcom_booking_id) {
+            if (bookingDetails.calcom_booking_id) {
                 try {
-                    calcomCancelled = await this.cancelCalcomBooking(booking.calcom_booking_id);
+                    calcomCancelled = await this.cancelCalcomBooking(bookingDetails.calcom_booking_id);
                 } catch (error) {
                     console.warn('⚠️ Impossible d\'annuler sur Cal.com:', error);
                     // Continuer quand même avec l'annulation locale
                 }
             }
 
-            // 5. Démarrer une transaction pour assurer la cohérence des données
             console.log('🔄 Début de la transaction d\'annulation...');
 
-            // 5a. Mettre à jour la réservation
+            // 5. Mettre à jour la réservation dans bookings
             const { error: updateError } = await supabase
                 .from('bookings')
                 .update({
@@ -63,28 +90,41 @@ class BookingCancellation {
                     cancelled_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', bookingId);
+                .eq('id', bookingId)
+                .eq('user_id', userId);
 
             if (updateError) throw updateError;
 
-            // 5b. Si la réservation utilisait un package, rembourser un crédit
+            // 6. Si la réservation utilisait un package, rembourser un crédit
             let creditTransaction = null;
-            if (booking.package_id) {
-                creditTransaction = await this.refundCreditToPackage(
-                    booking.package_id,
-                    booking.user_id,
-                    bookingId
-                );
+            if (bookingDetails.package_id) {
+                try {
+                    // Utiliser packagesManager.refundCredit si disponible
+                    if (window.packagesManager && window.packagesManager.refundCredit) {
+                        creditTransaction = await window.packagesManager.refundCredit(
+                            bookingDetails.package_id, 
+                            userId, 
+                            bookingId
+                        );
+                    } else {
+                        // Méthode de secours
+                        creditTransaction = await this.refundCreditToPackage(bookingDetails.package_id, userId, bookingId);
+                    }
+                } catch (creditError) {
+                    console.warn('⚠️ Erreur remboursement crédit:', creditError);
+                    // Ne pas échouer l'annulation si seulement le remboursement échoue
+                }
             }
 
-            // 6. Créer un log système
-            await this.logCancellation(booking, userId, calcomCancelled, creditTransaction);
+            // 7. Créer un log système
+            await this.logCancellation(bookingDetails, userId, calcomCancelled, creditTransaction);
 
             console.log('✅ Annulation réussie!');
             
             return {
                 success: true,
                 bookingId,
+                bookingNumber: bookingDetails.booking_number,
                 calcomCancelled,
                 creditRefunded: !!creditTransaction,
                 message: 'Réservation annulée avec succès'
@@ -111,47 +151,54 @@ class BookingCancellation {
     // Annuler un rendez-vous sur Cal.com (API v2)
     async cancelCalcomBooking(calcomBookingId) {
         const config = window.YOTEACHER_CONFIG;
-        if (!config.CALCOM_API_KEY) {
-            throw new Error('Clé API Cal.com non configurée');
+        if (!config || !config.CALCOM_API_KEY) {
+            console.warn('⚠️ Clé API Cal.com non configurée');
+            return false;
         }
 
-        const apiUrl = 'https://api.cal.com/v2/bookings/' + calcomBookingId;
-        
-        console.log('📡 Annulation Cal.com API v2 pour:', calcomBookingId);
-        
-        const response = await fetch(apiUrl, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': 'Bearer ' + config.CALCOM_API_KEY,
-                'Content-Type': 'application/json',
-                'Cal-API-Version': 'v2'
+        try {
+            const apiUrl = 'https://api.cal.com/v2/bookings/' + calcomBookingId;
+            
+            console.log('📡 Annulation Cal.com API v2 pour:', calcomBookingId);
+            
+            const response = await fetch(apiUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + config.CALCOM_API_KEY,
+                    'Content-Type': 'application/json',
+                    'Cal-API-Version': 'v2'
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Cal.com API error: ${response.status} - ${errorText}`);
             }
-        });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Cal.com API error: ${response.status} - ${errorText}`);
+            console.log('✅ Annulation Cal.com réussie');
+            return true;
+        } catch (error) {
+            console.warn('⚠️ Erreur annulation Cal.com:', error);
+            throw error;
         }
-
-        console.log('✅ Annulation Cal.com réussie');
-        return true;
     }
 
-    // Rembourser un crédit au package
+    // Rembourser un crédit au package (méthode de secours)
     async refundCreditToPackage(packageId, userId, bookingId) {
         try {
             // 1. Récupérer le package actuel
-            const { data: package, error: packageError } = await supabase
+            const { data: pkg, error: packageError } = await supabase
                 .from('packages')
                 .select('*')
                 .eq('id', packageId)
+                .eq('user_id', userId)
                 .single();
 
             if (packageError) throw packageError;
 
             // 2. Calculer les nouveaux crédits
-            const newRemainingCredits = (package.remaining_credits || 0) + 1;
-            const creditsBefore = package.remaining_credits || 0;
+            const newRemainingCredits = (pkg.remaining_credits || 0) + 1;
+            const creditsBefore = pkg.remaining_credits || 0;
             const creditsAfter = newRemainingCredits;
 
             // 3. Mettre à jour le package
@@ -166,26 +213,30 @@ class BookingCancellation {
             if (updateError) throw updateError;
 
             // 4. Créer une transaction de crédit
-            const { data: transaction, error: transactionError } = await supabase
-                .from('credit_transactions')
-                .insert({
-                    user_id: userId,
-                    booking_id: bookingId,
-                    package_id: packageId,
-                    credits_change: 1,
-                    credits_before: creditsBefore,
-                    credits_after: creditsAfter,
-                    transaction_type: 'refund',
-                    reason: 'Annulation de réservation',
-                    created_at: new Date().toISOString()
-                })
-                .select()
-                .single();
+            const transactionData = {
+                user_id: userId,
+                package_id: packageId,
+                booking_id: bookingId,
+                credits_change: 1,
+                credits_before: creditsBefore,
+                credits_after: creditsAfter,
+                transaction_type: 'refund',
+                reason: 'Annulation de réservation',
+                created_at: new Date().toISOString()
+            };
 
-            if (transactionError) throw transactionError;
+            const { error: transactionError } = await supabase
+                .from('credit_transactions')
+                .insert(transactionData);
+
+            if (transactionError) {
+                console.warn('Erreur création transaction crédit:', transactionError);
+            } else {
+                console.log('✅ Transaction crédit créée');
+            }
 
             console.log(`💰 Crédit remboursé: ${creditsBefore} → ${creditsAfter}`);
-            return transaction;
+            return { success: true, transactionData };
 
         } catch (error) {
             console.error('❌ Erreur remboursement crédit:', error);
@@ -204,33 +255,23 @@ class BookingCancellation {
             message: `Réservation ${booking.booking_number || booking.id} annulée`,
             metadata: {
                 bookingId: booking.id,
+                bookingNumber: booking.booking_number,
                 calcomCancelled,
                 creditRefunded: !!creditTransaction,
                 originalStatus: booking.status,
-                courseType: booking.course_type,
+                calcomBookingId: booking.calcom_booking_id,
+                packageId: booking.package_id,
                 startTime: booking.start_time
             }
         });
     }
-
-    // Fonction pour vérifier l'état d'une réservation
-    async getBookingStatus(bookingId, userId) {
-        try {
-            const { data: booking, error } = await supabase
-                .from('bookings')
-                .select('status, start_time, cancelled_at')
-                .eq('id', bookingId)
-                .eq('user_id', userId)
-                .single();
-
-            if (error) throw error;
-            return booking;
-        } catch (error) {
-            console.error('Erreur vérification statut:', error);
-            return null;
-        }
-    }
 }
 
 // Initialiser et exposer globalement
-window.bookingCancellation = new BookingCancellation();
+try {
+    window.bookingCancellation = new BookingCancellation();
+    console.log('✅ BookingCancellation chargé et initialisé');
+} catch (error) {
+    console.error('❌ Erreur initialisation BookingCancellation:', error);
+    window.bookingCancellation = null;
+}
