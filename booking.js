@@ -1,4 +1,4 @@
-// booking.js - Gestion des réservations avec Cal.com (API v2) - VERSION CORRIGÉE - DOUBLE DÉDUCTION FIX
+// booking.js - Gestion des réservations avec Cal.com (API v2) - VERSION CORRIGÉE
 class BookingManager {
     constructor() {
         const config = window.YOTEACHER_CONFIG || {};
@@ -22,7 +22,7 @@ class BookingManager {
         this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         this.rateLimitInfo = { limit: 120, remaining: 120, reset: null };
         
-        console.log('📅 BookingManager initialisé - Version corrigée avec double déduction fix');
+        console.log('📅 BookingManager initialisé - Version corrigée');
     }
 
     checkCalcomConfig() {
@@ -339,19 +339,26 @@ class BookingManager {
             
             console.log('👤 Utilisateur:', user.email);
             
-            // 1. Vérifier les crédits SANS les utiliser encore
-            console.log('🔍 Vérification des crédits disponibles...');
-            const canUseCredit = await this.canUseCredit(bookingData);
-            if (!canUseCredit) {
-                throw new Error('Pas de crédits disponibles pour ce type de cours');
+            // 1. Utiliser un crédit
+            console.log('💰 Utilisation d\'un crédit...');
+            const creditResult = await window.packagesManager.useCredit(
+                user.id,
+                bookingData.courseType,
+                { 
+                    id: `temp_${Date.now()}`,
+                    duration: bookingData.duration || 60 
+                }
+            );
+            
+            console.log('📦 Résultat utilisation crédit:', creditResult);
+            
+            if (!creditResult.success) {
+                throw new Error(`Impossible d'utiliser un crédit: ${creditResult.error}`);
             }
             
-            console.log('✅ Crédits disponibles confirmés');
+            console.log('✅ Crédit utilisé, package_id:', creditResult.package_id);
             
-            // 2. Créer un ID temporaire unique pour cette réservation
-            const tempBookingId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            
-            // 3. Préparer les données pour la réservation
+            // 2. Préparer les données pour la réservation
             const bookingForCalcom = {
                 startTime: bookingData.startTime,
                 endTime: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, bookingData.duration),
@@ -371,76 +378,36 @@ class BookingManager {
                 currency: null,
                 paymentMethod: 'credit',
                 transactionId: `CREDIT-${Date.now()}`,
-                // Note: pas de packageId ici - il sera déterminé par useCredit
-                tempBookingId: tempBookingId, // ← NOUVEAU: ID temporaire
+                packageId: creditResult.package_id,
                 status: 'confirmed',
-                isCreditBooking: true,
+                isCreditBooking: true, // ← IMPORTANT
                 isPackage: false,
                 packageQuantity: 1
             };
             
-            console.log('📤 Données pour Cal.com avec ID temporaire:', tempBookingId);
+            console.log('📤 Données pour Cal.com:', bookingForCalcom);
             
-            // 4. Créer la réservation sur Cal.com (SANS déduire le crédit encore)
-            console.log('📅 Création réservation Cal.com...');
+            // 3. Créer la réservation sur Cal.com
             const bookingResult = await this.createBookingAfterPayment(bookingForCalcom);
             
             console.log('📥 Résultat création réservation:', bookingResult);
             
             if (!bookingResult.success) {
-                console.error('❌ Échec création réservation Cal.com');
+                console.error('❌ Échec création réservation après utilisation crédit');
                 throw new Error(`Échec création réservation: ${bookingResult.error}`);
             }
             
-            // 5. MAINTENANT utiliser le crédit avec l'ID de réservation réel
-            console.log('💰 Utilisation du crédit avec l\'ID de réservation...');
-            
-            // Préparer les données pour useCredit avec l'ID réel
-            const creditBookingData = {
-                id: bookingResult.supabaseBookingId || tempBookingId,
-                duration: bookingData.duration || 60,
-                type: bookingData.courseType
-            };
-            
-            const creditResult = await window.packagesManager.useCredit(
-                user.id,
-                bookingData.courseType,
-                creditBookingData
-            );
-            
-            console.log('📦 Résultat utilisation crédit:', creditResult);
-            
-            if (!creditResult.success) {
-                console.error('❌ Échec utilisation crédit après création réservation');
-                throw new Error(`Échec utilisation crédit: ${creditResult.error}`);
-            }
-            
-            // 6. Mettre à jour la réservation avec le packageId
-            console.log('🔄 Mise à jour réservation avec packageId:', creditResult.package_id);
-            if (creditResult.package_id && bookingResult.supabaseBookingId) {
-                await this.updateBookingWithPackageId(
-                    bookingResult.supabaseBookingId, 
-                    creditResult.package_id
-                );
-            }
-            
-            // 7. Préparer les données pour la page de succès
+            // 4. Préparer les données pour la page de succès
             const finalBookingData = {
                 ...bookingForCalcom,
                 calcomId: bookingResult.data?.id || bookingResult.data?.uid,
                 meetingLink: bookingResult.data?.location,
                 bookingNumber: `BK-CREDIT-${Date.now().toString().slice(-8)}`,
                 confirmedAt: new Date().toISOString(),
-                supabaseBookingId: bookingResult.supabaseBookingId,
-                packageId: creditResult.package_id // ← Ajouter le packageId final
+                supabaseBookingId: bookingResult.supabaseBookingId
             };
             
             console.log('✅ Réservation avec crédit créée avec succès');
-            
-            // 8. Vérifier et nettoyer les doublons après un délai
-            setTimeout(() => {
-                this.checkAndCleanDuplicateCreditTransactions(finalBookingData);
-            }, 3000);
             
             return {
                 success: true,
@@ -455,146 +422,6 @@ class BookingManager {
                 success: false, 
                 error: error.message 
             };
-        }
-    }
-
-    async updateBookingWithPackageId(bookingId, packageId) {
-        try {
-            if (!window.supabase || !bookingId || !packageId) {
-                console.warn('❌ Paramètres manquants pour updateBookingWithPackageId');
-                return false;
-            }
-            
-            console.log(`🔄 Mise à jour réservation ${bookingId} avec package ${packageId}`);
-            
-            const { data, error } = await supabase
-                .from('bookings')
-                .update({ package_id: packageId })
-                .eq('id', bookingId)
-                .select();
-                
-            if (error) {
-                console.error('❌ Erreur mise à jour package_id:', error);
-                return false;
-            }
-            
-            console.log('✅ Réservation mise à jour avec package_id');
-            return true;
-        } catch (error) {
-            console.error('Exception mise à jour réservation:', error);
-            return false;
-        }
-    }
-
-    async checkAndCleanDuplicateCreditTransactions(bookingData) {
-        try {
-            if (!window.supabase) return;
-            
-            const user = window.authManager?.getCurrentUser();
-            if (!user || !bookingData.supabaseBookingId) return;
-            
-            console.log('🔍 Vérification des transactions en double...');
-            
-            // Vérifier les transactions de crédit pour cette réservation
-            const { data: transactions, error } = await supabase
-                .from('credit_transactions')
-                .select('*')
-                .eq('booking_id', bookingData.supabaseBookingId)
-                .eq('transaction_type', 'use')
-                .order('created_at', { ascending: false });
-            
-            if (error) {
-                console.error('❌ Erreur vérification transactions:', error);
-                return;
-            }
-            
-            // Si plus d'une transaction pour la même réservation, supprimer les doublons
-            if (transactions && transactions.length > 1) {
-                console.warn(`⚠️ ${transactions.length} transactions trouvées pour la même réservation`);
-                
-                // Garder la première transaction (la plus récente) et supprimer les autres
-                const transactionToKeep = transactions[0];
-                
-                for (let i = 1; i < transactions.length; i++) {
-                    console.log(`🗑️ Suppression transaction doublon: ${transactions[i].id}`);
-                    
-                    const { error: deleteError } = await supabase
-                        .from('credit_transactions')
-                        .delete()
-                        .eq('id', transactions[i].id);
-                    
-                    if (deleteError) {
-                        console.error(`❌ Erreur suppression transaction ${transactions[i].id}:`, deleteError);
-                    } else {
-                        console.log(`✅ Transaction ${transactions[i].id} supprimée (doublon)`);
-                    }
-                }
-                
-                // Vérifier aussi les packages pour corriger le décompte
-                await this.fixPackageCreditsCount(bookingData, transactionToKeep.package_id);
-            } else {
-                console.log('✅ Une seule transaction trouvée, pas de doublon');
-            }
-        } catch (error) {
-            console.error('Erreur nettoyage transactions:', error);
-        }
-    }
-
-    async fixPackageCreditsCount(bookingData, correctPackageId) {
-        try {
-            if (!window.supabase || !correctPackageId) return;
-            
-            console.log(`🔧 Correction du décompte de crédits pour package ${correctPackageId}`);
-            
-            // Récupérer le package
-            const { data: packageData, error } = await supabase
-                .from('packages')
-                .select('*')
-                .eq('id', correctPackageId)
-                .single();
-                
-            if (error || !packageData) {
-                console.error('❌ Package non trouvé:', error);
-                return;
-            }
-            
-            // Compter les transactions de type 'use' pour ce package
-            const { data: transactions, error: transError } = await supabase
-                .from('credit_transactions')
-                .select('id, credits_change')
-                .eq('package_id', correctPackageId)
-                .eq('transaction_type', 'use');
-                
-            if (transError) {
-                console.error('❌ Erreur comptage transactions:', transError);
-                return;
-            }
-            
-            const usedCredits = transactions?.length || 0;
-            const correctRemaining = Math.max(0, packageData.total_credits - usedCredits);
-            
-            console.log(`📊 Crédits utilisés: ${usedCredits}, Devrait rester: ${correctRemaining}`);
-            
-            // Si le décompte est incorrect, corriger
-            if (packageData.remaining_credits !== correctRemaining) {
-                console.log(`🔄 Correction: ${packageData.remaining_credits} → ${correctRemaining}`);
-                
-                const { error: updateError } = await supabase
-                    .from('packages')
-                    .update({ 
-                        remaining_credits: correctRemaining,
-                        status: correctRemaining === 0 ? 'depleted' : 'active'
-                    })
-                    .eq('id', correctPackageId);
-                    
-                if (updateError) {
-                    console.error('❌ Erreur correction crédits:', updateError);
-                } else {
-                    console.log('✅ Package corrigé avec succès');
-                }
-            }
-        } catch (error) {
-            console.error('Exception correction crédits:', error);
         }
     }
 
@@ -763,8 +590,7 @@ class BookingManager {
                     isVip: String(window.authManager?.isUserVip() || 'false'),
                     quantity: String(bookingData.packageQuantity || '1'),
                     discount: String(bookingData.discountPercent || '0'),
-                    isCreditBooking: String(bookingData.isCreditBooking || 'false'),
-                    tempBookingId: String(bookingData.tempBookingId || '')
+                    isCreditBooking: String(bookingData.isCreditBooking || 'false')
                 }
             };
 
@@ -900,14 +726,10 @@ class BookingManager {
                 calcom_uid: calcomBooking.uid,
                 meeting_link: calcomBooking.location || calcomBooking.meetingUrl,
                 created_at: new Date().toISOString()
-                
-                // IMPORTANT: Ne pas mettre package_id ici pour les crédits
-                // Il sera ajouté plus tard par updateBookingWithPackageId
-                // Cela évite que le trigger ne déduise automatiquement le crédit
             };
 
-            // Ajouter package_id SEULEMENT si ce n'est pas une réservation avec crédit
-            if (bookingData.packageId && !bookingData.isCreditBooking) {
+            // Ajouter package_id si présent
+            if (bookingData.packageId) {
                 bookingRecord.package_id = bookingData.packageId;
             }
 
@@ -922,8 +744,8 @@ class BookingManager {
                 if (error) {
                     console.error('❌ Erreur insertion dans bookings:', error);
                     
-                    // Tentative 2: Essayer sans platform
-                    console.log('🔄 Tentative 2: sans platform...');
+                    // Tentative 2: Essayer avec platform = NULL
+                    console.log('🔄 Tentative 2: avec platform = NULL...');
                     const bookingRecordWithoutPlatform = { ...bookingRecord };
                     delete bookingRecordWithoutPlatform.platform;
                     
@@ -933,7 +755,7 @@ class BookingManager {
                         .select();
                         
                     if (error2) {
-                        console.error('❌ Même erreur sans platform:', error2);
+                        console.error('❌ Même erreur avec platform = NULL:', error2);
                         
                         // Tentative 3: Essayer avec des valeurs minimales
                         console.log('🔄 Tentative 3: avec valeurs minimales...');
@@ -959,7 +781,7 @@ class BookingManager {
                             return data3[0].id;
                         }
                     } else {
-                        console.log('✅ Insertion réussie sans platform');
+                        console.log('✅ Insertion réussie avec platform = NULL');
                         return data2[0].id;
                     }
                 }
@@ -1066,31 +888,6 @@ class BookingManager {
             }, 1000);
         });
     }
-
-    async verifyEventTypeExists(eventTypeId) {
-        try {
-            this.checkCalcomConfig();
-            
-            const response = await fetch(
-                `${this.apiBaseUrl}/event-types/${eventTypeId}`,
-                {
-                    method: 'GET',
-                    headers: this.getAuthHeaders('event-types')
-                }
-            );
-            
-            if (!response.ok) {
-                throw new Error(`Type d'événement non trouvé (ID: ${eventTypeId})`);
-            }
-            
-            const data = await response.json();
-            console.log('✅ Type d\'événement vérifié:', data);
-            return data;
-        } catch (error) {
-            console.error('Erreur vérification type d\'événement:', error);
-            throw error;
-        }
-    }
 }
 
 // Initialisation sécurisée
@@ -1098,7 +895,7 @@ function initializeBookingManager() {
     try {
         if (!window.bookingManager) {
             window.bookingManager = new BookingManager();
-            console.log('✅ BookingManager initialisé avec succès - Double déduction fix');
+            console.log('✅ BookingManager initialisé avec succès');
         }
         return window.bookingManager;
     } catch (error) {
@@ -1121,4 +918,4 @@ if (document.readyState === 'loading') {
 // Initialiser globalement
 window.bookingManager = initializeBookingManager();
 
-console.log('✅ booking.js chargé - Version corrigée avec DOUBLE DÉDUCTION FIX');
+console.log('✅ booking.js chargé - Version corrigée avec les 3 flux');
