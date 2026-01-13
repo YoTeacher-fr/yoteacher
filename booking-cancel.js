@@ -161,7 +161,7 @@ class BookingCancellation {
         }
     }
 
-    // Annuler un rendez-vous sur Cal.com (API v2) - CORRIGÉ avec calcom_uid
+    // Annuler un rendez-vous sur Cal.com (API v2) - OPTIMISÉ avec uniquement POST
     async cancelCalcomBooking(calcomUid) {
         const config = window.YOTEACHER_CONFIG;
         if (!config || !config.CALCOM_API_KEY) {
@@ -170,7 +170,6 @@ class BookingCancellation {
         }
 
         try {
-            // Construire l'URL avec l'UID de Cal.com
             const apiUrl = `https://api.cal.com/v2/bookings/${calcomUid}`;
             
             console.log('📡 Tentative d\'annulation Cal.com pour UID:', calcomUid);
@@ -185,9 +184,10 @@ class BookingCancellation {
                 }
             });
 
+            // Si la réservation n'existe pas ou est déjà annulée
             if (checkResponse.status === 404) {
-                console.log('ℹ️ Réservation Cal.com non trouvée (peut-être déjà annulée)');
-                return false; // Pas d'erreur, juste retourner false
+                console.log('ℹ️ Réservation Cal.com non trouvée (déjà annulée ou inexistante)');
+                return false;
             }
 
             if (!checkResponse.ok) {
@@ -197,26 +197,8 @@ class BookingCancellation {
                 return false;
             }
 
-            // Si on arrive ici, la réservation existe, on peut l'annuler
-            console.log('✅ Réservation Cal.com trouvée, tentative d\'annulation...');
-            
-            // Essayer DELETE d'abord (méthode standard)
-            const deleteResponse = await fetch(apiUrl, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': 'Bearer ' + config.CALCOM_API_KEY,
-                    'Content-Type': 'application/json',
-                    'Cal-API-Version': 'v2'
-                }
-            });
-
-            if (deleteResponse.ok) {
-                console.log('✅ Annulation Cal.com réussie (DELETE)');
-                return true;
-            }
-
-            // Si DELETE échoue, essayer POST /cancel
-            console.log('⚠️ DELETE a échoué, essai avec POST /cancel...');
+            // Annulation avec POST /cancel (méthode qui fonctionne)
+            console.log('✅ Réservation Cal.com trouvée, annulation via POST /cancel...');
             
             const cancelUrl = `${apiUrl}/cancel`;
             const postResponse = await fetch(cancelUrl, {
@@ -232,13 +214,12 @@ class BookingCancellation {
             });
 
             if (postResponse.ok) {
-                console.log('✅ Annulation Cal.com réussie (POST /cancel)');
+                console.log('✅ Annulation Cal.com réussie');
                 return true;
             }
 
-            // Les deux méthodes ont échoué
             const errorText = await postResponse.text();
-            console.warn('⚠️ Les deux méthodes d\'annulation Cal.com ont échoué:', errorText);
+            console.warn('⚠️ Annulation Cal.com échouée:', errorText);
             return false;
 
         } catch (error) {
