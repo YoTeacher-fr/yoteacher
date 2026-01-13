@@ -1,4 +1,4 @@
-// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - VERSION FINALE COMPLÈTE
+// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - VERSION CORRIGÉE
 
 class PackagesManager {
     constructor() {
@@ -364,6 +364,7 @@ class PackagesManager {
         }
     }
 
+    // CORRECTION : Retrait de la colonne updated_at qui n'existe pas dans le schéma
     async refundCredit(packageId, userId, bookingId) {
         if (!window.supabase || !packageId || !userId) {
             console.error('❌ Conditions non remplies pour rembourser un crédit');
@@ -386,19 +387,22 @@ class PackagesManager {
                 throw packageError;
             }
             
-            // Calculer les nouveaux crédits
-            const newRemainingCredits = (pkg.remaining_credits || 0) + 1;
+            // Calculer les nouveaux crédits, sans dépasser total_credits
+            const currentCredits = pkg.remaining_credits || 0;
+            const maxCredits = pkg.total_credits || 0;
+            const newRemainingCredits = Math.min(currentCredits + 1, maxCredits);
             
-            console.log(`💰 Mise à jour crédits: ${pkg.remaining_credits} → ${newRemainingCredits}`);
+            console.log(`💰 Mise à jour crédits: ${currentCredits} → ${newRemainingCredits}`);
             
-            // Mettre à jour le package
+            // CORRECTION : Retirer updated_at qui n'existe pas dans la table
+            const updateData = { 
+                remaining_credits: newRemainingCredits,
+                status: newRemainingCredits > 0 ? 'active' : 'depleted'
+            };
+            
             const { error: updateError } = await supabase
                 .from('packages')
-                .update({ 
-                    remaining_credits: newRemainingCredits,
-                    status: newRemainingCredits > 0 ? 'active' : 'depleted',
-                    updated_at: new Date().toISOString()
-                })
+                .update(updateData)
                 .eq('id', packageId);
                 
             if (updateError) {
@@ -412,7 +416,7 @@ class PackagesManager {
                 package_id: packageId,
                 booking_id: bookingId,
                 credits_change: 1,
-                credits_before: pkg.remaining_credits || 0,
+                credits_before: currentCredits,
                 credits_after: newRemainingCredits,
                 transaction_type: 'refund',
                 reason: 'Annulation de réservation',
@@ -430,10 +434,10 @@ class PackagesManager {
                 // Ne pas échouer si seulement la transaction échoue
             }
             
-            console.log(`✅ Crédit remboursé avec succès: ${pkg.remaining_credits} → ${newRemainingCredits}`);
+            console.log(`✅ Crédit remboursé avec succès: ${currentCredits} → ${newRemainingCredits}`);
             return { 
                 success: true, 
-                oldCredits: pkg.remaining_credits, 
+                oldCredits: currentCredits, 
                 newCredits: newRemainingCredits,
                 package_id: packageId
             };
@@ -731,4 +735,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PackagesManager chargé - Version complète avec méthode refundCredit');
+console.log('✅ PackagesManager chargé - Version corrigée avec refundCredit sans updated_at');
