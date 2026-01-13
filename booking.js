@@ -372,10 +372,12 @@ class BookingManager {
         }
         
         try {
-            const credits = await window.packagesManager.getUserCredits(user.id);
-            console.log(`🔍 Crédits disponibles pour ${bookingData.courseType}:`, credits[bookingData.courseType]);
-            const hasCredits = credits[bookingData.courseType] > 0;
-            console.log('✅ Peut utiliser crédit?', hasCredits);
+            // Récupérer la durée, par défaut 60
+            const duration = bookingData.duration || 60;
+            
+            // Utiliser la nouvelle méthode pour vérifier les crédits par durée
+            const hasCredits = await window.packagesManager.hasCreditForDuration(user.id, bookingData.courseType, duration);
+            console.log(`🔍 Crédits disponibles pour ${bookingData.courseType} (${duration}min):`, hasCredits);
             return hasCredits;
         } catch (error) {
             console.warn('Erreur vérification crédits:', error);
@@ -394,6 +396,16 @@ class BookingManager {
             
             console.log('👤 Utilisateur:', user.email);
             
+            const duration = bookingData.duration || 60;
+            
+            // Vérifier d'abord si le crédit existe pour cette durée
+            if (window.packagesManager) {
+                const hasCredit = await window.packagesManager.hasCreditForDuration(user.id, bookingData.courseType, duration);
+                if (!hasCredit) {
+                    throw new Error(`Vous n'avez pas de crédit disponible pour un cours de ${duration} minutes. Veuillez choisir une durée correspondant à vos forfaits.`);
+                }
+            }
+            
             // 1. Utiliser un crédit
             console.log('💰 Utilisation d\'un crédit...');
             const creditResult = await window.packagesManager.useCredit(
@@ -401,7 +413,7 @@ class BookingManager {
                 bookingData.courseType,
                 { 
                     id: `temp_${Date.now()}`,
-                    duration: bookingData.duration || 60 
+                    duration: duration 
                 }
             );
             
@@ -419,7 +431,7 @@ class BookingManager {
                 endTime: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, bookingData.duration),
                 eventType: bookingData.courseType,
                 courseType: bookingData.courseType,
-                duration: bookingData.duration || 60,
+                duration: duration,
                 location: bookingData.location || 'integrations:google:meet',
                 name: bookingData.name,
                 email: bookingData.email,
@@ -1214,4 +1226,4 @@ if (document.readyState === 'loading') {
 // Initialiser globalement
 window.bookingManager = initializeBookingManager();
 
-console.log('✅ booking.js chargé - Version finale avec gestion des crédits corrigée');
+console.log('✅ booking.js chargé - Version finale avec gestion des crédits corrigée et vérification de durée');

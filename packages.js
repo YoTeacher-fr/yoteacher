@@ -188,13 +188,40 @@ class PackagesManager {
         };
     }
 
+    async hasCreditForDuration(userId, courseType, duration) {
+        if (!window.supabase || !userId) return false;
+        
+        try {
+            const { data, error } = await supabase
+                .from('packages')
+                .select('id, remaining_credits, expires_at')
+                .eq('user_id', userId)
+                .eq('course_type', courseType)
+                .eq('duration_minutes', duration)
+                .eq('status', 'active')
+                .gt('remaining_credits', 0)
+                .gt('expires_at', new Date().toISOString())
+                .limit(1);
+
+            if (error) {
+                console.warn('Erreur vérification crédit par durée:', error);
+                return false;
+            }
+
+            return data && data.length > 0;
+        } catch (error) {
+            console.error('Exception vérification crédit par durée:', error);
+            return false;
+        }
+    }
+
     async getUserCredits(userId) {
         if (!window.supabase || !userId) return { conversation: 0, curriculum: 0, examen: 0 };
         
         try {
             const { data: packages, error } = await supabase
                 .from('packages')
-                .select('course_type, remaining_credits, expires_at')
+                .select('course_type, remaining_credits, expires_at, duration_minutes')
                 .eq('user_id', userId)
                 .eq('status', 'active')
                 .gt('remaining_credits', 0)
@@ -225,7 +252,7 @@ class PackagesManager {
         
         try {
             console.log(`💰 APPEL useCredit - Protection double déduction`);
-            console.log(`   User: ${userId}, Type: ${courseType}, BookingID: ${bookingData?.id}`);
+            console.log(`   User: ${userId}, Type: ${courseType}, BookingID: ${bookingData?.id}, Durée: ${bookingData?.duration || 60}`);
             
             // VÉRIFICATION CONTRE DOUBLE DÉDUCTION
             if (bookingData?.id) {
@@ -239,13 +266,18 @@ class PackagesManager {
                 }
             }
             
-            console.log(`💰 Recherche package pour utilisation crédit: userId=${userId}, courseType=${courseType}`);
+            // Récupérer la durée depuis bookingData (par défaut 60)
+            const duration = bookingData?.duration || 60;
             
+            console.log(`💰 Recherche package pour utilisation crédit: userId=${userId}, courseType=${courseType}, durée=${duration}`);
+            
+            // CORRECTION : Ajouter la condition de durée
             const { data: activePackages, error: findError } = await supabase
                 .from('packages')
-                .select('id, remaining_credits, expires_at, total_credits, purchased_at')
+                .select('id, remaining_credits, expires_at, total_credits, purchased_at, duration_minutes')
                 .eq('user_id', userId)
                 .eq('course_type', courseType)
+                .eq('duration_minutes', duration)  // Vérifier la durée
                 .eq('status', 'active')
                 .gt('remaining_credits', 0)
                 .gt('expires_at', new Date().toISOString())
@@ -257,18 +289,19 @@ class PackagesManager {
             }
 
             if (!activePackages || activePackages.length === 0) {
-                console.log(`❌ Aucun package actif trouvé pour ${courseType}`);
-                throw new Error('Aucun forfait actif avec des crédits disponibles');
+                console.log(`❌ Aucun package actif trouvé pour ${courseType} (${duration}min)`);
+                throw new Error(`Aucun forfait actif avec des crédits disponibles pour un cours de ${duration} minutes. Veuillez choisir une durée correspondant à vos forfaits.`);
             }
 
-            console.log(`📦 Packages actifs trouvés:`, activePackages);
+            console.log(`📦 Package actif trouvé pour ${courseType} ${duration}min:`, activePackages[0]);
             const activePackage = activePackages[0];
             
             console.log('✅ Package sélectionné pour utilisation de crédit:', {
                 id: activePackage.id,
                 credits_avant: activePackage.remaining_credits,
                 expires_at: activePackage.expires_at,
-                purchased_at: activePackage.purchased_at
+                purchased_at: activePackage.purchased_at,
+                duration_minutes: activePackage.duration_minutes
             });
 
             const newRemainingCredits = (activePackage.remaining_credits || 0) - 1;
@@ -300,7 +333,7 @@ class PackagesManager {
                     credits_change: -1,
                     credits_after: newRemainingCredits,
                     transaction_type: 'use',
-                    reason: `Réservation de cours ${courseType} ${bookingData?.type ? `(${bookingData.type})` : ''}`,
+                    reason: `Réservation de cours ${courseType} (${duration}min)`,
                     created_at: new Date().toISOString()
                 };
 
@@ -390,7 +423,8 @@ class PackagesManager {
                 total_credits: newPackage.total_credits,
                 remaining_credits: newPackage.remaining_credits,
                 discount_percent: newPackage.discount_percent,
-                expires_at: newPackage.expires_at
+                expires_at: newPackage.expires_at,
+                duration_minutes: newPackage.duration_minutes
             });
 
             // Créer une transaction de crédit
@@ -544,4 +578,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PackagesManager chargé - Version corrigée avec protection double déduction');
+console.log('✅ PackagesManager chargé - Version corrigée avec protection double déduction et vérification de durée');

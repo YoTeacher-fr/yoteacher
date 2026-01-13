@@ -235,7 +235,7 @@ class PaymentManager {
             // Si c'est un forfait, ajouter des crédits
             let packageId = null;
             if (updatedBooking.isPackage && updatedBooking.packageQuantity > 1 && user?.id && window.packagesManager) {
-                console.log(`📦 Ajout de ${updatedBooking.packageQuantity} crédits pour ${updatedBooking.courseType}`);
+                console.log(`📦 Ajout de ${updatedBooking.packageQuantity} crédits pour ${updatedBooking.courseType} (${updatedBooking.duration}min)`);
                 
                 const creditResult = await window.packagesManager.addCredits(
                     user.id,
@@ -282,7 +282,10 @@ class PaymentManager {
                     const useCreditResult = await window.packagesManager.useCredit(
                         user.id,
                         updatedBooking.courseType,
-                        { id: bookingResult.supabaseBookingId } // On passe l'ID de la réservation Supabase
+                        { 
+                            id: bookingResult.supabaseBookingId,
+                            duration: updatedBooking.duration || 60
+                        }
                     );
                     
                     if (useCreditResult.success) {
@@ -377,4 +380,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PaymentManager chargé - Version corrigée');
+console.log('✅ PaymentManager chargé - Version corrigée avec gestion de durée des crédits');
