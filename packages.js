@@ -1,4 +1,4 @@
-// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - VERSION CORRIGÉE
+// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - VERSION FINALE COMPLÈTE
 
 class PackagesManager {
     constructor() {
@@ -364,6 +364,86 @@ class PackagesManager {
         }
     }
 
+    async refundCredit(packageId, userId, bookingId) {
+        if (!window.supabase || !packageId || !userId) {
+            console.error('❌ Conditions non remplies pour rembourser un crédit');
+            return { success: false, error: 'Paramètres manquants' };
+        }
+        
+        try {
+            console.log(`💰 Remplacement de crédit pour le package ${packageId}...`);
+            
+            // Récupérer le package actuel
+            const { data: pkg, error: packageError } = await supabase
+                .from('packages')
+                .select('*')
+                .eq('id', packageId)
+                .eq('user_id', userId)
+                .single();
+                
+            if (packageError) {
+                console.error('Erreur récupération package:', packageError);
+                throw packageError;
+            }
+            
+            // Calculer les nouveaux crédits
+            const newRemainingCredits = (pkg.remaining_credits || 0) + 1;
+            
+            console.log(`💰 Mise à jour crédits: ${pkg.remaining_credits} → ${newRemainingCredits}`);
+            
+            // Mettre à jour le package
+            const { error: updateError } = await supabase
+                .from('packages')
+                .update({ 
+                    remaining_credits: newRemainingCredits,
+                    status: newRemainingCredits > 0 ? 'active' : 'depleted',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', packageId);
+                
+            if (updateError) {
+                console.error('Erreur mise à jour package:', updateError);
+                throw updateError;
+            }
+            
+            // Créer une transaction de crédit
+            const transactionData = {
+                user_id: userId,
+                package_id: packageId,
+                booking_id: bookingId,
+                credits_change: 1,
+                credits_before: pkg.remaining_credits || 0,
+                credits_after: newRemainingCredits,
+                transaction_type: 'refund',
+                reason: 'Annulation de réservation',
+                created_at: new Date().toISOString()
+            };
+            
+            console.log('📝 Création transaction de remboursement:', transactionData);
+            
+            const { error: transactionError } = await supabase
+                .from('credit_transactions')
+                .insert(transactionData);
+                
+            if (transactionError) {
+                console.warn('⚠️ Erreur création transaction crédit:', transactionError);
+                // Ne pas échouer si seulement la transaction échoue
+            }
+            
+            console.log(`✅ Crédit remboursé avec succès: ${pkg.remaining_credits} → ${newRemainingCredits}`);
+            return { 
+                success: true, 
+                oldCredits: pkg.remaining_credits, 
+                newCredits: newRemainingCredits,
+                package_id: packageId
+            };
+            
+        } catch (error) {
+            console.error('❌ Erreur lors du remboursement du crédit:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
     async addCredits(userId, courseType, quantity, price, currency, paymentMethod, transactionId, bookingData = null) {
         if (!window.supabase || !userId) return { success: false, error: 'Supabase ou utilisateur non disponible' };
         
@@ -486,6 +566,58 @@ class PackagesManager {
         }
     }
 
+    async getUserPackagesByType(userId) {
+        if (!window.supabase || !userId) {
+            return {
+                conversation: { 30: 0, 45: 0, 60: 0, expiry: null },
+                curriculum: { 30: 0, 45: 0, 60: 0, expiry: null },
+                examen: { 30: 0, 45: 0, 60: 0, expiry: null }
+            };
+        }
+        
+        try {
+            const packages = await this.getUserActivePackages(userId);
+            
+            const packagesByType = {
+                conversation: { 30: 0, 45: 0, 60: 0, expiry: null },
+                curriculum: { 30: 0, 45: 0, 60: 0, expiry: null },
+                examen: { 30: 0, 45: 0, 60: 0, expiry: null }
+            };
+            
+            packages.forEach(pkg => {
+                const type = pkg.course_type;
+                const duration = pkg.duration_minutes || 60;
+                const remainingCredits = pkg.remaining_credits || 0;
+                
+                if (packagesByType[type]) {
+                    // Ajouter les crédits pour la durée appropriée
+                    if (duration === 30) {
+                        packagesByType[type][30] += remainingCredits;
+                    } else if (duration === 45) {
+                        packagesByType[type][45] += remainingCredits;
+                    } else {
+                        packagesByType[type][60] += remainingCredits;
+                    }
+                    
+                    // Mettre à jour la date d'expiration la plus proche
+                    const expiryDate = new Date(pkg.expires_at);
+                    if (!packagesByType[type].expiry || expiryDate < new Date(packagesByType[type].expiry)) {
+                        packagesByType[type].expiry = pkg.expires_at;
+                    }
+                }
+            });
+            
+            return packagesByType;
+        } catch (error) {
+            console.error('Erreur organisation packages par type:', error);
+            return {
+                conversation: { 30: 0, 45: 0, 60: 0, expiry: null },
+                curriculum: { 30: 0, 45: 0, 60: 0, expiry: null },
+                examen: { 30: 0, 45: 0, 60: 0, expiry: null }
+            };
+        }
+    }
+
     formatPackageDisplay(courseType, quantity, currency = 'EUR') {
         const price = this.calculatePrice(courseType, quantity);
         
@@ -566,6 +698,27 @@ class PackagesManager {
         
         return (singlePrice * quantity) - packagePrice;
     }
+    
+    // NOUVELLE MÉTHODE : Pour les besoins du dashboard
+    async getDashboardPackagesData(userId) {
+        try {
+            const packagesByType = await this.getUserPackagesByType(userId);
+            
+            // Retourner les données formatées pour le dashboard
+            return {
+                conversation: packagesByType.conversation,
+                curriculum: packagesByType.curriculum,
+                examen: packagesByType.examen
+            };
+        } catch (error) {
+            console.error('Erreur préparation données dashboard:', error);
+            return {
+                conversation: { 30: 0, 45: 0, 60: 0, expiry: null },
+                curriculum: { 30: 0, 45: 0, 60: 0, expiry: null },
+                examen: { 30: 0, 45: 0, 60: 0, expiry: null }
+            };
+        }
+    }
 }
 
 // Initialisation
@@ -578,4 +731,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PackagesManager chargé - Version corrigée avec protection double déduction et vérification de durée');
+console.log('✅ PackagesManager chargé - Version complète avec méthode refundCredit');
