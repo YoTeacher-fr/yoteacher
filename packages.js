@@ -1,10 +1,10 @@
-// packages.js - Gestion des forfaits et crédits avec votre schéma Supabase - VERSION CORRIGÉE
-
+// packages.js - Gestion des forfaits et crédits avec 90 jours de validité
 class PackagesManager {
     constructor() {
         this.packages = null;
         this.basePrices = null;
         this.isInitialized = false;
+        this.packageValidityDays = 90; // 90 jours de validité
         console.log('📦 PackagesManager initialisé');
     }
 
@@ -364,7 +364,7 @@ class PackagesManager {
         }
     }
 
-    // CORRECTION : Retrait de la colonne updated_at qui n'existe pas dans le schéma
+    // Remboursement de crédit - utilise BookingCancellation.createRefundPackage
     async refundCredit(packageId, userId, bookingId) {
         if (!window.supabase || !packageId || !userId) {
             console.error('❌ Conditions non remplies pour rembourser un crédit');
@@ -372,12 +372,12 @@ class PackagesManager {
         }
         
         try {
-            console.log(`💰 Remplacement de crédit pour le package ${packageId}...`);
+            console.log(`💰 Remboursement de crédit - Appel de createRefundPackage via BookingCancellation`);
             
-            // Récupérer le package actuel
+            // Récupérer les infos du package pour connaître le type de cours
             const { data: pkg, error: packageError } = await supabase
                 .from('packages')
-                .select('*')
+                .select('course_type, duration_minutes, purchased_at')
                 .eq('id', packageId)
                 .eq('user_id', userId)
                 .single();
@@ -387,60 +387,18 @@ class PackagesManager {
                 throw packageError;
             }
             
-            // Calculer les nouveaux crédits, sans dépasser total_credits
-            const currentCredits = pkg.remaining_credits || 0;
-            const maxCredits = pkg.total_credits || 0;
-            const newRemainingCredits = Math.min(currentCredits + 1, maxCredits);
-            
-            console.log(`💰 Mise à jour crédits: ${currentCredits} → ${newRemainingCredits}`);
-            
-            // CORRECTION : Retirer updated_at qui n'existe pas dans la table
-            const updateData = { 
-                remaining_credits: newRemainingCredits,
-                status: newRemainingCredits > 0 ? 'active' : 'depleted'
-            };
-            
-            const { error: updateError } = await supabase
-                .from('packages')
-                .update(updateData)
-                .eq('id', packageId);
-                
-            if (updateError) {
-                console.error('Erreur mise à jour package:', updateError);
-                throw updateError;
+            // Utiliser le BookingCancellation pour créer un package de remboursement
+            if (window.bookingCancellation && window.bookingCancellation.createRefundPackage) {
+                return await window.bookingCancellation.createRefundPackage(
+                    userId,
+                    pkg.course_type,
+                    pkg.duration_minutes || 60,
+                    bookingId,
+                    pkg.purchased_at // Date d'achat du package original
+                );
+            } else {
+                throw new Error('BookingCancellation non disponible');
             }
-            
-            // Créer une transaction de crédit
-            const transactionData = {
-                user_id: userId,
-                package_id: packageId,
-                booking_id: bookingId,
-                credits_change: 1,
-                credits_before: currentCredits,
-                credits_after: newRemainingCredits,
-                transaction_type: 'refund',
-                reason: 'Annulation de réservation',
-                created_at: new Date().toISOString()
-            };
-            
-            console.log('📝 Création transaction de remboursement:', transactionData);
-            
-            const { error: transactionError } = await supabase
-                .from('credit_transactions')
-                .insert(transactionData);
-                
-            if (transactionError) {
-                console.warn('⚠️ Erreur création transaction crédit:', transactionError);
-                // Ne pas échouer si seulement la transaction échoue
-            }
-            
-            console.log(`✅ Crédit remboursé avec succès: ${currentCredits} → ${newRemainingCredits}`);
-            return { 
-                success: true, 
-                oldCredits: currentCredits, 
-                newCredits: newRemainingCredits,
-                package_id: packageId
-            };
             
         } catch (error) {
             console.error('❌ Erreur lors du remboursement du crédit:', error);
@@ -448,12 +406,15 @@ class PackagesManager {
         }
     }
 
+    // Ajouter des crédits avec 90 jours de validité
     async addCredits(userId, courseType, quantity, price, currency, paymentMethod, transactionId, bookingData = null) {
         if (!window.supabase || !userId) return { success: false, error: 'Supabase ou utilisateur non disponible' };
         
         try {
-            const expiresAt = new Date();
-            expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+            // MODIFICATION : 90 jours au lieu d'1 an
+            const purchasedDate = new Date();
+            const expiresAt = new Date(purchasedDate);
+            expiresAt.setDate(expiresAt.getDate() + this.packageValidityDays); // 90 jours
 
             const packageInfo = await this.getPackageInfo(courseType, quantity);
             if (!packageInfo) {
@@ -469,7 +430,10 @@ class PackagesManager {
                 total_price: price,
                 currency: currency,
                 price_per_course: pricePerCourse,
-                discount_percent: packageInfo.discount_percent || 0
+                discount_percent: packageInfo.discount_percent || 0,
+                purchased_date: purchasedDate.toISOString(),
+                expires_at: expiresAt.toISOString(),
+                expires_in_days: this.packageValidityDays
             });
 
             const packageData = {
@@ -482,7 +446,7 @@ class PackagesManager {
                 discount_percent: packageInfo.discount_percent || 0,
                 currency: currency,
                 status: 'active',
-                purchased_at: new Date().toISOString(),
+                purchased_at: purchasedDate.toISOString(),
                 expires_at: expiresAt.toISOString(),
                 expiration_alert_sent: false
             };
@@ -507,8 +471,10 @@ class PackagesManager {
                 total_credits: newPackage.total_credits,
                 remaining_credits: newPackage.remaining_credits,
                 discount_percent: newPackage.discount_percent,
+                purchased_at: newPackage.purchased_at,
                 expires_at: newPackage.expires_at,
-                duration_minutes: newPackage.duration_minutes
+                duration_minutes: newPackage.duration_minutes,
+                days_valid: this.packageValidityDays
             });
 
             // Créer une transaction de crédit
@@ -703,12 +669,10 @@ class PackagesManager {
         return (singlePrice * quantity) - packagePrice;
     }
     
-    // NOUVELLE MÉTHODE : Pour les besoins du dashboard
     async getDashboardPackagesData(userId) {
         try {
             const packagesByType = await this.getUserPackagesByType(userId);
             
-            // Retourner les données formatées pour le dashboard
             return {
                 conversation: packagesByType.conversation,
                 curriculum: packagesByType.curriculum,
@@ -723,6 +687,20 @@ class PackagesManager {
             };
         }
     }
+    
+    // Méthode utilitaire pour calculer les jours restants
+    calculateDaysRemaining(expiresAt) {
+        const expiryDate = new Date(expiresAt);
+        const now = new Date();
+        const timeDiff = expiryDate.getTime() - now.getTime();
+        return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+    }
+    
+    // Vérifier si un package est sur le point d'expirer (moins de 7 jours)
+    isPackageExpiringSoon(expiresAt, thresholdDays = 7) {
+        const daysRemaining = this.calculateDaysRemaining(expiresAt);
+        return daysRemaining > 0 && daysRemaining <= thresholdDays;
+    }
 }
 
 // Initialisation
@@ -735,4 +713,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PackagesManager chargé - Version corrigée avec refundCredit sans updated_at');
+console.log('✅ PackagesManager chargé - Version avec 90 jours de validité');
