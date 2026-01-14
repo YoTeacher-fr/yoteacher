@@ -557,12 +557,12 @@
             grid-column: span 2;
         }
 
-        /* NOUVEAU STYLE POUR BOUTON "J'AI PAYÉ" : BACKGROUND #eedbda */
+        /* RÉTABLIR LA COULEUR VERTE DU BOUTON "J'AI PAYÉ" */
         .btn-confirm-payment {
             width: 100%;
             padding: 15px;
-            background: #eedbda !important;
-            color: #333 !important;
+            background: linear-gradient(135deg, #4CAF50, #45a049) !important;
+            color: white !important;
             border: none;
             border-radius: 8px;
             font-size: 1.1rem;
@@ -573,7 +573,7 @@
 
         .btn-confirm-payment:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(238, 219, 218, 0.3);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
         }
 
         .btn-confirm-payment:disabled {
@@ -581,18 +581,18 @@
             cursor: not-allowed;
         }
 
-        /* Style pour le message important */
+        /* NOUVEAU STYLE POUR LES MESSAGES IMPORTANTS EN #eedbda */
         .payment-notice {
             margin-top: 15px;
             padding: 15px;
-            background: #fff3cd;
+            background: #eedbda !important;
             border-radius: 8px;
-            border: 1px solid #ffeaa7;
+            border: 1px solid #d7c0be !important;
             grid-column: span 2;
         }
 
         .payment-notice p {
-            color: #856404;
+            color: #5d4037 !important;
             margin: 0;
             font-size: 0.95rem;
             display: flex;
@@ -714,23 +714,6 @@
             color: #666;
             margin-bottom: 5px;
             display: block;
-        }
-        
-        /* Info devise */
-        .currency-info-payment {
-            font-size: 0.9rem;
-            color: #666;
-            text-align: center;
-            margin-top: 10px;
-            padding: 8px;
-            background: #f0f7ff;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
-        
-        .currency-info-payment i {
-            color: #3c84f6;
-            margin-right: 5px;
         }
 
         /* Header mobile ajusté */
@@ -967,9 +950,7 @@
             <div class="payment-header">
                 <h1 class="payment-title" data-i18n="payment.title_main">Finaliser votre paiement</h1>
                 <p class="payment-subtitle" data-i18n="payment.subtitle">Choisissez votre moyen de paiement et confirmez votre réservation</p>
-                <div class="currency-info-payment" id="currencyInfoPayment">
-                    <i class="fas fa-sync-alt"></i> <span data-i18n="payment.currency_info">Prix affichés en</span> <span id="currentCurrency">EUR</span>
-                </div>
+                <!-- SUPPRIMÉ : Bloc d'information sur la devise -->
             </div>
             
             <!-- Notification pour Interac -->
@@ -1392,10 +1373,7 @@
                     });
                 }
                 
-                // Mettre à jour l'affichage de la devise
-                updateCurrencyDisplay();
-                
-                // Initialiser l'affichage des paiements
+                // Mettre à jour l'affichage des paiements
                 updatePaymentDisplay();
             };
             
@@ -1462,13 +1440,10 @@
             
             updatePaymentDetails(currentBooking);
             updatePaymentSummary(currentBooking);
-            updateCurrencyDisplay();
         }
         
         // Mettre à jour les détails de paiement
         function updatePaymentDetails(booking) {
-            const refNumber = Date.now().toString().slice(-6);
-            
             // Calculer le montant dans la devise courante
             let amountToDisplay = booking.price;
             let currencyToDisplay = currentCurrency;
@@ -1514,10 +1489,6 @@
             const paypalEmail = config.PAYPAL_BUSINESS_EMAIL || "https://paypal.me/yoannbourbia";
             const interacEmail = config.INTERAC_EMAIL || contactEmail;
             
-            // CORRECTION : Ces éléments ont été supprimés du HTML, donc on ne les met plus à jour
-            // document.getElementById('revolutRefNum').textContent = refNumber;
-            // document.getElementById('interacRefNum').textContent = refNumber;
-            
             // Formater le montant
             let formattedAmount;
             if (window.currencyManager) {
@@ -1527,27 +1498,32 @@
             }
             
             document.querySelectorAll('#revolutAmount, #wiseAmount, #paypalAmount, #interacAmount').forEach(el => {
-                el.textContent = formattedAmount;
+                if (el) el.textContent = formattedAmount;
             });
             
             document.querySelectorAll('#revolutName, #wiseName, #paypalName, #interacName').forEach(el => {
-                el.textContent = contactName;
+                if (el) el.textContent = contactName;
             });
             
-            // CORRECTION : L'élément wiseEmail a été supprimé
-            // document.getElementById('wiseEmail').textContent = contactEmail;
+            const paypalEmailElement = document.getElementById('paypalEmail');
+            if (paypalEmailElement) paypalEmailElement.textContent = paypalEmail;
             
-            document.getElementById('paypalEmail').textContent = paypalEmail;
-            document.getElementById('interacEmail').textContent = interacEmail;
+            const interacEmailElement = document.getElementById('interacEmail');
+            if (interacEmailElement) interacEmailElement.textContent = interacEmail;
             
             const revolutDisplay = revolutLink.replace('https://', '');
             const wiseDisplay = wiseLink.replace('https://', '');
             const paypalUsername = 'yoannbourbia';
             const paypalDisplay = `paypal.me/${paypalUsername}`;
             
-            document.getElementById('revolutLinkDisplay').textContent = revolutDisplay;
-            document.getElementById('wiseLinkDisplay').textContent = wiseDisplay;
-            document.getElementById('paypalLinkDisplay').textContent = paypalDisplay;
+            const revolutLinkDisplay = document.getElementById('revolutLinkDisplay');
+            if (revolutLinkDisplay) revolutLinkDisplay.textContent = revolutDisplay;
+            
+            const wiseLinkDisplay = document.getElementById('wiseLinkDisplay');
+            if (wiseLinkDisplay) wiseLinkDisplay.textContent = wiseDisplay;
+            
+            const paypalLinkDisplay = document.getElementById('paypalLinkDisplay');
+            if (paypalLinkDisplay) paypalLinkDisplay.textContent = paypalDisplay;
             
             // Générer les liens de paiement avec le bon montant (Revolut en centimes)
             const revolutAmountInCents = Math.round(amountToDisplay * 100);
@@ -1717,27 +1693,6 @@
                     </div>
                 </div>
             `;
-        }
-        
-        // Mettre à jour l'affichage de la devise
-        function updateCurrencyDisplay() {
-            if (window.currencyManager) {
-                const currentCurrencySpan = document.getElementById('currentCurrency');
-                if (currentCurrencySpan) {
-                    currentCurrencySpan.textContent = window.currencyManager.currentCurrency;
-                }
-                
-                // Mettre à jour le sélecteur de devise
-                const desktopSelector = document.getElementById('currencySelector');
-                if (desktopSelector && desktopSelector.value !== window.currencyManager.currentCurrency) {
-                    desktopSelector.value = window.currencyManager.currentCurrency;
-                }
-                
-                const mobileSelector = document.getElementById('currencySelectorMobile');
-                if (mobileSelector && mobileSelector.value !== window.currencyManager.currentCurrency) {
-                    mobileSelector.value = window.currencyManager.currentCurrency;
-                }
-            }
         }
         
         // Gestion des boutons de méthode de paiement
