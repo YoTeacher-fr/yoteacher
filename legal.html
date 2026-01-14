@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentions Légales - YoTeacher</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Styles spécifiques à la page mentions légales */
+        .legal-page {
+            padding: 120px 0 80px;
+            background-color: #f8f9fa;
+        }
+        
+        .legal-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .legal-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .legal-title {
+            font-size: 2.5rem;
+            color: var(--neutral-dark);
+            margin-bottom: 20px;
+        }
+        
+        .legal-nav {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-light);
+        }
+        
+        .legal-nav-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .legal-nav-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--primary-blue);
+            color: white;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .legal-nav-link:hover {
+            background: var(--primary-blue-dark);
+            transform: translateY(-2px);
+        }
+        
+        .legal-section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-light);
+        }
+        
+        .legal-section h2 {
+            color: var(--primary-blue);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .legal-section h3 {
+            color: var(--neutral-dark);
+            margin: 25px 0 15px;
+        }
+        
+        .legal-section p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .legal-section ul {
+            margin: 15px 0 15px 20px;
+            color: #555;
+        }
+        
+        .legal-section li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .back-to-top {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-to-top:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .legal-page {
+                padding: 100px 0 60px;
+            }
+            
+            .legal-title {
+                font-size: 2rem;
+            }
+            
+            .legal-section {
+                padding: 25px;
+            }
+            
+            .legal-nav-list {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .legal-nav-link {
+                width: 100%;
+                text-align: center;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header (identique à index.html) -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <button class="hamburger-menu" id="hamburgerBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
+                <div class="logo-section">
+                    <a href="index.html" class="logo">Yoann</a>
+                    <div class="flag">🇫🇷</div>
+                </div>
+                
+                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                
+                <nav class="nav-menu desktop-menu">
+                    <div class="nav-links-wrapper">
+                        <a href="index.html#about" class="nav-link">À propos</a>
+                        <a href="index.html#courses" class="nav-link">Cours</a>
+                        <a href="index.html#testimonials" class="nav-link">Témoignages</a>
+                        <a href="index.html#contact" class="nav-link">Contact</a>
+                    </div>
+                </nav>
+
+                <div class="header-right-group">
+                    <div class="currency-selector">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <select id="currencySelector"></select>
+                    </div>
+                    
+                    <div class="language-switcher" id="languageSwitcherDesktop">
+                        <span class="flag">🌐</span>
+                        <span>EN</span>
+                    </div>
+                    
+                    <a href="login.html" class="login-btn">Connexion</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Menu Mobile -->
+        <div class="mobile-menu-overlay" id="mobileMenu">
+            <nav class="mobile-nav">
+                <button class="close-menu" id="closeMenuBtn">×</button>
+                <a href="index.html#about" class="mobile-nav-link">À propos</a>
+                <a href="index.html#courses" class="mobile-nav-link">Cours</a>
+                <a href="index.html#testimonials" class="mobile-nav-link">Témoignages</a>
+                <a href="index.html#contact" class="mobile-nav-link">Contact</a>
+                
+                <div class="currency-selector-mobile" style="padding: 15px 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                        <i class="fas fa-money-bill-wave"></i> Devise
+                    </label>
+                    <select id="currencySelectorMobile" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;"></select>
+                </div>
+                
+                <div class="mobile-language" id="languageSwitcherMobile">
+                    <span class="flag">🌐</span>
+                    <span>EN</span>
+                </div>
+                
+                <a href="login.html" class="btn btn-primary mobile-login-btn">Connexion</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Section principale -->
+    <section class="legal-page">
+        <div class="legal-container">
+            <div class="legal-header">
+                <h1 class="legal-title">Mentions Légales</h1>
+                <p>Informations légales, conditions de vente et politiques de YoTeacher</p>
+            </div>
+            
+            <!-- Navigation interne -->
+            <nav class="legal-nav">
+                <ul class="legal-nav-list">
+                    <li><a href="#mentions-legales" class="legal-nav-link">Mentions Légales</a></li>
+                    <li><a href="#conditions-vente" class="legal-nav-link">Conditions de Vente</a></li>
+                    <li><a href="#confidentialite" class="legal-nav-link">Confidentialité</a></li>
+                    <li><a href="#annulation" class="legal-nav-link">Annulation</a></li>
+                </ul>
+            </nav>
+            
+            <!-- Section Mentions Légales -->
+            <section id="mentions-legales" class="legal-section">
+                <h2>Mentions Légales</h2>
+                
+                <h3>Éditeur du site</h3>
+                <p><strong>YoTeach</strong> - Cours de français en ligne</p>
+                <p><strong>Professeur :</strong> Yoann Bourbia</p>
+                <p><strong>Email :</strong> yoteachfr@gmail.com</p>
+                <p><strong>Localisation :</strong> Marseille, France</p>
+                
+                <h3>Activité</h3>
+                <p>Enseignement de la langue française en ligne à destination des adultes.</p>
+                <p>Cours particuliers et personnalisés via visioconférence.</p>
+                
+                <h3>Hébergement</h3>
+                <p>Le site est hébergé par :</p>
+                <p><strong>GitHub Pages</strong></p>
+                <p>88 Colin P Kelly Jr St, San Francisco, CA 94107, États-Unis</p>
+                <p><a href="https://pages.github.com" target="_blank">https://pages.github.com</a></p>
+                
+                <h3>Propriété intellectuelle</h3>
+                <p>L'ensemble du contenu de ce site (textes, images, design, logos) est la propriété exclusive de YoTeach, sauf mention contraire. Toute reproduction, même partielle, est interdite sans autorisation écrite préalable.</p>
+                
+                <h3>Responsabilité</h3>
+                <p>YoTeach met tout en œuvre pour assurer l'exactitude des informations diffusées sur son site. Cependant, YoTeach ne saurait être tenue responsable des erreurs, omissions, ou des résultats qui pourraient être obtenus par l'usage de ces informations.</p>
+                
+                <a href="#" class="back-to-top">↑ Retour en haut</a>
+            </section>
+            
+            <!-- Section Conditions Générales de Vente -->
+            <section id="conditions-vente" class="legal-section">
+                <h2>Conditions Générales de Vente</h2>
+                <p><em>Dernière mise à jour : 15 janvier 2024</em></p>
+                
+                <h3>Article 1 - Objet</h3>
+                <p>Les présentes conditions générales de vente (CGV) ont pour objet de définir les relations contractuelles entre YoTeach et l'acheteur, ainsi que les conditions de vente des cours de français en ligne.</p>
+                
+                <h3>Article 2 - Prix</h3>
+                <p>Les prix des cours sont indiqués en euros (€) toutes taxes comprises (TVA non applicable, article 293 B du CGI). YoTeach se réserve le droit de modifier ses tarifs à tout moment, étant entendu que le prix applicable à la commande est celui en vigueur au jour de la commande.</p>
+                
+                <h3>Article 3 - Commande et Paiement</h3>
+                <p>La commande de cours s'effectue en ligne via le site YoTeach. Le paiement est exigible immédiatement à la commande. Les moyens de paiement acceptés sont :</p>
+                <ul>
+                    <li>Cartes bancaires (via Stripe)</li>
+                    <li>Revolut</li>
+                    <li>Wise</li>
+                    <li>PayPal</li>
+                    <li>Interac (Canada)</li>
+                </ul>
+                
+                <h3>Article 4 - Validation de la commande</h3>
+                <p>La commande ne sera considérée comme définitive qu'après réception du paiement complet. Une confirmation de commande sera envoyée par email à l'adresse fournie par l'acheteur.</p>
+                
+                <h3>Article 5 - Prestation de service</h3>
+                <p>Les cours sont dispensés en visioconférence via Zoom, Google Meet ou Microsoft Teams, selon le choix de l'élève. L'élève recevra le lien de connexion par email avant chaque séance.</p>
+                <p>YoTeach s'engage à respecter les horaires convenus et à fournir un service de qualité correspondant à la description des cours sur le site.</p>
+                
+                <h3>Article 6 - Droit de rétractation</h3>
+                <p>Conformément à l'article L.221-28 du Code de la consommation, le droit de rétractation ne s'applique pas aux contrats de prestation de services pleinement exécutés avant la fin du délai de rétractation. Les cours réservés et payés ne peuvent donc pas être remboursés, sauf dans les conditions prévues à l'article 7.</p>
+                
+                <h3>Article 7 - Annulation et report</h3>
+                <p>L'élève peut annuler ou reporter un cours sans frais jusqu'à 24 heures avant l'horaire prévu. Au-delà de ce délai, le cours est dû intégralement. En cas d'absence non excusée, le cours est également dû intégralement.</p>
+                
+                <h3>Article 8 - Propriété intellectuelle</h3>
+                <p>Les supports de cours fournis par YoTeach (documents, exercices, enregistrements) sont protégés par le droit d'auteur et sont destinés à un usage personnel uniquement. Toute diffusion, reproduction ou exploitation commerciale est interdite.</p>
+                
+                <h3>Article 9 - Protection des données personnelles</h3>
+                <p>Les données personnelles collectées sont traitées conformément à notre Politique de confidentialité. L'élève dispose d'un droit d'accès, de rectification et de suppression de ses données.</p>
+                
+                <h3>Article 10 - Litiges</h3>
+                <p>Les présentes CGV sont soumises au droit français. En cas de litige, une solution amiable sera recherchée prioritairement. À défaut, les tribunaux compétents seront ceux du ressort de Marseille.</p>
+                
+                <a href="#" class="back-to-top">↑ Retour en haut</a>
+            </section>
+            
+            <!-- Section Politique de Confidentialité -->
+            <section id="confidentialite" class="legal-section">
+                <h2>Politique de Confidentialité</h2>
+                <p><em>Dernière mise à jour : 15 janvier 2024</em></p>
+                
+                <h3>1. Données collectées</h3>
+                <p>Nous collectons les données suivantes :</p>
+                <ul>
+                    <li><strong>Identité :</strong> Nom, prénom, email</li>
+                    <li><strong>Paiement :</strong> Informations de transaction (gardées par nos processeurs de paiement)</li>
+                    <li><strong>Apprentissage :</strong> Niveau de français, objectifs, notes sur les cours</li>
+                    <li><strong>Communication :</strong> Historique des échanges par email</li>
+                </ul>
+                
+                <h3>2. Finalités du traitement</h3>
+                <p>Vos données sont utilisées pour :</p>
+                <ul>
+                    <li>Gérer votre compte étudiant</li>
+                    <li>Planifier et dispenser vos cours</li>
+                    <li>Traiter vos paiements</li>
+                    <li>Vous envoyer des informations sur vos cours</li>
+                    <li>Améliorer nos services</li>
+                </ul>
+                
+                <h3>3. Base légale</h3>
+                <p>Le traitement de vos données est basé sur :</p>
+                <ul>
+                    <li>L'exécution du contrat (cours que vous réservez)</li>
+                    <li>Votre consentement (newsletter, communications marketing)</li>
+                    <li>L'intérêt légitime (amélioration des services, sécurité)</li>
+                </ul>
+                
+                <h3>4. Conservation des données</h3>
+                <p>Vos données sont conservées :</p>
+                <ul>
+                    <li>Données de compte : 3 ans après la dernière activité</li>
+                    <li>Données de facturation : 10 ans (obligation légale)</li>
+                    <li>Données de cours : 5 ans après le dernier cours</li>
+                </ul>
+                
+                <h3>5. Partage des données</h3>
+                <p>Vos données ne sont partagées qu'avec :</p>
+                <ul>
+                    <li>Nos processeurs de paiement (Stripe, PayPal, etc.)</li>
+                    <li>Nos outils de visioconférence (Zoom, etc.)</li>
+                    <li>Nos sous-traitants techniques (hébergeur, email)</li>
+                </ul>
+                <p>Aucune donnée n'est vendue à des tiers.</p>
+                
+                <h3>6. Sécurité</h3>
+                <p>Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données contre tout accès non autorisé, modification, divulgation ou destruction.</p>
+                
+                <h3>7. Vos droits</h3>
+                <p>Vous disposez des droits suivants :</p>
+                <ul>
+                    <li>Droit d'accès à vos données</li>
+                    <li>Droit de rectification</li>
+                    <li>Droit à l'effacement ("droit à l'oubli")</li>
+                    <li>Droit à la limitation du traitement</li>
+                    <li>Droit à la portabilité des données</li>
+                    <li>Droit d'opposition</li>
+                </ul>
+                <p>Pour exercer ces droits, contactez-nous à : yoteachfr@gmail.com</p>
+                
+                <h3>8. Cookies</h3>
+                <p>Notre site utilise des cookies techniques essentiels au fonctionnement. Aucun cookie de tracking n'est utilisé.</p>
+                
+                <a href="#" class="back-to-top">↑ Retour en haut</a>
+            </section>
+            
+            <!-- Section Politique d'Annulation -->
+            <section id="annulation" class="legal-section">
+                <h2>Politique d'Annulation</h2>
+                <p><em>Dernière mise à jour : 15 janvier 2024</em></p>
+                
+                <h3>1. Annulation par l'élève</h3>
+                <p>L'élève peut annuler un cours sans frais jusqu'à <strong>24 heures</strong> avant l'horaire prévu. Pour annuler :</p>
+                <ul>
+                    <li>Via votre dashboard YoTeach</li>
+                    <li>Par email à yoteachfr@gmail.com</li>
+                    <li>Par message via l'application de messagerie utilisée pour le cours</li>
+                </ul>
+                
+                <h3>2. Retard dans l'annulation</h3>
+                <p>Si l'annulation intervient moins de 24 heures avant le cours :</p>
+                <ul>
+                    <li>Le cours est dû à 100%</li>
+                    <li>Aucun remboursement n'est effectué</li>
+                    <li>Le crédit est consommé</li>
+                </ul>
+                
+                <h3>3. Absence non excusée</h3>
+                <p>En cas d'absence sans annulation préalable :</p>
+                <ul>
+                    <li>Le cours est dû à 100%</li>
+                    <li>Le professeur attend 15 minutes avant de considérer le cours comme annulé</li>
+                    <li>Aucun report automatique n'est effectué</li>
+                </ul>
+                
+                <h3>4. Annulation par le professeur</h3>
+                <p>Dans le cas exceptionnel où le professeur doit annuler un cours :</p>
+                <ul>
+                    <li>L'élève est prévenu au plus tôt par email</li>
+                    <li>Le cours est reporté à une date convenue mutuellement</li>
+                    <li>Le crédit est conservé pour la nouvelle date</li>
+                    <li>En cas d'impossibilité de report, un remboursement est effectué</li>
+                </ul>
+                
+                <h3>5. Report de cours</h3>
+                <p>Le report est possible jusqu'à 24 heures avant le cours, sous réserve de disponibilité du professeur. Pour reporter :</p>
+                <ul>
+                    <li>Utilisez la fonction "Reporter" dans votre dashboard</li>
+                    <li>Contactez le professeur pour convenir d'une nouvelle date</li>
+                    <li>Le nouveau créneau doit être dans les 30 jours suivant le cours initial</li>
+                </ul>
+                
+                <h3>6. Forfaits de cours</h3>
+                <p>Pour les forfaits de 5 ou 10 cours :</p>
+                <ul>
+                    <li>Les crédits sont valables 6 mois à partir de la date d'achat</li>
+                    <li>Les annulations tardives consomment un crédit</li>
+                    <li>Les crédits non utilisés expirent sans remboursement</li>
+                </ul>
+                
+                <h3>7. Cours d'essai</h3>
+                <p>Le cours d'essai à 5€ suit les mêmes règles d'annulation. En cas d'annulation tardive ou d'absence, le montant n'est pas remboursé.</p>
+                
+                <h3>8. Exceptions</h3>
+                <p>Des exceptions peuvent être faites en cas de :</p>
+                <ul>
+                    <li>Problème de santé avec justificatif médical</li>
+                    <li>Urgence familiale</li>
+                    <li>Problème technique majeur (coupure internet prolongée, etc.)</li>
+                </ul>
+                <p>Contactez le professeur pour discuter de votre situation.</p>
+                
+                <h3>9. Remboursements</h3>
+                <p>Les remboursements sont effectués selon les modalités suivantes :</p>
+                <ul>
+                    <li>Via le même moyen de paiement que l'achat initial</li>
+                    <li>Sous 14 jours ouvrables maximum</li>
+                    <li>Les frais de transaction peuvent être déduits</li>
+                </ul>
+                
+                <a href="#" class="back-to-top">↑ Retour en haut</a>
+            </section>
+            
+            <!-- Contact -->
+            <div class="legal-section" style="text-align: center;">
+                <h3>Questions ?</h3>
+                <p>Pour toute question concernant nos mentions légales, conditions ou politiques, contactez-nous :</p>
+                <p><strong>Email :</strong> yoteachfr@gmail.com</p>
+                <p><strong>Réponse sous :</strong> 48 heures ouvrées</p>
+                <a href="index.html" class="btn btn-primary" style="margin-top: 20px;">← Retour à l'accueil</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (identique à index.html) -->
+    <section class="contact-section">
+        <div class="container">
+            <div class="contact-grid">
+                <div class="contact-column">
+                    <h3>Yo<span class="teacher-blue">Teach</span></h3>
+                    <div class="brand-info">
+                        <p>Cours de français en ligne pour adultes. Apprenez avec confiance et plaisir avec un professeur natif passionné.</p>
+                        <div class="brand-stats">
+                            <div>🇫🇷 Professeur natif de Marseille</div>
+                            <div>🌍 75 pays visités</div>
+                            <div>👥 500+ étudiants</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="contact-column">
+                    <h3>Liens rapides</h3>
+                    <ul class="quick-links">
+                        <li><a href="index.html" id="homeLinkFooter">Accueil</a></li>
+                        <li><a href="index.html#about">À propos</a></li>
+                        <li><a href="index.html#courses">Cours</a></li>
+                        <li><a href="index.html#testimonials">Témoignages</a></li>
+                        <li><a href="index.html#contact">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div class="contact-column">
+                    <h3>Mentions légales</h3>
+                    <ul class="legal-links">
+                        <li><a href="mentions-legales.html#mentions-legales">Mentions légales</a></li>
+                        <li><a href="mentions-legales.html#conditions-vente">Conditions Générales de Vente</a></li>
+                        <li><a href="mentions-legales.html#confidentialite">Politique de confidentialité</a></li>
+                        <li><a href="mentions-legales.html#annulation">Politique d'annulation</a></li>
+                        <li class="email-item"><i class="fas fa-envelope"></i> yoteachfr@gmail.com</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2021 YoTeach. Fait avec <span class="heart">❤️</span> à Marseille</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="auth.js"></script>
+    <script src="mobile-menu.js"></script>
+    <script src="common.js"></script>
+    <script src="currency.js"></script>
+    <script src="translation.js"></script>
+    
+    <script>
+        // Initialisation du menu mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            // Menu hamburger
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const closeMenuBtn = document.getElementById('closeMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if (hamburgerBtn) {
+                hamburgerBtn.addEventListener('click', function() {
+                    mobileMenu.classList.add('active');
+                    hamburgerBtn.classList.add('active');
+                });
+            }
+            
+            if (closeMenuBtn) {
+                closeMenuBtn.addEventListener('click', function() {
+                    mobileMenu.classList.remove('active');
+                    if (hamburgerBtn) hamburgerBtn.classList.remove('active');
+                });
+            }
+            
+            // Fermer le menu en cliquant en dehors
+            mobileMenu.addEventListener('click', function(e) {
+                if (e.target === mobileMenu) {
+                    mobileMenu.classList.remove('active');
+                    if (hamburgerBtn) hamburgerBtn.classList.remove('active');
+                }
+            });
+            
+            // Navigation interne fluide
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (href === '#') return;
+                    
+                    e.preventDefault();
+                    
+                    if (href.startsWith('#') && !href.includes('index.html')) {
+                        const target = document.querySelector(href);
+                        if (target) {
+                            window.scrollTo({
+                                top: target.offsetTop - 100,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                });
+            });
+            
+            // Navigation retour en haut
+            document.querySelectorAll('.back-to-top').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+            });
+            
+            // Gestion du scroll pour le header
+            window.addEventListener('scroll', function() {
+                const header = document.querySelector('.main-header');
+                if (window.scrollY > 100) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
