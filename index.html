@@ -10,7 +10,123 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="pages/index.css">
+    <style>
+/* 1. Navigation : Augmentation de la taille du texte */
+    .nav-link {
+        font-size: 1.2rem !important;
+        font-weight: 400;
+    }
+    
+/* Navigation centrée - SOLUTION SIMPLE ET EFFICACE */
+    .header-content {
+        display: grid;
+        grid-template-columns: 200px 1fr 220px;
+        align-items: center;
+        padding: 8px 0 !important;
+    }
+    
+    .logo-section {
+        justify-self: start;
+    }
+    
+    .nav-menu.desktop-menu {
+        justify-self: center;
+    }
+    
+    .nav-links-wrapper {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .header-right-group {
+        justify-self: end;
+        display: flex;
+        align-items: center;
+        gap: 4px !important;
+    }
+    
+    .nav-spacer {
+        display: none;
+    }
+
+    /* Devise */
+    .currency-selector {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+    
+    .currency-selector select {
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 20px;
+        padding: 2px 4px;
+        color: #333;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        outline: none;
+        width: auto;
+        text-align: center;
+        text-align-last: center;
+        appearance: none;
+        -webkit-appearance: none;
+        transition: all 0.3s ease;
+    }
+    
+    .main-header:not(.scrolled) .currency-selector select {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+
+    /* Langue */
+    .language-switcher {
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 5px 10px;
+        border-radius: 20px;
+        user-select: none;
+    }
+
+    .language-switcher:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .main-header.scrolled .language-switcher:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Mobile language */
+    .mobile-language {
+        cursor: pointer;
+        padding: 15px 20px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        user-select: none;
+    }
+
+    .mobile-language:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Bouton Connexion */
+    .login-btn {
+        padding: 10px 22px !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        border-radius: 50px;
+    }
+
+    @media (max-width: 768px) {
+        .currency-selector { display: none; }
+    }
+</style>
 </head>
 <body>
     <!-- Header -->
@@ -35,31 +151,32 @@
                 
                 <!-- Menu Desktop -->
                 <nav class="nav-menu desktop-menu">
-                    <div class="nav-links-wrapper">
-                        <a href="#about" class="nav-link" data-i18n="nav.about">À propos</a>
-                        <a href="#courses" class="nav-link" data-i18n="nav.courses">Cours</a>
-                        <a href="#testimonials" class="nav-link" data-i18n="nav.testimonials">Témoignages</a>
-                        <a href="#contact" class="nav-link" data-i18n="nav.contact">Contact</a>
+    <div class="nav-links-wrapper">
+        <a href="#about" class="nav-link" data-i18n="nav.about">À propos</a>
+        <a href="#courses" class="nav-link" data-i18n="nav.courses">Cours</a>
+        <a href="#testimonials" class="nav-link" data-i18n="nav.testimonials">Témoignages</a>
+        <a href="#contact" class="nav-link" data-i18n="nav.contact">Contact</a>
+    </div>
+</nav>
+
+<!-- Groupe des boutons de droite -->
+<div class="header-right-group">
+                        <!-- Sélecteur de devise -->
+                        <div class="currency-selector">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <select id="currencySelector">
+                                <!-- Rempli dynamiquement par currency.js -->
+                            </select>
+                        </div>
+                        
+                        <div class="language-switcher" id="languageSwitcherDesktop">
+                            <span class="flag">🌐</span>
+                            <span data-i18n="header.language">EN</span>
+                        </div>
+                        
+                        <a href="login.html" class="login-btn" data-i18n="header.login">Connexion</a>
                     </div>
                 </nav>
-
-                <!-- Groupe des boutons de droite -->
-                <div class="header-right-group">
-                    <!-- Sélecteur de devise -->
-                    <div class="currency-selector">
-                        <i class="fas fa-money-bill-wave"></i>
-                        <select id="currencySelector">
-                            <!-- Rempli dynamiquement par currency.js -->
-                        </select>
-                    </div>
-                    
-                    <div class="language-switcher" id="languageSwitcherDesktop">
-                        <span class="flag">🌐</span>
-                        <span data-i18n="header.language">EN</span>
-                    </div>
-                    
-                    <a href="login.html" class="login-btn" data-i18n="header.login">Connexion</a>
-                </div>
             </div>
         </div>
         
@@ -318,16 +435,17 @@
                 </div>
                 
                 <!-- Colonne droite : Mentions légales -->
-                <div class="contact-column">
-                    <h3>Mentions légales</h3>
-                    <ul class="legal-links">
-                        <li><a href="legal.html#mentions-legales" data-i18n="footer.legal">Mentions légales</a></li>
-                        <li><a href="legal.html#conditions-vente" data-i18n="footer.terms">Conditions Générales de Vente</a></li>
-                        <li><a href="legal.html#confidentialite" data-i18n="footer.privacy">Politique de confidentialité</a></li>
-                        <li><a href="legal.html#annulation" data-i18n="footer.cancellation">Politique d'annulation</a></li>
-                        <li class="email-item"><i class="fas fa-envelope"></i> <span data-i18n="footer.email">yoteachfr@gmail.com</span></li>
-                    </ul>
-                </div>
+                <!-- Dans la section Footer de index.html, colonne droite -->
+<div class="contact-column">
+    <h3>Mentions légales</h3>
+    <ul class="legal-links">
+        <li><a href="legal.html#mentions-legales" data-i18n="footer.legal">Mentions légales</a></li>
+        <li><a href="legal.html#conditions-vente" data-i18n="footer.terms">Conditions Générales de Vente</a></li>
+        <li><a href="legal.html#confidentialite" data-i18n="footer.privacy">Politique de confidentialité</a></li>
+        <li><a href="legal.html#annulation" data-i18n="footer.cancellation">Politique d'annulation</a></li>
+        <li class="email-item"><i class="fas fa-envelope"></i> <span data-i18n="footer.email">yoteachfr@gmail.com</span></li>
+    </ul>
+</div>
             </div>
             
             <div class="footer-bottom">
