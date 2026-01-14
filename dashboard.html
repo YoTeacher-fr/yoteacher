@@ -1460,13 +1460,10 @@
             } else {
                 greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
             }
-            
-            const welcomeTitle = 'Bienvenue sur votre dashboard YoTeacher';
-            
+                        
             welcomeDiv.innerHTML = `
                 <div class="welcome-message">
                     <h1>${greeting} ${userName} ! 👋</h1>
-                    <p>${welcomeTitle}</p>
                     <div id="vipBadge" style="display: none;" class="vip-badge">
                         <i class="fas fa-crown"></i>
                         <span>Membre VIP</span>
@@ -1845,7 +1842,7 @@
             });
             
             // Confirmation détaillée
-            if (!confirm(`Êtes-vous sûr de vouloir annuler ce cours ?\n\n📅 ${formattedDate}\n📚 ${lesson.course_type}\n⏱️ ${lesson.duration_minutes || 60}min\n\nUn crédit sera ajouté à votre compte si ce cours utilisait un forfait.`)) {
+            if (!confirm(`Êtes-vous sûr de vouloir annuler ce cours ?\n\n📅 ${formattedDate}\n📚 ${lesson.course_type}\n⏱️ ${lesson.duration_minutes || 60}min\n\nUn crédit sera ajouté à votre co`)) {
                 return;
             }
             
@@ -1862,8 +1859,7 @@
                 if (result.success) {
                     // Afficher un message de succès
                     const successMessage = `✅ Cours annulé avec succès !`;
-                    const creditMessage = result.creditRefunded ? '\n💰 1 crédit a été ajouté à votre compte (valable 90 jours).' : '';
-                    const calcomMessage = result.calcomCancelled ? '\n📅 Annulation Cal.com effectuée.' : '';
+                    const creditMessage = result.creditRefunded ? '\n💰 1 crédit a été ajouté à votre compte.' : '';
                     
                     if (window.utils && window.utils.showNotification) {
                         window.utils.showNotification(successMessage + creditMessage + calcomMessage, 'success');
