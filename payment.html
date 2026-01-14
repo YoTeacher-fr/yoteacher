@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="payment.title">Paiement - YoTeacher</title>
+    <title data-i18n="payment.title">Paiement - YoTeach</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
@@ -1134,7 +1134,7 @@
                                     </div>
                                     <div class="detail-item">
                                         <span class="label" data-i18n="payment.interac_email">Email Interac:</span>
-                                        <span class="value" id="interacEmail">yoann@yoteacher.com</span>
+                                        <span class="value" id="interacEmail">yoannbourbia@gmail.com</span>
                                     </div>
                                     <div class="detail-item">
                                         <span class="label" data-i18n="payment.amount">Montant:</span>
@@ -1146,7 +1146,7 @@
                                     </div>
                                     <div class="detail-item">
                                         <span class="label" data-i18n="payment.security_question">Question de sécurité:</span>
-                                        <span class="value">YoTeacher</span>
+                                        <span class="value">YoTeach</span>
                                     </div>
                                     <div class="detail-item">
                                         <span class="label" data-i18n="payment.answer">Réponse:</span>
@@ -1198,7 +1198,7 @@
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.paypal_email">Email PayPal</div>
-                                        <div class="info-value" id="paypalEmail">yoann@yoteacher.com</div>
+                                        <div class="info-value" id="paypalEmail">yoann.bourbia@gmail.com</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.amount">Montant</div>
@@ -1557,10 +1557,10 @@
             const config = window.YOTEACHER_CONFIG || {};
             
             const contactName = config.CONTACT_NAME || "Yoann Bourbia";
-            const contactEmail = config.CONTACT_EMAIL || "yoann@yoteacher.com";
+            const contactEmail = config.CONTACT_EMAIL || "yoannbourbia@gmail.com";
             const revolutLink = config.REVOLUT_PAYMENT_LINK || "https://revolut.me/yoann";
             const wiseLink = config.WISE_PAYMENT_LINK || "https://wise.com/pay/yoann";
-            const paypalEmail = config.PAYPAL_BUSINESS_EMAIL || "yoann@yoteacher.com";
+            const paypalEmail = config.PAYPAL_BUSINESS_EMAIL || "https://paypal.me/yoannbourbia";
             const interacEmail = config.INTERAC_EMAIL || contactEmail;
             
             document.getElementById('revolutRefNum').textContent = refNumber;
