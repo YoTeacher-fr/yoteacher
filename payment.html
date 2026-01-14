@@ -557,11 +557,12 @@
             grid-column: span 2;
         }
 
+        /* NOUVEAU STYLE POUR BOUTON "J'AI PAYÉ" : BACKGROUND #eedbda */
         .btn-confirm-payment {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
+            background: #eedbda !important;
+            color: #333 !important;
             border: none;
             border-radius: 8px;
             font-size: 1.1rem;
@@ -572,7 +573,7 @@
 
         .btn-confirm-payment:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+            box-shadow: 0 10px 25px rgba(238, 219, 218, 0.3);
         }
 
         .btn-confirm-payment:disabled {
@@ -641,22 +642,6 @@
         .summary-item .value {
             color: #333;
             font-weight: 500;
-        }
-
-        .payment-security {
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 25px;
-            border: 1px solid #c8e6c9;
-        }
-
-        .payment-security h4 {
-            color: #2e7d32;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
         .error-message {
@@ -983,7 +968,7 @@
                 <h1 class="payment-title" data-i18n="payment.title_main">Finaliser votre paiement</h1>
                 <p class="payment-subtitle" data-i18n="payment.subtitle">Choisissez votre moyen de paiement et confirmez votre réservation</p>
                 <div class="currency-info-payment" id="currencyInfoPayment">
-                    <i class="fas fa-sync-alt"></i> <span data-i18n="payment.currency_info">Prix affichés en</span> <span id="currentCurrency">EUR</span> - <span data-i18n="payment.auto_conversion">Conversion automatique</span>
+                    <i class="fas fa-sync-alt"></i> <span data-i18n="payment.currency_info">Prix affichés en</span> <span id="currentCurrency">EUR</span>
                 </div>
             </div>
             
@@ -1029,10 +1014,6 @@
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.beneficiary_name">Nom du bénéficiaire</div>
                                         <div class="info-value" id="revolutName">Yoann Bourbia</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label" data-i18n="payment.reference">Référence</div>
-                                        <div class="info-value" id="revolutRef">COURS-<span id="revolutRefNum"></span></div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.amount">Montant</div>
@@ -1081,10 +1062,6 @@
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.beneficiary_name">Nom du bénéficiaire</div>
                                         <div class="info-value" id="wiseName">Yoann Bourbia</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label" data-i18n="payment.wise_email">Email Wise</div>
-                                        <div class="info-value" id="wiseEmail">yoann@yoteacher.com</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.amount">Montant</div>
@@ -1139,10 +1116,6 @@
                                     <div class="detail-item">
                                         <span class="label" data-i18n="payment.amount">Montant:</span>
                                         <span class="value" id="interacAmount">-</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <span class="label" data-i18n="payment.reference">Référence:</span>
-                                        <span class="value" id="interacRef">COURS-<span id="interacRefNum"></span></span>
                                     </div>
                                     <div class="detail-item">
                                         <span class="label" data-i18n="payment.security_question">Question de sécurité:</span>
@@ -1237,13 +1210,6 @@
                                 <div class="stripe-card-element" id="card-element"></div>
                                 <div id="card-errors" role="alert"></div>
                                 
-                                <div class="payment-notice">
-                                    <p>
-                                        <i class="fas fa-lock"></i>
-                                        <strong data-i18n="payment.secure">Sécurisé :</strong> <span data-i18n="payment.secure_message">Votre paiement est chiffré et sécurisé par Stripe. Aucune information bancaire n'est stockée sur nos serveurs.</span>
-                                    </p>
-                                </div>
-                                
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" id="processCardPayment" data-method="card" disabled>
                                         <i class="fas fa-lock"></i> <span data-i18n="payment.pay_with_card">Payer par carte</span>
@@ -1259,21 +1225,6 @@
                     <h2 class="card-title" data-i18n="payment.summary">Récapitulatif</h2>
                     
                     <div id="paymentSummary"></div>
-                    
-                    <div class="payment-security">
-                        <h4><i class="fas fa-shield-alt"></i> <span data-i18n="payment.secure_payment">Paiement 100% sécurisé</span></h4>
-                        <p style="font-size: 0.95rem; color: #2e7d32;">
-                            <i class="fas fa-lock"></i> <span data-i18n="payment.encrypted">Vos données bancaires sont chiffrées</span><br>
-                            <i class="fas fa-check-circle"></i> <span data-i18n="payment.no_storage">Aucune information stockée sur nos serveurs</span><br>
-                            <i class="fas fa-clock"></i> <span data-i18n="payment.guaranteed">Réservation garantie après paiement</span>
-                        </p>
-                    </div>
-                    
-                    <div style="margin-top: 25px; padding: 15px; background: #fff3cd; border-radius: 10px; border: 1px solid #ffeaa7;">
-                        <p style="color: #856404; margin: 0; font-size: 0.95rem;">
-                            <i class="fas fa-info-circle"></i> <span data-i18n="payment.time_slot">Votre créneau est réservé pendant 15 minutes. Une fois le paiement confirmé, vous recevrez un email avec le lien de la visioconférence.</span>
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1595,8 +1546,9 @@
             document.getElementById('wiseLinkDisplay').textContent = wiseDisplay;
             document.getElementById('paypalLinkDisplay').textContent = paypalDisplay;
             
-            // Générer les liens de paiement avec le bon montant
-            const revolutFullLink = `${revolutLink}?amount=${amountToDisplay}&currency=${currencyToDisplay}&reference=COURS-${refNumber}`;
+            // Générer les liens de paiement avec le bon montant (Revolut en centimes)
+            const revolutAmountInCents = Math.round(amountToDisplay * 100);
+            const revolutFullLink = `${revolutLink}?amount=${revolutAmountInCents}&currency=${currencyToDisplay}`;
             const wiseFullLink = `${wiseLink}?amount=${amountToDisplay}&currency=${currencyToDisplay}`;
             const paypalFullLink = `https://www.paypal.com/paypalme/${paypalUsername}/${amountToDisplay}${currencyToDisplay}`;
             
