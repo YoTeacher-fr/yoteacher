@@ -950,7 +950,6 @@
             <div class="payment-header">
                 <h1 class="payment-title" data-i18n="payment.title_main">Finaliser votre paiement</h1>
                 <p class="payment-subtitle" data-i18n="payment.subtitle">Choisissez votre moyen de paiement et confirmez votre réservation</p>
-                <!-- SUPPRIMÉ : Bloc d'information sur la devise -->
             </div>
             
             <!-- Notification pour Interac -->
@@ -1098,14 +1097,6 @@
                                         <span class="label" data-i18n="payment.amount">Montant:</span>
                                         <span class="value" id="interacAmount">-</span>
                                     </div>
-                                    <div class="detail-item">
-                                        <span class="label" data-i18n="payment.security_question">Question de sécurité:</span>
-                                        <span class="value">YoTeach</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <span class="label" data-i18n="payment.answer">Réponse:</span>
-                                        <span class="value">francais</span>
-                                    </div>
                                 </div>
                                 
                                 <div class="payment-notice">
@@ -1145,10 +1136,6 @@
                                     <div class="info-item clickable" id="paypalLinkItem">
                                         <div class="info-label" data-i18n="payment.paypal_link">Lien PayPal</div>
                                         <div class="info-value" id="paypalLinkDisplay">paypal.me/yoann</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label" data-i18n="payment.beneficiary_name">Nom du bénéficiaire</div>
-                                        <div class="info-value" id="paypalName">Yoann Bourbia</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.paypal_email">Email PayPal</div>
@@ -1501,9 +1488,15 @@
                 if (el) el.textContent = formattedAmount;
             });
             
-            document.querySelectorAll('#revolutName, #wiseName, #paypalName, #interacName').forEach(el => {
-                if (el) el.textContent = contactName;
-            });
+            // Mettre à jour les noms de bénéficiaire pour Revolut, Wise et Interac (PayPal n'a plus de nom)
+            const revolutNameElement = document.getElementById('revolutName');
+            if (revolutNameElement) revolutNameElement.textContent = contactName;
+            
+            const wiseNameElement = document.getElementById('wiseName');
+            if (wiseNameElement) wiseNameElement.textContent = contactName;
+            
+            const interacNameElement = document.getElementById('interacName');
+            if (interacNameElement) interacNameElement.textContent = contactName;
             
             const paypalEmailElement = document.getElementById('paypalEmail');
             if (paypalEmailElement) paypalEmailElement.textContent = paypalEmail;
