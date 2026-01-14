@@ -1555,7 +1555,7 @@
             document.getElementById('revolutRefNum').textContent = refNumber;
             document.getElementById('interacRefNum').textContent = refNumber;
             
-            // Formater le montant
+            // Formater le montant pour l'affichage
             let formattedAmount;
             if (window.currencyManager) {
                 formattedAmount = window.currencyManager.formatPriceInCurrency(amountToDisplay, currencyToDisplay);
@@ -1584,8 +1584,11 @@
             document.getElementById('wiseLinkDisplay').textContent = wiseDisplay;
             document.getElementById('paypalLinkDisplay').textContent = paypalDisplay;
             
+            // Calculer le montant en centimes pour Revolut (sans décimales)
+            const amountInCents = Math.round(amountToDisplay * 100);
+            
             // Générer les liens de paiement avec le bon montant
-            const revolutFullLink = `${revolutLink}?amount=${amountToDisplay}&currency=${currencyToDisplay}&reference=COURS-${refNumber}`;
+            const revolutFullLink = `${revolutLink}?amount=${amountInCents}&currency=${currencyToDisplay}&reference=COURS-${refNumber}`;
             const wiseFullLink = `${wiseLink}?amount=${amountToDisplay}&currency=${currencyToDisplay}`;
             const paypalFullLink = `https://www.paypal.com/paypalme/${paypalUsername}/${amountToDisplay}${currencyToDisplay}`;
             
