@@ -434,14 +434,18 @@
         document.body.style.visibility = 'hidden';
         
         function checkAuthentication() {
+            console.log('🔐 Vérification de l\'authentification pour profile...');
+            
             let attempts = 0;
-            const maxAttempts = 30;
+            const maxAttempts = 50;
             
             function check() {
                 attempts++;
                 
-                if (window.authManager && window.authManager.isAuthenticated !== undefined) {
+                // Vérifier si authManager existe et est prêt
+                if (window.authManager && typeof window.authManager.isAuthenticated === 'function') {
                     if (window.authManager.isAuthenticated()) {
+                        console.log('✅ Utilisateur authentifié pour profile');
                         document.body.classList.add('loaded');
                         document.body.style.opacity = '1';
                         document.body.style.visibility = 'visible';
@@ -449,19 +453,65 @@
                         setTimeout(() => {
                             if (window.loadProfile) window.loadProfile();
                         }, 100);
+                        return;
                     } else {
-                        const currentUrl = encodeURIComponent(window.location.href);
-                        window.location.replace(`login.html?redirect=${currentUrl}`);
+                        console.log('❌ Utilisateur non authentifié');
+                        redirectToLogin();
+                        return;
                     }
-                } else if (attempts >= maxAttempts) {
-                    const currentUrl = encodeURIComponent(window.location.href);
-                    window.location.replace(`login.html?redirect=${currentUrl}`);
+                }
+                
+                if (attempts >= maxAttempts) {
+                    console.log('⚠️ AuthManager non disponible après ' + maxAttempts + ' tentatives');
+                    // Vérifier le localStorage en mode dégradé
+                    checkDegradedMode();
+                    return;
+                }
+                
+                setTimeout(check, 100);
+            }
+            
+            function checkDegradedMode() {
+                const storedUser = localStorage.getItem('yoteacher_user');
+                
+                if (storedUser) {
+                    try {
+                        const userData = JSON.parse(storedUser);
+                        console.log('✅ Utilisateur trouvé dans localStorage:', userData.email);
+                        
+                        // Créer un authManager temporaire en mode dégradé
+                        if (!window.authManager) {
+                            window.authManager = {
+                                getCurrentUser: () => userData,
+                                isAuthenticated: () => true
+                            };
+                        }
+                        
+                        document.body.classList.add('loaded');
+                        document.body.style.opacity = '1';
+                        document.body.style.visibility = 'visible';
+                        
+                        setTimeout(() => {
+                            if (window.loadProfile) window.loadProfile();
+                        }, 100);
+                        
+                    } catch (error) {
+                        console.error('❌ Erreur lecture localStorage:', error);
+                        redirectToLogin();
+                    }
                 } else {
-                    setTimeout(check, 100);
+                    console.log('❌ Aucun utilisateur dans localStorage');
+                    redirectToLogin();
                 }
             }
             
-            check();
+            function redirectToLogin() {
+                console.log('🔄 Redirection vers login...');
+                const currentUrl = encodeURIComponent(window.location.href);
+                window.location.replace(`login.html?redirect=${currentUrl}`);
+            }
+            
+            setTimeout(check, 200);
         }
         
         setTimeout(checkAuthentication, 200);
@@ -666,7 +716,11 @@
                 await waitForAuthManager();
                 const user = window.authManager?.getCurrentUser();
                 
-                if (!user) return;
+                if (!user) {
+                    console.error('❌ Aucun utilisateur trouvé');
+                    showError(window.translationManager?.getTranslation('profile.no_user') || 'Aucun utilisateur trouvé');
+                    return;
+                }
                 
                 // Initialiser l'avatar
                 const initials = user.email.substring(0, 2).toUpperCase();
