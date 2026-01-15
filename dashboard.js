@@ -116,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     setTimeout(checkAuthentication, 200);
 
-    // Code du second bloc <script>
     // Variables pour la navigation des cours
     let upcomingLessons = [];
     let currentLessonIndex = 0;
