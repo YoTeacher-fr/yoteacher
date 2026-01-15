@@ -601,20 +601,24 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Bouton d'annulation (seulement si possible)
         if (canCancel) {
-            externalActions.innerHTML += `
-                <button class="btn-external btn-cancel-external" onclick="handleCancelLesson('${lesson.id}')">
-                    <i class="fas fa-times"></i> Annuler le cours
-                </button>
-            `;
+            // Créer un bouton avec un écouteur d'événement plutôt qu'avec onclick
+            const cancelButton = document.createElement('button');
+            cancelButton.className = 'btn-external btn-cancel-external';
+            cancelButton.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
+            cancelButton.addEventListener('click', function() {
+                handleCancelLesson(lesson.id);
+            });
+            externalActions.appendChild(cancelButton);
         }
         
         // Bouton de connexion (toujours visible si lien disponible)
         if (lesson.meeting_link) {
-            externalActions.innerHTML += `
-                <a href="${lesson.meeting_link}" target="_blank" class="btn-external btn-join-external">
-                    <i class="fas fa-video"></i> Rejoindre
-                </a>
-            `;
+            const joinLink = document.createElement('a');
+            joinLink.href = lesson.meeting_link;
+            joinLink.target = '_blank';
+            joinLink.className = 'btn-external btn-join-external';
+            joinLink.innerHTML = '<i class="fas fa-video"></i> Rejoindre';
+            externalActions.appendChild(joinLink);
         }
         
         // Si aucun bouton n'est affiché, masquer la div
@@ -801,6 +805,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Exposer la fonction de chargement globalement
     window.loadDashboard = loadDashboard;
+    
+    // Exposer la fonction handleCancelLesson globalement pour qu'elle soit accessible
+    window.handleCancelLesson = handleCancelLesson;
     
     // Fonction de débogage pour tester l'annulation
     window.testCancellation = async function(bookingId) {
