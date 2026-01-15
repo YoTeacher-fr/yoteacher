@@ -215,7 +215,7 @@ class AuthManager {
                 .maybeSingle();
             
             if (!existingProfile) {
-                console.log('📝 Création du profil VIP pour l'utilisateur...');
+                console.log('📝 Création du profil VIP pour l\'utilisateur...');
                 
                 // Structure pour votre table profiles (sans colonne email)
                 const profileData = {
@@ -300,7 +300,7 @@ class AuthManager {
                 return { success: false, error: insertError.message };
             }
             
-            console.log(`✅ ${insertedPrices.length} prix VIP copiés pour l'utilisateur`);
+            console.log(`✅ ${insertedPrices.length} prix VIP copiés pour l\'utilisateur`);
             
             // 5. Recharger le profil pour mettre à jour this.user
             await this.loadUserProfile();
@@ -352,7 +352,7 @@ class AuthManager {
 
     async loadUserProfile() {
         if (!this.user) {
-            console.log('❌ Pas d'utilisateur à charger');
+            console.log('❌ Pas d\'utilisateur à charger');
             return;
         }
         
@@ -679,7 +679,7 @@ class AuthManager {
                 const invitationCode = this.invitationCode || sessionStorage.getItem('invitation_code');
                 
                 if (invitationCode) {
-                    console.log('🎟️ Code VIP détecté lors de l'inscription:', invitationCode);
+                    console.log('🎟️ Code VIP détecté lors de l\'inscription:', invitationCode);
                     
                     // Attendre un peu que le profil soit bien créé
                     await new Promise(resolve => setTimeout(resolve, 800));
@@ -702,7 +702,7 @@ class AuthManager {
                     this.user = oldUser;
                     
                     if (result.success) {
-                        console.log('✅ Code VIP appliqué automatiquement lors de l'inscription');
+                        console.log('✅ Code VIP appliqué automatiquement lors de l\'inscription');
                     } else {
                         console.warn('⚠️ Échec application code VIP:', result.error);
                     }
@@ -1287,7 +1287,7 @@ class AuthManager {
         }
 
         try {
-            console.log('👑 Chargement des prix VIP pour l'utilisateur:', this.user.id);
+            console.log('👑 Chargement des prix VIP pour l\'utilisateur:', this.user.id);
             
             const { data, error } = await supabase
                 .from('vip_pricing')
@@ -1661,7 +1661,7 @@ window.diagnoseBookingIssues = async function() {
         if (packagesError) {
             console.error('❌ Erreur accès à packages:', packagesError.message);
         } else {
-            console.log(`📦 ${packages.length} package(s) trouvé(s) pour l'utilisateur:`);
+            console.log(`📦 ${packages.length} package(s) trouvé(s) pour l\'utilisateur:`);
             packages.forEach((p, i) => {
                 console.log(`  ${i+1}. ${p.course_type} - ${p.remaining_credits}/${p.total_credits} crédits - ${p.status} - Expire: ${new Date(p.expires_at).toLocaleDateString()}`);
             });
