@@ -215,7 +215,7 @@ class AuthManager {
                 .maybeSingle();
             
             if (!existingProfile) {
-                console.log('📝 Création du profil VIP pour l\'utilisateur...');
+                console.log('📝 Création du profil VIP pour l'utilisateur...');
                 
                 // Structure pour votre table profiles (sans colonne email)
                 const profileData = {
@@ -352,7 +352,7 @@ class AuthManager {
 
     async loadUserProfile() {
         if (!this.user) {
-            console.log('❌ Pas d\'utilisateur à charger');
+            console.log('❌ Pas d'utilisateur à charger');
             return;
         }
         
@@ -679,7 +679,7 @@ class AuthManager {
                 const invitationCode = this.invitationCode || sessionStorage.getItem('invitation_code');
                 
                 if (invitationCode) {
-                    console.log('🎟️ Code VIP détecté lors de l\'inscription:', invitationCode);
+                    console.log('🎟️ Code VIP détecté lors de l'inscription:', invitationCode);
                     
                     // Attendre un peu que le profil soit bien créé
                     await new Promise(resolve => setTimeout(resolve, 800));
@@ -702,7 +702,7 @@ class AuthManager {
                     this.user = oldUser;
                     
                     if (result.success) {
-                        console.log('✅ Code VIP appliqué automatiquement lors de l\'inscription');
+                        console.log('✅ Code VIP appliqué automatiquement lors de l'inscription');
                     } else {
                         console.warn('⚠️ Échec application code VIP:', result.error);
                     }
@@ -783,6 +783,8 @@ class AuthManager {
             
             const returnUrl = this.getReturnUrl();
             
+            console.log('🔗 URL de redirection après login:', returnUrl);
+            
             return { 
                 success: true, 
                 data,
@@ -798,27 +800,138 @@ class AuthManager {
     }
 
     getReturnUrl() {
+        console.log('🔄 Détermination de l\'URL de redirection...');
+        
         const urlParams = new URLSearchParams(window.location.search);
         let returnUrl = urlParams.get('redirect');
         
         if (returnUrl) {
-            return decodeURIComponent(returnUrl);
+            returnUrl = decodeURIComponent(returnUrl);
+            console.log('🔍 URL de redirection brute détectée:', returnUrl);
+            
+            // CORRECTION IMPORTANTE : Gestion des URLs sans extension .html
+            // Cette fonction corrige les URLs comme "/dashboard" en "/dashboard.html"
+            
+            // Vérifier si c'est une URL complète
+            try {
+                const urlObj = new URL(returnUrl);
+                const pathname = urlObj.pathname;
+                const search = urlObj.search;
+                
+                console.log('📊 Analyse URL complète:', {
+                    origin: urlObj.origin,
+                    pathname: pathname,
+                    search: search
+                });
+                
+                // Liste des chemins connus qui nécessitent .html
+                const knownPaths = ['dashboard', 'profile', 'booking', 'login', 'signup', 'reset-password', 'index'];
+                
+                // Extraire le dernier segment du chemin
+                const pathSegments = pathname.split('/').filter(segment => segment);
+                const lastSegment = pathSegments[pathSegments.length - 1];
+                
+                console.log('📝 Dernier segment du chemin:', lastSegment);
+                
+                // Si le dernier segment est un chemin connu et n'a pas d'extension
+                if (knownPaths.includes(lastSegment) && !lastSegment.includes('.')) {
+                    // Reconstruire le chemin avec .html
+                    const newPathname = pathname.endsWith('/') ? 
+                        `${pathname}${lastSegment}.html` : 
+                        `${pathname}.html`;
+                    
+                    const correctedUrl = `${urlObj.origin}${newPathname}${search}`;
+                    console.log('✅ URL corrigée avec .html:', correctedUrl);
+                    
+                    // Vérifier si cette URL existe (optionnel, pour éviter les 404)
+                    // Pour Cloudflare Pages, nous faisons confiance que le fichier existe
+                    
+                    return correctedUrl;
+                }
+                
+                // Si l'URL se termine déjà par .html, la garder telle quelle
+                if (pathname.endsWith('.html')) {
+                    console.log('✅ URL a déjà .html, on garde:', returnUrl);
+                    return returnUrl;
+                }
+                
+            } catch (e) {
+                // Ce n'est pas une URL valide, peut-être un chemin relatif
+                console.log('⚠️ URL invalide ou chemin relatif:', returnUrl);
+                
+                // Vérifier si c'est un chemin relatif simple
+                const knownPaths = ['dashboard', 'profile', 'booking', 'login', 'signup', 'reset-password', 'index'];
+                
+                // Si le chemin ne contient pas de point et n'a pas de slash au début
+                if (!returnUrl.includes('.') && !returnUrl.startsWith('/')) {
+                    if (knownPaths.includes(returnUrl)) {
+                        const correctedUrl = `${returnUrl}.html`;
+                        console.log('✅ Chemin relatif corrigé:', correctedUrl);
+                        return correctedUrl;
+                    }
+                }
+                
+                // Si le chemin commence par / mais n'a pas d'extension
+                if (returnUrl.startsWith('/') && !returnUrl.includes('.')) {
+                    const lastSegment = returnUrl.split('/').pop();
+                    if (knownPaths.includes(lastSegment)) {
+                        const correctedUrl = `${returnUrl}.html`;
+                        console.log('✅ Chemin absolu corrigé:', correctedUrl);
+                        return correctedUrl;
+                    }
+                }
+            }
+            
+            console.log('✅ URL gardée telle quelle (déjà correcte):', returnUrl);
+            return returnUrl;
         }
         
+        // Vérifier le paramètre 'return' (alternative)
         returnUrl = urlParams.get('return');
         if (returnUrl) {
-            return decodeURIComponent(returnUrl);
+            const decodedUrl = decodeURIComponent(returnUrl);
+            console.log('🔍 URL de retour détectée:', decodedUrl);
+            return decodedUrl;
         }
         
+        // Vérifier le référent
         const referrer = document.referrer;
         if (referrer && 
             !referrer.includes('login.html') && 
             !referrer.includes('signup.html') &&
             !referrer.includes('reset-password.html')) {
+            console.log('🔍 Référent détecté:', referrer);
+            
+            // Appliquer la même correction au référent si nécessaire
+            try {
+                const urlObj = new URL(referrer);
+                const pathname = urlObj.pathname;
+                
+                // Vérifier si c'est une page connue sans .html
+                const knownPaths = ['dashboard', 'profile', 'booking'];
+                const pathSegments = pathname.split('/').filter(segment => segment);
+                const lastSegment = pathSegments[pathSegments.length - 1];
+                
+                if (knownPaths.includes(lastSegment) && !lastSegment.includes('.')) {
+                    const correctedPathname = pathname.endsWith('/') ? 
+                        `${pathname}${lastSegment}.html` : 
+                        `${pathname}.html`;
+                    
+                    const correctedUrl = `${urlObj.origin}${correctedPathname}`;
+                    console.log('✅ Référent corrigé:', correctedUrl);
+                    return correctedUrl;
+                }
+            } catch (e) {
+                // Erreur de parsing, on garde le référent tel quel
+            }
+            
             return referrer;
         }
         
-        return 'dashboard.html';
+        // Par défaut, rediriger vers le dashboard
+        const defaultUrl = 'dashboard.html';
+        console.log('🔗 URL par défaut:', defaultUrl);
+        return defaultUrl;
     }
 
     mockSignIn(email, password) {
@@ -856,9 +969,14 @@ class AuthManager {
 
     async signOut() {
         try {
+            console.log('🚪 Déconnexion en cours...');
+            
             if (this.supabaseReady && supabase && supabase.auth) {
                 const { error } = await supabase.auth.signOut();
-                if (error) throw error;
+                if (error) {
+                    console.warn('⚠️ Erreur lors de la déconnexion Supabase:', error);
+                    // On continue quand même avec la déconnexion locale
+                }
             }
             
             this.user = null;
@@ -868,14 +986,12 @@ class AuthManager {
             // Événement : déconnexion
             this.emitAuthEvent('logout');
             
-            window.location.href = 'index.html#top';
+            console.log('✅ Utilisateur déconnecté, redirection vers index.html');
             
-            window.addEventListener('load', function() {
-                window.scrollTo(0, 0);
-                if (!window.location.hash) {
-                    window.location.hash = 'top';
-                }
-            });
+            // Redirection vers la page d'accueil après un court délai
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 300);
             
             return { success: true };
         } catch (error) {
@@ -887,7 +1003,11 @@ class AuthManager {
             // Événement : déconnexion même en cas d'erreur
             this.emitAuthEvent('logout');
             
-            window.location.href = 'index.html#top';
+            // Redirection même en cas d'erreur
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 300);
+            
             return { success: true };
         }
     }
@@ -1167,7 +1287,7 @@ class AuthManager {
         }
 
         try {
-            console.log('👑 Chargement des prix VIP pour l\'utilisateur:', this.user.id);
+            console.log('👑 Chargement des prix VIP pour l'utilisateur:', this.user.id);
             
             const { data, error } = await supabase
                 .from('vip_pricing')
@@ -1484,11 +1604,11 @@ class AuthManager {
 
 // Ajout d'écouteurs globaux pour le débogage des événements
 window.addEventListener('auth:login', function(e) {
-    console.log('Événement global auth:login reçu', e.detail?.user?.email || 'sans email');
+    console.log('✅ Événement global auth:login reçu', e.detail?.user?.email || 'sans email');
 });
 
 window.addEventListener('auth:logout', function() {
-    console.log('Événement global auth:logout reçu');
+    console.log('⚠️ Événement global auth:logout reçu');
 });
 
 // Événement pour les codes VIP
@@ -1595,6 +1715,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const delay = window.innerWidth <= 768 ? 500 : 100;
     
     setTimeout(() => {
+        console.log('🚀 Initialisation de AuthManager...');
         window.authManager = new AuthManager();
         
         if (isDashboardPage) {
