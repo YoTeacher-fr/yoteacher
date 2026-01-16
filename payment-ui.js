@@ -1,4 +1,4 @@
-// payment-ui.js
+// payment-ui.js - Version corrigée
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initialisation page paiement...');
     
@@ -190,12 +190,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 logoutBtn.addEventListener('click', async (e) => {
                     e.preventDefault();
                     try {
-                        await window.authManager.logout();
+                        await window.authManager.signOut();
                         window.location.href = 'index.html';
                     } catch (error) {
                         console.error('Erreur déconnexion:', error);
                     }
                 });
+            }
+            
+            // Ajouter un badge VIP si l'utilisateur est VIP
+            if (window.authManager?.isUserVip()) {
+                const paymentTitle = document.querySelector('.payment-title');
+                if (paymentTitle && !paymentTitle.querySelector('.vip-badge-payment')) {
+                    const vipBadge = document.createElement('span');
+                    vipBadge.className = 'vip-badge-payment';
+                    vipBadge.textContent = 'VIP';
+                    vipBadge.style.cssText = `
+                        display: inline-block;
+                        background: linear-gradient(135deg, #FFD700, #FFA500);
+                        color: #000;
+                        padding: 4px 12px;
+                        border-radius: 20px;
+                        font-size: 14px;
+                        font-weight: bold;
+                        margin-left: 15px;
+                        border: 1px solid #FFA500;
+                        vertical-align: middle;
+                    `;
+                    paymentTitle.appendChild(vipBadge);
+                }
             }
         } else {
             if (userAvatar) userAvatar.style.display = 'none';
@@ -227,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let originalAmount, originalCurrency;
             
             if (booking.isVip && booking.vipPriceData) {
-                // Pour les VIP, le prix d'origine est en USD
+                // Pour les VIP, le prix d'origine est dans la devise VIP
                 originalAmount = booking.vipPriceData.price * (booking.packageQuantity || 1);
                 originalCurrency = booking.vipPriceData.currency || 'USD';
                 
@@ -251,13 +274,13 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`💱 Converti: ${originalAmount} ${originalCurrency} → ${amountToDisplay} ${currentCurrency}`);
         }
         
-        const config = window.YOTEACH_CONFIG || {};
+        const config = window.YOTEACHER_CONFIG || {};
         
         const contactName = config.CONTACT_NAME || "Yoann Bourbia";
         const contactEmail = config.CONTACT_EMAIL || "yoannbourbia@gmail.com";
         const revolutLink = config.REVOLUT_PAYMENT_LINK || "https://revolut.me/yoann";
         const wiseLink = config.WISE_PAYMENT_LINK || "https://wise.com/pay/yoann";
-        const paypalEmail = config.PAYPAL_BUSINESS_EMAIL || "https://paypal.me/yoannbourbia";
+        const paypalEmail = config.PAYPAL_BUSINESS_EMAIL || "yoann.bourbia@gmail.com";
         const interacEmail = config.INTERAC_EMAIL || contactEmail;
         
         // Formater le montant
@@ -272,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (el) el.textContent = formattedAmount;
         });
         
-        // Mettre à jour les noms de bénéficiaire pour Revolut, Wise et Interac (PayPal n'a plus de nom)
+        // Mettre à jour les noms de bénéficiaire
         const revolutNameElement = document.getElementById('revolutName');
         if (revolutNameElement) revolutNameElement.textContent = contactName;
         
@@ -302,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const paypalLinkDisplay = document.getElementById('paypalLinkDisplay');
         if (paypalLinkDisplay) paypalLinkDisplay.textContent = paypalDisplay;
         
-        // Générer les liens de paiement avec le bon montant (Revolut en centimes)
+        // Générer les liens de paiement avec le bon montant
         const revolutAmountInCents = Math.round(amountToDisplay * 100);
         const revolutFullLink = `${revolutLink}?amount=${revolutAmountInCents}&currency=${currencyToDisplay}`;
         const wiseFullLink = `${wiseLink}?amount=${amountToDisplay}&currency=${currencyToDisplay}`;
@@ -337,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let originalAmount, originalCurrency;
             
             if (booking.isVip && booking.vipPriceData) {
-                // Pour les VIP, le prix d'origine est en USD
+                // Pour les VIP, le prix d'origine est dans la devise VIP
                 originalAmount = booking.vipPriceData.price * (booking.packageQuantity || 1);
                 originalCurrency = booking.vipPriceData.currency || 'USD';
                 
@@ -412,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let vipInfo = '';
         if (booking.isVip) {
             vipInfo = `
-                <div class="summary-item" style="background: #fff8e1; border-radius: 8px; padding: 10px;">
+                <div class="summary-item" style="background: #fff8e1; border-radius: 8px; padding: 10px; margin-bottom: 10px;">
                     <span class="label" style="color: #ff8f00;"><i class="fas fa-crown"></i> Statut:</span>
                     <span class="value" style="color: #ff8f00; font-weight: 600;">Prix VIP appliqué</span>
                 </div>
@@ -429,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="value">${booking.packageQuantity} cours</span>
                 </div>
                 ${discount > 0 ? `
-                <div class="summary-item" style="background: #e8f5e9; border-radius: 8px; padding: 10px;">
+                <div class="summary-item" style="background: #e8f5e9; border-radius: 8px; padding: 10px; margin: 5px 0;">
                     <span class="label" style="color: #2e7d32;">Réduction:</span>
                     <span class="value" style="color: #2e7d32; font-weight: 600;">${discount}%</span>
                 </div>
@@ -546,32 +569,34 @@ document.addEventListener('DOMContentLoaded', function() {
             img.addEventListener('click', function() {
                 const link = this.dataset.link;
                 if (link) {
-                    window.open(link, '_blank');
+                    window.open(link, '_blank', 'noopener,noreferrer');
                 } else {
                     const method = this.id.replace('QrCode', '').toLowerCase();
                     if (method === 'revolut') {
-                        window.open('https://revolut.me/yoann', '_blank');
+                        window.open('https://revolut.me/yoann', '_blank', 'noopener,noreferrer');
                     } else if (method === 'wise') {
-                        window.open('https://wise.com/pay/yoann', '_blank');
+                        window.open('https://wise.com/pay/yoann', '_blank', 'noopener,noreferrer');
                     } else if (method === 'paypal') {
-                        window.open('https://paypal.me/yoann', '_blank');
+                        window.open('https://paypal.me/yoannbourbia', '_blank', 'noopener,noreferrer');
                     }
                 }
             });
             
             img.addEventListener('error', function() {
-                console.warn(`⚠️ Image non trouvée: ${this.src}`);
+                console.warn(`⚠️ Image QR code non trouvée: ${this.src}`);
                 this.style.display = 'none';
                 const placeholder = document.createElement('div');
                 placeholder.className = 'qr-code-placeholder';
                 placeholder.innerHTML = `
-                    <i class="fas fa-qrcode"></i>
-                    <p style="font-size: 0.8rem; margin-top: 5px;" data-i18n="payment.qr_code">QR Code</p>
+                    <i class="fas fa-qrcode" style="font-size: 60px; color: #666;"></i>
+                    <p style="font-size: 0.8rem; margin-top: 5px; color: #666;" data-i18n="payment.qr_code">QR Code</p>
                 `;
                 placeholder.dataset.link = this.dataset.link;
+                placeholder.style.cursor = 'pointer';
+                placeholder.style.textAlign = 'center';
                 placeholder.addEventListener('click', function() {
                     const link = this.dataset.link;
-                    if (link) window.open(link, '_blank');
+                    if (link) window.open(link, '_blank', 'noopener,noreferrer');
                 });
                 this.parentNode.appendChild(placeholder);
             });
@@ -581,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
             item.addEventListener('click', function() {
                 const link = this.dataset.link;
                 if (link) {
-                    window.open(link, '_blank');
+                    window.open(link, '_blank', 'noopener,noreferrer');
                 }
             });
         });
@@ -609,7 +634,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 buttonElement.classList.add('active');
                 
                 if (method === 'card' && window.paymentManager && typeof window.paymentManager.setupStripeForm === 'function') {
-                    window.paymentManager.setupStripeForm();
+                    setTimeout(() => {
+                        window.paymentManager.setupStripeForm();
+                    }, 100);
                 }
                 
                 if (window.innerWidth <= 768) {
@@ -646,42 +673,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 hidePaymentError();
                 
                 try {
-                    if (window.paymentManager) {
-                        // Mettre à jour le prix dans la réservation avec la devise courante
-                        const updatedBooking = { ...currentBooking };
-                        updatedBooking.currency = currentCurrency;
-                        
-                        // Recalculer le prix si nécessaire
-                        if (window.currencyManager && currentCurrency !== currentBooking.currency) {
-                            let originalAmount, originalCurrency;
-                            
-                            if (currentBooking.isVip && currentBooking.vipPriceData) {
-                                originalAmount = currentBooking.vipPriceData.price * (currentBooking.packageQuantity || 1);
-                                originalCurrency = currentBooking.vipPriceData.currency || 'USD';
-                                
-                                if (currentBooking.discountPercent && currentBooking.discountPercent > 0) {
-                                    originalAmount = originalAmount * (1 - (currentBooking.discountPercent / 100));
-                                }
-                            } else {
-                                originalAmount = currentBooking.originalPrice || currentBooking.priceEUR || currentBooking.price;
-                                originalCurrency = currentBooking.originalCurrency || 'EUR';
-                            }
-                            
-                            updatedBooking.price = window.currencyManager.convert(
-                                originalAmount,
-                                originalCurrency,
-                                currentCurrency
-                            );
-                        }
-                        
-                        window.paymentManager.currentBooking = updatedBooking;
-                        await window.paymentManager.handlePaymentMethod(method);
-                    } else {
-                        throw new Error('PaymentManager non disponible');
+                    // Vérifier que le gestionnaire de paiement existe
+                    if (!window.paymentManager) {
+                        throw new Error('Système de paiement non disponible');
                     }
+                    
+                    // Définir la réservation actuelle
+                    window.paymentManager.currentBooking = currentBooking;
+                    
+                    // Traiter le paiement
+                    await window.paymentManager.handlePaymentMethod(method);
+                    
                 } catch (error) {
                     console.error('❌ Erreur paiement:', error);
-                    showPaymentError('Erreur lors du traitement : ' + error.message);
+                    
+                    let errorMessage = error.message;
+                    
+                    // Messages d'erreur plus conviviaux
+                    if (error.message.includes('authentification') || error.message.includes('session')) {
+                        errorMessage = 'Votre session a expiré. Veuillez vous reconnecter et réessayer.';
+                    } else if (error.message.includes('Erreur serveur')) {
+                        errorMessage = 'Le service de paiement est temporairement indisponible. Veuillez réessayer dans quelques instants.';
+                    } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                        errorMessage = 'Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.';
+                    }
+                    
+                    showPaymentError('Erreur lors du traitement : ' + errorMessage);
                     
                     this.innerHTML = originalText;
                     this.disabled = false;
@@ -701,7 +718,27 @@ document.addEventListener('DOMContentLoaded', function() {
             
             errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
-            alert('Erreur: ' + message);
+            // Fallback
+            const fallbackDiv = document.createElement('div');
+            fallbackDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #dc3545;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                z-index: 9999;
+                max-width: 400px;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            `;
+            fallbackDiv.innerHTML = `
+                <strong>⚠️ Erreur</strong><br>
+                ${message}
+            `;
+            document.body.appendChild(fallbackDiv);
+            
+            setTimeout(() => fallbackDiv.remove(), 8000);
         }
     }
     
@@ -749,6 +786,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('💱 Événement currency:changed reçu', e.detail);
             currentCurrency = window.currencyManager.currentCurrency;
             updatePaymentDisplay();
+        });
+        
+        // Écouter les événements VIP
+        window.addEventListener('vip:loaded', function() {
+            console.log('🎁 Événement VIP chargé dans payment.html');
+            updateUserInterface();
         });
         
         console.log('✅ Page paiement complètement initialisée');
