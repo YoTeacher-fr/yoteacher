@@ -141,7 +141,7 @@ class PaymentManager {
                 throw new Error('Session expirée');
             }
 
-            const response = await fetch(`${supabaseUrl}/functions/v1/create-payment-intent`, {
+            const response = await fetch(`${supabaseUrl}/functions/v1/create-payment`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
