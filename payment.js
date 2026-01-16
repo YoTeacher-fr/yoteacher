@@ -12,10 +12,12 @@ class PaymentManager {
     async setupStripeForm() {
         try {
             const config = window.YOTEACHER_CONFIG || {};
-            const stripeKey = config.STRIPE_PUBLIC_KEY;
+            const stripeKey = config.STRIPE_PUBLISHABLE_KEY; // CORRECTION: STRIPE_PUBLISHABLE_KEY
             
             if (!stripeKey) {
                 console.warn('⚠️ Clé Stripe non configurée');
+                console.warn('Veuillez ajouter STRIPE_PUBLISHABLE_KEY dans config.js');
+                this.showStripeConfigError();
                 return;
             }
 
@@ -67,12 +69,54 @@ class PaymentManager {
                 const processBtn = document.getElementById('processCardPayment');
                 if (processBtn) {
                     processBtn.disabled = false;
+                    processBtn.innerHTML = '<i class="fas fa-lock"></i> Payer par carte';
                 }
             }
             
             console.log('✅ Formulaire Stripe initialisé');
         } catch (error) {
             console.error('❌ Erreur initialisation Stripe:', error);
+            this.showStripeError(error.message);
+        }
+    }
+
+    showStripeConfigError() {
+        const cardDetails = document.getElementById('cardDetails');
+        if (cardDetails) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'stripe-error';
+            errorDiv.style.cssText = `
+                background: #ffebee;
+                border: 1px solid #ffcdd2;
+                color: #c62828;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 15px 0;
+            `;
+            errorDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 1.2rem;"></i>
+                    <div>
+                        <strong>Configuration Stripe manquante</strong><br>
+                        <small>Veuillez configurer STRIPE_PUBLISHABLE_KEY dans config.js</small>
+                    </div>
+                </div>
+            `;
+            
+            const formTitle = cardDetails.querySelector('.card-form h3');
+            if (formTitle) {
+                formTitle.parentNode.insertBefore(errorDiv, formTitle.nextSibling);
+            } else {
+                cardDetails.insertBefore(errorDiv, cardDetails.firstChild);
+            }
+        }
+    }
+
+    showStripeError(message) {
+        const displayError = document.getElementById('card-errors');
+        if (displayError) {
+            displayError.textContent = message;
+            displayError.style.display = 'block';
         }
     }
 
