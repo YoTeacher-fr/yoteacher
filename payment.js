@@ -1,23 +1,22 @@
-// payment.js - Gestion des paiements uniquement - VERSION CORRIGÉE
-
+// payment.js - Version sécurisée avec calcul serveur
 class PaymentManager {
     constructor() {
         this.stripe = null;
         this.elements = null;
         this.cardElement = null;
         this.currentBooking = null;
-        console.log('💳 PaymentManager initialisé');
+        this.paymentIntentId = null;
+        this.clientSecret = null;
+        console.log('💳 PaymentManager initialisé (version sécurisée)');
     }
 
     async setupStripeForm() {
         try {
             const config = window.YOTEACHER_CONFIG || {};
-            const stripeKey = config.STRIPE_PUBLISHABLE_KEY; // CORRECTION: STRIPE_PUBLISHABLE_KEY
+            const stripeKey = config.STRIPE_PUBLISHABLE_KEY;
             
             if (!stripeKey) {
                 console.warn('⚠️ Clé Stripe non configurée');
-                console.warn('Veuillez ajouter STRIPE_PUBLISHABLE_KEY dans config.js');
-                this.showStripeConfigError();
                 return;
             }
 
@@ -29,7 +28,6 @@ class PaymentManager {
             this.stripe = window.Stripe(stripeKey);
             this.elements = this.stripe.elements();
             
-            // Créer l'élément de carte
             const cardStyle = {
                 base: {
                     color: '#32325d',
@@ -52,7 +50,6 @@ class PaymentManager {
             if (cardContainer) {
                 this.cardElement.mount(cardContainer);
                 
-                // Gérer les erreurs de carte
                 this.cardElement.on('change', (event) => {
                     const displayError = document.getElementById('card-errors');
                     if (displayError) {
@@ -65,58 +62,15 @@ class PaymentManager {
                     }
                 });
                 
-                // Activer le bouton de paiement
                 const processBtn = document.getElementById('processCardPayment');
                 if (processBtn) {
                     processBtn.disabled = false;
-                    processBtn.innerHTML = '<i class="fas fa-lock"></i> Payer par carte';
                 }
             }
             
             console.log('✅ Formulaire Stripe initialisé');
         } catch (error) {
             console.error('❌ Erreur initialisation Stripe:', error);
-            this.showStripeError(error.message);
-        }
-    }
-
-    showStripeConfigError() {
-        const cardDetails = document.getElementById('cardDetails');
-        if (cardDetails) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'stripe-error';
-            errorDiv.style.cssText = `
-                background: #ffebee;
-                border: 1px solid #ffcdd2;
-                color: #c62828;
-                padding: 15px;
-                border-radius: 8px;
-                margin: 15px 0;
-            `;
-            errorDiv.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 1.2rem;"></i>
-                    <div>
-                        <strong>Configuration Stripe manquante</strong><br>
-                        <small>Veuillez configurer STRIPE_PUBLISHABLE_KEY dans config.js</small>
-                    </div>
-                </div>
-            `;
-            
-            const formTitle = cardDetails.querySelector('.card-form h3');
-            if (formTitle) {
-                formTitle.parentNode.insertBefore(errorDiv, formTitle.nextSibling);
-            } else {
-                cardDetails.insertBefore(errorDiv, cardDetails.firstChild);
-            }
-        }
-    }
-
-    showStripeError(message) {
-        const displayError = document.getElementById('card-errors');
-        if (displayError) {
-            displayError.textContent = message;
-            displayError.style.display = 'block';
         }
     }
 
@@ -134,19 +88,16 @@ class PaymentManager {
 
             const user = window.authManager?.getCurrentUser();
             
-            // Pour Stripe (carte bancaire)
             if (method === 'card') {
                 await this.processStripePayment();
                 return;
             }
 
-            // Pour les autres méthodes (Revolut, Wise, Interac, PayPal)
+            // Pour les autres méthodes
             const result = await this.processManualPayment(method, user);
             
             if (result.success) {
                 console.log(`✅ Paiement ${method} traité avec succès`);
-                
-                // Rediriger vers la page de confirmation
                 setTimeout(() => {
                     window.location.href = `payment-success.html?booking=${encodeURIComponent(JSON.stringify(result.bookingData))}`;
                 }, 1000);
@@ -165,58 +116,99 @@ class PaymentManager {
                 throw new Error('Stripe non initialisé');
             }
 
-            const cardContainer = document.getElementById('card-element');
-            if (!cardContainer) {
-                throw new Error('Élément de carte non trouvé');
-            }
-
-            // Désactiver le bouton de paiement
             const processBtn = document.getElementById('processCardPayment');
             if (processBtn) {
                 processBtn.disabled = true;
                 processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement en cours...';
             }
 
-            // Récupérer les informations de facturation
             const user = window.authManager?.getCurrentUser();
-            const name = this.currentBooking.name || (user?.user_metadata?.full_name || 'Client');
-            const email = this.currentBooking.email || (user?.email || '');
-
-            // Créer un token de paiement
-            const { token, error } = await this.stripe.createToken(this.cardElement, {
-                name: name,
-                email: email,
-                address_line1: '',
-                address_city: '',
-                address_state: '',
-                address_zip: '',
-                address_country: 'FR'
-            });
-
-            if (error) {
-                console.error('Erreur token Stripe:', error);
-                throw new Error(error.message);
+            
+            if (!user) {
+                throw new Error('Veuillez vous connecter pour payer par carte');
             }
 
-            console.log('✅ Token Stripe créé:', token.id);
-
-            // Simuler le traitement du paiement (à remplacer par un appel à votre backend)
-            // Ici, on simule un paiement réussi
-            await this.simulateBackendPayment(token.id, this.currentBooking);
-
-            // Traiter la réservation après paiement
-            const result = await this.processManualPayment('card', user);
+            // ÉTAPE 1 : Créer le PaymentIntent côté serveur (calcul sécurisé)
+            console.log('📡 Création PaymentIntent sur le serveur...');
             
+            const supabaseUrl = window.YOTEACHER_CONFIG?.SUPABASE_URL;
+            if (!supabaseUrl) {
+                throw new Error('Configuration Supabase manquante');
+            }
+
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                throw new Error('Session expirée');
+            }
+
+            const response = await fetch(`${supabaseUrl}/functions/v1/create-payment-intent`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                    courseType: this.currentBooking.courseType,
+                    duration: this.currentBooking.duration || 60,
+                    quantity: this.currentBooking.packageQuantity || 1,
+                    email: this.currentBooking.email || user.email,
+                    name: this.currentBooking.name || user.user_metadata?.full_name,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Erreur création PaymentIntent');
+            }
+
+            const paymentData = await response.json();
+            this.clientSecret = paymentData.clientSecret;
+            this.paymentIntentId = paymentData.paymentIntentId;
+
+            console.log('✅ PaymentIntent créé:', this.paymentIntentId);
+            console.log('💰 Montant serveur:', paymentData.amount, paymentData.currency);
+
+            // ÉTAPE 2 : Confirmer le paiement avec Stripe
+            console.log('💳 Confirmation du paiement...');
+
+            const { error: stripeError, paymentIntent } = await this.stripe.confirmCardPayment(
+                this.clientSecret,
+                {
+                    payment_method: {
+                        card: this.cardElement,
+                        billing_details: {
+                            name: this.currentBooking.name || user.user_metadata?.full_name,
+                            email: this.currentBooking.email || user.email,
+                        },
+                    },
+                }
+            );
+
+            if (stripeError) {
+                throw new Error(stripeError.message);
+            }
+
+            if (paymentIntent.status === 'succeeded') {
+                console.log('✅ Paiement réussi !');
+                
+                // Traiter la réservation
+                const result = await this.processManualPayment('card', user, paymentIntent.id);
+                
+                if (result.success) {
+                    setTimeout(() => {
+                        window.location.href = `payment-success.html?booking=${encodeURIComponent(JSON.stringify(result.bookingData))}`;
+                    }, 1000);
+                }
+            }
+
             if (processBtn) {
                 processBtn.disabled = false;
                 processBtn.innerHTML = '<i class="fas fa-lock"></i> Payer par carte';
             }
 
-            return result;
         } catch (error) {
             console.error('❌ Erreur paiement Stripe:', error);
             
-            // Réactiver le bouton
             const processBtn = document.getElementById('processCardPayment');
             if (processBtn) {
                 processBtn.disabled = false;
@@ -227,46 +219,30 @@ class PaymentManager {
         }
     }
 
-    async simulateBackendPayment(tokenId, booking) {
-        // Simulation de l'appel à votre backend
-        // En production, vous devrez appeler votre serveur pour créer un PaymentIntent Stripe
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                console.log(`💰 Paiement simulé pour ${booking.price} ${booking.currency}`);
-                console.log(`📋 Token: ${tokenId}`);
-                resolve({ success: true });
-            }, 1500);
-        });
-    }
-
-    async processManualPayment(method, user) {
+    async processManualPayment(method, user, stripePaymentIntentId = null) {
         try {
             console.log(`📤 Traitement paiement manuel: ${method}`);
             
-            // Préparer les données de transaction
-            const transactionId = `TRX-${Date.now().toString().slice(-8)}-${method.toUpperCase()}`;
+            const transactionId = stripePaymentIntentId || `TRX-${Date.now().toString().slice(-8)}-${method.toUpperCase()}`;
             const refNumber = Date.now().toString().slice(-6);
             
+            // IMPORTANT : Ne pas inclure le prix dans paymentData
+            // Le prix a été calculé côté serveur
             const paymentData = {
                 user_id: user?.id || this.currentBooking.userId,
                 method: method,
-                amount: this.currentBooking.price,
-                currency: this.currentBooking.currency,
                 transaction_id: transactionId,
                 reference: `COURS-${refNumber}`,
-                booking_data: this.currentBooking,
                 status: 'completed',
                 created_at: new Date().toISOString()
             };
 
-            // Sauvegarder le paiement (localement car pas de table payments)
             const paymentResult = await this.savePaymentRecord(paymentData);
             
             if (!paymentResult.success) {
                 throw new Error(paymentResult.error || 'Erreur sauvegarde paiement');
             }
 
-            // Mettre à jour la réservation
             const updatedBooking = {
                 ...this.currentBooking,
                 status: 'confirmed',
@@ -276,10 +252,10 @@ class PaymentManager {
                 confirmedAt: new Date().toISOString()
             };
 
-            // Si c'est un forfait, ajouter des crédits
+            // Gérer les forfaits
             let packageId = null;
             if (updatedBooking.isPackage && updatedBooking.packageQuantity > 1 && user?.id && window.packagesManager) {
-                console.log(`📦 Ajout de ${updatedBooking.packageQuantity} crédits pour ${updatedBooking.courseType} (${updatedBooking.duration}min)`);
+                console.log(`📦 Ajout de ${updatedBooking.packageQuantity} crédits`);
                 
                 const creditResult = await window.packagesManager.addCredits(
                     user.id,
@@ -293,66 +269,43 @@ class PaymentManager {
                 );
                 
                 if (creditResult.success) {
-                    console.log('✅ Crédits ajoutés avec succès');
                     packageId = creditResult.package.id;
-                    
-                    // Marquer la réservation comme utilisant un crédit
                     updatedBooking.packageId = packageId;
-                    updatedBooking.price = 0; // Le cours est couvert par le forfait
-                } else {
-                    console.warn('⚠️ Échec ajout crédits:', creditResult.error);
+                    updatedBooking.price = 0;
                 }
             }
 
-            // Sauvegarder la réservation dans Supabase via bookingManager
-            if (window.bookingManager && typeof window.bookingManager.createBookingAfterPayment === 'function') {
+            // Créer la réservation Cal.com et Supabase
+            if (window.bookingManager?.createBookingAfterPayment) {
                 const bookingResult = await window.bookingManager.createBookingAfterPayment(updatedBooking);
                 
-                if (!bookingResult.success) {
-                    console.warn('⚠️ Réservation Cal.com échouée:', bookingResult.error);
-                    updatedBooking.calcomError = true;
-                    updatedBooking.calcomErrorMessage = bookingResult.error;
-                } else {
-                    // Ajouter l'ID Cal.com à la réservation
+                if (bookingResult.success) {
                     updatedBooking.calcomId = bookingResult.data?.id || bookingResult.data?.uid;
-                    // Ajouter également le meeting_link si disponible
                     if (bookingResult.data?.location) {
                         updatedBooking.meetingLink = bookingResult.data.location;
                     }
-                }
-                
-                // Si forfait, utiliser un crédit pour cette réservation
-                if (packageId && user?.id && window.packagesManager && bookingResult.supabaseBookingId) {
-                    const useCreditResult = await window.packagesManager.useCredit(
-                        user.id,
-                        updatedBooking.courseType,
-                        { 
-                            id: bookingResult.supabaseBookingId,
-                            duration: updatedBooking.duration || 60
-                        }
-                    );
-                    
-                    if (useCreditResult.success) {
-                        console.log('✅ 1 crédit déduit pour cette réservation');
-                    } else {
-                        console.warn('⚠️ Échec déduction crédit:', useCreditResult.error);
+
+                    // Déduire un crédit si c'est un forfait
+                    if (packageId && user?.id && bookingResult.supabaseBookingId) {
+                        await window.packagesManager.useCredit(
+                            user.id,
+                            updatedBooking.courseType,
+                            { 
+                                id: bookingResult.supabaseBookingId,
+                                duration: updatedBooking.duration || 60
+                            }
+                        );
                     }
                 }
             }
 
-            // Sauvegarder localement
             localStorage.setItem('confirmedBooking', JSON.stringify(updatedBooking));
             localStorage.removeItem('pendingBooking');
-
-            // Déterminer si nous avons un avertissement
-            const hasWarning = updatedBooking.calcomError || !updatedBooking.calcomId;
 
             return {
                 success: true,
                 bookingData: updatedBooking,
-                paymentData: paymentData,
                 message: `Paiement ${method} confirmé`,
-                redirectTo: `payment-success.html?booking=${encodeURIComponent(JSON.stringify(updatedBooking))}&warning=${hasWarning}`
             };
         } catch (error) {
             console.error(`❌ Erreur traitement paiement ${method}:`, error);
@@ -360,68 +313,26 @@ class PaymentManager {
         }
     }
 
-    // FONCTION CORRIGÉE : Pas de table payments dans votre schéma
     async savePaymentRecord(paymentData) {
-        try {
-            // Comme vous n'avez pas de table 'payments', sauvegarder localement
-            console.log('💾 Sauvegarde du paiement en mode local...');
-            return this.savePaymentToLocalStorage(paymentData);
-        } catch (error) {
-            console.warn('⚠️ Erreur sauvegarde paiement:', error);
-            return this.savePaymentToLocalStorage(paymentData);
-        }
-    }
-
-    savePaymentToLocalStorage(paymentData) {
         try {
             const payments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
             payments.push(paymentData);
             localStorage.setItem('yoteacher_payments', JSON.stringify(payments));
-            console.log('✅ Paiement sauvegardé localement');
             return { success: true };
         } catch (error) {
-            console.error('❌ Erreur sauvegarde locale:', error);
             return { success: false, error: error.message };
         }
     }
-
-    formatAmount(amount, currency) {
-        if (window.currencyManager) {
-            return window.currencyManager.formatPrice(amount);
-        }
-        
-        const formatter = new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: currency || 'EUR',
-            minimumFractionDigits: 2
-        });
-        
-        return formatter.format(amount);
-    }
-
-    async refundPayment(transactionId, reason = '') {
-        // Implémentation de remboursement
-        console.log(`🔄 Remboursement transaction: ${transactionId}`);
-        // À implémenter avec votre backend
-        return { success: true, message: 'Remboursement simulé' };
-    }
 }
 
-// Initialisation
 window.paymentManager = new PaymentManager();
 
-// Initialiser au chargement de la page
 document.addEventListener('DOMContentLoaded', async () => {
-    if (window.paymentManager) {
-        // Si on est sur la page de paiement, initialiser Stripe
-        if (window.location.pathname.includes('payment.html')) {
-            setTimeout(() => {
-                if (window.paymentManager.setupStripeForm) {
-                    window.paymentManager.setupStripeForm();
-                }
-            }, 1000);
-        }
+    if (window.location.pathname.includes('payment.html')) {
+        setTimeout(() => {
+            window.paymentManager?.setupStripeForm();
+        }, 1000);
     }
 });
 
-console.log('✅ PaymentManager chargé - Version corrigée avec gestion de durée des crédits');
+console.log('✅ PaymentManager chargé (version sécurisée avec calcul serveur)');
