@@ -198,13 +198,17 @@ class PaymentManager {
             };
 
             console.log('📤 Données envoyées:', requestBody);
-            console.log('🔑 Token JWT envoyé:', session.access_token ? 'Oui' : 'Non');
-
+            
+            // MODIFICATION ICI : On utilise la clé ANON pour l'autorisation HTTP
+            // et on passe le token utilisateur dans un header personnalisé
             const response = await fetch(functionUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`,
+                    // Utilisez la clé ANON ici pour garantir que la requête atteint la fonction
+                    'Authorization': `Bearer ${window.YOTEACHER_CONFIG?.SUPABASE_ANON_KEY}`,
+                    // Passez le token utilisateur ici pour vérification interne
+                    'x-user-token': session.access_token,
                     'apikey': window.YOTEACHER_CONFIG?.SUPABASE_ANON_KEY || '',
                     'x-client-info': 'yoteacher-web'
                 },
