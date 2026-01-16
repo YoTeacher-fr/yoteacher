@@ -201,19 +201,18 @@ class PaymentManager {
             
             // MODIFICATION ICI : On utilise la clé ANON pour l'autorisation HTTP
             // et on passe le token utilisateur dans un header personnalisé
-            const response = await fetch(functionUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // Utilisez la clé ANON ici pour garantir que la requête atteint la fonction
-                    'Authorization': `Bearer ${window.YOTEACHER_CONFIG?.SUPABASE_ANON_KEY}`,
-                    // Passez le token utilisateur ici pour vérification interne
-                    'x-user-token': session.access_token,
-                    'apikey': window.YOTEACHER_CONFIG?.SUPABASE_ANON_KEY || '',
-                    'x-client-info': 'yoteacher-web'
-                },
-                body: JSON.stringify(requestBody)
-            });
+           const response = await fetch(functionUrl, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        // On utilise la clé ANON pour passer la Gateway Supabase
+        'Authorization': `Bearer ${window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY}`,
+        // On transmet le jeton de session dans un header personnalisé
+        'x-user-token': session.access_token,
+        'apikey': window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY
+    },
+    body: JSON.stringify(requestBody)
+});
 
             console.log('📥 Réponse de la fonction Edge:', {
                 status: response.status,
