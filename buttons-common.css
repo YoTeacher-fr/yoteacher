@@ -1,0 +1,358 @@
+/* ===== BUTTONS COMMON STYLES ===== */
+/* Styles partagés pour tous les boutons */
+
+/* BASE BUTTON */
+.btn {
+    padding: 15px 35px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    text-decoration: none;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* PRIMARY BUTTON (Orange) */
+.btn-primary {
+    background-color: #ff9800;
+    color: white;
+    border-color: #ff9800;
+}
+
+.btn-primary:hover {
+    background-color: #e68900;
+    border-color: #e68900;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 25px rgba(255, 152, 0, 0.3);
+}
+
+/* SECONDARY BUTTON (Blue) */
+.btn-secondary {
+    background-color: #3c84f6;
+    color: white;
+    border-color: #3c84f6;
+}
+
+.btn-secondary:hover {
+    background-color: #2c74e6;
+    color: white;
+    border-color: #2c74e6;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+}
+
+/* LOGIN BUTTON */
+.login-btn {
+    background-color: #4f9ad1;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+
+.login-btn:hover {
+    background-color: #3f8ac1;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(79, 154, 209, 0.3);
+}
+
+/* AUTH BUTTON (Forms login/signup) */
+.btn-auth {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+.btn-auth:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+}
+
+.btn-auth:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* SAVE BUTTON (Profile page) */
+.btn-save {
+    padding: 15px 40px;
+    background: #3c84f6;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-save:hover {
+    background: #2c74e6;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(60, 132, 246, 0.3);
+}
+
+/* BOOKING BUTTON */
+.btn-booking {
+    width: 100%;
+    padding: 15px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+}
+
+.btn-booking:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+}
+
+.btn-booking:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* PAYMENT BUTTON */
+.btn-confirm-payment {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #4CAF50, #45a049) !important;
+    color: white !important;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-confirm-payment:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+}
+
+.btn-confirm-payment:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* PROFILE BUTTON */
+.btn-profile {
+    width: 100%;
+    padding: 12px;
+    background: #3c84f6;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-profile:hover {
+    background: #2c74e6;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(60, 132, 246, 0.3);
+}
+
+/* OUTLINE BUTTONS */
+.btn-outline-white {
+    background-color: #3c84f6;
+    color: white;
+    border: 2px solid #3c84f6;
+}
+
+.btn-outline-white:hover {
+    background-color: #2c74e6;
+    color: white;
+    border-color: #2c74e6;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+}
+
+.btn-outline-blue {
+    background: rgba(71, 129, 219, 0.9);
+    color: white;
+    border: 2px solid white;
+}
+
+.btn-outline-blue:hover {
+    background: white;
+    color: #4781DB;
+}
+
+/* ACCENT BUTTON (CTA) */
+.btn-accent {
+    background-color: #e09c5f;
+    color: white;
+    border: 2px solid #e09c5f;
+}
+
+.btn-accent:hover {
+    background-color: #d08c4f;
+    border-color: #d08c4f;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 25px rgba(224, 156, 95, 0.3);
+}
+
+/* EXTRA LARGE BUTTON */
+.btn-xl {
+    padding: 16px 35px;
+    font-size: 1.1rem;
+}
+
+/* CANCEL/DANGER BUTTONS */
+.btn-cancel-external {
+    background: transparent;
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.btn-cancel-external:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-cancel-external:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f0f0f0;
+    border-color: #ccc;
+    color: #999;
+}
+
+/* JOIN BUTTON */
+.btn-join-external {
+    background: #4CAF50;
+    border: 1px solid #4CAF50;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.btn-join-external:hover {
+    background: #45a049;
+    border-color: #45a049;
+}
+
+/* SUCCESS BUTTON */
+.btn-success {
+    background: white;
+    color: #97b4d4;
+    padding: 14px 28px;
+    border-radius: 50px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s;
+    font-size: 0.95rem;
+}
+
+.btn-success:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .login-btn {
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .btn {
+        padding: 14px 30px;
+        font-size: 0.95rem;
+    }
+    
+    .btn-xl {
+        padding: 15px 30px;
+        font-size: 1rem;
+    }
+    
+    .btn-auth {
+        padding: 14px;
+    }
+    
+    .btn-booking {
+        padding: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-btn {
+        padding: 5px 10px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .btn {
+        padding: 12px 25px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-xl {
+        padding: 14px 28px;
+        font-size: 0.95rem;
+    }
+}

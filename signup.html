@@ -124,10 +124,14 @@
             const errorText = document.getElementById('errorText');
             const successText = document.getElementById('successText');
 
-            // Vérifier si déjà connecté
-            if (window.authManager?.isAuthenticated()) {
-                window.location.href = 'dashboard.html';
-            }
+            // Attendre que l'AuthManager soit initialisé avant de vérifier
+            setTimeout(() => {
+                if (window.authManager && window.authManager.isAuthenticated && 
+                    window.authManager.isAuthenticated()) {
+                    console.log('✅ Déjà connecté, redirection vers dashboard');
+                    window.location.href = 'dashboard.html';
+                }
+            }, 1500);
             
             // Inscription
             form.addEventListener('submit', async function(e) {

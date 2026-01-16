@@ -109,10 +109,14 @@
             const successText = document.getElementById('successText');
             const forgotPasswordLink = document.getElementById('forgotPasswordLink');
 
-            // Vérifier si déjà connecté
-            if (window.authManager?.isAuthenticated()) {
-                window.location.href = 'dashboard.html';
-            }
+            // Attendre que l'AuthManager soit initialisé avant de vérifier
+            setTimeout(() => {
+                if (window.authManager && window.authManager.isAuthenticated && 
+                    window.authManager.isAuthenticated()) {
+                    console.log('✅ Déjà connecté, redirection vers dashboard');
+                    window.location.href = 'dashboard.html';
+                }
+            }, 1500);
             
             // Empêcher le bouton du header de recharger la page
             preventHeaderLoginButtons();
@@ -145,7 +149,7 @@
                     if (result.success) {
                         showSuccess(window.translationManager?.getTranslation('login.success') || 'Connexion réussie ! Redirection...');
                         
-                        // Utiliser le redirectUrl de la réponse
+                        // Utiliser le redirectUrl de la réponse (forcément dashboard.html)
                         const redirectUrl = result.redirectUrl || 'dashboard.html';
                         
                         setTimeout(() => {

@@ -1,4 +1,4 @@
-// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION FINALE CORRIGÉE
+// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION CORRIGÉE POUR REDIRECTIONS
 class AuthManager {
     constructor() {
         this.user = null;
@@ -592,14 +592,17 @@ class AuthManager {
             user_metadata: this.user.user_metadata,
             profile: this.user.profile,
             vipPrices: this.user.vipPrices,
-            created_at: this.user.created_at
+            created_at: this.user.created_at,
+            _timestamp: Date.now() // Ajouter timestamp pour diagnostic
         };
         
         localStorage.setItem('yoteacher_user', JSON.stringify(userData));
+        console.log('💾 Utilisateur sauvegardé dans localStorage');
     }
 
     removeUserFromStorage() {
         localStorage.removeItem('yoteacher_user');
+        console.log('🗑️ Utilisateur supprimé du localStorage');
     }
 
     async signUp(email, password, fullName) {
@@ -781,9 +784,10 @@ class AuthManager {
             // Appliquer code VIP si présent
             await this.applyPendingInvitation();
             
-            const returnUrl = this.getReturnUrl();
+            // FORCER dashboard.html comme URL de retour
+            const returnUrl = 'dashboard.html';
             
-            console.log('🔗 URL de redirection après login:', returnUrl);
+            console.log('🔗 Redirection forcée vers dashboard');
             
             return { 
                 success: true, 
@@ -807,125 +811,17 @@ class AuthManager {
         
         if (returnUrl) {
             returnUrl = decodeURIComponent(returnUrl);
-            console.log('🔍 URL de redirection brute détectée:', returnUrl);
+            console.log('🔍 URL de redirection détectée:', returnUrl);
             
-            // CORRECTION IMPORTANTE : Gestion des URLs sans extension .html
-            // Cette fonction corrige les URLs comme "/dashboard" en "/dashboard.html"
-            
-            // Vérifier si c'est une URL complète
-            try {
-                const urlObj = new URL(returnUrl);
-                const pathname = urlObj.pathname;
-                const search = urlObj.search;
-                
-                console.log('📊 Analyse URL complète:', {
-                    origin: urlObj.origin,
-                    pathname: pathname,
-                    search: search
-                });
-                
-                // Liste des chemins connus qui nécessitent .html
-                const knownPaths = ['dashboard', 'profile', 'booking', 'login', 'signup', 'reset-password', 'index'];
-                
-                // Extraire le dernier segment du chemin
-                const pathSegments = pathname.split('/').filter(segment => segment);
-                const lastSegment = pathSegments[pathSegments.length - 1];
-                
-                console.log('📝 Dernier segment du chemin:', lastSegment);
-                
-                // Si le dernier segment est un chemin connu et n'a pas d'extension
-                if (knownPaths.includes(lastSegment) && !lastSegment.includes('.')) {
-                    // Reconstruire le chemin avec .html
-                    const newPathname = pathname.endsWith('/') ? 
-                        `${pathname}${lastSegment}.html` : 
-                        `${pathname}.html`;
-                    
-                    const correctedUrl = `${urlObj.origin}${newPathname}${search}`;
-                    console.log('✅ URL corrigée avec .html:', correctedUrl);
-                    
-                    // Vérifier si cette URL existe (optionnel, pour éviter les 404)
-                    // Pour Cloudflare Pages, nous faisons confiance que le fichier existe
-                    
-                    return correctedUrl;
-                }
-                
-                // Si l'URL se termine déjà par .html, la garder telle quelle
-                if (pathname.endsWith('.html')) {
-                    console.log('✅ URL a déjà .html, on garde:', returnUrl);
-                    return returnUrl;
-                }
-                
-            } catch (e) {
-                // Ce n'est pas une URL valide, peut-être un chemin relatif
-                console.log('⚠️ URL invalide ou chemin relatif:', returnUrl);
-                
-                // Vérifier si c'est un chemin relatif simple
-                const knownPaths = ['dashboard', 'profile', 'booking', 'login', 'signup', 'reset-password', 'index'];
-                
-                // Si le chemin ne contient pas de point et n'a pas de slash au début
-                if (!returnUrl.includes('.') && !returnUrl.startsWith('/')) {
-                    if (knownPaths.includes(returnUrl)) {
-                        const correctedUrl = `${returnUrl}.html`;
-                        console.log('✅ Chemin relatif corrigé:', correctedUrl);
-                        return correctedUrl;
-                    }
-                }
-                
-                // Si le chemin commence par / mais n'a pas d'extension
-                if (returnUrl.startsWith('/') && !returnUrl.includes('.')) {
-                    const lastSegment = returnUrl.split('/').pop();
-                    if (knownPaths.includes(lastSegment)) {
-                        const correctedUrl = `${returnUrl}.html`;
-                        console.log('✅ Chemin absolu corrigé:', correctedUrl);
-                        return correctedUrl;
-                    }
-                }
+            // Simplification : retourner dashboard.html pour toutes les pages internes
+            if (returnUrl.includes('dashboard') || 
+                returnUrl.includes('profile') || 
+                returnUrl.includes('booking') ||
+                returnUrl.includes('payment')) {
+                return 'dashboard.html';
             }
             
-            console.log('✅ URL gardée telle quelle (déjà correcte):', returnUrl);
             return returnUrl;
-        }
-        
-        // Vérifier le paramètre 'return' (alternative)
-        returnUrl = urlParams.get('return');
-        if (returnUrl) {
-            const decodedUrl = decodeURIComponent(returnUrl);
-            console.log('🔍 URL de retour détectée:', decodedUrl);
-            return decodedUrl;
-        }
-        
-        // Vérifier le référent
-        const referrer = document.referrer;
-        if (referrer && 
-            !referrer.includes('login.html') && 
-            !referrer.includes('signup.html') &&
-            !referrer.includes('reset-password.html')) {
-            console.log('🔍 Référent détecté:', referrer);
-            
-            // Appliquer la même correction au référent si nécessaire
-            try {
-                const urlObj = new URL(referrer);
-                const pathname = urlObj.pathname;
-                
-                // Vérifier si c'est une page connue sans .html
-                const knownPaths = ['dashboard', 'profile', 'booking'];
-                const pathSegments = pathname.split('/').filter(segment => segment);
-                const lastSegment = pathSegments[pathSegments.length - 1];
-                
-                if (knownPaths.includes(lastSegment) && !lastSegment.includes('.')) {
-                    const correctedPathname = pathname.endsWith('/') ? 
-                        `${pathname}${lastSegment}.html` : 
-                        `${pathname}.html`;
-                    
-                    const correctedUrl = `${urlObj.origin}${correctedPathname}`;
-                    console.log('✅ Référent corrigé:', correctedUrl);
-                    return correctedUrl;
-                }
-            } catch (e) {
-                // Erreur de parsing, on garde le référent tel quel
-            }
-            
-            return referrer;
         }
         
         // Par défaut, rediriger vers le dashboard
@@ -950,7 +846,7 @@ class AuthManager {
                             resolve({ 
                                 success: true, 
                                 data: { user: user },
-                                redirectUrl: this.getReturnUrl()
+                                redirectUrl: 'dashboard.html'
                             });
                             return;
                         }
@@ -1600,6 +1496,23 @@ class AuthManager {
             return { success: false, error: error.message };
         }
     }
+
+    // NOUVELLE MÉTHODE : Forcer la synchronisation depuis localStorage
+    forceUserSync() {
+        const storedUser = localStorage.getItem('yoteacher_user');
+        if (storedUser && !this.user) {
+            try {
+                this.user = JSON.parse(storedUser);
+                console.log('✅ Utilisateur synchronisé depuis localStorage');
+                this.updateUI();
+                return true;
+            } catch (error) {
+                console.error('❌ Erreur synchronisation:', error);
+                return false;
+            }
+        }
+        return !!this.user;
+    }
 }
 
 // Ajout d'écouteurs globaux pour le débogage des événements
@@ -1704,6 +1617,46 @@ window.diagnoseBookingIssues = async function() {
     console.groupEnd();
 };
 
+// Fonction de diagnostic d'authentification
+window.diagnoseAuth = function() {
+    console.group('🔍 DIAGNOSTIC AUTH');
+    
+    // 1. Vérifier localStorage
+    const storedUser = localStorage.getItem('yoteacher_user');
+    console.log('1. localStorage user:', storedUser ? 'PRÉSENT' : 'ABSENT');
+    if (storedUser) {
+        try {
+            const user = JSON.parse(storedUser);
+            console.log('   Email:', user.email);
+            console.log('   Timestamp:', user._timestamp ? new Date(user._timestamp).toLocaleString() : 'N/A');
+        } catch (e) {
+            console.log('   ERREUR parsing:', e.message);
+        }
+    }
+    
+    // 2. Vérifier authManager
+    console.log('2. authManager:', window.authManager ? 'PRÉSENT' : 'ABSENT');
+    if (window.authManager) {
+        console.log('   User:', window.authManager.user ? 'PRÉSENT' : 'ABSENT');
+        console.log('   isAuthenticated:', typeof window.authManager.isAuthenticated);
+        if (typeof window.authManager.isAuthenticated === 'function') {
+            console.log('   isAuthenticated():', window.authManager.isAuthenticated());
+        }
+    }
+    
+    // 3. Vérifier sessionStorage
+    const sessionCode = sessionStorage.getItem('invitation_code');
+    console.log('3. Session code:', sessionCode || 'ABSENT');
+    
+    // 4. Vérifier URL actuelle
+    console.log('4. URL actuelle:', window.location.href);
+    console.log('   Path:', window.location.pathname);
+    const params = new URLSearchParams(window.location.search);
+    console.log('   Paramètres:', Object.fromEntries(params.entries()));
+    
+    console.groupEnd();
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const isAuthPage = window.location.pathname.includes('login.html') || 
                       window.location.pathname.includes('signup.html');
@@ -1718,22 +1671,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Initialisation de AuthManager...');
         window.authManager = new AuthManager();
         
-        if (isDashboardPage) {
-            setTimeout(() => {
-                if (!window.authManager.isAuthenticated()) {
-                    const currentUrl = encodeURIComponent(window.location.href);
-                    window.location.href = `login.html?redirect=${currentUrl}`;
-                }
-            }, 1000);
-        }
+        // NE PAS faire de redirection automatique depuis dashboard
+        // Laisser dashboard.js gérer ça
         
-        // Lancer un diagnostic automatique après 5 secondes
-        setTimeout(() => {
-            console.log('🧪 Lancement du diagnostic automatique...');
-            if (window.diagnoseBookingIssues) {
-                window.diagnoseBookingIssues();
-            }
-        }, 5000);
     }, delay);
 });
 

@@ -1,3 +1,30 @@
+// Fonction pour forcer la synchronisation de l'utilisateur
+window.forceUserSync = function() {
+    const storedUser = localStorage.getItem('yoteacher_user');
+    if (storedUser) {
+        try {
+            const userData = JSON.parse(storedUser);
+            console.log('🔄 Synchronisation utilisateur depuis localStorage');
+            
+            if (window.authManager) {
+                window.authManager.user = userData;
+                console.log('✅ authManager mis à jour');
+            }
+            
+            // Émettre l'événement login pour que le dashboard se charge
+            window.dispatchEvent(new CustomEvent('auth:login', {
+                detail: { user: userData }
+            }));
+            
+            return true;
+        } catch (error) {
+            console.error('❌ Erreur synchronisation:', error);
+            return false;
+        }
+    }
+    return false;
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // Code du premier bloc <script>
     document.body.style.opacity = '0';
@@ -26,37 +53,26 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkAuthentication() {
         console.log('🔐 Vérification de l\'authentification...');
         
-        let attempts = 0;
-        const maxAttempts = 100;
+        // 1. Vérifier d'abord localStorage (le plus fiable)
+        const storedUser = localStorage.getItem('yoteacher_user');
         
-        function check() {
-            attempts++;
-            console.log(`Tentative ${attempts}/${maxAttempts}`);
-            
-            if (!window.authManager) {
-                console.log('⏳ authManager non disponible, attente...');
-                if (attempts >= maxAttempts) {
-                    checkDegradedMode();
-                } else {
-                    setTimeout(check, 100);
+        if (storedUser) {
+            try {
+                const userData = JSON.parse(storedUser);
+                console.log('✅ Utilisateur trouvé dans localStorage:', userData.email);
+                
+                // Forcer l'initialisation de authManager si nécessaire
+                if (!window.authManager) {
+                    window.authManager = {
+                        user: userData,
+                        isAuthenticated: () => true,
+                        getCurrentUser: () => userData
+                    };
+                } else if (!window.authManager.user) {
+                    window.authManager.user = userData;
                 }
-                return;
-            }
-            
-            if (typeof window.authManager.isAuthenticated !== 'function') {
-                console.log('⏳ isAuthenticated non disponible, attente...');
-                if (attempts >= maxAttempts) {
-                    checkDegradedMode();
-                } else {
-                    setTimeout(check, 100);
-                }
-                return;
-            }
-            
-            console.log('✅ AuthManager prêt, vérification...');
-            
-            if (window.authManager.isAuthenticated()) {
-                console.log('✅ Utilisateur authentifié');
+                
+                // Afficher le dashboard
                 document.body.classList.add('loaded');
                 document.body.style.opacity = '1';
                 document.body.style.visibility = 'visible';
@@ -67,24 +83,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.loadDashboard();
                     }
                 }, 100);
-            } else {
-                console.log('❌ Utilisateur non authentifié');
-                redirectToLogin();
+                
+                return;
+            } catch (error) {
+                console.error('❌ Erreur lecture localStorage:', error);
             }
         }
         
-        function checkDegradedMode() {
-            const storedUser = localStorage.getItem('yoteacher_user');
+        // 2. Si pas dans localStorage, vérifier authManager
+        let attempts = 0;
+        const maxAttempts = 30;
+        
+        function checkAuthManager() {
+            attempts++;
             
-            if (storedUser) {
-                try {
-                    const userData = JSON.parse(storedUser);
-                    console.log('✅ Utilisateur trouvé dans localStorage:', userData.email);
-                    
-                    if (window.authManager) {
-                        window.authManager.user = userData;
-                    }
-                    
+            if (window.authManager && typeof window.authManager.isAuthenticated === 'function') {
+                if (window.authManager.isAuthenticated()) {
+                    console.log('✅ Utilisateur authentifié via authManager');
                     document.body.classList.add('loaded');
                     document.body.style.opacity = '1';
                     document.body.style.visibility = 'visible';
@@ -94,14 +109,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             window.loadDashboard();
                         }
                     }, 100);
-                    
-                } catch (error) {
-                    console.error('❌ Erreur lecture localStorage:', error);
+                } else {
+                    console.log('❌ AuthManager dit non authentifié');
                     redirectToLogin();
                 }
-            } else {
-                console.log('❌ Aucun utilisateur dans localStorage');
+            } else if (attempts >= maxAttempts) {
+                console.log('⚠️ AuthManager non initialisé après 3s');
                 redirectToLogin();
+            } else {
+                console.log(`⏳ Attente authManager (${attempts}/${maxAttempts})`);
+                setTimeout(checkAuthManager, 100);
             }
         }
         
@@ -111,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.replace(`login.html?redirect=${currentUrl}`);
         }
         
-        setTimeout(check, 200);
+        setTimeout(checkAuthManager, 200);
     }
     
     setTimeout(checkAuthentication, 200);
@@ -842,4 +859,32 @@ document.addEventListener('DOMContentLoaded', () => {
         
         console.groupEnd();
     };
+});
+
+// Vérification directe au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 Vérification rapide de l\'authentification...');
+    
+    // Vérifier immédiatement dans localStorage
+    const storedUser = localStorage.getItem('yoteacher_user');
+    
+    if (storedUser) {
+        console.log('✅ Utilisateur trouvé dans localStorage');
+        // Forcer l'opacité du body
+        document.body.style.opacity = '1';
+        document.body.style.visibility = 'visible';
+        
+        // Attendre que le dashboard se charge
+        setTimeout(function() {
+            if (window.loadDashboard) {
+                window.loadDashboard();
+            } else if (window.forceUserSync) {
+                window.forceUserSync();
+            }
+        }, 500);
+    } else {
+        console.log('❌ Pas d\'utilisateur dans localStorage');
+        // Masquer le contenu mais ne pas rediriger immédiatement
+        // La fonction checkAuthentication() se chargera de la redirection
+    }
 });

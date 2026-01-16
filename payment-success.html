@@ -34,7 +34,7 @@
             <div class="success-details" id="bookingDetails"></div>
             
             <div class="success-actions">
-                <a href="dashboard.html" class="btn-success">
+                <a href="dashboard.html" class="btn-success" id="dashboardLink">
                     <i class="fas fa-tachometer-alt"></i> <span data-i18n="payment.view_dashboard">Voir mon dashboard</span>
                 </a>
                 <a href="index.html" class="btn-outline-white">
@@ -48,6 +48,44 @@
     </section>
 
     <script src="translation.js"></script>
+    <script>
+        // Vérifier l'authentification sur payment-success
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔍 Vérification auth sur payment-success...');
+            
+            // Vérifier dans localStorage
+            const storedUser = localStorage.getItem('yoteacher_user');
+            
+            if (!storedUser) {
+                console.log('⚠️ Non authentifié, redirection vers login...');
+                // Rediriger après un court délai
+                setTimeout(function() {
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    window.location.href = `login.html?redirect=${currentUrl}`;
+                }, 2000);
+            } else {
+                console.log('✅ Utilisateur authentifié');
+                // S'assurer que authManager est synchronisé
+                if (window.authManager && !window.authManager.user) {
+                    try {
+                        window.authManager.user = JSON.parse(storedUser);
+                        console.log('✅ authManager synchronisé');
+                    } catch (error) {
+                        console.error('❌ Erreur synchronisation:', error);
+                    }
+                }
+                
+                // Modifier les liens pour qu'ils fonctionnent
+                const dashboardLink = document.getElementById('dashboardLink');
+                if (dashboardLink) {
+                    dashboardLink.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        window.location.href = 'dashboard.html';
+                    });
+                }
+            }
+        });
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
