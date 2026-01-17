@@ -1,3 +1,83 @@
+/* HEADER IDENTIQUE À LOGIN */
+.main-header {
+    background-color: rgba(255, 255, 255, 0.98) !important;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    min-height: 60px !important;
+}
+
+.header-content {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10px 0 !important;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    font-size: 1.5rem !important;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    color: #3c84f6;
+}
+
+.header-right-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    margin-left: auto !important;
+}
+
+.nav-menu.desktop-menu {
+    display: none !important;
+}
+
+.login-btn {
+    background-color: #4f9ad1;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    text-decoration: none;
+}
+
+.login-btn:hover {
+    background-color: #3f8ac1;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(79, 154, 209, 0.3);
+}
+
+.language-switcher {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 20px;
+    transition: background-color 0.3s;
+}
+
+.language-switcher:hover {
+    background-color: #f5f5f5;
+}
+
+/* CORRECTION DU PADDING DU BODY - AUGMENTÉ */
+body {
+    padding-top: 80px !important;
+    margin: 0;
+    height: 100%;
+}
+
 /* DASHBOARD COMPLET */
 body {
     opacity: 0;
@@ -273,6 +353,44 @@ body.loaded {
     width: 100%;
 }
 
+.btn-external {
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    flex: 1;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-cancel-external {
+    background: transparent;
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+}
+
+.btn-cancel-external:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-join-external {
+    background: #4CAF50;
+    border: 1px solid #4CAF50;
+    color: white;
+}
+
+.btn-join-external:hover {
+    background: #45a049;
+    border-color: #45a049;
+}
+
 /* Section Forfaits */
 .packages-container {
     flex-grow: 1;
@@ -437,6 +555,27 @@ body.loaded {
     color: #e91e63;
 }
 
+/* Avertissement expiration proche */
+.expiry-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
 /* Section Profil */
 .profile-info {
     flex-grow: 1;
@@ -468,6 +607,31 @@ body.loaded {
     font-size: 0.95rem;
     line-height: 1.4;
     word-break: break-word;
+}
+
+.btn-profile {
+    width: 100%;
+    padding: 12px;
+    background: #3c84f6;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    margin-top: auto;
+}
+
+.btn-profile:hover {
+    background: #2c74e6;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(60, 132, 246, 0.3);
 }
 
 /* Section Réserver un cours */
@@ -689,6 +853,10 @@ body.loaded {
         font-size: 1.1rem;
     }
     
+    .header-right-group {
+        display: none !important;
+    }
+    
     .main-header {
         min-height: 50px !important;
     }
@@ -808,6 +976,10 @@ body.loaded {
     .mobile-login-btn-header {
         display: none !important;
     }
+    
+    .header-right-group {
+        display: flex !important;
+    }
 }
 
 /* Animations */
@@ -818,4 +990,13 @@ body.loaded {
 
 .fade-in {
     animation: fadeIn 0.5s ease forwards;
+}
+
+/* Style pour le bouton d'annulation désactivé */
+.btn-cancel-external:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f0f0f0;
+    border-color: #ccc;
+    color: #999;
 }
