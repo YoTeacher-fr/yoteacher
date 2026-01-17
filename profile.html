@@ -271,7 +271,6 @@
     <script src="supabase.js"></script>
     <script src="auth.js"></script>
     <script src="booking.js"></script>
-    <script src="mobile-menu.js"></script>
     <script src="common.js"></script>
     <script src="translation.js"></script>
     
@@ -331,31 +330,7 @@
                     });
                 });
                 
-                // Upload photo profil
-                document.getElementById('avatarInput').addEventListener('change', async function(e) {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    
-                    if (file.size > 5 * 1024 * 1024) {
-                        showError(window.translationManager?.getTranslation('profile.upload_error') || 'La taille de l\'image ne doit pas dépasser 5MB');
-                        return;
-                    }
-                    
-                    try {
-                        const reader = new FileReader();
-                        reader.onload = function(event) {
-                            const avatar = document.getElementById('userAvatar');
-                            avatar.innerHTML = `<img src="${event.target.result}" alt="Photo profil">`;
-                        };
-                        reader.readAsDataURL(file);
-                        
-                        showSuccess(window.translationManager?.getTranslation('profile.upload_success') || 'Photo mise à jour localement. Sauvegarde cloud à configurer.');
-                        
-                    } catch (error) {
-                        showError(window.translationManager?.getTranslation('profile.upload_error_generic') || 'Erreur lors du chargement de l\'image: ' + error.message);
-                    }
-                });
-                
+               
                 // Formulaire informations
                 document.getElementById('personalForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
