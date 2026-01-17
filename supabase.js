@@ -37,19 +37,24 @@ if (!window.YOTEACHER_CONFIG) {
                 });
                 
                 // Test simple de connexion
-                try {
-                    await client.auth.getSession();
-                    console.log("✅ Supabase connecté");
-                    window.supabase = client;
-                    window.supabaseReady = true;
-                    return true;
-                } catch (sessionError) {
-                    console.warn("⚠️ Session error (peut être normal):", sessionError.message);
-                    window.supabase = client;
-                    window.supabaseReady = true;
-                    return true;
-                }
-                
+               // Dans supabase.js, remplacez le test de connexion par :
+
+try {
+    const sessionPromise = client.auth.getSession();
+    const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Session timeout')), 3000)
+    );
+    
+    await Promise.race([sessionPromise, timeoutPromise]);
+    console.log("✅ Supabase connecté");
+} catch (sessionError) {
+    // Ignorer les erreurs de session au démarrage
+    console.log("ℹ️ Supabase connecté (session non vérifiée)");
+}
+
+window.supabase = client;
+window.supabaseReady = true;
+return true;
             } catch (error) {
                 console.error("❌ Erreur initialisation Supabase:", error.message);
                 window.supabase = null;

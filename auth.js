@@ -9,78 +9,91 @@ class AuthManager {
     }
 
     async init() {
-        console.log('🔍 DEBUG INIT - Démarrage de l\'initialisation');
-        console.log('🔍 DEBUG INIT - window.supabase existe:', !!window.supabase);
-        console.log('🔍 DEBUG INIT - window.supabaseReady:', window.supabaseReady);
-        console.log('🔍 DEBUG INIT - window.supabaseInitialized:', !!window.supabaseInitialized);
+    console.log('🔍 DEBUG INIT - Démarrage de l\'initialisation');
+    console.log('🔍 DEBUG INIT - window.supabase existe:', !!window.supabase);
+    console.log('🔍 DEBUG INIT - window.supabaseReady:', window.supabaseReady);
+    console.log('🔍 DEBUG INIT - window.supabaseInitialized:', !!window.supabaseInitialized);
+    
+    try {
+        // Vérifier code d'invitation dans l'URL
+        this.checkInvitationCode();
+        
+        // Attendre que Supabase soit prêt
+        await this.waitForSupabase();
+        
+        console.log('🔍 DEBUG INIT - Après waitForSupabase, supabaseReady:', this.supabaseReady);
+        
+        if (!this.supabaseReady) {
+            console.warn('⚠️ Mode dégradé activé : Supabase non disponible');
+            this.setupDegradedMode();
+            return;
+        }
+
+        // ✅ SUPABASE EST PRÊT - Attendre un peu avant d'utiliser l'API
+        console.log('✅ Supabase prêt, attente stabilisation...');
+        await new Promise(resolve => setTimeout(resolve, 500)); // 500ms de délai
+        
+        console.log('✅ Vérification de la session...');
         
         try {
-            // Vérifier code d'invitation dans l'URL
-            this.checkInvitationCode();
+            const { data: { session }, error } = await supabase.auth.getSession();
             
-            // Attendre que Supabase soit prêt
-            await this.waitForSupabase();
+            console.log('🔍 DEBUG SESSION - error:', error);
+            console.log('🔍 DEBUG SESSION - session:', !!session);
             
-            console.log('🔍 DEBUG INIT - Après waitForSupabase, supabaseReady:', this.supabaseReady);
+            if (error) {
+                console.warn('⚠️ Erreur getSession:', error.message);
+                // Si l'erreur est une AbortError, on ignore et on continue
+                if (error.message.includes('aborted')) {
+                    console.log('ℹ️ Erreur abort ignorée, aucune session active');
+                }
+            }
             
-            if (!this.supabaseReady) {
-                console.warn('⚠️ Mode dégradé activé : Supabase non disponible');
-                this.setupDegradedMode();
-                return;
+            if (session) {
+                this.user = session.user;
+                await this.loadUserProfile();
+                this.updateUI();
+                this.emitAuthEvent('login', this.user);
+                console.log('✅ Session restaurée pour:', this.user.email);
+            } else {
+                console.log('ℹ️ Aucune session active');
             }
 
-            // ✅ SUPABASE EST PRÊT - Vérifier la session
-            console.log('✅ Supabase prêt, vérification de la session...');
-            
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-                
-                console.log('🔍 DEBUG SESSION - error:', error);
-                console.log('🔍 DEBUG SESSION - session:', !!session);
-                
-                if (error) {
-                    console.warn('⚠️ Erreur getSession:', error.message);
-                    // NE PAS activer le mode dégradé pour cette erreur
-                }
-                
+            // Écouter les changements d'authentification
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                console.log('🔄 Auth state changed:', event, !!session);
                 if (session) {
                     this.user = session.user;
                     await this.loadUserProfile();
                     this.updateUI();
                     this.emitAuthEvent('login', this.user);
-                    console.log('✅ Session restaurée pour:', this.user.email);
+                    await this.applyPendingInvitation();
                 } else {
-                    console.log('ℹ️ Aucune session active');
+                    this.user = null;
+                    this.removeUserFromStorage();
+                    this.updateUI();
+                    this.emitAuthEvent('logout');
                 }
-
-                // Écouter les changements d'authentification
-                supabase.auth.onAuthStateChange(async (event, session) => {
-                    console.log('🔄 Auth state changed:', event, !!session);
-                    if (session) {
-                        this.user = session.user;
-                        await this.loadUserProfile();
-                        this.updateUI();
-                        this.emitAuthEvent('login', this.user);
-                        await this.applyPendingInvitation();
-                    } else {
-                        this.user = null;
-                        this.removeUserFromStorage();
-                        this.updateUI();
-                        this.emitAuthEvent('logout');
-                    }
-                });
-                
-            } catch (sessionError) {
-                console.error('❌ Erreur lors de la vérification de session:', sessionError);
-                // SEULEMENT maintenant on active le mode dégradé
+            });
+            
+        } catch (sessionError) {
+            console.error('❌ Exception lors de la vérification de session:', sessionError);
+            
+            // Si c'est une AbortError, on ne passe PAS en mode dégradé
+            if (sessionError.message && sessionError.message.includes('aborted')) {
+                console.log('ℹ️ Erreur abort - continuité normale sans session');
+                this.updateUI();
+            } else {
+                // Pour les autres erreurs, mode dégradé
                 this.setupDegradedMode();
             }
-            
-        } catch (error) {
-            console.error('❌ Erreur lors de l\'initialisation de l\'auth:', error);
-            this.setupDegradedMode();
         }
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de l\'initialisation de l\'auth:', error);
+        this.setupDegradedMode();
     }
+}
 
     // ===== GESTION DES CODES D'INVITATION VIP =====
     
