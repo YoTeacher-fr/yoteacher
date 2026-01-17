@@ -1,4 +1,4 @@
-// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION CORRIGÉE POUR REDIRECTIONS
+// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION CORRIGÉE
 class AuthManager {
     constructor() {
         this.user = null;
@@ -9,6 +9,11 @@ class AuthManager {
     }
 
     async init() {
+        console.log('🔍 DEBUG INIT - Démarrage de l\'initialisation');
+        console.log('🔍 DEBUG INIT - window.supabase existe:', !!window.supabase);
+        console.log('🔍 DEBUG INIT - window.supabaseReady:', window.supabaseReady);
+        console.log('🔍 DEBUG INIT - window.supabaseInitialized:', !!window.supabaseInitialized);
+        
         try {
             // Vérifier code d'invitation dans l'URL
             this.checkInvitationCode();
@@ -16,51 +21,63 @@ class AuthManager {
             // Attendre que Supabase soit prêt
             await this.waitForSupabase();
             
+            console.log('🔍 DEBUG INIT - Après waitForSupabase, supabaseReady:', this.supabaseReady);
+            
             if (!this.supabaseReady) {
-                console.warn('Mode dégradé activé : Supabase non disponible');
+                console.warn('⚠️ Mode dégradé activé : Supabase non disponible');
                 this.setupDegradedMode();
                 return;
             }
 
-            // Vérifier la session existante
+            // ✅ SUPABASE EST PRÊT - Vérifier la session
+            console.log('✅ Supabase prêt, vérification de la session...');
+            
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                console.log('🔍 DEBUG SESSION - error:', error);
+                console.log('🔍 DEBUG SESSION - session:', !!session);
+                
+                if (error) {
+                    console.warn('⚠️ Erreur getSession:', error.message);
+                    // NE PAS activer le mode dégradé pour cette erreur
+                }
+                
                 if (session) {
                     this.user = session.user;
                     await this.loadUserProfile();
                     this.updateUI();
-                    // Événement : utilisateur déjà connecté
                     this.emitAuthEvent('login', this.user);
                     console.log('✅ Session restaurée pour:', this.user.email);
-                    // Ne PAS appliquer le code ici, c'est fait pendant signUp
+                } else {
+                    console.log('ℹ️ Aucune session active');
                 }
 
                 // Écouter les changements d'authentification
                 supabase.auth.onAuthStateChange(async (event, session) => {
-                    console.log('Auth state changed:', event, session);
+                    console.log('🔄 Auth state changed:', event, !!session);
                     if (session) {
                         this.user = session.user;
                         await this.loadUserProfile();
                         this.updateUI();
-                        // Événement : connexion
                         this.emitAuthEvent('login', this.user);
-                        
-                        // Appliquer code VIP si présent
                         await this.applyPendingInvitation();
                     } else {
                         this.user = null;
                         this.removeUserFromStorage();
                         this.updateUI();
-                        // Événement : déconnexion
                         this.emitAuthEvent('logout');
                     }
                 });
-            } catch (error) {
-                console.warn('Erreur lors de la vérification de session:', error);
+                
+            } catch (sessionError) {
+                console.error('❌ Erreur lors de la vérification de session:', sessionError);
+                // SEULEMENT maintenant on active le mode dégradé
                 this.setupDegradedMode();
             }
+            
         } catch (error) {
-            console.error('Erreur lors de l\'initialisation de l\'auth:', error);
+            console.error('❌ Erreur lors de l\'initialisation de l\'auth:', error);
             this.setupDegradedMode();
         }
     }
@@ -207,7 +224,6 @@ class AuthManager {
             // 3. CRÉER OU METTRE À JOUR LE PROFIL AVANT TOUTE CHOSE
             console.log('🔄 Vérification/création du profil...');
             
-            // D'abord, vérifier si le profil existe
             const { data: existingProfile } = await supabase
                 .from('profiles')
                 .select('id, is_vip')
@@ -217,11 +233,10 @@ class AuthManager {
             if (!existingProfile) {
                 console.log('📝 Création du profil VIP pour l\'utilisateur...');
                 
-                // Structure pour votre table profiles (sans colonne email)
                 const profileData = {
                     id: this.user.id,
                     full_name: this.user.user_metadata?.full_name || this.user.email.split('@')[0] || 'Utilisateur',
-                    is_vip: true, // DIRECTEMENT À TRUE CAR C'EST UN CODE VIP
+                    is_vip: true,
                     preferred_currency: 'EUR',
                     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     created_at: new Date().toISOString(),
@@ -235,7 +250,6 @@ class AuthManager {
                 if (profileError) {
                     console.error('❌ Erreur création profil VIP:', profileError);
                     
-                    // Tentative avec structure minimale
                     const minimalProfile = {
                         id: this.user.id,
                         full_name: this.user.user_metadata?.full_name || this.user.email.split('@')[0] || 'Utilisateur',
@@ -258,7 +272,6 @@ class AuthManager {
                     console.log('✅ Profil VIP créé avec succès');
                 }
             } else {
-                // Le profil existe, mettre à jour pour le rendre VIP
                 console.log('🔄 Mise à jour du profil existant: is_vip = true');
                 
                 const { error: profileError } = await supabase
@@ -276,7 +289,7 @@ class AuthManager {
                 }
             }
             
-            // 4. Maintenant que le profil existe, copier les prix VIP
+            // 4. Copier les prix VIP
             const newPrices = templatePrices.map(price => ({
                 user_id: this.user.id,
                 course_type: price.course_type,
@@ -302,7 +315,7 @@ class AuthManager {
             
             console.log(`✅ ${insertedPrices.length} prix VIP copiés pour l\'utilisateur`);
             
-            // 5. Recharger le profil pour mettre à jour this.user
+            // 5. Recharger le profil
             await this.loadUserProfile();
             
             // 6. Nettoyer
@@ -380,7 +393,6 @@ class AuthManager {
                 console.log('✅ Profil chargé:', profile);
                 this.user.profile = profile;
                 
-                // Ajouter l'email au profil pour l'interface (colonne absente dans la table)
                 if (this.user.email) {
                     this.user.profile.email = this.user.email;
                 }
@@ -400,11 +412,9 @@ class AuthManager {
         if (!this.user || !this.supabaseReady) return;
         
         try {
-            // Structure qui correspond à VOTRE table profiles (sans colonne email)
             const profileData = {
                 id: this.user.id,
                 full_name: this.user.user_metadata?.full_name || this.user.email.split('@')[0] || 'Utilisateur',
-                // NOTE: email n'est PAS inclus car il n'existe pas dans votre table
                 is_vip: false,
                 preferred_currency: 'EUR',
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -418,7 +428,6 @@ class AuthManager {
 
             if (error) {
                 console.warn('Erreur création profil:', error);
-                // Tentative avec structure minimale si erreur
                 const minimalProfile = {
                     id: this.user.id,
                     full_name: this.user.user_metadata?.full_name || this.user.email.split('@')[0] || 'Utilisateur',
@@ -444,7 +453,6 @@ class AuthManager {
         }
     }
 
-    // Méthode pour émettre des événements d'authentification
     emitAuthEvent(eventName, user = null) {
         try {
             console.log(`Événement auth:${eventName} émis`, user ? `pour ${user.email}` : '');
@@ -460,50 +468,49 @@ class AuthManager {
     async waitForSupabase() {
         console.log('⏳ Attente de Supabase...');
         
-        return new Promise(async (resolve) => {
-            try {
-                const initialized = await window.supabaseInitialized;
-                this.supabaseReady = initialized;
+        try {
+            // Attendre la promesse d'initialisation
+            const initialized = await window.supabaseInitialized;
+            
+            console.log('🔍 DEBUG waitForSupabase - initialized:', initialized);
+            console.log('🔍 DEBUG waitForSupabase - window.supabase:', !!window.supabase);
+            
+            if (initialized && window.supabase) {
+                this.supabaseReady = true;
+                console.log('✅ Supabase initialisé via Promise');
+                return;
+            }
+        } catch (error) {
+            console.warn('⚠️ Erreur supabaseInitialized:', error.message);
+        }
+
+        // Vérification de secours (max 3 secondes)
+        let attempts = 0;
+        const maxAttempts = 15; // 15 x 200ms = 3 secondes max
+        
+        return new Promise((resolve) => {
+            const checkSupabase = () => {
+                attempts++;
                 
-                if (initialized && window.supabase?.auth?.getSession) {
-                    console.log('✅ Supabase initialisé');
+                if (attempts % 5 === 0) {
+                    console.log(`🔍 Vérification Supabase ${attempts}/${maxAttempts}`);
+                }
+                
+                if (window.supabase?.auth) {
+                    this.supabaseReady = true;
+                    console.log('✅ Supabase prêt (vérification directe)');
                     resolve();
                     return;
                 }
-            } catch (error) {
-                console.warn('⚠️ Erreur supabaseInitialized:', error);
-            }
-
-            let attempts = 0;
-            const maxAttempts = 150;
-            
-            const checkSupabase = async () => {
-                attempts++;
-                
-                if (attempts % 10 === 0) {
-                    console.log(`Vérification Supabase ${attempts}/${maxAttempts}`);
-                }
-                
-                if (window.supabase?.auth?.getSession) {
-                    try {
-                        await window.supabase.auth.getSession();
-                        this.supabaseReady = true;
-                        console.log('✅ Supabase prêt et fonctionnel');
-                        resolve();
-                        return;
-                    } catch (err) {
-                        console.warn('⚠️ Supabase existe mais erreur:', err.message);
-                    }
-                }
                 
                 if (attempts >= maxAttempts) {
-                    console.warn('⚠️ Supabase non initialisé après 15s - mode dégradé');
+                    console.warn('⚠️ Timeout Supabase après 3s - mode dégradé');
                     this.supabaseReady = false;
                     resolve();
                     return;
                 }
                 
-                setTimeout(checkSupabase, 100);
+                setTimeout(checkSupabase, 200);
             };
             
             checkSupabase();
@@ -515,15 +522,22 @@ class AuthManager {
         if (storedUser) {
             try {
                 this.user = JSON.parse(storedUser);
-                console.log('Mode dégradé : utilisateur restauré depuis le stockage local');
+                console.log('ℹ️ Mode dégradé : utilisateur restauré depuis localStorage');
+                this.updateUI();
             } catch (error) {
-                console.warn('Erreur lors de la lecture du stockage local:', error);
+                console.warn('Erreur lecture localStorage:', error);
                 this.user = null;
             }
         }
         
-        this.updateUI();
-        this.showDegradedModeWarning();
+        // NE PAS afficher le warning si on est sur index.html
+        const isIndexPage = window.location.pathname.includes('index.html') || 
+                           window.location.pathname === '/' || 
+                           window.location.pathname.endsWith('/');
+        
+        if (!isIndexPage) {
+            this.showDegradedModeWarning();
+        }
     }
 
     showDegradedModeWarning() {
@@ -593,7 +607,7 @@ class AuthManager {
             profile: this.user.profile,
             vipPrices: this.user.vipPrices,
             created_at: this.user.created_at,
-            _timestamp: Date.now() // Ajouter timestamp pour diagnostic
+            _timestamp: Date.now()
         };
         
         localStorage.setItem('yoteacher_user', JSON.stringify(userData));
@@ -633,15 +647,13 @@ class AuthManager {
             if (data.user) {
                 console.log('✅ Utilisateur créé dans auth.users:', data.user.id);
                 
-                // ÉTAPE 1 : Créer le profil IMMÉDIATEMENT (avec votre structure)
                 try {
                     console.log('📋 Création du profil...');
                     
-                    // Structure pour votre table profiles (sans colonne email)
                     const profileData = {
                         id: data.user.id,
                         full_name: fullName || email.split('@')[0],
-                        is_vip: false,  // On met false pour l'instant
+                        is_vip: false,
                         preferred_currency: 'EUR',
                         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                         created_at: new Date().toISOString(),
@@ -655,7 +667,6 @@ class AuthManager {
                     if (profileError) {
                         console.error('❌ Erreur création profil:', profileError);
                         
-                        // Tentative avec structure minimale
                         const minimalProfile = {
                             id: data.user.id,
                             full_name: fullName || email.split('@')[0],
@@ -678,30 +689,25 @@ class AuthManager {
                     console.error('❌ Exception création profil:', profileErr);
                 }
                 
-                // ÉTAPE 2 : Appliquer le code VIP si présent
+                // Appliquer le code VIP si présent
                 const invitationCode = this.invitationCode || sessionStorage.getItem('invitation_code');
                 
                 if (invitationCode) {
                     console.log('🎟️ Code VIP détecté lors de l\'inscription:', invitationCode);
                     
-                    // Attendre un peu que le profil soit bien créé
                     await new Promise(resolve => setTimeout(resolve, 800));
                     
-                    // Créer un objet user temporaire pour applyInvitationCode
                     const tempUser = {
                         id: data.user.id,
                         email: email,
                         user_metadata: { full_name: fullName }
                     };
                     
-                    // Sauvegarder temporairement
                     const oldUser = this.user;
                     this.user = tempUser;
                     
-                    // Appliquer le code
                     const result = await this.applyInvitationCode(invitationCode);
                     
-                    // Restaurer
                     this.user = oldUser;
                     
                     if (result.success) {
@@ -778,13 +784,10 @@ class AuthManager {
             }
             this.updateUI();
             
-            // Événement : connexion réussie
             this.emitAuthEvent('login', this.user);
             
-            // Appliquer code VIP si présent
             await this.applyPendingInvitation();
             
-            // FORCER dashboard.html comme URL de retour
             const returnUrl = 'dashboard.html';
             
             console.log('🔗 Redirection forcée vers dashboard');
@@ -813,7 +816,6 @@ class AuthManager {
             returnUrl = decodeURIComponent(returnUrl);
             console.log('🔍 URL de redirection détectée:', returnUrl);
             
-            // Simplification : retourner dashboard.html pour toutes les pages internes
             if (returnUrl.includes('dashboard') || 
                 returnUrl.includes('profile') || 
                 returnUrl.includes('booking') ||
@@ -824,7 +826,6 @@ class AuthManager {
             return returnUrl;
         }
         
-        // Par défaut, rediriger vers le dashboard
         const defaultUrl = 'dashboard.html';
         console.log('🔗 URL par défaut:', defaultUrl);
         return defaultUrl;
@@ -841,7 +842,6 @@ class AuthManager {
                         if (user.email === email) {
                             this.user = user;
                             this.updateUI();
-                            // Événement : connexion mock
                             this.emitAuthEvent('login', this.user);
                             resolve({ 
                                 success: true, 
@@ -871,7 +871,6 @@ class AuthManager {
                 const { error } = await supabase.auth.signOut();
                 if (error) {
                     console.warn('⚠️ Erreur lors de la déconnexion Supabase:', error);
-                    // On continue quand même avec la déconnexion locale
                 }
             }
             
@@ -879,12 +878,10 @@ class AuthManager {
             this.removeUserFromStorage();
             this.updateUI();
             
-            // Événement : déconnexion
             this.emitAuthEvent('logout');
             
             console.log('✅ Utilisateur déconnecté, redirection vers index.html');
             
-            // Redirection vers la page d'accueil après un court délai
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 300);
@@ -896,10 +893,8 @@ class AuthManager {
             this.removeUserFromStorage();
             this.updateUI();
             
-            // Événement : déconnexion même en cas d'erreur
             this.emitAuthEvent('logout');
             
-            // Redirection même en cas d'erreur
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 300);
@@ -915,20 +910,16 @@ class AuthManager {
                            window.location.pathname.endsWith('/');
         
         if (user) {
-            // Sur TOUTES les pages : ajouter avatar, retirer bouton Connexion header
             this.removeLoginButtonFromHeader();
             this.addUserAvatar();
             
-            // Sur index.html seulement : Ne rien changer d'autre
             if (isIndexPage) {
-                return; // Sortir ici, ne pas modifier les autres boutons
+                return;
             }
             
-            // Sur les AUTRES pages : modifier tous les boutons
             this.updateAllButtonsForConnectedUser();
             
         } else {
-            // Utilisateur non connecté
             this.removeUserAvatar();
             this.restoreLoginButtonInHeader();
             
@@ -953,7 +944,6 @@ class AuthManager {
             if (btn) {
                 btn.style.display = 'flex';
                 
-                // Ajouter le paramètre redirect si nécessaire
                 if (!window.location.pathname.includes('login.html') && 
                     !window.location.pathname.includes('signup.html') &&
                     btn.href && btn.href.includes('login.html')) {
@@ -966,7 +956,6 @@ class AuthManager {
     }
 
     updateAllButtonsForConnectedUser() {
-        // Boutons "Créer un compte" -> "Mon dashboard"
         document.querySelectorAll('.btn-secondary, .btn-outline-white').forEach(btn => {
             if (!btn || !btn.textContent) return;
             
@@ -988,7 +977,6 @@ class AuthManager {
     }
 
     restoreAllButtonsForDisconnectedUser() {
-        // Boutons "Mon dashboard" -> "Créer un compte gratuit"
         document.querySelectorAll('.btn-outline, .btn-primary').forEach(btn => {
             if (!btn || !btn.textContent) return;
             
@@ -1014,7 +1002,6 @@ class AuthManager {
         
         if (!this.user) return;
         
-        // Trouver le conteneur header-right-group
         const container = document.querySelector('.header-right-group');
         
         if (!container) return;
@@ -1024,7 +1011,6 @@ class AuthManager {
         
         const initials = this.getUserInitials();
         
-        // Nouveau design : Bouton Dashboard avec avatar intégré et croix de déconnexion
         avatar.innerHTML = `
             <a href="dashboard.html" class="dashboard-btn">
                 <div class="avatar-img">${initials}</div>
@@ -1033,10 +1019,8 @@ class AuthManager {
             </a>
         `;
         
-        // Ajouter l'avatar à la fin du container
         container.appendChild(avatar);
         
-        // Gestion du clic sur le bouton de déconnexion
         const logoutBtn = document.getElementById('logoutBtnIcon');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
@@ -1048,11 +1032,9 @@ class AuthManager {
             });
         }
         
-        // Gestion du clic sur le bouton Dashboard
         const dashboardBtn = avatar.querySelector('.dashboard-btn');
         if (dashboardBtn) {
             dashboardBtn.addEventListener('click', (e) => {
-                // Si on clique sur la croix, ne pas rediriger
                 if (e.target.id === 'logoutBtnIcon' || e.target.closest('#logoutBtnIcon')) {
                     return;
                 }
@@ -1094,12 +1076,10 @@ class AuthManager {
         return this.user;
     }
 
-    // MÉTHODE : Vérifier si l'utilisateur est VIP
     isUserVip() {
         return this.user && this.user.profile && this.user.profile.is_vip === true;
     }
 
-    // MÉTHODE : Obtenir le prix VIP pour un type de cours et une durée
     async getVipPrice(courseType, duration) {
         try {
             if (!this.supabaseReady || !window.supabase || !this.user) {
@@ -1110,7 +1090,6 @@ class AuthManager {
             const durationInt = parseInt(duration);
             console.log(`🔍 Recherche prix VIP pour ${courseType} - ${durationInt}min, user: ${this.user.id}`);
             
-            // Chercher d'abord le prix exact pour cette durée
             const { data, error } = await supabase
                 .from('vip_pricing')
                 .select('price, currency, duration_minutes')
@@ -1135,7 +1114,6 @@ class AuthManager {
                 };
             }
 
-            // Si pas de prix exact, chercher le prix pour 60min et ajuster
             console.log(`ℹ️ Pas de prix exact pour ${durationInt}min, recherche 60min...`);
             
             const { data: data60, error: error60 } = await supabase
@@ -1152,11 +1130,10 @@ class AuthManager {
             }
 
             if (data60) {
-                // Ajuster le prix selon la durée
                 const basePrice = parseFloat(data60.price);
                 const adjustedPrice = basePrice * (durationInt / 60);
                 
-                console.log(`📏 Prix ajusté: ${basePrice}${data60.currency} (60min) → ${adjustedPrice.toFixed(2)}${data60.currency} (${durationInt}min)`);
+                console.log(`📐 Prix ajusté: ${basePrice}${data60.currency} (60min) → ${adjustedPrice.toFixed(2)}${data60.currency} (${durationInt}min)`);
                 
                 return {
                     price: adjustedPrice,
@@ -1198,10 +1175,8 @@ class AuthManager {
             if (data && data.length > 0) {
                 console.log(`✅ ${data.length} prix VIP chargés:`, data);
                 
-                // Stocker les prix VIP dans l'objet user
                 this.user.vipPrices = data;
                 
-                // Émettre un événement pour informer que les prix VIP sont chargés
                 window.dispatchEvent(new CustomEvent('vip:loaded', { 
                     detail: { prices: data } 
                 }));
@@ -1269,7 +1244,6 @@ class AuthManager {
                 this.user = data.session.user;
                 await this.loadUserProfile();
                 this.updateUI();
-                // Événement : session rafraîchie
                 this.emitAuthEvent('login', this.user);
             }
             
@@ -1301,11 +1275,9 @@ class AuthManager {
         return errorMap[errorMessage] || errorMessage || 'Une erreur est survenue';
     }
 
-    // MÉTHODE : Gestion des paiements
     async savePayment(paymentData) {
         try {
             if (!this.supabaseReady || !window.supabase) {
-                // Sauvegarder localement en mode dégradé
                 const payments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
                 const paymentRecord = {
                     ...paymentData,
@@ -1317,10 +1289,8 @@ class AuthManager {
                 return { success: true, id: paymentRecord.id, data: paymentRecord };
             }
 
-            // Note: Votre schéma n'a pas de table 'payments', nous utiliserons bookings avec payment_method
             console.log('⚠️ Table payments non trouvée dans le schéma');
             
-            // Enregistrer dans localStorage comme fallback
             const payments = JSON.parse(localStorage.getItem('yoteacher_payments') || '[]');
             const paymentRecord = {
                 ...paymentData,
@@ -1337,7 +1307,6 @@ class AuthManager {
         }
     }
 
-    // MÉTHODE : Mettre à jour le statut d'une réservation
     async updateBookingStatus(bookingId, status) {
         try {
             if (!this.supabaseReady || !window.supabase) {
@@ -1349,12 +1318,9 @@ class AuthManager {
                 updated_at: new Date().toISOString()
             };
 
-            // Ajouter completed_at si le statut est 'completed'
             if (status === 'completed') {
                 updateData.completed_at = new Date().toISOString();
-            }
-            // Ajouter cancelled_at si le statut est 'cancelled'
-            else if (status === 'cancelled') {
+            } else if (status === 'cancelled') {
                 updateData.cancelled_at = new Date().toISOString();
             }
 
@@ -1375,11 +1341,9 @@ class AuthManager {
         }
     }
 
-    // MÉTHODE : Obtenir l'historique des réservations
     async getBookingHistory() {
         try {
             if (!this.supabaseReady || !window.supabase || !this.user) {
-                // Retourner les réservations locales
                 const localBookings = JSON.parse(localStorage.getItem('yoteacher_bookings') || '[]');
                 return { success: true, data: localBookings };
             }
@@ -1402,21 +1366,17 @@ class AuthManager {
         }
     }
 
-    // MÉTHODE : Sauvegarder les données de réservation - VERSION CORRIGÉE POUR VOTRE SCHÉMA
     async saveBookingData(bookingData) {
         try {
             if (!this.supabaseReady || !window.supabase || !this.user) {
-                // Sauvegarder localement
                 const bookings = JSON.parse(localStorage.getItem('yoteacher_bookings') || '[]');
                 bookings.push(bookingData);
                 localStorage.setItem('yoteacher_bookings', JSON.stringify(bookings));
                 return { success: true };
             }
 
-            // Générer un numéro de réservation
             const bookingNumber = `BK-${Date.now().toString().slice(-8)}`;
             
-            // STRUCTURE CORRIGÉE selon votre table 'bookings' - UNIQUEMENT les colonnes existantes
             const bookingRecord = {
                 user_id: this.user.id,
                 course_type: bookingData.courseType,
@@ -1425,7 +1385,6 @@ class AuthManager {
                 end_time: bookingData.endTime,
                 price_paid: bookingData.price,
                 currency: bookingData.currency,
-                // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK
                 platform: this.getPlatformName(bookingData.location),
                 status: bookingData.status || 'pending',
                 booking_number: bookingNumber,
@@ -1434,13 +1393,6 @@ class AuthManager {
                 created_at: new Date().toISOString()
             };
 
-            // IMPORTANT : Les colonnes suivantes n'existent PAS dans votre schéma et ont été RETIRÉES :
-            // - is_vip_booking
-            // - original_price
-            // - original_currency
-            // - package_quantity
-            // - discount_percent
-            
             console.log('💾 Insertion dans bookings avec structure corrigée:', bookingRecord);
             
             const { error } = await supabase
@@ -1459,20 +1411,16 @@ class AuthManager {
         }
     }
 
-    // CORRECTION : Utiliser les valeurs autorisées par la contrainte CHECK
     getPlatformName(location) {
-        if (!location) return 'zoom'; // valeur par défaut
+        if (!location) return 'zoom';
         
-        // Convertir les valeurs Cal.com en valeurs autorisées par la contrainte CHECK
-        if (location.includes('google')) return 'meet';      // 'meet' pour Google Meet
-        if (location.includes('teams')) return 'teams';     // 'teams' pour Microsoft Teams
-        if (location.includes('zoom')) return 'zoom';       // 'zoom' pour Zoom
+        if (location.includes('google')) return 'meet';
+        if (location.includes('teams')) return 'teams';
+        if (location.includes('zoom')) return 'zoom';
         
-        // Pour les autres plateformes ou valeurs inconnues
-        return 'other'; // valeur autorisée par la contrainte
+        return 'other';
     }
 
-    // MÉTHODE : Obtenir les statistiques de l'utilisateur
     async getUserStatistics() {
         try {
             if (!this.supabaseReady || !window.supabase || !this.user) {
@@ -1497,7 +1445,6 @@ class AuthManager {
         }
     }
 
-    // NOUVELLE MÉTHODE : Forcer la synchronisation depuis localStorage
     forceUserSync() {
         const storedUser = localStorage.getItem('yoteacher_user');
         if (storedUser && !this.user) {
@@ -1515,7 +1462,7 @@ class AuthManager {
     }
 }
 
-// Ajout d'écouteurs globaux pour le débogage des événements
+// Écouteurs globaux pour le débogage
 window.addEventListener('auth:login', function(e) {
     console.log('✅ Événement global auth:login reçu', e.detail?.user?.email || 'sans email');
 });
@@ -1524,7 +1471,6 @@ window.addEventListener('auth:logout', function() {
     console.log('⚠️ Événement global auth:logout reçu');
 });
 
-// Événement pour les codes VIP
 window.addEventListener('vip:applied', function(e) {
     console.log('🎉 Code VIP appliqué:', e.detail.code);
 });
@@ -1547,7 +1493,6 @@ window.diagnoseBookingIssues = async function() {
     }
     
     try {
-        // Vérifier la table bookings
         const { data: bookings, error: bookingsError } = await supabase
             .from('bookings')
             .select('*')
@@ -1564,7 +1509,6 @@ window.diagnoseBookingIssues = async function() {
             });
         }
         
-        // Vérifier la table packages
         const { data: packages, error: packagesError } = await supabase
             .from('packages')
             .select('*')
@@ -1580,7 +1524,6 @@ window.diagnoseBookingIssues = async function() {
             });
         }
         
-        // Vérifier la table credit_transactions
         const { data: transactions, error: transactionsError } = await supabase
             .from('credit_transactions')
             .select('*')
@@ -1597,7 +1540,6 @@ window.diagnoseBookingIssues = async function() {
             });
         }
         
-        // Vérifier le profil
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -1621,7 +1563,6 @@ window.diagnoseBookingIssues = async function() {
 window.diagnoseAuth = function() {
     console.group('🔍 DIAGNOSTIC AUTH');
     
-    // 1. Vérifier localStorage
     const storedUser = localStorage.getItem('yoteacher_user');
     console.log('1. localStorage user:', storedUser ? 'PRÉSENT' : 'ABSENT');
     if (storedUser) {
@@ -1634,7 +1575,6 @@ window.diagnoseAuth = function() {
         }
     }
     
-    // 2. Vérifier authManager
     console.log('2. authManager:', window.authManager ? 'PRÉSENT' : 'ABSENT');
     if (window.authManager) {
         console.log('   User:', window.authManager.user ? 'PRÉSENT' : 'ABSENT');
@@ -1644,11 +1584,9 @@ window.diagnoseAuth = function() {
         }
     }
     
-    // 3. Vérifier sessionStorage
     const sessionCode = sessionStorage.getItem('invitation_code');
     console.log('3. Session code:', sessionCode || 'ABSENT');
     
-    // 4. Vérifier URL actuelle
     console.log('4. URL actuelle:', window.location.href);
     console.log('   Path:', window.location.pathname);
     const params = new URLSearchParams(window.location.search);
@@ -1664,16 +1602,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const isDashboardPage = window.location.pathname.includes('dashboard.html') ||
                            window.location.pathname.includes('profile.html');
     
-    // Délai adaptatif selon le device
     const delay = window.innerWidth <= 768 ? 500 : 100;
     
     setTimeout(() => {
         console.log('🚀 Initialisation de AuthManager...');
         window.authManager = new AuthManager();
-        
-        // NE PAS faire de redirection automatique depuis dashboard
-        // Laisser dashboard.js gérer ça
-        
     }, delay);
 });
 
@@ -1700,7 +1633,6 @@ window.debugVipPrices = async function() {
         console.log('⚠️ Aucun prix VIP chargé dans user.vipPrices');
     }
     
-    // Tester la récupération des prix
     const courseTypes = ['conversation', 'curriculum', 'examen'];
     const durations = [30, 45, 60];
     
@@ -1710,7 +1642,6 @@ window.debugVipPrices = async function() {
             const price = await authMgr.getVipPrice(courseType, duration);
             if (price) {
                 console.log(`  ✅ ${duration}min: ${price.price} ${price.currency}`);
-                // Tester la conversion si currencyManager est disponible
                 if (window.currencyManager) {
                     const converted = window.currencyManager.convertVIPPrice(price);
                     if (converted) {
@@ -1726,4 +1657,4 @@ window.debugVipPrices = async function() {
     console.groupEnd();
 };
 
-console.log('✅ auth.js chargé avec système de codes d\'invitation VIP - Version finale corrigée pour votre schéma');
+console.log('✅ auth.js chargé avec système de codes d\'invitation VIP - Version corrigée avec debug complet');
