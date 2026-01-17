@@ -706,79 +706,95 @@ body {
     display: block;
 }
 
-/* Header mobile ajusté */
+/* ===== HEADER MOBILE UNIFIÉ - PAYMENT (AVEC DEVISE) ===== */
 @media (max-width: 768px) {
+    /* Cacher le menu hamburger */
     .hamburger-menu {
-        display: block;
-    }
-    
-    .mobile-login-btn-header {
-        display: block !important;
-        padding: 6px 12px;
-        font-size: 0.85rem;
-        background: #4f9ad1;
-        color: white;
-        border-radius: 20px;
-        text-decoration: none;
-    }
-    
-    /* Cacher les éléments du groupe droit sur mobile */
-    .header-right-group {
-        display: none;
-    }
-    
-    .main-header .login-btn {
         display: none !important;
     }
     
-    .language-switcher {
-        display: none;
+    /* Cacher le menu mobile */
+    .mobile-menu-overlay {
+        display: none !important;
     }
     
-    .currency-selector {
-        display: none;
+    /* Cacher le bouton mobile séparé */
+    .mobile-login-btn-header {
+        display: none !important;
     }
     
-    .user-avatar {
-        display: none;
+    /* Header mobile unifié */
+    .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0 !important;
+        position: relative;
+        width: 100%;
     }
     
+    /* Logo centré */
     .logo-section {
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
     
-    .header-content {
-        justify-content: space-between;
-    }
-}
-
-@media (max-width: 992px) {
-    .payment-grid {
-        grid-template-columns: 1fr;
-        gap: 30px;
+    .logo {
+        font-size: 1.6rem !important;
     }
     
-    .payment-details-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
+    /* Groupe de droite (avec devise) */
+    .header-right-group {
+        display: flex !important;
+        align-items: center;
+        gap: 8px !important;
+        margin-left: auto !important;
+        order: 3;
     }
     
-    .qr-code-container {
-        order: 2;
-    }
-    
-    .payment-info {
+    /* Devise visible sur mobile */
+    .currency-selector {
+        display: flex !important;
+        align-items: center;
+        gap: 3px;
         order: 1;
     }
     
-    .payment-action {
-        grid-column: span 1;
+    .currency-selector select {
+        padding: 2px 4px;
+        font-size: 0.8rem;
+        min-width: 60px;
     }
-}
-
-@media (max-width: 768px) {
+    
+    /* Langue */
+    .language-switcher {
+        display: flex !important;
+        align-items: center;
+        gap: 2px;
+        padding: 5px 8px;
+        font-size: 0.8rem;
+        order: 2;
+    }
+    
+    /* Bouton Connexion */
+    .login-btn {
+        display: flex !important;
+        align-items: center;
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+        order: 3;
+    }
+    
+    /* Cacher l'avatar sur mobile si présent */
+    .user-avatar {
+        display: none;
+    }
+    
+    /* Ajustements de la page payment sur mobile */
     .payment-section {
         padding: 30px 15px;
         min-height: calc(100vh - 60px);
@@ -805,27 +821,36 @@ body {
         min-height: 55px !important;
     }
     
-    .header-content {
-        padding: 8px 0 !important;
-    }
-    
-    .logo {
-        font-size: 1.3rem !important;
-    }
-    
-    .mobile-login-btn-header {
-        padding: 6px 12px !important;
-        font-size: 0.85rem !important;
-        order: 3;
-        z-index: 1001;
-    }
-    
     body {
         padding-top: 55px !important;
     }
     
     .payment-section {
         min-height: calc(100vh - 55px);
+    }
+}
+
+@media (max-width: 992px) {
+    .payment-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    .payment-details-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .qr-code-container {
+        order: 2;
+    }
+    
+    .payment-info {
+        order: 1;
+    }
+    
+    .payment-action {
+        grid-column: span 1;
     }
 }
 
@@ -857,5 +882,24 @@ body {
     
     .qr-code-placeholder i {
         font-size: 2.5rem;
+    }
+    
+    .currency-selector select {
+        min-width: 55px;
+        font-size: 0.75rem;
+    }
+    
+    .language-switcher {
+        padding: 4px 6px;
+        font-size: 0.75rem;
+    }
+    
+    .login-btn {
+        padding: 5px 10px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .logo {
+        font-size: 1.4rem !important;
     }
 }

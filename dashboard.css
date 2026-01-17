@@ -731,50 +731,73 @@ body.loaded {
     color: #3c84f6;
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
-    .course-buttons-row {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-    }
-    
-    .card-upcoming, .card-packages, .card-profile {
-        grid-column: span 6;
-    }
-}
-
-@media (max-width: 992px) {
-    .dashboard-grid {
-        grid-template-columns: repeat(6, 1fr);
-        gap: 20px;
-    }
-    
-    .card-upcoming, .card-packages, .card-profile {
-        grid-column: span 6;
-    }
-    
-    .dashboard-header {
-        flex-direction: column;
-        text-align: center;
-        padding: 20px;
-    }
-    
-    .dashboard-actions {
-        justify-content: center;
-    }
-    
-    .welcome-message {
-        min-width: 100%;
-    }
-    
-    .card-packages {
-        min-height: auto;
-    }
-}
-
+/* ===== HEADER MOBILE UNIFIÉ - DASHBOARD (SANS DEVISE) ===== */
 @media (max-width: 768px) {
+    .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0 !important;
+        position: relative;
+        width: 100%;
+    }
+    
+    /* Logo centré */
+    .logo-section {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .logo {
+        font-size: 1.6rem !important;
+    }
+    
+    /* Cacher la devise */
+    .currency-selector {
+        display: none !important;
+    }
+    
+    /* Groupe de droite (sans devise) */
+    .header-right-group {
+        display: flex !important;
+        align-items: center;
+        gap: 8px !important;
+        margin-left: auto !important;
+        order: 3;
+    }
+    
+    /* Langue */
+    .language-switcher {
+        display: flex !important;
+        align-items: center;
+        gap: 2px;
+        padding: 5px 8px;
+        font-size: 0.8rem;
+        order: 1;
+    }
+    
+    /* Bouton Déconnexion */
+    .login-btn {
+        display: flex !important;
+        align-items: center;
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+        order: 2;
+    }
+    
+    /* Cacher le bouton mobile séparé */
+    .mobile-login-btn-header {
+        display: none !important;
+    }
+    
+    /* Ajustements du dashboard sur mobile */
     .dashboard {
         padding: 15px 15px 30px;
+        min-height: calc(100vh - 55px);
     }
     
     .card-upcoming, .card-packages, .card-profile {
@@ -823,19 +846,6 @@ body.loaded {
         flex-direction: column;
     }
     
-    .mobile-login-btn-header {
-        display: block !important;
-        background-color: #4f9ad1;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        text-decoration: none;
-        margin-left: auto;
-        z-index: 1001;
-    }
-    
     .logo-section {
         position: absolute;
         left: 50%;
@@ -846,27 +856,27 @@ body.loaded {
     }
     
     .logo {
-        font-size: 1.2rem !important;
+        font-size: 1.6rem !important;
     }
     
     .flag {
-        font-size: 1.1rem;
+        font-size: 1.3rem;
     }
     
     .header-right-group {
-        display: none !important;
+        display: flex !important;
     }
     
     .main-header {
-        min-height: 50px !important;
+        min-height: 55px !important;
     }
     
     body {
-        padding-top: 60px !important;
+        padding-top: 55px !important;
     }
     
     .dashboard {
-        min-height: calc(100vh - 60px);
+        min-height: calc(100vh - 55px);
     }
     
     .course-button {
@@ -889,6 +899,47 @@ body.loaded {
     .package-nav-internal {
         width: 100%;
         justify-content: center;
+    }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .course-buttons-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .card-upcoming, .card-packages, .card-profile {
+        grid-column: span 6;
+    }
+}
+
+@media (max-width: 992px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 20px;
+    }
+    
+    .card-upcoming, .card-packages, .card-profile {
+        grid-column: span 6;
+    }
+    
+    .dashboard-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .dashboard-actions {
+        justify-content: center;
+    }
+    
+    .welcome-message {
+        min-width: 100%;
+    }
+    
+    .card-packages {
+        min-height: auto;
     }
 }
 
@@ -963,6 +1014,21 @@ body.loaded {
     
     .expiry-days {
         font-size: 0.75rem;
+    }
+    
+    /* Ajustements header mobile */
+    .language-switcher {
+        padding: 4px 6px;
+        font-size: 0.75rem;
+    }
+    
+    .login-btn {
+        padding: 5px 10px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .logo {
+        font-size: 1.4rem !important;
     }
 }
 

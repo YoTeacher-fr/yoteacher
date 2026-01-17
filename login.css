@@ -250,12 +250,15 @@ body {
     }
 }
 
-/* ===== RESPONSIVE MOBILE ===== */
+/* ===== HEADER MOBILE UNIFIÉ - LOGIN (SANS DEVISE) ===== */
 @media (max-width: 768px) {
-    /* HEADER MOBILE SIMPLIFIÉ */
     .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         padding: 8px 0 !important;
         position: relative;
+        width: 100%;
     }
     
     /* Logo centré */
@@ -269,35 +272,52 @@ body {
     }
     
     .logo {
-        font-size: 1.3rem !important;
+        font-size: 1.6rem !important;
     }
     
     .flag {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
     }
     
-    /* Groupe de droite caché sur mobile */
-    .header-right-group {
+    /* Cacher la devise */
+    .currency-selector {
         display: none !important;
     }
     
-    /* Bouton connexion mobile visible */
-    .mobile-login-btn-header {
-        display: block !important;
-        background-color: #4f9ad1;
-        color: white;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 500;
-        text-decoration: none;
-        margin-left: auto;
-        z-index: 1001;
-        border: none;
-        cursor: pointer;
-        font-family: 'Inter', sans-serif;
+    /* Groupe de droite (sans devise) */
+    .header-right-group {
+        display: flex !important;
+        align-items: center;
+        gap: 8px !important;
+        margin-left: auto !important;
+        order: 3;
     }
     
+    /* Langue */
+    .language-switcher {
+        display: flex !important;
+        align-items: center;
+        gap: 2px;
+        padding: 5px 8px;
+        font-size: 0.8rem;
+        order: 1;
+    }
+    
+    /* Bouton Connexion */
+    .login-btn {
+        display: flex !important;
+        align-items: center;
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+        order: 2;
+    }
+    
+    /* Cacher le bouton mobile séparé */
+    .mobile-login-btn-header {
+        display: none !important;
+    }
+    
+    /* Ajustements du formulaire sur mobile */
     .auth-section {
         min-height: calc(100vh - 55px);
         padding: 0 15px;
@@ -340,6 +360,21 @@ body {
     
     .btn-auth {
         padding: 14px;
+    }
+    
+    /* Ajustements header mobile */
+    .language-switcher {
+        padding: 4px 6px;
+        font-size: 0.75rem;
+    }
+    
+    .login-btn {
+        padding: 5px 10px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .logo {
+        font-size: 1.4rem !important;
     }
 }
 
