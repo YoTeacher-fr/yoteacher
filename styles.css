@@ -240,6 +240,140 @@ button {
     box-shadow: 0 8px 20px rgba(79, 154, 209, 0.3);
 }
 
+/* ===== BOUTON CONNEXION MOBILE ===== */
+.mobile-login-btn-header {
+    display: none;
+}
+
+/* ===== MENU HAMBURGER (MOBILE) ===== */
+.hamburger-menu {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 22px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+.hamburger-menu span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background-color: var(--neutral-dark);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.main-header:not(.scrolled) .hamburger-menu span {
+    background-color: white !important;
+}
+
+.hamburger-menu.active span:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+}
+
+.hamburger-menu.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active span:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg);
+}
+
+/* Menu Mobile Overlay */
+.mobile-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-menu-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.mobile-nav {
+    padding: 100px 30px 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.close-menu {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    font-size: 2.5rem;
+    color: var(--neutral-dark);
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.mobile-nav-link {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--neutral-dark);
+    padding: 12px 0;
+    text-align: center;
+    width: 100%;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.mobile-nav-link:hover {
+    color: var(--primary-blue);
+    transform: translateX(5px);
+}
+
+.mobile-language {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 25px;
+    background: rgba(30, 136, 229, 0.1);
+    border-radius: 50px;
+    margin-top: 20px;
+    font-weight: 500;
+}
+
+/* MODIFICATION: Bouton connexion menu sandwich en #4f9ad1 */
+.mobile-login-btn {
+    width: 100%;
+    max-width: 250px;
+    margin-top: 20px;
+    padding: 12px 25px;
+    background-color: #4f9ad1 !important;
+    color: white !important;
+    border: 2px solid #4f9ad1 !important;
+}
+
+.mobile-login-btn:hover {
+    background-color: #3f8ac1 !important;
+    border-color: #3f8ac1 !important;
+    transform: translateY(-2px);
+}
+
 /* ===== HERO SECTION ===== */
 .hero {
     padding: 150px 0 150px 0;
@@ -1282,6 +1416,25 @@ button {
         font-size: 1.2rem;
     }
     
+    /* MENU HAMBURGER SUR TABLETTE */
+    .desktop-menu {
+        display: none !important;
+    }
+    
+    .hamburger-menu {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        width: 30px !important;
+        height: 22px !important;
+    }
+    
+    .logo-section {
+        justify-content: center;
+        text-align: center;
+    }
+}
+
 /* MOBILE - MODIFICATIONS UNIQUEMENT POUR MOBILE */
 @media (max-width: 768px) {
     /* 1. HEADER MOBILE AVEC LOGO À ÉGALE DISTANCE */
@@ -1292,6 +1445,32 @@ button {
         padding: 8px 0 !important;
         position: relative;
         width: 100%;
+    }
+    
+    /* CORRECTION HAMBURGER MENU - CONSERVER LES 3 TRAITS */
+    .hamburger-menu {
+        order: 1;
+        flex: 0 0 auto;
+        display: flex !important;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 30px;
+        height: 22px;
+        margin-right: 0;
+        min-width: 30px;
+    }
+    
+    .hamburger-menu span {
+        display: block;
+        width: 100%;
+        height: 3px;
+        background-color: var(--neutral-dark);
+        border-radius: 2px;
+        transition: all 0.3s ease;
+    }
+    
+    .main-header:not(.scrolled) .hamburger-menu span {
+        background-color: white !important;
     }
     
     /* Logo PARFAITEMENT centré avec distances égales */
@@ -1591,6 +1770,11 @@ button {
         font-size: 0.8rem;
     }
     
+    .hamburger-menu {
+        width: 24px;
+        height: 18px;
+    }
+    
     .logo {
         font-size: 1.4rem;
     }
@@ -1697,6 +1881,17 @@ button {
     select,
     textarea {
         font-size: 16px !important;
+    }
+}
+
+/* Cacher menu hamburger sur desktop */
+@media (min-width: 993px) {
+    .hamburger-menu {
+        display: none !important;
+    }
+    
+    .mobile-menu-overlay {
+        display: none !important;
     }
 }
 
@@ -2003,6 +2198,10 @@ button {
         order: 2;
     }
     
+    .hamburger-menu {
+        order: 1;
+    }
+    
     /* Menu mobile - section utilisateur */
     .mobile-user-section {
         background: white;
@@ -2195,7 +2394,11 @@ button {
     .logo-section {
         order: 2;
     }
- 
+    
+    .hamburger-menu {
+        order: 1;
+    }
+    
     .mobile-user-section {
         background: white;
         border-bottom: 1px solid rgba(0,0,0,0.1);
