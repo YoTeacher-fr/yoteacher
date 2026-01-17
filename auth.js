@@ -1,19 +1,22 @@
-// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION CORRIGÉE POUR REDIRECTIONS
+// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION CORRIGÉE POUR COORDINATION SUPABASE
 class AuthManager {
     constructor() {
         this.user = null;
         this.supabaseReady = false;
         this.pendingPayment = null;
         this.invitationCode = null; // Code d'invitation VIP
+        this._initializationPromise = null; // Promesse d'initialisation
         this.init();
     }
 
     async init() {
         try {
+            console.log('🔧 Initialisation AuthManager...');
+            
             // Vérifier code d'invitation dans l'URL
             this.checkInvitationCode();
             
-            // Attendre que Supabase soit prêt
+            // Attendre que Supabase soit prêt - NOUVELLE VERSION
             await this.waitForSupabase();
             
             if (!this.supabaseReady) {
@@ -63,6 +66,90 @@ class AuthManager {
             console.error('Erreur lors de l\'initialisation de l\'auth:', error);
             this.setupDegradedMode();
         }
+    }
+
+    // ===== NOUVELLE MÉTHODE : Attente coordonnée de Supabase =====
+    async waitForSupabase() {
+        console.log('⏳ Attente coordonnée de Supabase...');
+        
+        return new Promise(async (resolve) => {
+            try {
+                // OPTION 1: Utiliser la promesse d'initialisation si elle existe
+                if (window.supabaseInitPromise && typeof window.supabaseInitPromise.then === 'function') {
+                    console.log('🔧 Utilisation de supabaseInitPromise...');
+                    
+                    try {
+                        // Attendre avec timeout raisonnable
+                        const timeoutPromise = new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('Timeout initialisation Supabase')), 15000)
+                        );
+                        
+                        await Promise.race([
+                            window.supabaseInitPromise,
+                            timeoutPromise
+                        ]);
+                        
+                        if (window.supabase && window.supabase.auth) {
+                            this.supabaseReady = true;
+                            console.log('✅ Supabase initialisé via supabaseInitPromise');
+                            resolve();
+                            return;
+                        }
+                    } catch (promiseError) {
+                        console.warn('⚠️ Erreur supabaseInitPromise:', promiseError.message);
+                        // Continuer avec la vérification légère
+                    }
+                }
+                
+                // OPTION 2: Vérification légère avec backoff
+                let attempts = 0;
+                const maxAttempts = 60; // 6 secondes maximum (100ms * 60)
+                let checkDelay = 100; // Commence à 100ms
+                
+                const checkSupabase = async () => {
+                    attempts++;
+                    
+                    if (attempts % 10 === 0) {
+                        console.log(`🔍 Vérification Supabase ${attempts}/${maxAttempts}`);
+                    }
+                    
+                    // Vérification LÉGÈRE : juste l'existence
+                    if (window.supabase && window.supabase.auth) {
+                        // Vérification supplémentaire : tenter un appel simple
+                        try {
+                            await window.supabase.auth.getSession();
+                            this.supabaseReady = true;
+                            console.log('✅ Supabase prêt et fonctionnel');
+                            resolve();
+                            return;
+                        } catch (err) {
+                            console.warn('⚠️ Supabase existe mais erreur session:', err.message);
+                            // Continuer à vérifier
+                        }
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        console.warn('⚠️ Supabase non initialisé après 6s - mode dégradé');
+                        this.supabaseReady = false;
+                        resolve();
+                        return;
+                    }
+                    
+                    // Backoff exponentiel léger
+                    if (attempts > 20) checkDelay = 200;
+                    if (attempts > 40) checkDelay = 300;
+                    
+                    setTimeout(checkSupabase, checkDelay);
+                };
+                
+                checkSupabase();
+                
+            } catch (error) {
+                console.warn('⚠️ Erreur dans waitForSupabase:', error);
+                this.supabaseReady = false;
+                resolve();
+            }
+        });
     }
 
     // ===== GESTION DES CODES D'INVITATION VIP =====
@@ -455,59 +542,6 @@ class AuthManager {
         } catch (error) {
             console.warn('Erreur lors de l\'émission d\'événement:', error);
         }
-    }
-
-    async waitForSupabase() {
-        console.log('⏳ Attente de Supabase...');
-        
-        return new Promise(async (resolve) => {
-            try {
-                const initialized = await window.supabaseInitialized;
-                this.supabaseReady = initialized;
-                
-                if (initialized && window.supabase?.auth?.getSession) {
-                    console.log('✅ Supabase initialisé');
-                    resolve();
-                    return;
-                }
-            } catch (error) {
-                console.warn('⚠️ Erreur supabaseInitialized:', error);
-            }
-
-            let attempts = 0;
-            const maxAttempts = 150;
-            
-            const checkSupabase = async () => {
-                attempts++;
-                
-                if (attempts % 10 === 0) {
-                    console.log(`Vérification Supabase ${attempts}/${maxAttempts}`);
-                }
-                
-                if (window.supabase?.auth?.getSession) {
-                    try {
-                        await window.supabase.auth.getSession();
-                        this.supabaseReady = true;
-                        console.log('✅ Supabase prêt et fonctionnel');
-                        resolve();
-                        return;
-                    } catch (err) {
-                        console.warn('⚠️ Supabase existe mais erreur:', err.message);
-                    }
-                }
-                
-                if (attempts >= maxAttempts) {
-                    console.warn('⚠️ Supabase non initialisé après 15s - mode dégradé');
-                    this.supabaseReady = false;
-                    resolve();
-                    return;
-                }
-                
-                setTimeout(checkSupabase, 100);
-            };
-            
-            checkSupabase();
-        });
     }
 
     setupDegradedMode() {
@@ -1657,6 +1691,7 @@ window.diagnoseAuth = function() {
     console.groupEnd();
 };
 
+// Initialisation avec coordination améliorée
 document.addEventListener('DOMContentLoaded', function() {
     const isAuthPage = window.location.pathname.includes('login.html') || 
                       window.location.pathname.includes('signup.html');
@@ -1664,15 +1699,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const isDashboardPage = window.location.pathname.includes('dashboard.html') ||
                            window.location.pathname.includes('profile.html');
     
-    // Délai adaptatif selon le device
-    const delay = window.innerWidth <= 768 ? 500 : 100;
+    // Délai adaptatif amélioré pour coordination Supabase
+    const delay = window.innerWidth <= 768 ? 800 : 600; // Délai augmenté pour laisser Supabase s'initialiser
+    
+    console.log(`⏰ Lancement AuthManager dans ${delay}ms (coordination Supabase)...`);
     
     setTimeout(() => {
         console.log('🚀 Initialisation de AuthManager...');
-        window.authManager = new AuthManager();
+        console.log('Supabase disponible:', !!window.supabase);
+        console.log('Supabase prêt:', !!window.supabaseReady);
+        console.log('Promesse d\'init:', !!window.supabaseInitPromise);
         
-        // NE PAS faire de redirection automatique depuis dashboard
-        // Laisser dashboard.js gérer ça
+        window.authManager = new AuthManager();
         
     }, delay);
 });
@@ -1726,4 +1764,4 @@ window.debugVipPrices = async function() {
     console.groupEnd();
 };
 
-console.log('✅ auth.js chargé avec système de codes d\'invitation VIP - Version finale corrigée pour votre schéma');
+console.log('✅ auth.js chargé avec coordination Supabase améliorée - Version finale corrigée pour votre schéma');
