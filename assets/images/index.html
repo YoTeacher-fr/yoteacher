@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoann - Professeur de Français pour Adultes</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">           
+                <!-- Logo au CENTRE -->
+                <div class="logo-section">
+                    <a href="index.html" class="logo">Yoann</a>
+                    <div class="flag">🇫🇷</div>
+                </div>
+                
+                <!-- Bouton Connexion Mobile (visible uniquement sur mobile) -->
+                <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
+                
+                <!-- Menu Desktop -->
+                <nav class="nav-menu desktop-menu">
+    <div class="nav-links-wrapper">
+        <a href="#about" class="nav-link" data-i18n="nav.about">À propos</a>
+        <a href="#courses" class="nav-link" data-i18n="nav.courses">Cours</a>
+        <a href="#testimonials" class="nav-link" data-i18n="nav.testimonials">Témoignages</a>
+        <a href="#contact" class="nav-link" data-i18n="nav.contact">Contact</a>
+    </div>
+</nav>
+
+<!-- Groupe des boutons de droite -->
+<div class="header-right-group">
+                        <!-- Sélecteur de devise -->
+                        <div class="currency-selector">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <select id="currencySelector">
+                                <!-- Rempli dynamiquement par currency.js -->
+                            </select>
+                        </div>
+                        
+                        <div class="language-switcher" id="languageSwitcherDesktop">
+                            <span class="flag">🌐</span>
+                            <span data-i18n="header.language">EN</span>
+                        </div>
+                        
+                        <a href="login.html" class="login-btn" data-i18n="header.login">Connexion</a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Section Hero avec texte à gauche -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content-left">
+                <h1 data-i18n="hero.title">Apprenez le français simplement</h1>
+                <p class="hero-subtitle" data-i18n="hero.subtitle">Professeur natif • Cours chaleureux et personnalisés pour adultes</p>
+                
+                <div class="stats-left">
+                    <div class="stat-item">
+                        <span class="stat-number">5+</span>
+                        <span class="stat-label" data-i18n="hero.stat1">Ans d'expérience</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">500+</span>
+                        <span class="stat-label">
+                            <span class="desktop-stat" data-i18n="hero.stat2">Étudiants</span>
+                            <span class="mobile-stat" data-i18n="hero.stat2">Étudiants</span>
+                        </span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">3000+</span>
+                        <span class="stat-label" data-i18n="hero.stat3">Leçons données</span>
+                    </div>
+                </div>
+                
+                <div class="cta-buttons-left">
+                    <a href="booking.html?type=essai" class="btn btn-primary mobile-course-btn" data-i18n="hero.trial">Réserver un cours d'essai</a>
+                    <a href="signup.html" class="btn btn-secondary" data-i18n="hero.signup">Créer un compte gratuit</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section À propos CORRIGÉE (version de index.html) -->
+    <section id="about" class="about-section-new">
+        <div class="container">
+            <div class="about-grid">
+                <!-- Colonne Image -->
+                <div class="about-image-col">
+                    <div class="about-image-wrapper">
+                        <img 
+                            src="assets/images/hero-yoann.webp" 
+                            alt="Yoann Bourbia" 
+                            class="about-image"
+                            id="yoannImage"
+                        >
+                    </div>
+                </div>
+
+                <!-- Colonne Contenu -->
+                <div class="about-content-col">
+                    <span class="section-label" data-i18n="about.label">À propos de Yoann</span>
+                    <h2 class="section-title about-title">
+                        <span data-i18n="about.title">Votre guide vers la maîtrise du</span> <span class="text-primary" data-i18n="about.french">français</span>
+                    </h2>
+                    <div class="decorative-line-left"></div>
+
+                    <div class="about-text">
+                        <p data-i18n="about.text1">
+                            Bonjour ! Je suis Yoann, professeur de français passionné depuis 5 ans.
+                            Originaire de Marseille, dans le sud de la France, j'ai décidé de quitter
+                            ma carrière de comptable pour suivre ma vraie passion : enseigner le français
+                            et voyager à travers le monde.
+                        </p>
+                        <p data-i18n="about.text2">
+                            Avec plus de 75 pays visités en 6 ans, j'apporte une richesse culturelle
+                            unique à mes cours. Cette expérience me permet d'aborder des sujets variés
+                            et de comprendre les défis spécifiques de chaque culture dans l'apprentissage
+                            du français.
+                        </p>
+                    </div>
+
+                    <!-- Grille des highlights -->
+                    <div class="highlights-grid">
+                        <div class="highlight-item">
+                            <i class="fas fa-globe-europe highlight-icon"></i>
+                            <span class="highlight-text" data-i18n="about.highlight1">Originaire de Marseille</span>
+                        </div>
+                        <div class="highlight-item">
+                            <i class="fas fa-plane highlight-icon"></i>
+                            <span class="highlight-text" data-i18n="about.highlight2">75 pays visités</span>
+                        </div>
+                        <div class="highlight-item">
+                            <i class="fas fa-book-open highlight-icon"></i>
+                            <span class="highlight-text" data-i18n="about.highlight3">Ancien comptable reconverti</span>
+                        </div>
+                        <div class="highlight-item">
+                            <i class="fas fa-award highlight-icon"></i>
+                            <span class="highlight-text" data-i18n="about.highlight4">Certifié en anglais</span>
+                        </div>
+                    </div>
+
+                    <!-- Tags de personnalité -->
+                    <div class="personality-section">
+                        <p class="personality-title" data-i18n="about.personality">
+                            Ce que mes étudiants disent de moi :
+                        </p>
+                        <div class="personality-tags">
+                            <span class="personality-tag" data-i18n="about.tag1">Professionnel</span>
+                            <span class="personality-tag" data-i18n="about.tag2">Chaleureux et sociable</span>
+                            <span class="personality-tag" data-i18n="about.tag3">Ouvert d'esprit</span>
+                            <span class="personality-tag" data-i18n="about.tag4">Aventureux</span>
+                            <span class="personality-tag" data-i18n="about.tag5">Bienveillant</span>
+                            <span class="personality-tag" data-i18n="about.tag6">Dynamique</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Cours - CENTRÉE -->
+    <section id="courses" class="courses-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label" data-i18n="courses.label">Mes cours</span>
+                <h2 class="section-title">
+                    <span data-i18n="courses.title">Des formules adaptées à</span> <span class="text-primary" data-i18n="courses.your_needs">vos besoins</span>
+                </h2>
+                <p class="section-subtitle" data-i18n="courses.subtitle">
+                    Choisissez la formule qui vous convient et commencez votre voyage linguistique
+                </p>
+            </div>
+            
+            <div class="courses-container" id="coursesContainer">
+                <!-- Les cartes seront générées par JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Témoignages -->
+    <section id="testimonials" class="testimonials-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label" data-i18n="testimonials.label">Témoignages</span>
+                <h2 class="section-title">
+                    <span data-i18n="testimonials.title">Ce que disent mes</span> <span class="text-primary" data-i18n="testimonials.students">étudiants</span>
+                </h2>
+                <p class="section-subtitle" data-i18n="testimonials.subtitle">
+                    Plus de 500 étudiants satisfaits à travers le monde
+                </p>
+            </div>
+            
+            <div class="testimonials-slider-container">
+                <button class="slider-btn prev-btn" id="prevTestimonial">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                
+                <div class="testimonials-slider" id="testimonialsSlider">
+                    <!-- Les témoignages seront générés ici -->
+                </div>
+                
+                <button class="slider-btn next-btn" id="nextTestimonial">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <div class="testimonial-indicators" id="testimonialIndicators">
+                <!-- Les indicateurs seront générés ici -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Final CTA -->
+    <section class="final-cta-section">
+        <div class="container">
+            <div class="final-cta-content">
+                <h2 class="final-cta-title">
+                    <span data-i18n="cta.title">Prêt à commencer votre voyage vers la</span> <span class="final-cta-accent" data-i18n="cta.mastery">maîtrise du français</span> ?
+                </h2>
+
+                <p class="final-cta-subtitle" data-i18n="cta.subtitle">
+                    Rejoignez plus de 500 étudiants satisfaits. Réservez votre cours d'essai
+                    aujourd'hui et découvrez une nouvelle façon d'apprendre le français.
+                </p>
+
+                <div class="final-cta-buttons">
+                    <a href="booking.html?type=essai" class="btn btn-accent btn-xl" id="essaiPriceBtn">
+                        <span data-i18n="cta.trial">Essayer maintenant</span> - <span class="price-essai">5€</span>
+                    </a>
+                    <a href="signup.html" class="btn btn-outline-white btn-xl" data-i18n="cta.account">
+                        Créer un compte gratuit
+                    </a>
+                </div>
+
+                <p class="final-cta-note">
+                    <i class="fas fa-sync-alt"></i> <span data-i18n="cta.note1">Conversion automatique selon votre localisation</span> • 
+                    <i class="fas fa-lock"></i> <span data-i18n="cta.note2">Paiement sécurisé</span> • 
+                    <i class="fas fa-clock"></i> <span data-i18n="cta.note3">Annulation gratuite 24h avant</span>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Contact et Footer -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <div class="contact-grid">
+                <!-- Colonne gauche : Présentation -->
+                <div class="contact-column">
+                    <h3>Yo<span class="teacher-blue">Teach</span></h3>
+                    <div class="brand-info">
+                        <p data-i18n="footer.tagline">Cours de français en ligne pour adultes. Apprenez avec confiance et plaisir avec un professeur natif passionné.</p>
+                        
+                        <div class="brand-stats">
+                            <div data-i18n="footer.teacher">🇫🇷 Professeur natif de Marseille</div>
+                            <div data-i18n="footer.countries">🌍 75 pays visités</div>
+                            <div data-i18n="footer.students">👥 500+ étudiants</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Colonne centre : Liens rapides -->
+                <div class="contact-column">
+                    <h3 data-i18n="footer.quick_links">Liens rapides</h3>
+                    <ul class="quick-links">
+                        <li><a href="#" id="homeLinkFooter" data-i18n="footer.home">Accueil</a></li>
+                        <li><a href="#about" data-i18n="nav.about">À propos</a></li>
+                        <li><a href="#courses" data-i18n="nav.courses">Cours</a></li>
+                        <li><a href="#testimonials" data-i18n="nav.testimonials">Témoignages</a></li>
+                        <li><a href="#contact" data-i18n="nav.contact">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Colonne droite : Mentions légales -->
+                <!-- Dans la section Footer de index.html, colonne droite -->
+<div class="contact-column">
+    <h3>Mentions légales</h3>
+    <ul class="legal-links">
+        <li><a href="legal.html#mentions-legales" data-i18n="footer.legal">Mentions légales</a></li>
+        <li><a href="legal.html#conditions-vente" data-i18n="footer.terms">Conditions Générales de Vente</a></li>
+        <li><a href="legal.html#confidentialite" data-i18n="footer.privacy">Politique de confidentialité</a></li>
+        <li><a href="legal.html#annulation" data-i18n="footer.cancellation">Politique d'annulation</a></li>
+        <li class="email-item"><i class="fas fa-envelope"></i> <span data-i18n="footer.email">yoteachfr@gmail.com</span></li>
+    </ul>
+</div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2021 YoTeach. Fait avec <span class="heart">❤️</span> à Marseille</span></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="auth.js"></script>
+    <script src="booking.js"></script>
+    <script src="common.js"></script>
+    <script src="currency.js"></script>
+    <script src="translation.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        // Fonction pour mettre à jour les liens de connexion avec redirect
+        function updateMobileLoginLinks() {
+            if (window.innerWidth <= 768) {
+                const mobileLoginBtn = document.querySelector('.mobile-login-btn');
+                const mobileLoginHeaderBtn = document.querySelector('.mobile-login-btn-header');
+                
+                // Mettre à jour le bouton dans le header
+                if (mobileLoginHeaderBtn && !window.location.pathname.includes('login.html')) {
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    mobileLoginHeaderBtn.href = `login.html?redirect=${currentUrl}`;
+                }
+                
+                // Mettre à jour le bouton dans le menu mobile
+                if (mobileLoginBtn && !window.location.pathname.includes('login.html')) {
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    mobileLoginBtn.href = `login.html?redirect=${currentUrl}`;
+                }
+            }
+        }
+        
+        // Initialiser le sélecteur de devise mobile
+        function initMobileCurrencySelector() {
+            const mobileSelector = document.getElementById('currencySelectorMobile');
+            if (!mobileSelector || !window.currencyManager) return;
+            
+            // Remplir les options
+            window.currencyManager.supportedCurrencies.forEach(currency => {
+                const option = document.createElement('option');
+                option.value = currency;
+                option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
+                
+                if (currency === window.currencyManager.currentCurrency) {
+                    option.selected = true;
+                }
+                
+                mobileSelector.appendChild(option);
+            });
+            
+            // Écouter les changements
+            mobileSelector.addEventListener('change', (e) => {
+                const newCurrency = e.target.value;
+                if (window.currencyManager.setCurrency(newCurrency)) {
+                    // Fermer le menu mobile après changement
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                }
+            });
+        }
+        
+        // Mettre à jour les prix sur la page d'accueil
+        function updateHomePagePrices() {
+            if (!window.currencyManager) return;
+            
+            const currency = window.currencyManager.currentCurrency;
+            const symbol = window.currencyManager.getSymbol();
+            
+            // Mettre à jour l'affichage de la devise dans le footer
+            const currencyDisplay = document.getElementById('currentCurrencyDisplay');
+            if (currencyDisplay) {
+                currencyDisplay.textContent = currency;
+            }
+            
+            // Mettre à jour le prix du cours d'essai dans le CTA
+            const essaiPriceBtn = document.getElementById('essaiPriceBtn');
+            if (essaiPriceBtn) {
+                const priceElement = essaiPriceBtn.querySelector('.price-essai');
+                if (priceElement) {
+                    const formattedPrice = window.currencyManager.formatPrice(5);
+                    priceElement.textContent = formattedPrice;
+                }
+            }
+            
+            // Mettre à jour les prix des cartes de cours
+            document.querySelectorAll('.course-card').forEach(card => {
+                const priceElement = card.querySelector('.price-main');
+                if (priceElement) {
+                    // Récupérer le prix de base en EUR depuis un attribut data
+                    const basePrice = parseFloat(card.dataset.basePrice || '0');
+                    if (basePrice > 0) {
+                        const formattedPrice = window.currencyManager.formatPrice(basePrice);
+                        priceElement.innerHTML = formattedPrice;
+                    }
+                }
+                
+                // Mettre à jour les prix détaillés
+                const priceDetails = card.querySelector('.price-details');
+                if (priceDetails) {
+                    // Logique spécifique pour chaque type de cours
+                    // (sera gérée par script.js)
+                }
+            });
+        }
+
+        // Gérer le lien "Accueil" dans le footer
+        function handleHomeLink() {
+            const homeLink = document.getElementById('homeLinkFooter');
+            if (homeLink) {
+                homeLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Scroller vers le haut de la page en douceur
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+            }
+        }
+        
+        // Appeler cette fonction après le chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updateMobileLoginLinks, 300);
+            
+            // Re-mettre à jour si la taille de l'écran change
+            window.addEventListener('resize', updateMobileLoginLinks);
+            
+            // Initialiser le sélecteur de devise mobile
+            initMobileCurrencySelector();
+            
+            // Écouter les changements de devise
+            window.addEventListener('currency:ready', updateHomePagePrices);
+            window.addEventListener('currency:changed', updateHomePagePrices);
+            
+            // Mettre à jour les prix une fois que currencyManager est prêt
+            if (window.currencyManager && !window.currencyManager.isLoading) {
+                setTimeout(updateHomePagePrices, 500);
+            }
+
+            // Gérer le lien Accueil dans le footer
+            handleHomeLink();
+        });
+    </script>
+</body>
+</html>
