@@ -800,90 +800,8 @@ body .mobile-login-btn:hover {
     background: #2c74e6;
 }
 
-/* ===== HEADER MOBILE UNIFIÉ - BOOKING (AVEC DEVISE) ===== */
+/* Styles responsives */
 @media (max-width: 768px) {
-    /* Cacher le menu hamburger */
-    body .hamburger-menu {
-        display: none !important;
-    }
-    
-    /* Cacher le menu mobile */
-    body .mobile-menu-overlay {
-        display: none !important;
-    }
-    
-    /* Cacher le bouton mobile séparé */
-    body .mobile-login-btn-header {
-        display: none !important;
-    }
-    
-    /* Header mobile unifié */
-    body .header-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px 0 !important;
-        position: relative;
-        width: 100%;
-    }
-    
-    /* Logo centré */
-    body .logo-section {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    body .logo {
-        font-size: 1.6rem !important;
-    }
-    
-    /* Groupe de droite (avec devise) */
-    body .header-right-group {
-        display: flex !important;
-        align-items: center;
-        gap: 8px !important;
-        margin-left: auto !important;
-        order: 3;
-    }
-    
-    /* Devise visible sur mobile */
-    body .currency-selector {
-        display: flex !important;
-        align-items: center;
-        gap: 3px;
-        order: 1;
-    }
-    
-    body .currency-selector select {
-        padding: 2px 4px;
-        font-size: 0.8rem;
-        min-width: 60px;
-    }
-    
-    /* Langue */
-    body .language-switcher {
-        display: flex !important;
-        align-items: center;
-        gap: 2px;
-        padding: 5px 8px;
-        font-size: 0.8rem;
-        order: 2;
-    }
-    
-    /* Bouton Connexion */
-    body .login-btn {
-        display: flex !important;
-        align-items: center;
-        padding: 6px 12px !important;
-        font-size: 0.85rem !important;
-        order: 3;
-    }
-    
-    /* Ajustements de la page booking sur mobile */
     body .booking-section {
         padding: 30px 15px;
         min-height: calc(100vh - 60px);
@@ -923,9 +841,50 @@ body .mobile-login-btn:hover {
         font-size: 0.9rem;
     }
     
-    /* Cacher l'avatar sur mobile si présent */
+    /* Header mobile */
+    body .hamburger-menu {
+        display: block;
+    }
+    
+    body .mobile-login-btn-header {
+        display: block !important;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        background: #4f9ad1;
+        color: white;
+        border-radius: 20px;
+        text-decoration: none;
+    }
+    
+    /* Cacher les éléments du groupe droit sur mobile */
+    body .header-right-group {
+        display: none;
+    }
+    
+    body .main-header .login-btn {
+        display: none !important;
+    }
+    
+    body .language-switcher {
+        display: none;
+    }
+    
+    body .currency-selector {
+        display: none;
+    }
+    
     body .user-avatar {
         display: none;
+    }
+    
+    body .logo-section {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    body .header-content {
+        justify-content: space-between;
     }
 }
 
@@ -960,25 +919,6 @@ body .mobile-login-btn:hover {
         min-width: 60px;
         padding: 8px 10px;
         font-size: 0.85rem;
-    }
-    
-    body .currency-selector select {
-        min-width: 55px;
-        font-size: 0.75rem;
-    }
-    
-    body .language-switcher {
-        padding: 4px 6px;
-        font-size: 0.75rem;
-    }
-    
-    body .login-btn {
-        padding: 5px 10px !important;
-        font-size: 0.8rem !important;
-    }
-    
-    body .logo {
-        font-size: 1.4rem !important;
     }
 }
 

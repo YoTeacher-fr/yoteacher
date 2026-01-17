@@ -1,13 +1,3 @@
-/* STYLE DE BASE POUR ÉVITER LE FLASH VISUEL */
-.main-header:not(.scrolled) {
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85)) !important;
-    backdrop-filter: blur(5px) !important;
-}
-
-/* Animation rapide pour le scroll */
-.main-header {
-    transition: all 0.2s ease-in-out !important;
-}
 /* ===== VARIABLES CSS ===== */
 :root {
     --primary-blue: #1e88e5;
@@ -180,6 +170,7 @@ button {
     align-items: center;
 }
 
+
 .nav-spacer {
     display: none;
 }
@@ -249,37 +240,9 @@ button {
     box-shadow: 0 8px 20px rgba(79, 154, 209, 0.3);
 }
 
-/* ===== MODIFICATION DES STYLES GÉNÉRAUX POUR HEADER MOBILE ===== */
-@media (max-width: 768px) {
-    /* Cacher toujours le menu hamburger */
-    .hamburger-menu {
-        display: none !important;
-    }
-    
-    /* Cacher toujours le menu mobile overlay */
-    .mobile-menu-overlay {
-        display: none !important;
-    }
-    
-    /* Cacher les liens de navigation desktop */
-    .desktop-menu {
-        display: none !important;
-    }
-    
-    /* Cacher les boutons mobile individuels */
-    .mobile-login-btn-header {
-        display: none !important;
-    }
-    
-    /* Assurer que le header a une hauteur fixe */
-    .main-header {
-        min-height: 55px !important;
-    }
-    
-    /* Ajuster le padding du body */
-    body {
-        padding-top: 55px !important;
-    }
+/* ===== BOUTON CONNEXION MOBILE ===== */
+.mobile-login-btn-header {
+    display: none;
 }
 
 /* ===== HERO SECTION ===== */
@@ -1323,10 +1286,347 @@ button {
         height: 45px;
         font-size: 1.2rem;
     }
+    
+    /* MENU HAMBURGER SUR TABLETTE */
+    .desktop-menu {
+        display: none !important;
+    }
+    
+    .hamburger-menu {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        width: 30px !important;
+        height: 22px !important;
+    }
+    
+    .logo-section {
+        justify-content: center;
+        text-align: center;
+    }
+}
+
+/* MOBILE - MODIFICATIONS UNIQUEMENT POUR MOBILE */
+@media (max-width: 768px) {
+    /* 1. HEADER MOBILE AVEC LOGO À ÉGALE DISTANCE */
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0 !important;
+        position: relative;
+        width: 100%;
+    }
+    /* Logo PARFAITEMENT centré avec distances égales */
+    .logo-section {
+        order: 2;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        position: static;
+        transform: none;
+        left: auto;
+        top: auto;
+        margin: 0;
+    }
+    
+    .logo {
+        font-size: 1.6rem;
+    }
+    
+    .flag {
+        font-size: 1.3rem;
+        margin-left: 5px;
+    }
+    
+    /* Bouton connexion à droite - 3ème colonne */
+    .mobile-login-btn-header {
+        display: block !important;
+        background-color: #4f9ad1;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+        line-height: 1.4;
+        order: 3;
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+        margin-left: auto;
+        z-index: 1001;
+    }
+    
+    .mobile-login-btn-header:hover {
+        background-color: #3f8ac1;
+        transform: translateY(-2px);
+    }
+    
+    /* MODIFICATION: Changer le texte pour mobile */
+    .desktop-stat {
+        display: none;
+    }
+    
+    .mobile-stat {
+        display: block;
+    }
+    
+    /* Cacher le bouton connexion desktop sur mobile */
+    .login-btn {
+        display: none;
+    }
+    
+    /* Cacher le groupe de droite sur mobile */
+    .header-right-group {
+        display: none;
+    }
+    
+    /* 2. HERO SECTION */
+    .hero {
+        padding: 100px 0 150px 0;
+        text-align: center;
+    }
+    
+    .hero-content-left {
+        text-align: center;
+        margin: 20px auto 0 auto;
+    }
+    
+    .hero h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    /* Statistiques centrées */
+    .stats-left {
+        align-items: center;
+        flex-direction: row;
+        justify-content: center;
+        gap: 10px;
+        margin: 30px 0;
+    }
+    
+    .stat-item {
+        text-align: center;
+        min-width: 100px;
+        padding: 12px 15px;
+        flex: 0 0 calc(50% - 10px);
+    }
+    
+    .stat-number {
+        font-size: 1.7rem;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
+        letter-spacing: 0.5px;
+        white-space: normal;
+    }
+    
+    /* Boutons CTA */
+    .cta-buttons-left {
+        justify-content: center;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .btn {
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+    
+    /* 3. ENLEVER L'ICÔNE BULLE DU BOUTON HERO SUR MOBILE */
+    .mobile-course-btn .emoji {
+        display: none;
+    }
+    
+    /* 4. COURS ET TÉMOIGNAGES */
+    .courses-container,
+    .testimonials-slider {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    /* 5. CONTACT ET FOOTER - TOUT CENTRÉ */
+    .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 35px;
+        text-align: center;
+    }
+    
+    .contact-column h3::after {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    /* Centrer les statistiques du brand */
+    .brand-info {
+        text-align: center;
+        align-items: center;
+    }
+    
+    .brand-info p {
+        text-align: center;
+    }
+    
+    .brand-stats {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .brand-stats div {
+        justify-content: center;
+        text-align: center;
+        width: 100%;
+    }
+    
+    /* Centrer l'adresse email */
+    .legal-links {
+        align-items: center;
+    }
+    
+    .email-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        width: 100%;
+    }
+    
+    /* 6. TITRES ET SOUS-TITRES */
+    .section-title {
+        font-size: 1.8rem;
+    }
+    
+    .about-content,
+    .section-subtitle {
+        font-size: 1rem;
+    }
+    
+    /* 7. CARTES DE COURS */
+    .course-type {
+        font-size: 1.4rem;
+    }
+    
+    .price-main {
+        font-size: 2.2rem;
+    }
+    
+    /* 8. HIGHLIGHTS GRID */
+    .highlights-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* 9. BOUTONS FINAL CTA */
+    .final-cta-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-xl {
+        width: 100%;
+        max-width: 280px;
+    }
+    
+    /* 10. SLIDER TÉMOIGNAGES */
+    .testimonials-slider-container {
+        padding: 0 45px;
+        gap: 5px;
+    }
+    
+    .slider-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    
+    /* 11. FOOTER BOTTOM */
+    .footer-bottom {
+        text-align: center;
+        justify-content: center;
+    }
+    
+    /* 12. CORRECTION IMAGE SUR MOBILE */
+    .about-image-col {
+        margin-top: 0 !important;
+    }
+    
+    .about-image-wrapper {
+        height: 400px !important;
+    }
+    
+    /* 13. TAGS DE PERSONNALITÉ */
+    .personality-tags {
+        justify-content: center;
+    }
+    
+    .personality-tag {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+    }
+    
+    /* 14. CENTRER LE CONTENU À PROPOS SUR MOBILE */
+    .about-content-col {
+        text-align: center;
+    }
+    
+    .decorative-line-left {
+        margin: 20px auto 25px auto;
+    }
+    
+    .highlights-grid {
+        justify-content: center;
+    }
+    
+    .highlight-item {
+        justify-content: center;
+    }
+}
+
+/* Cacher le bouton mobile sur desktop */
+@media (min-width: 769px) {
+    .mobile-login-btn-header {
+        display: none !important;
+    }
 }
 
 /* TRÈS PETITS ÉCRANS */
 @media (max-width: 480px) {
+    .mobile-login-btn-header {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .hamburger-menu {
+        width: 24px;
+        height: 18px;
+    }
+    
+    .logo {
+        font-size: 1.4rem;
+    }
+    
+    .flag {
+        font-size: 1.2rem;
+    }
+    
     .hero h1 {
         font-size: 1.8rem;
     }
@@ -1467,6 +1767,85 @@ button {
     cursor: pointer;
     border: 2px solid #3c84f6;
     transition: transform 0.3s;
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
+
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+    margin-left: 15px;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1532,7 +1911,171 @@ button {
 .login-btn.connected:hover {
     background-color: #45a049 !important;
 }
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
 
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+
+/* Style pour les boutons connectés */
+.login-btn.connected {
+    background-color: #4CAF50 !important;
+}
+
+.login-btn.connected:hover {
+    background-color: #45a049 !important;
+}
+
+/* Styles pour l'avatar et menu mobile */
+@media (max-width: 768px) {
+    .user-avatar {
+        margin-left: auto !important;
+        margin-right: 10px !important;
+        order: 2; /* Position dans le header mobile */
+    }
+    
+    .user-menu {
+        right: auto !important;
+        left: 0 !important;
+    }
+    
+    /* Ajustement header avec avatar */
+    .header-content {
+        gap: 10px !important;
+    }
+    
+    .mobile-login-btn-header {
+        order: 3;
+        z-index: 1001;
+    }
+    
+    .logo-section {
+        order: 2;
+    }
+    
+    .hamburger-menu {
+        order: 1;
+    }
+    
+    /* Menu mobile - section utilisateur */
+    .mobile-user-section {
+        background: white;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding: 20px;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .mobile-user-section a, 
+    .mobile-user-section button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .mobile-logout-btn {
+        background: #ffeaea !important;
+        color: #e74c3c !important;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .mobile-logout-btn:hover {
+        background: #ffd6d6 !important;
+    }
+}
+
+/* Correction pour le menu utilisateur sur desktop */
+@media (min-width: 769px) {
+    .user-menu {
+        right: 0;
+        left: auto;
+    }
+}
 /* ===== NAVIGATION CENTRÉE ===== */
 .nav-menu.desktop-menu {
     display: flex;
@@ -1634,6 +2177,10 @@ button {
     border-color: rgba(255, 255, 255, 0.7);
     transform: scale(1.15);
     box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+/* Suppression de l'ancien menu déroulant */
+.user-menu {
+    display: none !important;
 }
 /* Suppression de l'ancien menu déroulant */
 .user-menu {
