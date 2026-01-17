@@ -1317,33 +1317,6 @@ button {
         position: relative;
         width: 100%;
     }
-    
-    /* CORRECTION HAMBURGER MENU - CONSERVER LES 3 TRAITS */
-    .hamburger-menu {
-        order: 1;
-        flex: 0 0 auto;
-        display: flex !important;
-        flex-direction: column;
-        justify-content: space-between;
-        width: 30px;
-        height: 22px;
-        margin-right: 0;
-        min-width: 30px;
-    }
-    
-    .hamburger-menu span {
-        display: block;
-        width: 100%;
-        height: 3px;
-        background-color: var(--neutral-dark);
-        border-radius: 2px;
-        transition: all 0.3s ease;
-    }
-    
-    .main-header:not(.scrolled) .hamburger-menu span {
-        background-color: white !important;
-    }
-    
     /* Logo PARFAITEMENT centré avec distances égales */
     .logo-section {
         order: 2;
