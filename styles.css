@@ -170,7 +170,6 @@ button {
     align-items: center;
 }
 
-
 .nav-spacer {
     display: none;
 }
@@ -1306,87 +1305,137 @@ button {
     }
 }
 
-/* MOBILE - MODIFICATIONS UNIQUEMENT POUR MOBILE */
+/* ===== CORRECTION HEADER MOBILE UNIFIÉ ===== */
 @media (max-width: 768px) {
-    /* 1. HEADER MOBILE AVEC LOGO À ÉGALE DISTANCE */
+    /* 1. HEADER MOBILE - LOGO À GAUCHE */
     .header-content {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 8px 0 !important;
+        padding: 8px 15px !important;
         position: relative;
         width: 100%;
+        gap: 10px;
+        background-color: rgba(255, 255, 255, 0.98) !important;
+        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
+        backdrop-filter: blur(10px) !important;
+        min-height: 60px !important;
     }
-    /* Logo PARFAITEMENT centré avec distances égales */
+    
+    /* Logo positionné à gauche */
     .logo-section {
-        order: 2;
-        flex: 1;
+        order: 1;
+        flex: 0 0 auto;
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
-        text-align: center;
+        text-align: left;
         position: static;
         transform: none;
         left: auto;
         top: auto;
         margin: 0;
+        padding: 0;
+        width: auto;
     }
     
     .logo {
-        font-size: 1.6rem;
+        font-size: 1.4rem !important;
+        color: #333 !important;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
     }
     
-    .flag {
-        font-size: 1.3rem;
-        margin-left: 5px;
+    /* 2. GROUPEMENT DES ÉLÉMENTS DE DROITE */
+    .header-right-group {
+        display: flex !important;
+        align-items: center;
+        gap: 10px;
+        margin-left: auto;
+        flex: 0 0 auto;
+        order: 2;
     }
     
-    /* Bouton connexion à droite - 3ème colonne */
-    .mobile-login-btn-header {
-        display: block !important;
-        background-color: #4f9ad1;
-        color: white;
-        padding: 8px 15px;
+    /* 3. ÉLÉMENTS INDIVIDUELS */
+    /* Devise */
+    .currency-selector {
+        display: flex !important;
+        align-items: center;
+        gap: 3px;
+    }
+    
+    .currency-selector select {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+        min-width: 60px;
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.15);
         border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 500;
+        color: #333;
+    }
+    
+    /* Langue */
+    .language-switcher {
+        display: flex !important;
+        align-items: center;
+        gap: 3px;
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        color: #333;
+        background: none;
+        border-radius: 20px;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Bouton Connexion/Dashboard */
+    .login-btn,
+    .dashboard-btn {
+        display: flex !important;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600;
+        border-radius: 20px;
+        background: #4f9ad1 !important;
+        color: white !important;
         text-decoration: none;
         white-space: nowrap;
-        transition: all 0.3s ease;
         border: none;
         cursor: pointer;
-        text-align: center;
-        line-height: 1.4;
-        order: 3;
-        flex: 1;
-        display: flex;
-        justify-content: flex-end;
-        margin-left: auto;
-        z-index: 1001;
+        height: 32px;
     }
     
-    .mobile-login-btn-header:hover {
-        background-color: #3f8ac1;
-        transform: translateY(-2px);
+    /* Avatar dans le bouton dashboard */
+    .dashboard-btn .avatar-img {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 0.75rem !important;
     }
     
-    /* MODIFICATION: Changer le texte pour mobile */
-    .desktop-stat {
-        display: none;
+    .logout-btn-icon {
+        width: 18px !important;
+        height: 18px !important;
+        font-size: 0.8rem !important;
+        right: -5px !important;
+        top: -5px !important;
     }
     
-    .mobile-stat {
-        display: block;
+    /* 4. CACHER LES ÉLÉMENTS MOBILES REDONDANTS */
+    .mobile-login-btn-header {
+        display: none !important;
     }
     
-    /* Cacher le bouton connexion desktop sur mobile */
-    .login-btn {
-        display: none;
+    .hamburger-menu {
+        display: none !important;
     }
     
-    /* Cacher le groupe de droite sur mobile */
-    .header-right-group {
-        display: none;
+    /* 5. ESPACEMENT CORRECT */
+    .header-content > * {
+        margin: 0 !important;
     }
     
     /* 2. HERO SECTION */
@@ -1600,15 +1649,40 @@ button {
     }
 }
 
-/* Cacher le bouton mobile sur desktop */
-@media (min-width: 769px) {
-    .mobile-login-btn-header {
-        display: none !important;
-    }
-}
-
-/* TRÈS PETITS ÉCRANS */
+/* Adaptation pour très petits écrans */
 @media (max-width: 480px) {
+    .header-content {
+        padding: 8px 10px !important;
+        gap: 8px;
+    }
+    
+    .logo {
+        font-size: 1.2rem !important;
+        max-width: 120px;
+    }
+    
+    .header-right-group {
+        gap: 6px;
+    }
+    
+    .currency-selector select {
+        min-width: 50px;
+        font-size: 0.75rem;
+        padding: 3px 6px;
+    }
+    
+    .language-switcher {
+        font-size: 0.75rem;
+        padding: 3px 6px;
+    }
+    
+    .login-btn,
+    .dashboard-btn {
+        padding: 5px 10px !important;
+        font-size: 0.8rem !important;
+        height: 28px;
+    }
+    
     .mobile-login-btn-header {
         padding: 6px 10px;
         font-size: 0.8rem;
@@ -1617,14 +1691,6 @@ button {
     .hamburger-menu {
         width: 24px;
         height: 18px;
-    }
-    
-    .logo {
-        font-size: 1.4rem;
-    }
-    
-    .flag {
-        font-size: 1.2rem;
     }
     
     .hero h1 {
@@ -1692,6 +1758,13 @@ button {
     }
 }
 
+/* Cacher le bouton mobile sur desktop */
+@media (min-width: 769px) {
+    .mobile-login-btn-header {
+        display: none !important;
+    }
+}
+
 /* ORIENTATION PAYSAGE MOBILE */
 @media (max-height: 600px) and (orientation: landscape) {
     .hero {
@@ -1737,85 +1810,6 @@ button {
     .slider-btn {
         min-height: 44px !important;
     }
-}
-/* ===== STYLES POUR LE DASHBOARD ===== */
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    background: #e0e0e0;
-    color: #333;
-}
-
-.status-badge.vip {
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    color: #000;
-}
-
-/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
-.user-avatar {
-    position: relative;
-    margin-left: 15px;
-}
-
-.avatar-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #3c84f6;
-    transition: transform 0.3s;
-}
-
-.avatar-img:hover {
-    transform: scale(1.1);
-}
-
-.user-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    min-width: 180px;
-    padding: 10px 0;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.3s;
-    z-index: 1000;
-}
-
-.user-avatar:hover .user-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.user-menu a {
-    display: block;
-    padding: 10px 20px;
-    color: #333;
-    text-decoration: none;
-    transition: background 0.2s;
-}
-
-.user-menu a:hover {
-    background: #f8f9fa;
-    color: #3c84f6;
-}
-
-.user-menu .logout-btn {
-    color: #e74c3c;
-    border-top: 1px solid #eee;
-    margin-top: 5px;
-}
-
-.user-menu .logout-btn:hover {
-    background: #ffeaea;
 }
 /* ===== STYLES POUR LE DASHBOARD ===== */
 .status-badge {
