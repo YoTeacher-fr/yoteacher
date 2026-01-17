@@ -40,6 +40,7 @@ body {
     line-height: 1.6;
     background-color: #fefefe;
     overflow-x: hidden;
+    padding-top: 80px;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -126,6 +127,13 @@ button {
     background-color: #3f8ac1 !important;
 }
 
+.header-content {
+    display: grid;
+    grid-template-columns: 200px 1fr 200px;
+    align-items: center;
+    padding: 8px 0 !important;
+}
+
 .logo-section {
     display: flex;
     align-items: center;
@@ -162,6 +170,7 @@ button {
     align-items: center;
 }
 
+
 .nav-spacer {
     display: none;
 }
@@ -191,6 +200,44 @@ button {
 
 .nav-link:hover::after {
     width: 100%;
+}
+
+/* ===== GROUPEMENT DES BOUTONS DROITE ===== */
+.header-right-group {
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.language-switcher {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 50px;
+    transition: background-color var(--transition-fast);
+    font-weight: 500;
+}
+
+.language-switcher:hover {
+    background-color: var(--neutral-light);
+}
+
+.login-btn {
+    background-color: #4f9ad1;
+    color: var(--text-light);
+    padding: 10px 25px;
+    border-radius: 50px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.login-btn:hover {
+    background-color: #3f8ac1;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(79, 154, 209, 0.3);
 }
 
 /* ===== BOUTON CONNEXION MOBILE ===== */
@@ -433,6 +480,47 @@ button {
     margin-top: 20px;
 }
 
+.btn {
+    padding: 15px 35px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all var(--transition-normal);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: var(--accent-orange);
+    color: var(--text-light);
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-orange-dark);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 25px rgba(255, 152, 0, 0.3);
+}
+
+.btn-secondary {
+    background-color: #3c84f6;
+    color: white;
+    border-color: #3c84f6;
+}
+
+.btn-secondary:hover {
+    background-color: #2c74e6;
+    color: white;
+    border-color: #2c74e6;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
+}
+
 /* ===== SECTION À PROPOS - CENTRÉE ===== */
 .about-section-new {
     padding: 80px 0;
@@ -646,7 +734,6 @@ button {
 .section-title span.text-primary {
     color: #3c84f6 !important;
 }
-
 /* ===== COURSES SECTION - CENTRÉE ===== */
 .courses-section {
     padding: 40px 0 80px 0;
@@ -796,6 +883,24 @@ button {
 .course-feature span {
     color: #555;
     font-size: 0.95rem;
+}
+
+.course-card .btn-primary {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+    border-radius: 50px;
+    font-weight: 600;
+    margin-top: auto;
+    background-color: #ea8934;
+    border-color: #ea8934;
+}
+
+.course-card .btn-primary:hover {
+    background-color: #da7924;
+    border-color: #da7924;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 25px rgba(234, 137, 52, 0.3);
 }
 
 /* ===== TESTIMONIALS SECTION ===== */
@@ -1027,6 +1132,40 @@ button {
     justify-content: center;
     flex-wrap: wrap;
     margin-bottom: 25px;
+}
+
+.btn-xl {
+    padding: 16px 35px;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    font-weight: 600;
+}
+
+.btn-accent {
+    background-color: #e09c5f;
+    color: white;
+    border: 2px solid #e09c5f;
+}
+
+.btn-accent:hover {
+    background-color: #d08c4f;
+    border-color: #d08c4f;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 25px rgba(224, 156, 95, 0.3);
+}
+
+.btn-outline-white {
+    background-color: #3c84f6;
+    color: white;
+    border: 2px solid #3c84f6;
+}
+
+.btn-outline-white:hover {
+    background-color: #2c74e6;
+    color: white;
+    border-color: #2c74e6;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(60, 132, 246, 0.3);
 }
 
 .final-cta-note {
@@ -1266,6 +1405,11 @@ button {
         font-size: 1.1rem;
     }
     
+    .btn-xl {
+        padding: 15px 30px;
+        font-size: 1rem;
+    }
+    
     .slider-btn {
         width: 45px;
         height: 45px;
@@ -1391,6 +1535,16 @@ button {
         display: block;
     }
     
+    /* Cacher le bouton connexion desktop sur mobile */
+    .login-btn {
+        display: none;
+    }
+    
+    /* Cacher le groupe de droite sur mobile */
+    .header-right-group {
+        display: none;
+    }
+    
     /* 2. HERO SECTION */
     .hero {
         padding: 100px 0 150px 0;
@@ -1441,6 +1595,12 @@ button {
         justify-content: center;
         flex-direction: column;
         gap: 15px;
+    }
+    
+    .btn {
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
     }
     
     /* 3. ENLEVER L'ICÔNE BULLE DU BOUTON HERO SUR MOBILE */
@@ -1530,7 +1690,18 @@ button {
         grid-template-columns: 1fr;
     }
     
-    /* 9. SLIDER TÉMOIGNAGES */
+    /* 9. BOUTONS FINAL CTA */
+    .final-cta-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-xl {
+        width: 100%;
+        max-width: 280px;
+    }
+    
+    /* 10. SLIDER TÉMOIGNAGES */
     .testimonials-slider-container {
         padding: 0 45px;
         gap: 5px;
@@ -1542,13 +1713,13 @@ button {
         font-size: 1.1rem;
     }
     
-    /* 10. FOOTER BOTTOM */
+    /* 11. FOOTER BOTTOM */
     .footer-bottom {
         text-align: center;
         justify-content: center;
     }
     
-    /* 11. CORRECTION IMAGE SUR MOBILE */
+    /* 12. CORRECTION IMAGE SUR MOBILE */
     .about-image-col {
         margin-top: 0 !important;
     }
@@ -1557,7 +1728,7 @@ button {
         height: 400px !important;
     }
     
-    /* 12. TAGS DE PERSONNALITÉ */
+    /* 13. TAGS DE PERSONNALITÉ */
     .personality-tags {
         justify-content: center;
     }
@@ -1567,7 +1738,7 @@ button {
         padding: 5px 10px;
     }
     
-    /* 13. CENTRER LE CONTENU À PROPOS SUR MOBILE */
+    /* 14. CENTRER LE CONTENU À PROPOS SUR MOBILE */
     .about-content-col {
         text-align: center;
     }
@@ -1734,6 +1905,454 @@ button {
         min-height: 44px !important;
     }
 }
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
+
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+    margin-left: 15px;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
+
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+    margin-left: 15px;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+
+/* Style pour les boutons connectés */
+.login-btn.connected {
+    background-color: #4CAF50 !important;
+}
+
+.login-btn.connected:hover {
+    background-color: #45a049 !important;
+}
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
+
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+
+/* Style pour les boutons connectés */
+.login-btn.connected {
+    background-color: #4CAF50 !important;
+}
+
+.login-btn.connected:hover {
+    background-color: #45a049 !important;
+}
+
+/* Styles pour l'avatar et menu mobile */
+@media (max-width: 768px) {
+    .user-avatar {
+        margin-left: auto !important;
+        margin-right: 10px !important;
+        order: 2; /* Position dans le header mobile */
+    }
+    
+    .user-menu {
+        right: auto !important;
+        left: 0 !important;
+    }
+    
+    /* Ajustement header avec avatar */
+    .header-content {
+        gap: 10px !important;
+    }
+    
+    .mobile-login-btn-header {
+        order: 3;
+        z-index: 1001;
+    }
+    
+    .logo-section {
+        order: 2;
+    }
+    
+    .hamburger-menu {
+        order: 1;
+    }
+    
+    /* Menu mobile - section utilisateur */
+    .mobile-user-section {
+        background: white;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding: 20px;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .mobile-user-section a, 
+    .mobile-user-section button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .mobile-logout-btn {
+        background: #ffeaea !important;
+        color: #e74c3c !important;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .mobile-logout-btn:hover {
+        background: #ffd6d6 !important;
+    }
+}
+
+/* Correction pour le menu utilisateur sur desktop */
+@media (min-width: 769px) {
+    .user-menu {
+        right: 0;
+        left: auto;
+    }
+}
+/* ===== NAVIGATION CENTRÉE ===== */
+.nav-menu.desktop-menu {
+    display: flex;
+    gap: 15px !important;
+    align-items: center;
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: center;
+}
+
+.nav-spacer {
+    display: none;
+}
+
+/* ===== GROUPEMENT DES BOUTONS DROITE ===== */
+.header-right-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Bouton Dashboard avec avatar intégré et croix */
+.dashboard-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #4f9ad1;
+    color: white;
+    padding: 6px 35px 6px 6px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    text-decoration: none;
+    border: none;
+    position: relative;
+    cursor: pointer;
+}
+
+.dashboard-btn:hover {
+    background-color: #3f8ac1;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(79, 154, 209, 0.3);
+}
+
+.dashboard-btn .avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+/* Bouton déconnexion intégré dans le dashboard */
+.logout-btn-icon {
+    position: absolute;
+    right: -1px;
+    top: -1px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #e74c3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s;
+    font-weight: bold;
+    z-index: 2;
+}
+
+.logout-btn-icon:hover {
+    background-color: rgba(231, 76, 60, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.7);
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+/* Suppression de l'ancien menu déroulant */
+.user-menu {
+    display: none !important;
+}
+/* Suppression de l'ancien menu déroulant */
+.user-menu {
+    display: none !important;
+}
 
 /* Styles pour l'avatar et menu mobile */
 @media (max-width: 768px) {
@@ -1741,6 +2360,26 @@ button {
         margin-left: 0 !important;
         margin-right: 0 !important;
         order: 3;
+    }
+    
+    .dashboard-btn {
+        padding: 5px 30px 5px 5px;
+        font-size: 0.85rem;
+        gap: 6px;
+    }
+    
+    .dashboard-btn .avatar-img {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+    
+    .logout-btn-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 0.9rem;
+        right: -6px;
+        top: -6px;
     }
     
     .header-content {
