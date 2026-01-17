@@ -17,7 +17,13 @@
     <header class="main-header">
         <div class="container">
             <div class="header-content">
-               
+                <!-- Menu Hamburger (Mobile) -->
+                <button class="hamburger-menu" id="hamburgerBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
                 <!-- Logo au CENTRE -->
                 <div class="logo-section">
                     <a href="index.html" class="logo">Yoann</a>
@@ -57,6 +63,36 @@
                 </nav>
             </div>
         </div>
+        
+        <!-- Menu Mobile -->
+        <div class="mobile-menu-overlay" id="mobileMenu">
+            <nav class="mobile-nav">
+                <button class="close-menu" id="closeMenuBtn">×</button>
+                <!-- La section utilisateur sera ajoutée dynamiquement ici -->
+                <a href="#about" class="mobile-nav-link" data-i18n="nav.about">À propos</a>
+                <a href="#courses" class="mobile-nav-link" data-i18n="nav.courses">Cours</a>
+                <a href="#testimonials" class="mobile-nav-link" data-i18n="nav.testimonials">Témoignages</a>
+                <a href="#contact" class="mobile-nav-link" data-i18n="nav.contact">Contact</a>
+                
+                <!-- Sélecteur de devise mobile -->
+                <div class="currency-selector-mobile" style="padding: 15px 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                        <i class="fas fa-money-bill-wave"></i> Devise
+                    </label>
+                    <select id="currencySelectorMobile" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                        <!-- Rempli dynamiquement -->
+                    </select>
+                </div>
+                
+                <div class="mobile-language" id="languageSwitcherMobile">
+                    <span class="flag">🌐</span>
+                    <span data-i18n="header.language">EN</span>
+                </div>
+                
+                <a href="login.html" class="btn btn-primary mobile-login-btn" data-i18n="header.login">Connexion</a>
+            </nav>
+        </div>
+    </header>
 
     <!-- Section Hero avec texte à gauche -->
     <section class="hero">
