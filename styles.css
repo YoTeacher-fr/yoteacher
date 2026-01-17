@@ -1305,7 +1305,7 @@ button {
     }
 }
 
-/* ===== CORRECTION URGENTE HEADER MOBILE - BOUTONS COMPACT ===== */
+/* ===== CORRECTION COMPLÈTE HEADER MOBILE (IDENTIQUE À BOOKING.CSS) ===== */
 @media (max-width: 768px) {
     /* CORRECTION GLOBALE HEADER MOBILE */
     body {
@@ -1328,16 +1328,15 @@ button {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
-        padding: 0 12px !important;
+        padding: 0 15px !important;
         height: 60px !important;
         width: 100% !important;
-        gap: 6px;
+        gap: 8px;
         position: relative;
     }
     
-    /* Logo à gauche - COMPACT */
+    /* Logo à gauche - IDENTIQUE À BOOKING.CSS */
     .logo-section {
-        order: 1 !important;
         flex: 0 0 auto !important;
         display: flex !important;
         justify-content: flex-start !important;
@@ -1350,30 +1349,31 @@ button {
         margin: 0 !important;
         padding: 0 !important;
         width: auto !important;
+        order: 1 !important;
     }
     
     .logo {
-        font-size: 1.3rem !important;
+        font-size: 1.4rem !important;
         color: #333 !important;
         font-weight: 700 !important;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 120px;
+        max-width: 130px;
         display: block !important;
     }
     
-    /* Grouper les éléments à droite - COMPACT */
+    /* Éléments de droite - IDENTIQUE À BOOKING.CSS */
     .header-right-group {
         display: flex !important;
         align-items: center !important;
-        gap: 4px !important;
+        gap: 6px !important;
         margin-left: auto !important;
         flex: 0 0 auto !important;
         order: 2 !important;
     }
     
-    /* Devise - TEXTE SEULEMENT (sans icône) */
+    /* Devise - TEXTE SEULEMENT (sans icône) - IDENTIQUE À BOOKING.CSS */
     .currency-selector {
         display: flex !important;
         align-items: center !important;
@@ -1395,15 +1395,13 @@ button {
         border-radius: 12px !important;
         color: #333 !important;
         display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
         height: 26px !important;
         font-weight: 600;
         text-align: center;
         text-align-last: center;
     }
     
-    /* Langue - TEXTE SEULEMENT (sans icône) */
+    /* Langue - TEXTE SEULEMENT (sans icône) - IDENTIQUE À BOOKING.CSS */
     .language-switcher {
         display: flex !important;
         align-items: center !important;
@@ -1432,7 +1430,7 @@ button {
         font-weight: 600;
     }
     
-    /* Bouton Connexion - COMPACT */
+    /* Bouton Connexion - IDENTIQUE À BOOKING.CSS */
     .login-btn,
     .dashboard-btn {
         display: flex !important;
@@ -1451,7 +1449,6 @@ button {
         cursor: pointer !important;
         height: 26px !important;
         min-width: 70px;
-        max-width: 90px;
     }
     
     /* Avatar dans le bouton dashboard - PLUS PETIT */
@@ -1470,7 +1467,7 @@ button {
         top: -4px !important;
     }
     
-    /* Cacher les éléments mobiles redondants */
+    /* Cacher les éléments mobiles redondants - IDENTIQUE À BOOKING.CSS */
     .mobile-login-btn-header {
         display: none !important;
     }
@@ -1479,12 +1476,12 @@ button {
         display: none !important;
     }
     
-    /* Navigation desktop cachée sur mobile */
+    /* Navigation desktop cachée sur mobile - IDENTIQUE À BOOKING.CSS */
     .nav-menu.desktop-menu {
         display: none !important;
     }
     
-    /* 2. HERO SECTION */
+    /* 2. HERO SECTION - CORRECTIONS SPÉCIFIQUES POUR LA PAGE D'ACCUEIL */
     .hero {
         padding: 100px 0 150px 0;
         text-align: center;
@@ -1707,17 +1704,17 @@ button {
 /* Adaptation pour très petits écrans */
 @media (max-width: 480px) {
     .header-content {
-        padding: 0 8px !important;
-        gap: 4px;
+        padding: 0 10px !important;
+        gap: 5px;
     }
     
     .logo {
         font-size: 1.2rem !important;
-        max-width: 100px;
+        max-width: 110px;
     }
     
     .header-right-group {
-        gap: 3px;
+        gap: 4px;
     }
     
     .currency-selector select {
@@ -1741,7 +1738,6 @@ button {
         font-size: 0.65rem !important;
         height: 24px !important;
         min-width: 65px;
-        max-width: 75px;
     }
     
     .mobile-login-btn-header {
