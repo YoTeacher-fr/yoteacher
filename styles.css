@@ -1287,6 +1287,25 @@ button {
         font-size: 1.2rem;
     }
     
+    /* MENU HAMBURGER SUR TABLETTE */
+    .desktop-menu {
+        display: none !important;
+    }
+    
+    .hamburger-menu {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        width: 30px !important;
+        height: 22px !important;
+    }
+    
+    .logo-section {
+        justify-content: center;
+        text-align: center;
+    }
+}
+
 /* MOBILE - MODIFICATIONS UNIQUEMENT POUR MOBILE */
 @media (max-width: 768px) {
     /* 1. HEADER MOBILE AVEC LOGO À ÉGALE DISTANCE */
@@ -1593,6 +1612,11 @@ button {
     .mobile-login-btn-header {
         padding: 6px 10px;
         font-size: 0.8rem;
+    }
+    
+    .hamburger-menu {
+        width: 24px;
+        height: 18px;
     }
     
     .logo {
@@ -2007,6 +2031,10 @@ button {
         order: 2;
     }
     
+    .hamburger-menu {
+        order: 1;
+    }
+    
     /* Menu mobile - section utilisateur */
     .mobile-user-section {
         background: white;
@@ -2200,7 +2228,10 @@ button {
         order: 2;
     }
     
-
+    .hamburger-menu {
+        order: 1;
+    }
+    
     .mobile-user-section {
         background: white;
         border-bottom: 1px solid rgba(0,0,0,0.1);
