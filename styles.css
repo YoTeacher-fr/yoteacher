@@ -1305,7 +1305,7 @@ button {
     }
 }
 
-/* ===== CORRECTION URGENTE HEADER MOBILE ===== */
+/* ===== CORRECTION URGENTE HEADER MOBILE - BOUTONS COMPACT ===== */
 @media (max-width: 768px) {
     /* CORRECTION GLOBALE HEADER MOBILE */
     body {
@@ -1328,14 +1328,14 @@ button {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
-        padding: 0 15px !important;
+        padding: 0 12px !important;
         height: 60px !important;
         width: 100% !important;
-        gap: 10px;
+        gap: 6px;
         position: relative;
     }
     
-    /* Logo à gauche - FIX */
+    /* Logo à gauche - COMPACT */
     .logo-section {
         order: 1 !important;
         flex: 0 0 auto !important;
@@ -1353,89 +1353,121 @@ button {
     }
     
     .logo {
-        font-size: 1.4rem !important;
+        font-size: 1.3rem !important;
         color: #333 !important;
         font-weight: 700 !important;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 150px;
+        max-width: 120px;
         display: block !important;
     }
     
-    /* Grouper les éléments à droite - VISIBLES */
+    /* Grouper les éléments à droite - COMPACT */
     .header-right-group {
         display: flex !important;
         align-items: center !important;
-        gap: 8px !important;
+        gap: 4px !important;
         margin-left: auto !important;
         flex: 0 0 auto !important;
         order: 2 !important;
     }
     
-    /* Devise visible */
+    /* Devise - TEXTE SEULEMENT (sans icône) */
     .currency-selector {
         display: flex !important;
         align-items: center !important;
-        gap: 3px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .currency-selector i {
+        display: none !important;
     }
     
     .currency-selector select {
-        padding: 4px 8px !important;
-        font-size: 0.8rem !important;
-        min-width: 60px !important;
+        padding: 3px 6px !important;
+        font-size: 0.7rem !important;
+        min-width: 45px !important;
+        max-width: 50px !important;
         background: white !important;
         border: 1px solid rgba(0, 0, 0, 0.15) !important;
-        border-radius: 20px !important;
+        border-radius: 12px !important;
         color: #333 !important;
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+        height: 26px !important;
+        font-weight: 600;
+        text-align: center;
+        text-align-last: center;
     }
     
-    .currency-selector i {
-        display: inline-block !important;
-        color: #333 !important;
-        font-size: 0.9rem !important;
-    }
-    
-    /* Langue visible */
+    /* Langue - TEXTE SEULEMENT (sans icône) */
     .language-switcher {
         display: flex !important;
         align-items: center !important;
-        gap: 3px !important;
-        font-size: 0.8rem !important;
-        padding: 4px 8px !important;
-        color: #333 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
         background: none !important;
-        border-radius: 20px !important;
-        border: 1px solid rgba(0, 0, 0, 0.15) !important;
     }
     
-    /* Bouton Connexion visible */
+    .language-switcher i {
+        display: none !important;
+    }
+    
+    .language-switcher span {
+        font-size: 0.7rem !important;
+        padding: 3px 8px !important;
+        color: #333 !important;
+        background: white !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 12px !important;
+        height: 26px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        font-weight: 600;
+    }
+    
+    /* Bouton Connexion - COMPACT */
     .login-btn,
     .dashboard-btn {
         display: flex !important;
         align-items: center !important;
-        gap: 6px !important;
-        padding: 6px 12px !important;
-        font-size: 0.85rem !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        padding: 4px 10px !important;
+        font-size: 0.7rem !important;
         font-weight: 600 !important;
-        border-radius: 20px !important;
+        border-radius: 12px !important;
         background: #4f9ad1 !important;
         color: white !important;
         text-decoration: none !important;
         white-space: nowrap !important;
         border: none !important;
         cursor: pointer !important;
-        height: 32px !important;
+        height: 26px !important;
+        min-width: 70px;
+        max-width: 90px;
     }
     
-    /* Avatar dans le bouton dashboard */
+    /* Avatar dans le bouton dashboard - PLUS PETIT */
     .dashboard-btn .avatar-img {
-        width: 24px !important;
-        height: 24px !important;
-        font-size: 0.75rem !important;
+        width: 18px !important;
+        height: 18px !important;
+        font-size: 0.65rem !important;
+    }
+    
+    /* Bouton déconnexion - PLUS PETIT */
+    .logout-btn-icon {
+        width: 16px !important;
+        height: 16px !important;
+        font-size: 0.7rem !important;
+        right: -4px !important;
+        top: -4px !important;
     }
     
     /* Cacher les éléments mobiles redondants */
@@ -1675,45 +1707,45 @@ button {
 /* Adaptation pour très petits écrans */
 @media (max-width: 480px) {
     .header-content {
-        padding: 0 10px !important;
-        gap: 6px;
+        padding: 0 8px !important;
+        gap: 4px;
     }
     
     .logo {
         font-size: 1.2rem !important;
-        max-width: 120px;
+        max-width: 100px;
     }
     
     .header-right-group {
-        gap: 5px;
+        gap: 3px;
     }
     
     .currency-selector select {
-        min-width: 50px;
-        font-size: 0.75rem !important;
-        padding: 3px 6px !important;
+        min-width: 40px !important;
+        max-width: 45px !important;
+        font-size: 0.65rem !important;
+        padding: 2px 4px !important;
+        height: 24px !important;
     }
     
-    .language-switcher {
-        font-size: 0.75rem !important;
-        padding: 3px 6px !important;
+    .language-switcher span {
+        font-size: 0.65rem !important;
+        padding: 2px 6px !important;
+        height: 24px !important;
+        min-width: 35px;
     }
     
     .login-btn,
     .dashboard-btn {
-        padding: 5px 10px !important;
-        font-size: 0.8rem !important;
-        height: 28px !important;
+        padding: 3px 8px !important;
+        font-size: 0.65rem !important;
+        height: 24px !important;
+        min-width: 65px;
+        max-width: 75px;
     }
     
     .mobile-login-btn-header {
-        padding: 6px 10px;
-        font-size: 0.8rem;
-    }
-    
-    .hamburger-menu {
-        width: 24px;
-        height: 18px;
+        display: none !important;
     }
     
     .hero h1 {
@@ -1799,6 +1831,12 @@ button {
     
     .header-right-group {
         justify-self: end !important;
+    }
+    
+    /* Rétablir les icônes sur desktop */
+    .currency-selector i,
+    .language-switcher i {
+        display: inline-block !important;
     }
 }
 
