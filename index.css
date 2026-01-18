@@ -112,4 +112,7 @@
 
 @media (max-width: 768px) {
     .currency-selector { display: none; }
+.language-switcher i {
+        display: none !important;
+    }
 }
