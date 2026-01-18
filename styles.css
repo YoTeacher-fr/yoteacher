@@ -170,6 +170,7 @@ button {
     align-items: center;
 }
 
+
 .nav-spacer {
     display: none;
 }
@@ -1305,183 +1306,92 @@ button {
     }
 }
 
-/* ===== CORRECTION COMPLÈTE HEADER MOBILE (IDENTIQUE À BOOKING.CSS) ===== */
+/* MOBILE - MODIFICATIONS UNIQUEMENT POUR MOBILE */
 @media (max-width: 768px) {
-    /* CORRECTION GLOBALE HEADER MOBILE */
-    body {
-        padding-top: 60px !important;
-    }
-    
-    .main-header {
-        background-color: rgba(255, 255, 255, 0.98) !important;
-        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
-        backdrop-filter: blur(10px) !important;
-        min-height: 60px !important;
-        height: 60px !important;
-        position: fixed;
-        top: 0;
-        width: 100%;
-        z-index: 1000;
-    }
-    
+    /* 1. HEADER MOBILE AVEC LOGO À ÉGALE DISTANCE */
     .header-content {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        padding: 0 15px !important;
-        height: 60px !important;
-        width: 100% !important;
-        gap: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0 !important;
         position: relative;
+        width: 100%;
     }
-    
-    /* Logo à gauche - IDENTIQUE À BOOKING.CSS */
+    /* Logo PARFAITEMENT centré avec distances égales */
     .logo-section {
-        flex: 0 0 auto !important;
-        display: flex !important;
-        justify-content: flex-start !important;
-        align-items: center !important;
-        text-align: left !important;
-        position: static !important;
-        transform: none !important;
-        left: auto !important;
-        top: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: auto !important;
-        order: 1 !important;
+        order: 2;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        position: static;
+        transform: none;
+        left: auto;
+        top: auto;
+        margin: 0;
     }
     
     .logo {
-        font-size: 1.4rem !important;
-        color: #333 !important;
-        font-weight: 700 !important;
+        font-size: 1.6rem;
+    }
+    
+    .flag {
+        font-size: 1.3rem;
+        margin-left: 5px;
+    }
+    
+    /* Bouton connexion à droite - 3ème colonne */
+    .mobile-login-btn-header {
+        display: block !important;
+        background-color: #4f9ad1;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-decoration: none;
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 130px;
-        display: block !important;
-    }
-    
-    /* Éléments de droite - IDENTIQUE À BOOKING.CSS */
-    .header-right-group {
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        margin-left: auto !important;
-        flex: 0 0 auto !important;
-        order: 2 !important;
-    }
-    
-    /* Devise - TEXTE SEULEMENT (sans icône) - IDENTIQUE À BOOKING.CSS */
-    .currency-selector {
-        display: flex !important;
-        align-items: center !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
-    .currency-selector i {
-        display: none !important;
-    }
-    
-    .currency-selector select {
-        padding: 3px 6px !important;
-        font-size: 0.7rem !important;
-        min-width: 45px !important;
-        max-width: 50px !important;
-        background: white !important;
-        border: 1px solid rgba(0, 0, 0, 0.15) !important;
-        border-radius: 12px !important;
-        color: #333 !important;
-        display: block !important;
-        height: 26px !important;
-        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
         text-align: center;
-        text-align-last: center;
+        line-height: 1.4;
+        order: 3;
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+        margin-left: auto;
+        z-index: 1001;
     }
     
-    /* Langue - TEXTE SEULEMENT (sans icône) - IDENTIQUE À BOOKING.CSS */
-    .language-switcher {
-        display: flex !important;
-        align-items: center !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        background: none !important;
+    .mobile-login-btn-header:hover {
+        background-color: #3f8ac1;
+        transform: translateY(-2px);
     }
-    
     .language-switcher i {
         display: none !important;
     }
-    
-    .language-switcher span {
-        font-size: 0.7rem !important;
-        padding: 3px 8px !important;
-        color: #333 !important;
-        background: white !important;
-        border: 1px solid rgba(0, 0, 0, 0.15) !important;
-        border-radius: 12px !important;
-        height: 26px !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 40px;
-        font-weight: 600;
+    /* MODIFICATION: Changer le texte pour mobile */
+    .desktop-stat {
+        display: none;
     }
     
-    /* Bouton Connexion - IDENTIQUE À BOOKING.CSS */
-    .login-btn,
-    .dashboard-btn {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 4px !important;
-        padding: 4px 10px !important;
-        font-size: 0.7rem !important;
-        font-weight: 600 !important;
-        border-radius: 12px !important;
-        background: #4f9ad1 !important;
-        color: white !important;
-        text-decoration: none !important;
-        white-space: nowrap !important;
-        border: none !important;
-        cursor: pointer !important;
-        height: 26px !important;
-        min-width: 70px;
+    .mobile-stat {
+        display: block;
     }
     
-    /* Avatar dans le bouton dashboard - PLUS PETIT */
-    .dashboard-btn .avatar-img {
-        width: 18px !important;
-        height: 18px !important;
-        font-size: 0.65rem !important;
+    /* Cacher le bouton connexion desktop sur mobile */
+    .login-btn {
+        display: none;
     }
     
-    /* Bouton déconnexion - PLUS PETIT */
-    .logout-btn-icon {
-        width: 16px !important;
-        height: 16px !important;
-        font-size: 0.7rem !important;
-        right: -4px !important;
-        top: -4px !important;
+    /* Cacher le groupe de droite sur mobile */
+    .header-right-group {
+        display: none;
     }
     
-    /* Cacher les éléments mobiles redondants - IDENTIQUE À BOOKING.CSS */
-    .mobile-login-btn-header {
-        display: none !important;
-    }
-    
-    .hamburger-menu {
-        display: none !important;
-    }
-    
-    /* Navigation desktop cachée sur mobile - IDENTIQUE À BOOKING.CSS */
-    .nav-menu.desktop-menu {
-        display: none !important;
-    }
-    
-    /* 2. HERO SECTION - CORRECTIONS SPÉCIFIQUES POUR LA PAGE D'ACCUEIL */
+    /* 2. HERO SECTION */
     .hero {
         padding: 100px 0 150px 0;
         text-align: center;
@@ -1524,15 +1434,6 @@ button {
         font-size: 0.7rem;
         letter-spacing: 0.5px;
         white-space: normal;
-    }
-    
-    /* MODIFICATION: Changer le texte pour mobile */
-    .desktop-stat {
-        display: none;
-    }
-    
-    .mobile-stat {
-        display: block;
     }
     
     /* Boutons CTA */
@@ -1701,47 +1602,31 @@ button {
     }
 }
 
-/* Adaptation pour très petits écrans */
+/* Cacher le bouton mobile sur desktop */
+@media (min-width: 769px) {
+    .mobile-login-btn-header {
+        display: none !important;
+    }
+}
+
+/* TRÈS PETITS ÉCRANS */
 @media (max-width: 480px) {
-    .header-content {
-        padding: 0 10px !important;
-        gap: 5px;
+    .mobile-login-btn-header {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .hamburger-menu {
+        width: 24px;
+        height: 18px;
     }
     
     .logo {
-        font-size: 1.2rem !important;
-        max-width: 110px;
+        font-size: 1.4rem;
     }
     
-    .header-right-group {
-        gap: 4px;
-    }
-    
-    .currency-selector select {
-        min-width: 40px !important;
-        max-width: 45px !important;
-        font-size: 0.65rem !important;
-        padding: 2px 4px !important;
-        height: 24px !important;
-    }
-    
-    .language-switcher span {
-        font-size: 0.65rem !important;
-        padding: 2px 6px !important;
-        height: 24px !important;
-        min-width: 35px;
-    }
-    
-    .login-btn,
-    .dashboard-btn {
-        padding: 3px 8px !important;
-        font-size: 0.65rem !important;
-        height: 24px !important;
-        min-width: 65px;
-    }
-    
-    .mobile-login-btn-header {
-        display: none !important;
+    .flag {
+        font-size: 1.2rem;
     }
     
     .hero h1 {
@@ -1809,33 +1694,6 @@ button {
     }
 }
 
-/* Cacher le bouton mobile sur desktop */
-@media (min-width: 769px) {
-    .mobile-login-btn-header {
-        display: none !important;
-    }
-    
-    /* Rétablir le header desktop */
-    .header-content {
-        display: grid !important;
-        grid-template-columns: 200px 1fr 200px !important;
-    }
-    
-    .logo-section {
-        justify-self: start !important;
-    }
-    
-    .header-right-group {
-        justify-self: end !important;
-    }
-    
-    /* Rétablir les icônes sur desktop */
-    .currency-selector i,
-    .language-switcher i {
-        display: inline-block !important;
-    }
-}
-
 /* ORIENTATION PAYSAGE MOBILE */
 @media (max-height: 600px) and (orientation: landscape) {
     .hero {
@@ -1882,7 +1740,179 @@ button {
         min-height: 44px !important;
     }
 }
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
 
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+    margin-left: 15px;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+/* ===== STYLES POUR LE DASHBOARD ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #333;
+}
+
+.status-badge.vip {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ===== STYLES POUR L'AVATAR UTILISATEUR ===== */
+.user-avatar {
+    position: relative;
+    margin-left: 15px;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #3c84f6;
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+}
+
+.avatar-img:hover {
+    transform: scale(1.1);
+}
+
+.user-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.user-avatar:hover .user-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.user-menu a:hover {
+    background: #f8f9fa;
+    color: #3c84f6;
+}
+
+.user-menu .logout-btn {
+    color: #e74c3c;
+    border-top: 1px solid #eee;
+    margin-top: 5px;
+}
+
+.user-menu .logout-btn:hover {
+    background: #ffeaea;
+}
+
+/* Style pour les boutons connectés */
+.login-btn.connected {
+    background-color: #4CAF50 !important;
+}
+
+.login-btn.connected:hover {
+    background-color: #45a049 !important;
+}
 /* ===== STYLES POUR LE DASHBOARD ===== */
 .status-badge {
     display: inline-block;
@@ -2048,7 +2078,6 @@ button {
         left: auto;
     }
 }
-
 /* ===== NAVIGATION CENTRÉE ===== */
 .nav-menu.desktop-menu {
     display: flex;
@@ -2151,7 +2180,10 @@ button {
     transform: scale(1.15);
     box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
 }
-
+/* Suppression de l'ancien menu déroulant */
+.user-menu {
+    display: none !important;
+}
 /* Suppression de l'ancien menu déroulant */
 .user-menu {
     display: none !important;
