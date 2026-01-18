@@ -1,3 +1,5 @@
+[file name]: auth.js
+[file content begin]
 // Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION CORRIGÉE
 class AuthManager {
     constructor() {
@@ -183,7 +185,7 @@ class AuthManager {
             return;
         }
         
-        console.log('🎟️ Application du code d\'invitation VIP:', code);
+        console.log('🎟️ Application du code d'invitation VIP:', code);
         await this.applyInvitationCode(code);
     }
 
@@ -211,7 +213,7 @@ class AuthManager {
             
             if (!templatePrices || templatePrices.length === 0) {
                 console.warn('⚠️ Code VIP invalide (aucun prix configuré)');
-                this.showError('Code d\'invitation invalide');
+                this.showError('Code d'invitation invalide');
                 sessionStorage.removeItem('invitation_code');
                 this.invitationCode = null;
                 return { success: false, error: 'Code invalide' };
@@ -474,7 +476,7 @@ class AuthManager {
             });
             window.dispatchEvent(event);
         } catch (error) {
-            console.warn('Erreur lors de l\'émission d\'événement:', error);
+            console.warn('Erreur lors de l'émission d\'événement:', error);
         }
     }
 
@@ -820,7 +822,7 @@ class AuthManager {
     }
 
     getReturnUrl() {
-        console.log('🔄 Détermination de l\'URL de redirection...');
+        console.log('🔄 Détermination de l'URL de redirection...');
         
         const urlParams = new URLSearchParams(window.location.search);
         let returnUrl = urlParams.get('redirect');
@@ -926,6 +928,9 @@ class AuthManager {
             this.removeLoginButtonFromHeader();
             this.addUserAvatar();
             
+            // MISE À JOUR CRITIQUE : Mettre à jour le bouton mobile en "Dashboard" quand connecté
+            this.updateMobileLoginButtons(true);
+            
             if (isIndexPage) {
                 return;
             }
@@ -936,15 +941,59 @@ class AuthManager {
             this.removeUserAvatar();
             this.restoreLoginButtonInHeader();
             
+            // MISE À JOUR CRITIQUE : Restaurer le bouton mobile en "Connexion" quand déconnecté
+            this.updateMobileLoginButtons(false);
+            
             if (!isIndexPage) {
                 this.restoreAllButtonsForDisconnectedUser();
             }
         }
     }
 
+    // NOUVELLE MÉTHODE : Mettre à jour tous les boutons de connexion mobile
+    updateMobileLoginButtons(isLoggedIn) {
+        // Sélectionner TOUS les boutons de connexion mobile
+        const mobileLoginButtons = document.querySelectorAll('.mobile-login-btn-header, .mobile-login-btn');
+        
+        mobileLoginButtons.forEach(btn => {
+            if (!btn) return;
+            
+            if (isLoggedIn) {
+                // Utilisateur connecté : changer en "Dashboard"
+                btn.textContent = 'Dashboard';
+                btn.href = 'dashboard.html';
+                btn.style.display = 'flex'; // S'assurer qu'il est visible
+                
+                // Si c'est un bouton avec classe mobile-login-btn (dans le menu mobile)
+                if (btn.classList.contains('mobile-login-btn')) {
+                    btn.textContent = 'Mon dashboard';
+                }
+            } else {
+                // Utilisateur déconnecté : restaurer "Connexion"
+                btn.textContent = 'Connexion';
+                
+                // Ne pas modifier l'URL si on est déjà sur login.html
+                if (!window.location.pathname.includes('login.html')) {
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    btn.href = `login.html?redirect=${currentUrl}`;
+                } else {
+                    btn.href = 'login.html';
+                }
+                
+                btn.style.display = 'flex'; // S'assurer qu'il est visible
+                
+                // Si c'est un bouton avec classe mobile-login-btn (dans le menu mobile)
+                if (btn.classList.contains('mobile-login-btn')) {
+                    btn.textContent = 'Connexion';
+                }
+            }
+        });
+    }
+
     removeLoginButtonFromHeader() {
-        const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header, .mobile-login-btn');
-        loginButtons.forEach(btn => {
+        // NE PAS cacher complètement les boutons mobiles, juste les mettre à jour
+        const desktopLoginButtons = document.querySelectorAll('.login-btn:not(.mobile-login-btn-header):not(.mobile-login-btn)');
+        desktopLoginButtons.forEach(btn => {
             if (btn && btn.parentElement) {
                 btn.style.display = 'none';
             }
@@ -955,7 +1004,11 @@ class AuthManager {
         const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header, .mobile-login-btn');
         loginButtons.forEach(btn => {
             if (btn) {
-                btn.style.display = 'flex';
+                // Pour les boutons desktop
+                if (!btn.classList.contains('mobile-login-btn-header') && 
+                    !btn.classList.contains('mobile-login-btn')) {
+                    btn.style.display = 'flex';
+                }
                 
                 if (!window.location.pathname.includes('login.html') && 
                     !window.location.pathname.includes('signup.html') &&
@@ -1173,7 +1226,7 @@ class AuthManager {
         }
 
         try {
-            console.log('👑 Chargement des prix VIP pour l\'utilisateur:', this.user.id);
+            console.log('👑 Chargement des prix VIP pour l'utilisateur:', this.user.id);
             
             const { data, error } = await supabase
                 .from('vip_pricing')
@@ -1276,7 +1329,7 @@ class AuthManager {
             'Email not confirmed': 'Veuillez confirmer votre adresse email',
             'User already registered': 'Un compte existe déjà avec cette adresse email',
             'Password should be at least 6 characters': 'Le mot de passe doit contenir au moins 6 caractères',
-            'Unable to validate email address: invalid format': 'Format d\'email invalide',
+            'Unable to validate email address: invalid format': 'Format d'email invalide',
             'Auth session missing': 'Session expirée, veuillez vous reconnecter',
             'Invalid Refresh Token': 'Session expirée, veuillez vous reconnecter',
             'Email address is invalid': 'Adresse email invalide',
@@ -1531,7 +1584,7 @@ window.diagnoseBookingIssues = async function() {
         if (packagesError) {
             console.error('❌ Erreur accès à packages:', packagesError.message);
         } else {
-            console.log(`📦 ${packages.length} package(s) trouvé(s) pour l\'utilisateur:`);
+            console.log(`📦 ${packages.length} package(s) trouvé(s) pour l'utilisateur:`);
             packages.forEach((p, i) => {
                 console.log(`  ${i+1}. ${p.course_type} - ${p.remaining_credits}/${p.total_credits} crédits - ${p.status} - Expire: ${new Date(p.expires_at).toLocaleDateString()}`);
             });
@@ -1670,4 +1723,5 @@ window.debugVipPrices = async function() {
     console.groupEnd();
 };
 
-console.log('✅ auth.js chargé avec système de codes d\'invitation VIP - Version corrigée avec debug complet');
+console.log('✅ auth.js chargé avec système de codes d'invitation VIP - Version corrigée avec debug complet');
+[file content end]
