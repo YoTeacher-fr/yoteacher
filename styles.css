@@ -1449,7 +1449,36 @@ button {
         height: 26px !important;
         min-width: 70px;
     }
-    
+    .dashboard-btn {
+    display: flex !important;
+}
+/* CORRECTION MOBILE: Masquer le bouton login quand dashboard présent */
+.header-right-group:has(.user-avatar) .login-btn,
+.header-right-group:has(.user-avatar) .mobile-login-btn-header {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+/* CORRECTION MOBILE: Forcer l'affichage du dashboard quand connecté */
+.user-avatar {
+    display: flex !important;
+    align-items: center !important;
+    order: 3 !important;
+}
+
+.user-avatar .dashboard-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
     /* Avatar dans le bouton dashboard - PLUS PETIT */
     .dashboard-btn .avatar-img {
         width: 18px !important;
