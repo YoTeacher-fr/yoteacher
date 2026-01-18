@@ -1369,9 +1369,7 @@ button {
         background-color: #3f8ac1;
         transform: translateY(-2px);
     }
-    .language-switcher i {
-        display: none !important;
-    }
+    
     /* MODIFICATION: Changer le texte pour mobile */
     .desktop-stat {
         display: none;
