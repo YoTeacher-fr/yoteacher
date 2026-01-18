@@ -1410,9 +1410,14 @@ button {
         border: none !important;
         background: none !important;
     }
-    
-    .language-switcher i {
+       /* Masquer TOUTES les icônes du language switcher sur mobile */
+    .language-switcher i,
+    .language-switcher .fas,
+    .language-switcher .fa-globe {
         display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        visibility: hidden !important;
     }
     
     .language-switcher span {
