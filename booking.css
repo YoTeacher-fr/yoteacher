@@ -718,6 +718,7 @@ body .courses-count-option {
     transition: all 0.3s;
     text-align: center;
     position: relative;
+    overflow: visible !important;
 }
 
 body .courses-count-option:hover {
@@ -735,22 +736,15 @@ body .courses-count-option.selected {
 }
 
 body .discount-badge {
-position: absolute !important;
-    top: -8px !important;
-    right: -8px !important;
-    background: linear-gradient(135deg, #FFD700, #FFA500) !important;
-    color: #000 !important;
-    font-size: 0.7rem !important;
-    padding: 3px 8px !important;
-    border-radius: 12px !important;
-    font-weight: 700 !important;
-    border: 2px solid white !important;
-    box-shadow: 0 3px 8px rgba(255, 165, 0, 0.4) !important;
-    z-index: 10 !important;
-    display: inline-block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    white-space: nowrap !important;
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #f6ae3b;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
 }
 
 /* Styles pour le menu mobile */

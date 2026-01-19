@@ -137,19 +137,21 @@
                         <!-- Nouveau: Sélecteur du nombre de cours -->
                         <div class="form-group courses-count-group" id="coursesCountGroup">
                             <label class="form-label" data-i18n="booking.courses_count">Nombre de cours</label>
-                            <div class="courses-count-options">
-                                <button type="button" class="courses-count-option selected" data-count="1" data-discount="0" data-i18n="booking.one_course">
-                                    1 cours
-                                </button>
-                                <button type="button" class="courses-count-option" data-count="5" data-discount="2" data-i18n="booking.five_courses">
-    5 cours
-    <span class="discount-badge">-2%</span>
-</button>
-<button type="button" class="courses-count-option" data-count="10" data-discount="5" data-i18n="booking.ten_courses">
-    10 cours
-    <span class="discount-badge">-5%</span>
-</button>
-                            </div>
+                            <<div class="courses-count-options">
+    <button type="button" class="courses-count-option selected" data-count="1" data-discount="0">
+        <span data-i18n="booking.one_course">1 cours</span>
+    </button>
+    
+    <button type="button" class="courses-count-option" data-count="5" data-discount="2">
+        <span data-i18n="booking.five_courses">5 cours</span>
+        <span class="discount-badge">-2%</span>
+    </button>
+    
+    <button type="button" class="courses-count-option" data-count="10" data-discount="5">
+        <span data-i18n="booking.ten_courses">10 cours</span>
+        <span class="discount-badge">-5%</span>
+    </button>
+</div>
                             <input type="hidden" id="coursesCount" value="1">
                             <input type="hidden" id="discountPercent" value="0">
                         </div>
