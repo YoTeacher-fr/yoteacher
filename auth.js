@@ -531,28 +531,46 @@ class AuthManager {
     }
 
     setupDegradedMode() {
-        const storedUser = localStorage.getItem('yoteacher_user');
-        if (storedUser) {
-            try {
-                this.user = JSON.parse(storedUser);
-                console.log('ℹ️ Mode dégradé : utilisateur restauré depuis localStorage');
-                this.updateUI();
-            } catch (error) {
-                console.warn('Erreur lecture localStorage:', error);
-                this.user = null;
-            }
-        }
-        
-        // NE PAS afficher le warning si on est sur index.html
-        const isIndexPage = window.location.pathname.includes('index.html') || 
-                           window.location.pathname === '/' || 
-                           window.location.pathname.endsWith('/');
-        
-        if (!isIndexPage) {
-            this.showDegradedModeWarning();
+    const storedUser = localStorage.getItem('yoteacher_user');
+    if (storedUser) {
+        try {
+            this.user = JSON.parse(storedUser);
+            console.log('ℹ️ Mode dégradé : utilisateur restauré depuis localStorage');
+            this.updateUI();
+            return; // Sortir si l'utilisateur est restauré
+        } catch (error) {
+            console.warn('Erreur lecture localStorage:', error);
+            this.user = null;
         }
     }
-
+    
+    // Si on arrive ici, l'utilisateur n'est PAS authentifié
+    console.log('❌ Mode dégradé : utilisateur non authentifié');
+    this.user = null;
+    
+    // NE PAS rediriger si on est sur index.html ou login/signup pages
+    const isIndexPage = window.location.pathname.includes('index.html') || 
+                       window.location.pathname === '/' || 
+                       window.location.pathname.endsWith('/');
+    
+    const isAuthPage = window.location.pathname.includes('login.html') ||
+                      window.location.pathname.includes('signup.html') ||
+                      window.location.pathname.includes('reset-password.html');
+    
+    // Rediriger vers login si pas sur une page d'authentification
+    if (!isIndexPage && !isAuthPage) {
+        console.log('🔄 Redirection vers login.html (mode dégradé)');
+        const currentUrl = encodeURIComponent(window.location.href);
+        setTimeout(() => {
+            window.location.replace(`login.html?redirect=${currentUrl}`);
+        }, 500);
+    }
+    
+    // Afficher l'avertissement de mode dégradé
+    if (!isIndexPage) {
+        this.showDegradedModeWarning();
+    }
+}
     showDegradedModeWarning() {
         if (document.getElementById('degraded-mode-warning')) return;
         
