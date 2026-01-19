@@ -140,28 +140,6 @@
         white-space: nowrap !important;
     }
     
-    /* HAMBURGER MENU À GAUCHE */
-    .hamburger-menu {
-        display: block !important;
-        background: none !important;
-        border: none !important;
-        cursor: pointer !important;
-        padding: 8px !important;
-        margin-right: 10px !important;
-        order: 1 !important;
-        flex: 0 0 auto !important;
-    }
-    
-    .hamburger-menu span {
-        display: block !important;
-        width: 25px !important;
-        height: 3px !important;
-        background: #333 !important;
-        margin: 4px 0 !important;
-        border-radius: 2px !important;
-        transition: 0.3s !important;
-    }
-    
     /* GROUPE DE DROITE - EXACTEMENT COMME BOOKING */
     .mobile-header-right-group {
         display: flex !important;
