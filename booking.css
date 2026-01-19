@@ -734,18 +734,6 @@ body .courses-count-option.selected {
     box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3);
 }
 
-body .discount-badge {
-    position: relative;
-    top: -8px;
-    right: -8px;
-    background: #f6ae3b;
-    color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-weight: bold;
-}
-
 /* Styles pour le menu mobile */
 body .currency-selector-mobile {
     padding: 15px 0;
