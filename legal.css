@@ -234,7 +234,7 @@ body {
     }
     
     .logo {
-        font-size: 1.3rem !important;
+        font-size: 1.5rem !important;
     }
     
     .flag {
@@ -245,7 +245,37 @@ body {
     .header-right-group {
         display: none !important;
     }
+        /* Ajouter le sélecteur de langue sur mobile */
+    .header-right-group {
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+    }
     
+    /* Langue visible sur legal mobile */
+    .language-switcher {
+        display: flex !important;
+    }
+    
+    .language-switcher span {
+        font-size: 0.75rem !important;
+        padding: 4px 10px !important;
+        height: 28px !important;
+        min-width: 45px !important;
+        background: white !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 14px !important;
+        color: #333 !important;
+        font-weight: 600 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .language-switcher .flag {
+        display: none !important;
+    }
+}
     /* Bouton connexion mobile visible */
     .mobile-login-btn-header {
         display: block !important;
