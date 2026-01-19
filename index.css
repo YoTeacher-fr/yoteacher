@@ -110,9 +110,133 @@
     border-radius: 50px;
 }
 
+/* ===== CORRECTION HEADER MOBILE POUR INDEX.HTML ===== */
 @media (max-width: 768px) {
-    .currency-selector { display: none; }
-.language-switcher i {
+    /* Header mobile simplifié */
+    .main-header {
+        background-color: rgba(255, 255, 255, 0.98) !important;
+        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
+        min-height: 55px !important;
+        height: 55px !important;
+    }
+    
+    .header-content {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 0 15px !important;
+        height: 55px !important;
+        width: 100% !important;
+    }
+    
+    /* Logo centré */
+    .logo-section {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .logo {
+        font-size: 1.5rem !important;
+        color: #333 !important;
+        font-weight: 700 !important;
+    }
+    
+    /* Cacher tous les éléments du header-right-group sur mobile */
+    .header-right-group {
+        display: none !important;
+    }
+    
+    /* Bouton connexion mobile */
+    .mobile-login-btn-header {
+        display: block !important;
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+        background: #4f9ad1 !important;
+        color: white !important;
+        border-radius: 20px !important;
+        text-decoration: none !important;
+        white-space: nowrap !important;
+        order: 2;
+        margin-left: auto;
+    }
+    
+    /* Cacher le menu desktop sur mobile */
+    .nav-menu.desktop-menu {
+        display: none !important;
+    }
+    
+    /* Ajuster le padding du body */
+    body {
+        padding-top: 55px !important;
+    }
+    
+    /* Styles pour le bouton dashboard mobile (quand connecté) */
+    .mobile-dashboard-btn {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px;
+        padding: 5px 10px !important;
+        background: #4f9ad1 !important;
+        color: white !important;
+        border-radius: 20px !important;
+        text-decoration: none !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        order: 2;
+        margin-left: auto;
+    }
+    
+    .mobile-dashboard-btn .avatar-img {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3c84f6, #1e88e5);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    /* Cacher tout code résiduel hamburger */
+    .hamburger-menu {
+        display: none !important;
+    }
+    
+    /* Cacher devise sur mobile */
+    .currency-selector { 
+        display: none !important; 
+    }
+}
+
+@media (min-width: 769px) {
+    /* Rétablir le header desktop */
+    .header-content {
+        display: grid !important;
+        grid-template-columns: 200px 1fr 220px !important;
+    }
+    
+    .logo-section {
+        justify-self: start !important;
+        position: static !important;
+        transform: none !important;
+    }
+    
+    .header-right-group {
+        display: flex !important;
+        justify-self: end !important;
+    }
+    
+    .mobile-login-btn-header {
+        display: none !important;
+    }
+    
+    .mobile-dashboard-btn {
         display: none !important;
     }
 }

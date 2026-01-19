@@ -9,11 +9,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="legal.css">
 </head>
 <body>
-    <!-- Header simplifié sans navlinks - IDENTIQUE À LOGIN.HTML -->
+    <!-- Header simplifié sans navlinks -->
     <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
@@ -23,7 +23,7 @@
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-                <!-- Bouton Connexion Mobile -->
+                <!-- Bouton Connexion/Dashboard Mobile -->
                 <a href="login.html" class="mobile-login-btn-header">Connexion</a>
                 
                 <!-- Groupe des boutons de droite - FORCÉ À DROITE -->
@@ -300,16 +300,6 @@
                     });
                 });
             });
-            
-            // Gestion du sélecteur de langue
-            const languageSwitcher = document.getElementById('languageSwitcherDesktop');
-            if (languageSwitcher && window.translationManager) {
-                languageSwitcher.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.translationManager.toggleLanguage();
-                });
-            }
         });
     </script>
 </body>

@@ -1,99 +1,74 @@
-// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION CORRIGÉE
+// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION MOBILE CORRIGÉE
 class AuthManager {
     constructor() {
         this.user = null;
         this.supabaseReady = false;
         this.pendingPayment = null;
-        this.invitationCode = null; // Code d'invitation VIP
+        this.invitationCode = null;
         this.init();
     }
 
     async init() {
-    console.log('🔍 DEBUG INIT - Démarrage de l\'initialisation');
-    console.log('🔍 DEBUG INIT - window.supabase existe:', !!window.supabase);
-    console.log('🔍 DEBUG INIT - window.supabaseReady:', window.supabaseReady);
-    console.log('🔍 DEBUG INIT - window.supabaseInitialized:', !!window.supabaseInitialized);
-    
-    try {
-        // Vérifier code d'invitation dans l'URL
-        this.checkInvitationCode();
-        
-        // Attendre que Supabase soit prêt
-        await this.waitForSupabase();
-        
-        console.log('🔍 DEBUG INIT - Après waitForSupabase, supabaseReady:', this.supabaseReady);
-        
-        if (!this.supabaseReady) {
-            console.warn('⚠️ Mode dégradé activé : Supabase non disponible');
-            this.setupDegradedMode();
-            return;
-        }
-
-        // ✅ SUPABASE EST PRÊT - Attendre un peu avant d'utiliser l'API
-        console.log('✅ Supabase prêt, attente stabilisation...');
-        await new Promise(resolve => setTimeout(resolve, 500)); // 500ms de délai
-        
-        console.log('✅ Vérification de la session...');
+        console.log('🔍 DEBUG INIT - Démarrage de l\'initialisation');
         
         try {
-            const { data: { session }, error } = await supabase.auth.getSession();
+            this.checkInvitationCode();
+            await this.waitForSupabase();
             
-            console.log('🔍 DEBUG SESSION - error:', error);
-            console.log('🔍 DEBUG SESSION - session:', !!session);
-            
-            if (error) {
-                console.warn('⚠️ Erreur getSession:', error.message);
-                // Si l'erreur est une AbortError, on ignore et on continue
-                if (error.message.includes('aborted')) {
-                    console.log('ℹ️ Erreur abort ignorée, aucune session active');
-                }
-            }
-            
-            if (session) {
-                this.user = session.user;
-                await this.loadUserProfile();
-                this.updateUI();
-                this.emitAuthEvent('login', this.user);
-                console.log('✅ Session restaurée pour:', this.user.email);
-            } else {
-                console.log('ℹ️ Aucune session active');
+            if (!this.supabaseReady) {
+                console.warn('⚠️ Mode dégradé activé : Supabase non disponible');
+                this.setupDegradedMode();
+                return;
             }
 
-            // Écouter les changements d'authentification
-            supabase.auth.onAuthStateChange(async (event, session) => {
-                console.log('🔄 Auth state changed:', event, !!session);
+            console.log('✅ Supabase prêt, attente stabilisation...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            console.log('✅ Vérification de la session...');
+            
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    console.warn('⚠️ Erreur getSession:', error.message);
+                }
+                
                 if (session) {
                     this.user = session.user;
                     await this.loadUserProfile();
                     this.updateUI();
                     this.emitAuthEvent('login', this.user);
-                    await this.applyPendingInvitation();
+                    console.log('✅ Session restaurée pour:', this.user.email);
                 } else {
-                    this.user = null;
-                    this.removeUserFromStorage();
-                    this.updateUI();
-                    this.emitAuthEvent('logout');
+                    console.log('ℹ️ Aucune session active');
                 }
-            });
-            
-        } catch (sessionError) {
-            console.error('❌ Exception lors de la vérification de session:', sessionError);
-            
-            // Si c'est une AbortError, on ne passe PAS en mode dégradé
-            if (sessionError.message && sessionError.message.includes('aborted')) {
-                console.log('ℹ️ Erreur abort - continuité normale sans session');
-                this.updateUI();
-            } else {
-                // Pour les autres erreurs, mode dégradé
+
+                supabase.auth.onAuthStateChange(async (event, session) => {
+                    console.log('🔄 Auth state changed:', event, !!session);
+                    if (session) {
+                        this.user = session.user;
+                        await this.loadUserProfile();
+                        this.updateUI();
+                        this.emitAuthEvent('login', this.user);
+                        await this.applyPendingInvitation();
+                    } else {
+                        this.user = null;
+                        this.removeUserFromStorage();
+                        this.updateUI();
+                        this.emitAuthEvent('logout');
+                    }
+                });
+                
+            } catch (sessionError) {
+                console.error('❌ Exception lors de la vérification de session:', sessionError);
                 this.setupDegradedMode();
             }
+            
+        } catch (error) {
+            console.error('❌ Erreur lors de l\'initialisation de l\'auth:', error);
+            this.setupDegradedMode();
         }
-        
-    } catch (error) {
-        console.error('❌ Erreur lors de l\'initialisation de l\'auth:', error);
-        this.setupDegradedMode();
     }
-}
 
     // ===== GESTION DES CODES D'INVITATION VIP =====
     
@@ -196,7 +171,6 @@ class AuthManager {
         try {
             console.log(`🔍 Vérification du code VIP: ${code}`);
             
-            // 1. Vérifier que le code existe dans la table (au moins 1 prix template)
             const { data: templatePrices, error: pricesError } = await supabase
                 .from('vip_pricing')
                 .select('*')
@@ -219,7 +193,6 @@ class AuthManager {
             
             console.log(`✅ Code valide trouvé avec ${templatePrices.length} prix VIP`);
             
-            // 2. Vérifier si l'utilisateur a déjà des prix VIP avec ce code
             const { data: existingPrices } = await supabase
                 .from('vip_pricing')
                 .select('id')
@@ -234,7 +207,6 @@ class AuthManager {
                 return { success: true, message: 'Déjà appliqué' };
             }
             
-            // 3. CRÉER OU METTRE À JOUR LE PROFIL AVANT TOUTE CHOSE
             console.log('🔄 Vérification/création du profil...');
             
             const { data: existingProfile } = await supabase
@@ -302,7 +274,6 @@ class AuthManager {
                 }
             }
             
-            // 4. Copier les prix VIP
             const newPrices = templatePrices.map(price => ({
                 user_id: this.user.id,
                 course_type: price.course_type,
@@ -328,17 +299,12 @@ class AuthManager {
             
             console.log(`✅ ${insertedPrices.length} prix VIP copiés pour l\'utilisateur`);
             
-            // 5. Recharger le profil
             await this.loadUserProfile();
-            
-            // 6. Nettoyer
             sessionStorage.removeItem('invitation_code');
             this.invitationCode = null;
             
-            // 7. Afficher message de succès
             this.showSuccess(`🎉 Bienvenue en tant que membre VIP ! Vous bénéficiez de ${insertedPrices.length} prix préférentiels.`);
             
-            // 8. Émettre événement
             window.dispatchEvent(new CustomEvent('vip:applied', {
                 detail: { 
                     code: code, 
@@ -482,7 +448,6 @@ class AuthManager {
         console.log('⏳ Attente de Supabase...');
         
         try {
-            // Attendre la promesse d'initialisation
             const initialized = await window.supabaseInitialized;
             
             console.log('🔍 DEBUG waitForSupabase - initialized:', initialized);
@@ -497,17 +462,12 @@ class AuthManager {
             console.warn('⚠️ Erreur supabaseInitialized:', error.message);
         }
 
-        // Vérification de secours (max 3 secondes)
         let attempts = 0;
-        const maxAttempts = 15; // 15 x 200ms = 3 secondes max
+        const maxAttempts = 15;
         
         return new Promise((resolve) => {
             const checkSupabase = () => {
                 attempts++;
-                
-                if (attempts % 5 === 0) {
-                    console.log(`🔍 Vérification Supabase ${attempts}/${maxAttempts}`);
-                }
                 
                 if (window.supabase?.auth) {
                     this.supabaseReady = true;
@@ -531,46 +491,43 @@ class AuthManager {
     }
 
     setupDegradedMode() {
-    const storedUser = localStorage.getItem('yoteacher_user');
-    if (storedUser) {
-        try {
-            this.user = JSON.parse(storedUser);
-            console.log('ℹ️ Mode dégradé : utilisateur restauré depuis localStorage');
-            this.updateUI();
-            return; // Sortir si l'utilisateur est restauré
-        } catch (error) {
-            console.warn('Erreur lecture localStorage:', error);
-            this.user = null;
+        const storedUser = localStorage.getItem('yoteacher_user');
+        if (storedUser) {
+            try {
+                this.user = JSON.parse(storedUser);
+                console.log('ℹ️ Mode dégradé : utilisateur restauré depuis localStorage');
+                this.updateUI();
+                return;
+            } catch (error) {
+                console.warn('Erreur lecture localStorage:', error);
+                this.user = null;
+            }
+        }
+        
+        console.log('❌ Mode dégradé : utilisateur non authentifié');
+        this.user = null;
+        
+        const isIndexPage = window.location.pathname.includes('index.html') || 
+                           window.location.pathname === '/' || 
+                           window.location.pathname.endsWith('/');
+        
+        const isAuthPage = window.location.pathname.includes('login.html') ||
+                          window.location.pathname.includes('signup.html') ||
+                          window.location.pathname.includes('reset-password.html');
+        
+        if (!isIndexPage && !isAuthPage) {
+            console.log('🔄 Redirection vers login.html (mode dégradé)');
+            const currentUrl = encodeURIComponent(window.location.href);
+            setTimeout(() => {
+                window.location.replace(`login.html?redirect=${currentUrl}`);
+            }, 500);
+        }
+        
+        if (!isIndexPage) {
+            this.showDegradedModeWarning();
         }
     }
-    
-    // Si on arrive ici, l'utilisateur n'est PAS authentifié
-    console.log('❌ Mode dégradé : utilisateur non authentifié');
-    this.user = null;
-    
-    // NE PAS rediriger si on est sur index.html ou login/signup pages
-    const isIndexPage = window.location.pathname.includes('index.html') || 
-                       window.location.pathname === '/' || 
-                       window.location.pathname.endsWith('/');
-    
-    const isAuthPage = window.location.pathname.includes('login.html') ||
-                      window.location.pathname.includes('signup.html') ||
-                      window.location.pathname.includes('reset-password.html');
-    
-    // Rediriger vers login si pas sur une page d'authentification
-    if (!isIndexPage && !isAuthPage) {
-        console.log('🔄 Redirection vers login.html (mode dégradé)');
-        const currentUrl = encodeURIComponent(window.location.href);
-        setTimeout(() => {
-            window.location.replace(`login.html?redirect=${currentUrl}`);
-        }, 500);
-    }
-    
-    // Afficher l'avertissement de mode dégradé
-    if (!isIndexPage) {
-        this.showDegradedModeWarning();
-    }
-}
+
     showDegradedModeWarning() {
         if (document.getElementById('degraded-mode-warning')) return;
         
@@ -650,309 +607,44 @@ class AuthManager {
         console.log('🗑️ Utilisateur supprimé du localStorage');
     }
 
-    async signUp(email, password, fullName) {
-        try {
-            if (!this.supabaseReady) {
-                return this.mockSignUp(email, password, fullName);
-            }
-
-            console.log('📝 Inscription en cours pour:', email);
-
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        full_name: fullName,
-                        created_at: new Date().toISOString()
-                    },
-                    emailRedirectTo: `${window.location.origin}/login.html?message=confirmed`
-                }
-            });
-
-            if (error) {
-                console.error('Supabase signUp error:', error);
-                throw error;
-            }
-
-            if (data.user) {
-                console.log('✅ Utilisateur créé dans auth.users:', data.user.id);
-                
-                try {
-                    console.log('📋 Création du profil...');
-                    
-                    const profileData = {
-                        id: data.user.id,
-                        full_name: fullName || email.split('@')[0],
-                        is_vip: false,
-                        preferred_currency: 'EUR',
-                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    };
-
-                    const { error: profileError } = await supabase
-                        .from('profiles')
-                        .insert(profileData);
-
-                    if (profileError) {
-                        console.error('❌ Erreur création profil:', profileError);
-                        
-                        const minimalProfile = {
-                            id: data.user.id,
-                            full_name: fullName || email.split('@')[0],
-                            created_at: new Date().toISOString()
-                        };
-                        
-                        const { error: minimalError } = await supabase
-                            .from('profiles')
-                            .insert(minimalProfile);
-                            
-                        if (minimalError) {
-                            console.error('❌ Erreur même avec structure minimale:', minimalError);
-                        } else {
-                            console.log('✅ Profil créé avec structure minimale');
-                        }
-                    } else {
-                        console.log('✅ Profil créé avec succès');
-                    }
-                } catch (profileErr) {
-                    console.error('❌ Exception création profil:', profileErr);
-                }
-                
-                // Appliquer le code VIP si présent
-                const invitationCode = this.invitationCode || sessionStorage.getItem('invitation_code');
-                
-                if (invitationCode) {
-                    console.log('🎟️ Code VIP détecté lors de l\'inscription:', invitationCode);
-                    
-                    await new Promise(resolve => setTimeout(resolve, 800));
-                    
-                    const tempUser = {
-                        id: data.user.id,
-                        email: email,
-                        user_metadata: { full_name: fullName }
-                    };
-                    
-                    const oldUser = this.user;
-                    this.user = tempUser;
-                    
-                    const result = await this.applyInvitationCode(invitationCode);
-                    
-                    this.user = oldUser;
-                    
-                    if (result.success) {
-                        console.log('✅ Code VIP appliqué automatiquement lors de l\'inscription');
-                    } else {
-                        console.warn('⚠️ Échec application code VIP:', result.error);
-                    }
-                }
-            }
-
-            return { 
-                success: true, 
-                data,
-                message: 'Compte créé ! Veuillez vérifier votre email pour confirmer votre compte.'
-            };
-        } catch (error) {
-            console.error('Erreur inscription:', error);
-            return { 
-                success: false, 
-                error: this.getUserFriendlyError(error.message),
-                details: error.message
-            };
-        }
-    }
-
-    mockSignUp(email, password, fullName) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const mockUser = {
-                    id: 'mock_' + Date.now(),
-                    email: email,
-                    user_metadata: {
-                        full_name: fullName,
-                        created_at: new Date().toISOString()
-                    },
-                    profile: {
-                        full_name: fullName,
-                        is_vip: false,
-                        preferred_currency: 'EUR'
-                    },
-                    created_at: new Date().toISOString()
-                };
-                
-                this.user = mockUser;
-                this.saveUserToStorage();
-                this.updateUI();
-                
-                resolve({ 
-                    success: true, 
-                    data: { user: mockUser },
-                    message: 'Compte créé en mode local (données sauvegardées localement)'
-                });
-            }, 500);
-        });
-    }
-
-    async signIn(email, password) {
-        try {
-            if (!this.supabaseReady) {
-                return this.mockSignIn(email, password);
-            }
-
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password
-            });
-
-            if (error) throw error;
-            
-            this.user = data.user;
-            await this.loadUserProfile();
-            if (this.user.profile?.is_vip) {
-                await this.loadVipPrices();
-            }
-            this.updateUI();
-            
-            this.emitAuthEvent('login', this.user);
-            
-            await this.applyPendingInvitation();
-            
-            const returnUrl = 'dashboard.html';
-            
-            console.log('🔗 Redirection forcée vers dashboard');
-            
-            return { 
-                success: true, 
-                data,
-                redirectUrl: returnUrl
-            };
-        } catch (error) {
-            console.error('Erreur connexion:', error);
-            return { 
-                success: false, 
-                error: this.getUserFriendlyError(error.message) 
-            };
-        }
-    }
-
-    getReturnUrl() {
-        console.log('🔄 Détermination de l\'URL de redirection...');
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        let returnUrl = urlParams.get('redirect');
-        
-        if (returnUrl) {
-            returnUrl = decodeURIComponent(returnUrl);
-            console.log('🔍 URL de redirection détectée:', returnUrl);
-            
-            if (returnUrl.includes('dashboard') || 
-                returnUrl.includes('profile') || 
-                returnUrl.includes('booking') ||
-                returnUrl.includes('payment')) {
-                return 'dashboard.html';
-            }
-            
-            return returnUrl;
-        }
-        
-        const defaultUrl = 'dashboard.html';
-        console.log('🔗 URL par défaut:', defaultUrl);
-        return defaultUrl;
-    }
-
-    mockSignIn(email, password) {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const storedUser = localStorage.getItem('yoteacher_user');
-                
-                if (storedUser) {
-                    try {
-                        const user = JSON.parse(storedUser);
-                        if (user.email === email) {
-                            this.user = user;
-                            this.updateUI();
-                            this.emitAuthEvent('login', this.user);
-                            resolve({ 
-                                success: true, 
-                                data: { user: user },
-                                redirectUrl: 'dashboard.html'
-                            });
-                            return;
-                        }
-                    } catch (error) {
-                        // Continue vers l'échec
-                    }
-                }
-                
-                reject({ 
-                    success: false, 
-                    error: 'Email ou mot de passe incorrect (mode local)' 
-                });
-            }, 500);
-        });
-    }
-
-    async signOut() {
-        try {
-            console.log('🚪 Déconnexion en cours...');
-            
-            if (this.supabaseReady && supabase && supabase.auth) {
-                const { error } = await supabase.auth.signOut();
-                if (error) {
-                    console.warn('⚠️ Erreur lors de la déconnexion Supabase:', error);
-                }
-            }
-            
-            this.user = null;
-            this.removeUserFromStorage();
-            this.updateUI();
-            
-            this.emitAuthEvent('logout');
-            
-            console.log('✅ Utilisateur déconnecté, redirection vers index.html');
-            
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 300);
-            
-            return { success: true };
-        } catch (error) {
-            console.error('Erreur déconnexion:', error);
-            this.user = null;
-            this.removeUserFromStorage();
-            this.updateUI();
-            
-            this.emitAuthEvent('logout');
-            
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 300);
-            
-            return { success: true };
-        }
-    }
-
+    // ===== MISE À JOUR DE L'INTERFACE MOBILE =====
     updateUI() {
         const user = this.user;
-        const isIndexPage = window.location.pathname.includes('index.html') || 
-                           window.location.pathname === '/' || 
-                           window.location.pathname.endsWith('/');
+        const isMobile = window.innerWidth <= 768;
         
         if (user) {
+            // UTILISATEUR CONNECTÉ
             this.removeLoginButtonFromHeader();
-            this.addUserAvatar();
+            this.removeMobileLoginButton();
             
-            if (isIndexPage) {
-                return;
+            if (isMobile) {
+                this.addMobileDashboardButton();
+            } else {
+                this.addUserAvatar();
             }
             
-            this.updateAllButtonsForConnectedUser();
+            const isIndexPage = window.location.pathname.includes('index.html') || 
+                               window.location.pathname === '/' || 
+                               window.location.pathname.endsWith('/');
+            
+            if (!isIndexPage) {
+                this.updateAllButtonsForConnectedUser();
+            }
             
         } else {
+            // UTILISATEUR NON CONNECTÉ
             this.removeUserAvatar();
-            this.restoreLoginButtonInHeader();
+            this.removeMobileDashboardButton();
+            
+            if (isMobile) {
+                this.showMobileLoginButton();
+            } else {
+                this.restoreLoginButtonInHeader();
+            }
+            
+            const isIndexPage = window.location.pathname.includes('index.html') || 
+                               window.location.pathname === '/' || 
+                               window.location.pathname.endsWith('/');
             
             if (!isIndexPage) {
                 this.restoreAllButtonsForDisconnectedUser();
@@ -960,6 +652,64 @@ class AuthManager {
         }
     }
 
+    // ===== FONCTIONS MOBILE SPÉCIFIQUES =====
+    addMobileDashboardButton() {
+        this.removeMobileDashboardButton();
+        this.removeMobileLoginButton();
+        
+        if (!this.user) return;
+        
+        const headerContent = document.querySelector('.header-content');
+        if (!headerContent) return;
+        
+        // Vérifier si le bouton existe déjà
+        if (document.querySelector('.mobile-dashboard-btn')) return;
+        
+        const mobileDashboardBtn = document.createElement('a');
+        mobileDashboardBtn.className = 'mobile-dashboard-btn';
+        mobileDashboardBtn.href = 'dashboard.html';
+        
+        const initials = this.getUserInitials();
+        mobileDashboardBtn.innerHTML = `
+            <div class="avatar-img">${initials}</div>
+            <span>Dashboard</span>
+        `;
+        
+        // Ajouter à droite du header
+        headerContent.appendChild(mobileDashboardBtn);
+    }
+
+    removeMobileDashboardButton() {
+        const mobileDashboardBtn = document.querySelector('.mobile-dashboard-btn');
+        if (mobileDashboardBtn) {
+            mobileDashboardBtn.remove();
+        }
+    }
+
+    showMobileLoginButton() {
+        this.removeMobileDashboardButton();
+        
+        const mobileLoginBtn = document.querySelector('.mobile-login-btn-header');
+        if (mobileLoginBtn) {
+            mobileLoginBtn.style.display = 'block';
+            
+            // Mettre à jour le lien avec redirect si nécessaire
+            if (!window.location.pathname.includes('login.html') && 
+                !window.location.pathname.includes('signup.html')) {
+                const currentUrl = encodeURIComponent(window.location.href);
+                mobileLoginBtn.href = `login.html?redirect=${currentUrl}`;
+            }
+        }
+    }
+
+    removeMobileLoginButton() {
+        const mobileLoginBtn = document.querySelector('.mobile-login-btn-header');
+        if (mobileLoginBtn) {
+            mobileLoginBtn.style.display = 'none';
+        }
+    }
+
+    // ===== FONCTIONS EXISTANTES (conservées) =====
     removeLoginButtonFromHeader() {
         const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header, .mobile-login-btn');
         loginButtons.forEach(btn => {
@@ -1034,7 +784,6 @@ class AuthManager {
         if (!this.user) return;
         
         const container = document.querySelector('.header-right-group');
-        
         if (!container) return;
         
         const avatar = document.createElement('div');
@@ -1136,7 +885,6 @@ class AuthManager {
 
             if (data) {
                 console.log('✅ Prix VIP exact trouvé:', data);
-                
                 return {
                     price: parseFloat(data.price),
                     currency: data.currency,
@@ -1205,7 +953,6 @@ class AuthManager {
 
             if (data && data.length > 0) {
                 console.log(`✅ ${data.length} prix VIP chargés:`, data);
-                
                 this.user.vipPrices = data;
                 
                 window.dispatchEvent(new CustomEvent('vip:loaded', { 
@@ -1219,72 +966,256 @@ class AuthManager {
         }
     }
 
-    async resetPassword(email) {
+    async signUp(email, password, fullName) {
         try {
             if (!this.supabaseReady) {
-                throw new Error('Supabase non initialisé');
+                return this.mockSignUp(email, password, fullName);
             }
 
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/reset-password.html`
+            console.log('📝 Inscription en cours pour:', email);
+
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: fullName,
+                        created_at: new Date().toISOString()
+                    },
+                    emailRedirectTo: `${window.location.origin}/login.html?message=confirmed`
+                }
             });
 
-            if (error) throw error;
-            return { success: true };
+            if (error) {
+                console.error('Supabase signUp error:', error);
+                throw error;
+            }
+
+            if (data.user) {
+                console.log('✅ Utilisateur créé dans auth.users:', data.user.id);
+                
+                try {
+                    console.log('📋 Création du profil...');
+                    
+                    const profileData = {
+                        id: data.user.id,
+                        full_name: fullName || email.split('@')[0],
+                        is_vip: false,
+                        preferred_currency: 'EUR',
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    };
+
+                    const { error: profileError } = await supabase
+                        .from('profiles')
+                        .insert(profileData);
+
+                    if (profileError) {
+                        console.error('❌ Erreur création profil:', profileError);
+                        
+                        const minimalProfile = {
+                            id: data.user.id,
+                            full_name: fullName || email.split('@')[0],
+                            created_at: new Date().toISOString()
+                        };
+                        
+                        const { error: minimalError } = await supabase
+                            .from('profiles')
+                            .insert(minimalProfile);
+                            
+                        if (minimalError) {
+                            console.error('❌ Erreur même avec structure minimale:', minimalError);
+                        } else {
+                            console.log('✅ Profil créé avec structure minimale');
+                        }
+                    } else {
+                        console.log('✅ Profil créé avec succès');
+                    }
+                } catch (profileErr) {
+                    console.error('❌ Exception création profil:', profileErr);
+                }
+                
+                const invitationCode = this.invitationCode || sessionStorage.getItem('invitation_code');
+                
+                if (invitationCode) {
+                    console.log('🎟️ Code VIP détecté lors de l\'inscription:', invitationCode);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    
+                    const tempUser = {
+                        id: data.user.id,
+                        email: email,
+                        user_metadata: { full_name: fullName }
+                    };
+                    
+                    const oldUser = this.user;
+                    this.user = tempUser;
+                    
+                    const result = await this.applyInvitationCode(invitationCode);
+                    
+                    this.user = oldUser;
+                    
+                    if (result.success) {
+                        console.log('✅ Code VIP appliqué automatiquement lors de l\'inscription');
+                    } else {
+                        console.warn('⚠️ Échec application code VIP:', result.error);
+                    }
+                }
+            }
+
+            return { 
+                success: true, 
+                data,
+                message: 'Compte créé ! Veuillez vérifier votre email pour confirmer votre compte.'
+            };
         } catch (error) {
-            console.error('Erreur réinitialisation mot de passe:', error);
+            console.error('Erreur inscription:', error);
             return { 
                 success: false, 
-                error: this.getUserFriendlyError(error.message) 
+                error: this.getUserFriendlyError(error.message),
+                details: error.message
             };
         }
     }
 
-    async updatePassword(newPassword) {
-        try {
-            if (!this.supabaseReady) {
-                throw new Error('Supabase non initialisé');
-            }
-
-            const { error } = await supabase.auth.updateUser({
-                password: newPassword
-            });
-
-            if (error) throw error;
-            return { success: true };
-        } catch (error) {
-            console.error('Erreur mise à jour mot de passe:', error);
-            return { 
-                success: false, 
-                error: this.getUserFriendlyError(error.message) 
-            };
-        }
-    }
-
-    async refreshSession() {
-        try {
-            if (!this.supabaseReady) {
-                throw new Error('Supabase non initialisé');
-            }
-
-            const { data, error } = await supabase.auth.refreshSession();
-            
-            if (error) throw error;
-            
-            if (data.session) {
-                this.user = data.session.user;
-                await this.loadUserProfile();
+    mockSignUp(email, password, fullName) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const mockUser = {
+                    id: 'mock_' + Date.now(),
+                    email: email,
+                    user_metadata: {
+                        full_name: fullName,
+                        created_at: new Date().toISOString()
+                    },
+                    profile: {
+                        full_name: fullName,
+                        is_vip: false,
+                        preferred_currency: 'EUR'
+                    },
+                    created_at: new Date().toISOString()
+                };
+                
+                this.user = mockUser;
+                this.saveUserToStorage();
                 this.updateUI();
-                this.emitAuthEvent('login', this.user);
+                
+                resolve({ 
+                    success: true, 
+                    data: { user: mockUser },
+                    message: 'Compte créé en mode local (données sauvegardées localement)'
+                });
+            }, 500);
+        });
+    }
+
+    async signIn(email, password) {
+        try {
+            if (!this.supabaseReady) {
+                return this.mockSignIn(email, password);
             }
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) throw error;
             
-            return { success: true, data };
+            this.user = data.user;
+            await this.loadUserProfile();
+            if (this.user.profile?.is_vip) {
+                await this.loadVipPrices();
+            }
+            this.updateUI();
+            
+            this.emitAuthEvent('login', this.user);
+            await this.applyPendingInvitation();
+            
+            return { 
+                success: true, 
+                data,
+                redirectUrl: 'dashboard.html'
+            };
         } catch (error) {
-            console.error('Erreur rafraîchissement session:', error);
+            console.error('Erreur connexion:', error);
             return { 
                 success: false, 
                 error: this.getUserFriendlyError(error.message) 
             };
+        }
+    }
+
+    mockSignIn(email, password) {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                const storedUser = localStorage.getItem('yoteacher_user');
+                
+                if (storedUser) {
+                    try {
+                        const user = JSON.parse(storedUser);
+                        if (user.email === email) {
+                            this.user = user;
+                            this.updateUI();
+                            this.emitAuthEvent('login', this.user);
+                            resolve({ 
+                                success: true, 
+                                data: { user: user },
+                                redirectUrl: 'dashboard.html'
+                            });
+                            return;
+                        }
+                    } catch (error) {
+                        // Continue vers l'échec
+                    }
+                }
+                
+                reject({ 
+                    success: false, 
+                    error: 'Email ou mot de passe incorrect (mode local)' 
+                });
+            }, 500);
+        });
+    }
+
+    async signOut() {
+        try {
+            console.log('🚪 Déconnexion en cours...');
+            
+            if (this.supabaseReady && supabase && supabase.auth) {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                    console.warn('⚠️ Erreur lors de la déconnexion Supabase:', error);
+                }
+            }
+            
+            this.user = null;
+            this.removeUserFromStorage();
+            this.updateUI();
+            
+            this.emitAuthEvent('logout');
+            
+            console.log('✅ Utilisateur déconnecté, redirection vers index.html');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 300);
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Erreur déconnexion:', error);
+            this.user = null;
+            this.removeUserFromStorage();
+            this.updateUI();
+            
+            this.emitAuthEvent('logout');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 300);
+            
+            return { success: true };
         }
     }
 
@@ -1506,94 +1437,9 @@ window.addEventListener('vip:applied', function(e) {
     console.log('🎉 Code VIP appliqué:', e.detail.code);
 });
 
-// Fonction de diagnostic des problèmes de base de données
-window.diagnoseBookingIssues = async function() {
-    console.group('🔍 DIAGNOSTIC DES RÉSERVATIONS');
-    
-    if (!window.supabase) {
-        console.error('❌ Supabase non initialisé');
-        console.groupEnd();
-        return;
-    }
-    
-    const user = window.authManager?.getCurrentUser();
-    if (!user) {
-        console.error('❌ Utilisateur non connecté');
-        console.groupEnd();
-        return;
-    }
-    
-    try {
-        const { data: bookings, error: bookingsError } = await supabase
-            .from('bookings')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(5);
-        
-        if (bookingsError) {
-            console.error('❌ Erreur accès à bookings:', bookingsError.message);
-        } else {
-            console.log(`📋 ${bookings.length} réservation(s) trouvée(s) dans bookings:`);
-            bookings.forEach((b, i) => {
-                console.log(`  ${i+1}. ${b.booking_number} - ${b.course_type} - ${b.status} - ${b.price_paid} ${b.currency}`);
-            });
-        }
-        
-        const { data: packages, error: packagesError } = await supabase
-            .from('packages')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('purchased_at', { ascending: false });
-        
-        if (packagesError) {
-            console.error('❌ Erreur accès à packages:', packagesError.message);
-        } else {
-            console.log(`📦 ${packages.length} package(s) trouvé(s) pour l\'utilisateur:`);
-            packages.forEach((p, i) => {
-                console.log(`  ${i+1}. ${p.course_type} - ${p.remaining_credits}/${p.total_credits} crédits - ${p.status} - Expire: ${new Date(p.expires_at).toLocaleDateString()}`);
-            });
-        }
-        
-        const { data: transactions, error: transactionsError } = await supabase
-            .from('credit_transactions')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(5);
-        
-        if (transactionsError) {
-            console.error('❌ Erreur accès à credit_transactions:', transactionsError.message);
-        } else {
-            console.log(`💳 ${transactions.length} transaction(s) de crédit trouvée(s):`);
-            transactions.forEach((t, i) => {
-                console.log(`  ${i+1}. ${t.transaction_type} - ${t.credits_change} crédits - ${t.reason}`);
-            });
-        }
-        
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-        
-        if (profileError) {
-            console.error('❌ Erreur accès au profil:', profileError.message);
-        } else {
-            console.log(`👤 Profil trouvé: ${profile.full_name} - VIP: ${profile.is_vip}`);
-        }
-        
-    } catch (error) {
-        console.error('❌ Erreur diagnostic:', error);
-    }
-    
-    console.groupEnd();
-};
-
-// Fonction de diagnostic d'authentification
+// Fonction de diagnostic
 window.diagnoseAuth = function() {
     console.group('🔍 DIAGNOSTIC AUTH');
-    
     const storedUser = localStorage.getItem('yoteacher_user');
     console.log('1. localStorage user:', storedUser ? 'PRÉSENT' : 'ABSENT');
     if (storedUser) {
@@ -1605,34 +1451,11 @@ window.diagnoseAuth = function() {
             console.log('   ERREUR parsing:', e.message);
         }
     }
-    
     console.log('2. authManager:', window.authManager ? 'PRÉSENT' : 'ABSENT');
-    if (window.authManager) {
-        console.log('   User:', window.authManager.user ? 'PRÉSENT' : 'ABSENT');
-        console.log('   isAuthenticated:', typeof window.authManager.isAuthenticated);
-        if (typeof window.authManager.isAuthenticated === 'function') {
-            console.log('   isAuthenticated():', window.authManager.isAuthenticated());
-        }
-    }
-    
-    const sessionCode = sessionStorage.getItem('invitation_code');
-    console.log('3. Session code:', sessionCode || 'ABSENT');
-    
-    console.log('4. URL actuelle:', window.location.href);
-    console.log('   Path:', window.location.pathname);
-    const params = new URLSearchParams(window.location.search);
-    console.log('   Paramètres:', Object.fromEntries(params.entries()));
-    
     console.groupEnd();
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-    const isAuthPage = window.location.pathname.includes('login.html') || 
-                      window.location.pathname.includes('signup.html');
-    
-    const isDashboardPage = window.location.pathname.includes('dashboard.html') ||
-                           window.location.pathname.includes('profile.html');
-    
     const delay = window.innerWidth <= 768 ? 500 : 100;
     
     setTimeout(() => {
@@ -1641,51 +1464,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }, delay);
 });
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { AuthManager };
-}
-
-window.debugVipPrices = async function() {
-    const authMgr = window.authManager;
-    
-    if (!authMgr || !authMgr.user) {
-        console.error('❌ Utilisateur non connecté');
-        return;
-    }
-    
-    console.group('🔍 Debug Prix VIP');
-    console.log('User ID:', authMgr.user.id);
-    console.log('Est VIP:', authMgr.isUserVip());
-    console.log('Profile:', authMgr.user.profile);
-    
-    if (authMgr.user.vipPrices) {
-        console.log('Prix VIP chargés:', authMgr.user.vipPrices);
-    } else {
-        console.log('⚠️ Aucun prix VIP chargé dans user.vipPrices');
-    }
-    
-    const courseTypes = ['conversation', 'curriculum', 'examen'];
-    const durations = [30, 45, 60];
-    
-    for (const courseType of courseTypes) {
-        console.log(`\n📚 ${courseType}:`);
-        for (const duration of durations) {
-            const price = await authMgr.getVipPrice(courseType, duration);
-            if (price) {
-                console.log(`  ✅ ${duration}min: ${price.price} ${price.currency}`);
-                if (window.currencyManager) {
-                    const converted = window.currencyManager.convertVIPPrice(price);
-                    if (converted) {
-                        console.log(`    → ${converted.display}`);
-                    }
-                }
-            } else {
-                console.log(`  ❌ ${duration}min: non trouvé`);
-            }
-        }
-    }
-    
-    console.groupEnd();
-};
-
-console.log('✅ auth.js chargé avec système de codes d\'invitation VIP - Version corrigée avec debug complet');
+console.log('✅ auth.js chargé avec système de codes d\'invitation VIP - Version mobile corrigée');
