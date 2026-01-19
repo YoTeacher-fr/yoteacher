@@ -708,9 +708,6 @@ body {
 
 /* Header mobile ajusté */
 @media (max-width: 768px) {
-    .hamburger-menu {
-        display: block;
-    }
     
     .mobile-login-btn-header {
         display: block !important;
@@ -810,7 +807,7 @@ body {
     }
     
     .logo {
-        font-size: 1.3rem !important;
+        font-size: 1.5rem !important;
     }
     
     .mobile-login-btn-header {
