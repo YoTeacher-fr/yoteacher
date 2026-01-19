@@ -89,6 +89,19 @@
     background: rgba(0, 0, 0, 0.05);
 }
 
+/* Mobile language */
+.mobile-language {
+    cursor: pointer;
+    padding: 15px 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.mobile-language:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
 /* Bouton Connexion */
 .login-btn {
     padding: 10px 22px !important;
@@ -97,264 +110,198 @@
     border-radius: 50px;
 }
 
-/* ===== HEADER MOBILE - PIXEL PERFECT AVEC BOOKING ===== */
+/* ===== CORRECTION HEADER MOBILE POUR INDEX.HTML ===== */
 @media (max-width: 768px) {
-    /* HEADER - IDENTIQUE À BOOKING */
+    /* Header mobile simplifié */
     .main-header {
         background-color: rgba(255, 255, 255, 0.98) !important;
         box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
-        backdrop-filter: blur(10px) !important;
-        min-height: 60px !important;
-        height: 60px !important;
+        min-height: 55px !important;
+        height: 55px !important;
     }
     
-    /* HEADER CONTENT - FLEX COMPACT */
     .header-content {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
-        padding: 0 10px !important;
+        padding: 0 15px !important;
+        height: 55px !important;
         width: 100% !important;
-        height: 60px !important;
-        gap: 5px !important;
+        gap: 10px;
     }
     
-    /* PAS DE HAMBURGER MENU */
-    .hamburger-menu {
-        display: none !important;
-    }
-    
-    /* LOGO À GAUCHE - COMPACT */
+    /* Logo centré */
     .logo-section {
-        display: flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-        order: 1 !important;
-        flex: 0 0 auto !important;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
     
     .logo {
-        font-size: 1.3rem !important;
+        font-size: 1.5rem !important;
         color: #333 !important;
         font-weight: 700 !important;
-        white-space: nowrap !important;
     }
     
-    /* GROUPE DE DROITE - COMPACT */
+    /* Groupe de droite sur mobile - RÉORGANISATION COMPLÈTE */
     .mobile-header-right-group {
         display: flex !important;
         align-items: center !important;
         gap: 6px !important;
-        order: 2 !important;
-        flex: 0 0 auto !important;
-        flex-shrink: 0 !important;
+        order: 2;
+        width: auto;
+        justify-content: flex-end;
+        flex: 1;
     }
     
-    /* DEVISE MOBILE - PLUS PETIT */
+    /* Devise mobile */
     .currency-selector-mobile {
-        display: block !important;
-        order: 1 !important;
-        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        order: 1;
+min-width: 65px;
     }
     
     .currency-selector-mobile select {
-        padding: 2px 4px !important;
-        font-size: 0.65rem !important;
-        width: 55px !important;
-        min-width: 55px !important;
-        max-width: 55px !important;
+        padding: 3px 6px !important;
+        font-size: 0.7rem !important;
+        min-width: 60px !important;
+        max-width: 70px !important;
         background: white !important;
-        border: 1px solid #ddd !important;
-        border-radius: 10px !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 12px !important;
         color: #333 !important;
-        height: 24px !important;
-        font-weight: 600 !important;
-        text-align: center !important;
-        text-align-last: center !important;
-        line-height: 20px !important;
-        box-sizing: border-box !important;
-        appearance: none !important;
-        -webkit-appearance: none !important;
-        cursor: pointer !important;
+        display: block !important;
+        height: 26px !important;
+        font-weight: 600;
+        text-align: center;
+        text-align-last: center;
+white-space: nowrap; /* Empêcher le retour à la ligne */
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .currency-selector-mobile i {
         display: none !important;
     }
     
-    /* LANGUE MOBILE - PLUS PETIT */
+    /* Langue mobile */
     .language-switcher-mobile {
-        display: block !important;
-        order: 2 !important;
-        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        order: 2;
     }
     
     .language-switcher-mobile span {
-        font-size: 0.65rem !important;
-        padding: 2px 6px !important;
+        font-size: 0.7rem !important;
+        padding: 3px 8px !important;
         color: #333 !important;
         background: white !important;
-        border: 1px solid #ddd !important;
-        border-radius: 10px !important;
-        height: 24px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        min-width: 36px !important;
-        font-weight: 600 !important;
-        line-height: 20px !important;
-        box-sizing: border-box !important;
-        cursor: pointer !important;
-        white-space: nowrap !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 12px !important;
+        height: 26px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        font-weight: 600;
     }
     
     .language-switcher-mobile .flag {
         display: none !important;
     }
     
-    /* BOUTON CONNEXION MOBILE - COMPACT */
+    /* Bouton connexion/dashboard mobile - POSITION DROITE */
     .mobile-login-btn-header {
         display: block !important;
-        padding: 5px 10px !important;
-        font-size: 0.8rem !important;
+        padding: 4px 10px !important;
+        font-size: 0.7rem !important;
         font-weight: 600 !important;
         background: #4f9ad1 !important;
         color: white !important;
-        border-radius: 18px !important;
+        border-radius: 12px !important;
         text-decoration: none !important;
         white-space: nowrap !important;
         border: none !important;
         cursor: pointer !important;
-        min-width: 60px !important;
-        text-align: center !important;
-        order: 3 !important;
-        height: auto !important;
-        line-height: 1.2 !important;
-        box-sizing: border-box !important;
-        flex-shrink: 0 !important;
+        height: 26px !important;
+        min-width: 70px;
+        text-align: center;
+        order: 3; /* Toujours à droite */
     }
     
-    /* BOUTON DASHBOARD MOBILE - COMPACT */
+    /* Styles pour le bouton dashboard mobile (quand connecté) */
     .mobile-dashboard-btn {
         display: flex !important;
         align-items: center !important;
-        gap: 4px !important;
-        padding: 4px 8px 4px 4px !important;
+        gap: 6px;
+        padding: 3px 8px 3px 4px !important;
         background: #4f9ad1 !important;
         color: white !important;
-        border-radius: 18px !important;
+        border-radius: 12px !important;
         text-decoration: none !important;
-        font-size: 0.75rem !important;
+        font-size: 0.65rem !important;
         font-weight: 600 !important;
-        min-width: 70px !important;
-        max-width: 85px !important;
-        order: 3 !important;
-        height: auto !important;
-        line-height: 1.2 !important;
-        box-sizing: border-box !important;
-        flex-shrink: 0 !important;
-        overflow: hidden !important;
+        height: 26px !important;
+        min-width: 90px;
+        order: 3; /* Même position que login */
+        margin-left: 0 !important; /* Supprimer le margin-left */
     }
     
     .mobile-dashboard-btn .avatar-img {
-        width: 22px !important;
-        height: 22px !important;
-        border-radius: 50% !important;
-        background: linear-gradient(135deg, #3c84f6, #1e88e5) !important;
-        color: white !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 0.7rem !important;
-        font-weight: bold !important;
-        flex-shrink: 0 !important;
+        width: 20px !important;
+        height: 20px !important;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3c84f6, #1e88e5);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem !important;
+        font-weight: bold;
+        flex-shrink: 0;
     }
     
-    .mobile-dashboard-btn span {
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-    }
-    
-    /* LOGIQUE D'AFFICHAGE */
+    /* Cacher le bouton connexion quand dashboard est affiché */
     .mobile-header-right-group .mobile-login-btn-header {
         display: none !important;
     }
     
     .mobile-header-right-group .mobile-dashboard-btn {
-        display: none !important;
-    }
-    
-    .mobile-header-right-group .mobile-login-btn-header:not([style*="display: none"]) {
-        display: block !important;
-    }
-    
-    .mobile-header-right-group .mobile-dashboard-btn:not([style*="display: none"]) {
         display: flex !important;
     }
     
-    /* CACHER LES ÉLÉMENTS DESKTOP */
+    /* Cacher le groupe de droite desktop sur mobile */
     .header-right-group {
         display: none !important;
     }
     
+    /* Cacher le menu desktop sur mobile */
     .nav-menu.desktop-menu {
         display: none !important;
     }
     
-    .currency-selector {
-        display: none !important;
-    }
-    
-    .language-switcher {
-        display: none !important;
-    }
-    
-    .login-btn {
-        display: none !important;
-    }
-    
-    .user-avatar {
-        display: none !important;
-    }
-    
-    /* BODY PADDING */
+    /* Ajuster le padding du body */
     body {
-        padding-top: 60px !important;
+        padding-top: 55px !important;
     }
     
-    /* NAV SPACER */
-    .nav-spacer {
+    /* Cacher tout code résiduel hamburger */
+    .hamburger-menu {
         display: none !important;
     }
-}
-
-/* ÉCRANS TRÈS PETITS - ENCORE PLUS COMPACT */
-@media (max-width: 360px) {
-    .logo {
-        font-size: 1.2rem !important;
-    }
     
-    .currency-selector-mobile select {
-        width: 50px !important;
-        min-width: 50px !important;
-        font-size: 0.6rem !important;
-    }
-    
-    .language-switcher-mobile span {
-        min-width: 32px !important;
-        font-size: 0.6rem !important;
-    }
-    
-    .mobile-dashboard-btn {
-        min-width: 65px !important;
-        max-width: 75px !important;
-        font-size: 0.7rem !important;
+    /* Cacher devise desktop sur mobile */
+    .currency-selector { 
+        display: none !important; 
     }
 }
 
-/* ===== DESKTOP - INCHANGÉ ===== */
 @media (min-width: 769px) {
+    /* Rétablir le header desktop */
     .header-content {
         display: grid !important;
         grid-template-columns: 200px 1fr 220px !important;
@@ -362,6 +309,8 @@
     
     .logo-section {
         justify-self: start !important;
+        position: static !important;
+        transform: none !important;
     }
     
     .header-right-group {
@@ -388,12 +337,10 @@
     .language-switcher-mobile {
         display: none !important;
     }
-    
-    .hamburger-menu {
-        display: none !important;
-    }
-    
-    .nav-menu.desktop-menu {
-        display: block !important;
-    }
+}
+
+/* Correction pour s'assurer que le dashboard remplace bien le login */
+.mobile-header-right-group .mobile-login-btn-header[style*="display: none"],
+.mobile-header-right-group .mobile-dashboard-btn[style*="display: none"] {
+    display: none !important;
 }
