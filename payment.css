@@ -824,7 +824,7 @@ body {
     .payment-section {
         min-height: calc(100vh - 55px);
     }
-}
+
     /* Forcer layout vertical pour les détails de paiement */
     .payment-details-grid {
         display: flex !important;
