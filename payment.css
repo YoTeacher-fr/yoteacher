@@ -825,7 +825,57 @@ body {
         min-height: calc(100vh - 55px);
     }
 }
-
+    /* Forcer layout vertical pour les détails de paiement */
+    .payment-details-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 20px !important;
+    }
+    
+    /* QR Code en haut */
+    .qr-code-container {
+        order: 1;
+        width: 100%;
+        margin-bottom: 0;
+    }
+    
+    .qr-code-placeholder,
+    .qr-code-img {
+        width: 200px !important;
+        height: 200px !important;
+        margin: 0 auto 10px !important;
+    }
+    
+    .qr-code-label {
+        display: none; /* Cacher le texte sous le QR */
+    }
+    
+    /* Informations de paiement en dessous */
+    .payment-info {
+        order: 2;
+        width: 100%;
+    }
+    
+    /* Message important en dessous */
+    .payment-notice {
+        order: 3;
+        width: 100%;
+        margin-top: 15px !important;
+        grid-column: auto !important;
+    }
+    
+    /* Bouton tout en bas */
+    .payment-action {
+        order: 4;
+        width: 100%;
+        margin-top: 15px !important;
+        grid-column: auto !important;
+    }
+    
+    .btn-confirm-payment {
+        width: 100%;
+    }
+}
 @media (max-width: 480px) {
     .payment-card {
         padding: 20px 15px;
