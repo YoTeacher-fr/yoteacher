@@ -890,8 +890,8 @@ body .mobile-login-btn:hover {
         text-decoration: none !important;
         font-size: 0.85rem !important;
         font-weight: 600 !important;
-        order: 2;
-        margin-left: auto;
+        order: 3;
+        margin-left: 0 !important;
     }
     
     .mobile-dashboard-btn .avatar-img {
@@ -905,6 +905,25 @@ body .mobile-login-btn:hover {
         justify-content: center;
         font-size: 0.75rem;
         font-weight: bold;
+    }
+    /* Groupe de droite sur mobile - même structure qu'index */
+    .mobile-header-right-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        order: 2;
+        width: auto;
+        justify-content: flex-end;
+        flex: 1;
+    }
+    
+    /* Cacher le bouton connexion quand dashboard est affiché */
+    .mobile-header-right-group .mobile-login-btn-header {
+        display: none !important;
+    }
+    
+    .mobile-header-right-group .mobile-dashboard-btn {
+        display: flex !important;
     }
     body .logo-section {
         position: absolute;
