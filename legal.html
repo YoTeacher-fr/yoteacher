@@ -23,8 +23,16 @@
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-                <!-- Bouton Connexion/Dashboard Mobile -->
-                <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                <!-- Groupe de droite pour mobile (language, bouton) -->
+                <div class="mobile-header-right-group">
+                    <!-- Langue mobile -->
+                    <div class="language-switcher-mobile" id="languageSwitcherMobile">
+                        <span>EN</span>
+                    </div>
+                    
+                    <!-- Bouton Connexion/Dashboard Mobile -->
+                    <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                </div>
                 
                 <!-- Groupe des boutons de droite - FORCÉ À DROITE -->
                 <div class="header-right-group">
@@ -300,6 +308,16 @@
                     });
                 });
             });
+            
+            // Initialiser le sélecteur de langue mobile
+            const languageSwitcherMobile = document.getElementById('languageSwitcherMobile');
+            if (languageSwitcherMobile && window.translationManager) {
+                languageSwitcherMobile.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.translationManager.toggleLanguage();
+                });
+            }
         });
     </script>
 </body>

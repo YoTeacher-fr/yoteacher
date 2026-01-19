@@ -23,8 +23,21 @@
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-                <!-- Bouton Connexion/Dashboard Mobile -->
-                <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
+                <!-- Groupe de droite pour mobile (currency, language, bouton) -->
+                <div class="mobile-header-right-group">
+                    <!-- Devise mobile -->
+                    <div class="currency-selector-mobile">
+                        <select id="currencySelectorMobile"></select>
+                    </div>
+                    
+                    <!-- Langue mobile -->
+                    <div class="language-switcher-mobile" id="languageSwitcherMobile">
+                        <span>EN</span>
+                    </div>
+                    
+                    <!-- Bouton Connexion/Dashboard Mobile -->
+                    <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
+                </div>
                 
                 <!-- Menu Desktop -->
                 <nav class="nav-menu desktop-menu">
@@ -36,7 +49,7 @@
                     </div>
                 </nav>
 
-                <!-- Groupe des boutons de droite -->
+                <!-- Groupe des boutons de droite (desktop) -->
                 <div class="header-right-group">
                     <!-- Sélecteur de devise -->
                     <div class="currency-selector">
@@ -310,5 +323,53 @@
     <script src="currency.js"></script>
     <script src="translation.js"></script>
     <script src="script.js"></script>
+    
+    <script>
+        // Initialiser les sélecteurs mobiles
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialiser le sélecteur de devise mobile
+            setTimeout(function() {
+                if (window.currencyManager) {
+                    const mobileSelector = document.getElementById('currencySelectorMobile');
+                    if (mobileSelector) {
+                        // Remplir les options
+                        window.currencyManager.supportedCurrencies.forEach(currency => {
+                            const option = document.createElement('option');
+                            option.value = currency;
+                            option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
+                            
+                            if (currency === window.currencyManager.currentCurrency) {
+                                option.selected = true;
+                            }
+                            
+                            mobileSelector.appendChild(option);
+                        });
+                        
+                        // Écouter les changements
+                        mobileSelector.addEventListener('change', (e) => {
+                            const newCurrency = e.target.value;
+                            if (window.currencyManager.setCurrency(newCurrency)) {
+                                // Mettre à jour aussi le sélecteur desktop
+                                const desktopSelector = document.getElementById('currencySelector');
+                                if (desktopSelector) {
+                                    desktopSelector.value = newCurrency;
+                                }
+                            }
+                        });
+                    }
+                }
+            }, 500);
+            
+            // Initialiser le sélecteur de langue mobile
+            const languageSwitcherMobile = document.getElementById('languageSwitcherMobile');
+            if (languageSwitcherMobile && window.translationManager) {
+                languageSwitcherMobile.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.translationManager.toggleLanguage();
+                });
+            }
+        });
+    </script>
 </body>
 </html>

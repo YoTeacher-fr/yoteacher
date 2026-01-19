@@ -1,4 +1,4 @@
-// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION MOBILE CORRIGÉE
+// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION MOBILE OPTIMISÉE
 class AuthManager {
     constructor() {
         this.user = null;
@@ -13,18 +13,21 @@ class AuthManager {
         
         try {
             this.checkInvitationCode();
+            
+            // Synchronisation immédiate avec localStorage
+            this.forceUserSync();
+            
+            // Mettre à jour l'UI immédiatement
+            this.updateUI();
+            
             await this.waitForSupabase();
             
             if (!this.supabaseReady) {
                 console.warn('⚠️ Mode dégradé activé : Supabase non disponible');
-                this.setupDegradedMode();
                 return;
             }
 
-            console.log('✅ Supabase prêt, attente stabilisation...');
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            console.log('✅ Vérification de la session...');
+            console.log('✅ Supabase prêt, vérification de session...');
             
             try {
                 const { data: { session }, error } = await supabase.auth.getSession();
@@ -61,12 +64,10 @@ class AuthManager {
                 
             } catch (sessionError) {
                 console.error('❌ Exception lors de la vérification de session:', sessionError);
-                this.setupDegradedMode();
             }
             
         } catch (error) {
             console.error('❌ Erreur lors de l\'initialisation de l\'auth:', error);
-            this.setupDegradedMode();
         }
     }
 
@@ -450,9 +451,6 @@ class AuthManager {
         try {
             const initialized = await window.supabaseInitialized;
             
-            console.log('🔍 DEBUG waitForSupabase - initialized:', initialized);
-            console.log('🔍 DEBUG waitForSupabase - window.supabase:', !!window.supabase);
-            
             if (initialized && window.supabase) {
                 this.supabaseReady = true;
                 console.log('✅ Supabase initialisé via Promise');
@@ -463,7 +461,7 @@ class AuthManager {
         }
 
         let attempts = 0;
-        const maxAttempts = 15;
+        const maxAttempts = 10; // Réduit à 2 secondes
         
         return new Promise((resolve) => {
             const checkSupabase = () => {
@@ -477,7 +475,7 @@ class AuthManager {
                 }
                 
                 if (attempts >= maxAttempts) {
-                    console.warn('⚠️ Timeout Supabase après 3s - mode dégradé');
+                    console.warn('⚠️ Timeout Supabase après 2s - mode dégradé');
                     this.supabaseReady = false;
                     resolve();
                     return;
@@ -607,27 +605,31 @@ class AuthManager {
         console.log('🗑️ Utilisateur supprimé du localStorage');
     }
 
-    // ===== MISE À JOUR DE L'INTERFACE MOBILE =====
+    // ===== MISE À JOUR DE L'INTERFACE OPTIMISÉE =====
     updateUI() {
         const user = this.user;
         const isMobile = window.innerWidth <= 768;
+        const isDashboardPage = window.location.pathname.includes('dashboard.html');
         
         if (user) {
             // UTILISATEUR CONNECTÉ
             this.removeLoginButtonFromHeader();
             this.removeMobileLoginButton();
             
-            if (isMobile) {
-                this.addMobileDashboardButton();
-            } else {
-                this.addUserAvatar();
+            // Ne pas afficher de bouton dashboard sur la page dashboard
+            if (!isDashboardPage) {
+                if (isMobile) {
+                    this.addMobileDashboardButton();
+                } else {
+                    this.addUserAvatar();
+                }
             }
             
             const isIndexPage = window.location.pathname.includes('index.html') || 
                                window.location.pathname === '/' || 
                                window.location.pathname.endsWith('/');
             
-            if (!isIndexPage) {
+            if (!isIndexPage && !isDashboardPage) {
                 this.updateAllButtonsForConnectedUser();
             }
             
@@ -646,14 +648,15 @@ class AuthManager {
                                window.location.pathname === '/' || 
                                window.location.pathname.endsWith('/');
             
-            if (!isIndexPage) {
+            if (!isIndexPage && !isDashboardPage) {
                 this.restoreAllButtonsForDisconnectedUser();
             }
         }
     }
 
-    // ===== FONCTIONS MOBILE SPÉCIFIQUES =====
+    // ===== FONCTIONS MOBILE OPTIMISÉES =====
     addMobileDashboardButton() {
+        // Supprimer d'abord l'ancien bouton s'il existe
         this.removeMobileDashboardButton();
         this.removeMobileLoginButton();
         
@@ -675,7 +678,7 @@ class AuthManager {
             <span>Dashboard</span>
         `;
         
-        // Ajouter à droite du header
+        // Ajouter immédiatement pour éviter le délai
         headerContent.appendChild(mobileDashboardBtn);
     }
 
@@ -1413,7 +1416,6 @@ class AuthManager {
             try {
                 this.user = JSON.parse(storedUser);
                 console.log('✅ Utilisateur synchronisé depuis localStorage');
-                this.updateUI();
                 return true;
             } catch (error) {
                 console.error('❌ Erreur synchronisation:', error);
@@ -1456,12 +1458,8 @@ window.diagnoseAuth = function() {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-    const delay = window.innerWidth <= 768 ? 500 : 100;
-    
-    setTimeout(() => {
-        console.log('🚀 Initialisation de AuthManager...');
-        window.authManager = new AuthManager();
-    }, delay);
+    console.log('🚀 Initialisation de AuthManager...');
+    window.authManager = new AuthManager();
 });
 
-console.log('✅ auth.js chargé avec système de codes d\'invitation VIP - Version mobile corrigée');
+console.log('✅ auth.js chargé - Version mobile optimisée');
