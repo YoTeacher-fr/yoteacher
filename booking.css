@@ -718,6 +718,7 @@ body .courses-count-option {
     transition: all 0.3s;
     text-align: center;
     position: relative;
+    overflow: visible !important;
 }
 
 body .courses-count-option:hover {
