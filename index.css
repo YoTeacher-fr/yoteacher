@@ -110,23 +110,14 @@
     border-radius: 50px;
 }
 
-/* ===== HEADER MOBILE IDENTIQUE À PAYMENT.CSS ===== */
+/* ===== CORRECTION HEADER MOBILE POUR INDEX.HTML ===== */
 @media (max-width: 768px) {
-    /* CORRECTION GLOBALE HEADER MOBILE */
-    body {
-        padding-top: 60px !important;
-    }
-    
+    /* Header mobile simplifié */
     .main-header {
         background-color: rgba(255, 255, 255, 0.98) !important;
         box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
-        backdrop-filter: blur(10px) !important;
-        min-height: 60px !important;
-        height: 60px !important;
-        position: fixed;
-        top: 0;
-        width: 100%;
-        z-index: 1000;
+        min-height: 55px !important;
+        height: 55px !important;
     }
     
     .header-content {
@@ -134,67 +125,51 @@
         justify-content: space-between !important;
         align-items: center !important;
         padding: 0 15px !important;
-        height: 60px !important;
+        height: 55px !important;
         width: 100% !important;
-        gap: 8px;
-        position: relative;
+        gap: 10px;
     }
     
-    /* Logo à gauche - IDENTIQUE À PAYMENT.CSS */
+    /* Logo centré */
     .logo-section {
-        flex: 0 0 auto !important;
-        display: flex !important;
-        justify-content: flex-start !important;
-        align-items: center !important;
-        text-align: left !important;
-        position: static !important;
-        transform: none !important;
-        left: auto !important;
-        top: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: auto !important;
-        order: 1 !important;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
     
     .logo {
         font-size: 1.5rem !important;
         color: #333 !important;
         font-weight: 700 !important;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 130px;
-        display: block !important;
     }
     
-    /* Éléments de droite - IDENTIQUE À PAYMENT.CSS */
-    .header-right-group {
+    /* Groupe de droite sur mobile - RÉORGANISATION COMPLÈTE */
+    .mobile-header-right-group {
         display: flex !important;
         align-items: center !important;
         gap: 6px !important;
-        margin-left: auto !important;
-        flex: 0 0 auto !important;
-        order: 2 !important;
+        order: 2;
+        width: auto;
+        justify-content: flex-end;
+        flex: 1;
     }
     
-    /* Devise - TEXTE SEULEMENT (sans icône) - IDENTIQUE À PAYMENT.CSS */
-    .currency-selector {
+    /* Devise mobile */
+    .currency-selector-mobile {
         display: flex !important;
         align-items: center !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        order: 1;
+min-width: 65px;
     }
     
-    .currency-selector i {
-        display: none !important;
-    }
-    
-    .currency-selector select {
+    .currency-selector-mobile select {
         padding: 3px 6px !important;
         font-size: 0.7rem !important;
-        min-width: 45px !important;
-        max-width: 50px !important;
+        min-width: 60px !important;
+        max-width: 70px !important;
         background: white !important;
         border: 1px solid rgba(0, 0, 0, 0.15) !important;
         border-radius: 12px !important;
@@ -204,23 +179,23 @@
         font-weight: 600;
         text-align: center;
         text-align-last: center;
+white-space: nowrap; /* Empêcher le retour à la ligne */
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
-    /* Langue - TEXTE SEULEMENT (sans icône) - IDENTIQUE À PAYMENT.CSS */
-    .language-switcher {
-        display: flex !important;
-        align-items: center !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        background: none !important;
-    }
-    
-    .language-switcher .flag {
+    .currency-selector-mobile i {
         display: none !important;
     }
     
-    .language-switcher span {
+    /* Langue mobile */
+    .language-switcher-mobile {
+        display: flex !important;
+        align-items: center !important;
+        order: 2;
+    }
+    
+    .language-switcher-mobile span {
         font-size: 0.7rem !important;
         padding: 3px 8px !important;
         color: #333 !important;
@@ -235,108 +210,97 @@
         font-weight: 600;
     }
     
-    /* Bouton Connexion - IDENTIQUE À PAYMENT.CSS */
-    .login-btn,
-    .dashboard-btn {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 4px !important;
+    .language-switcher-mobile .flag {
+        display: none !important;
+    }
+    
+    /* Bouton connexion/dashboard mobile - POSITION DROITE */
+    .mobile-login-btn-header {
+        display: block !important;
         padding: 4px 10px !important;
         font-size: 0.7rem !important;
         font-weight: 600 !important;
-        border-radius: 12px !important;
         background: #4f9ad1 !important;
         color: white !important;
+        border-radius: 12px !important;
         text-decoration: none !important;
         white-space: nowrap !important;
         border: none !important;
         cursor: pointer !important;
         height: 26px !important;
         min-width: 70px;
+        text-align: center;
+        order: 3; /* Toujours à droite */
     }
     
-    /* Avatar dans le bouton dashboard - PLUS PETIT */
-    .dashboard-btn .avatar-img {
-        width: 18px !important;
-        height: 18px !important;
+    /* Styles pour le bouton dashboard mobile (quand connecté) */
+    .mobile-dashboard-btn {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px;
+        padding: 3px 8px 3px 4px !important;
+        background: #4f9ad1 !important;
+        color: white !important;
+        border-radius: 12px !important;
+        text-decoration: none !important;
         font-size: 0.65rem !important;
+        font-weight: 600 !important;
+        height: 26px !important;
+        min-width: 90px;
+        order: 3; /* Même position que login */
+        margin-left: 0 !important; /* Supprimer le margin-left */
     }
     
-    /* Bouton déconnexion - PLUS PETIT */
-    .logout-btn-icon {
-        width: 16px !important;
-        height: 16px !important;
-        font-size: 0.7rem !important;
-        right: -4px !important;
-        top: -4px !important;
+    .mobile-dashboard-btn .avatar-img {
+        width: 20px !important;
+        height: 20px !important;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3c84f6, #1e88e5);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem !important;
+        font-weight: bold;
+        flex-shrink: 0;
     }
     
-    /* Cacher les éléments mobiles redondants - IDENTIQUE À PAYMENT.CSS */
-    .mobile-login-btn-header {
+    /* Cacher le bouton connexion quand dashboard est affiché */
+    .mobile-header-right-group .mobile-login-btn-header {
         display: none !important;
     }
     
+    .mobile-header-right-group .mobile-dashboard-btn {
+        display: flex !important;
+    }
+    
+    /* Cacher le groupe de droite desktop sur mobile */
+    .header-right-group {
+        display: none !important;
+    }
+    
+    /* Cacher le menu desktop sur mobile */
+    .nav-menu.desktop-menu {
+        display: none !important;
+    }
+    
+    /* Ajuster le padding du body */
+    body {
+        padding-top: 55px !important;
+    }
+    
+    /* Cacher tout code résiduel hamburger */
     .hamburger-menu {
         display: none !important;
     }
     
-    /* Navigation desktop cachée sur mobile - IDENTIQUE À PAYMENT.CSS */
-    .nav-menu.desktop-menu {
-        display: none !important;
+    /* Cacher devise desktop sur mobile */
+    .currency-selector { 
+        display: none !important; 
     }
 }
 
-/* Adaptation pour très petits écrans */
-@media (max-width: 480px) {
-    .header-content {
-        padding: 0 10px !important;
-        gap: 5px;
-    }
-    
-    .logo {
-        font-size: 1.5rem !important;
-        max-width: 110px;
-    }
-    
-    .header-right-group {
-        gap: 4px;
-    }
-    
-    .currency-selector select {
-        min-width: 40px !important;
-        max-width: 45px !important;
-        font-size: 0.65rem !important;
-        padding: 2px 4px !important;
-        height: 24px !important;
-    }
-    
-    .language-switcher span {
-        font-size: 0.65rem !important;
-        padding: 2px 6px !important;
-        height: 24px !important;
-        min-width: 35px;
-    }
-    
-    .login-btn,
-    .dashboard-btn {
-        padding: 3px 8px !important;
-        font-size: 0.65rem !important;
-        height: 24px !important;
-        min-width: 65px;
-    }
-    
-    .mobile-login-btn-header {
-        display: none !important;
-    }
-}
-
-/* Cacher le bouton mobile sur desktop */
 @media (min-width: 769px) {
-    .mobile-login-btn-header {
-        display: none !important;
-    }
-    
     /* Rétablir le header desktop */
     .header-content {
         display: grid !important;
@@ -345,15 +309,38 @@
     
     .logo-section {
         justify-self: start !important;
+        position: static !important;
+        transform: none !important;
     }
     
     .header-right-group {
+        display: flex !important;
         justify-self: end !important;
     }
     
-    /* Rétablir les icônes sur desktop */
-    .currency-selector i,
-    .language-switcher i {
-        display: inline-block !important;
+    .mobile-login-btn-header {
+        display: none !important;
     }
+    
+    .mobile-dashboard-btn {
+        display: none !important;
+    }
+    
+    .mobile-header-right-group {
+        display: none !important;
+    }
+    
+    .currency-selector-mobile {
+        display: none !important;
+    }
+    
+    .language-switcher-mobile {
+        display: none !important;
+    }
+}
+
+/* Correction pour s'assurer que le dashboard remplace bien le login */
+.mobile-header-right-group .mobile-login-btn-header[style*="display: none"],
+.mobile-header-right-group .mobile-dashboard-btn[style*="display: none"] {
+    display: none !important;
 }
