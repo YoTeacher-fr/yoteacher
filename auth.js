@@ -662,11 +662,11 @@ class AuthManager {
         
         if (!this.user) return;
         
-        const headerContent = document.querySelector('.header-content');
-        if (!headerContent) return;
+        const mobileHeaderGroup = document.querySelector('.mobile-header-right-group');
+        if (!mobileHeaderGroup) return;
         
         // Vérifier si le bouton existe déjà
-        if (document.querySelector('.mobile-dashboard-btn')) return;
+        if (mobileHeaderGroup.querySelector('.mobile-dashboard-btn')) return;
         
         const mobileDashboardBtn = document.createElement('a');
         mobileDashboardBtn.className = 'mobile-dashboard-btn';
@@ -678,13 +678,19 @@ class AuthManager {
             <span>Dashboard</span>
         `;
         
-        // Ajouter immédiatement pour éviter le délai
-        headerContent.appendChild(mobileDashboardBtn);
+        // Ajouter au groupe mobile
+        mobileHeaderGroup.appendChild(mobileDashboardBtn);
+        
+        // Cacher le bouton login s'il existe
+        const mobileLoginBtn = mobileHeaderGroup.querySelector('.mobile-login-btn-header');
+        if (mobileLoginBtn) {
+            mobileLoginBtn.style.display = 'none';
+        }
     }
 
     removeMobileDashboardButton() {
         const mobileDashboardBtn = document.querySelector('.mobile-dashboard-btn');
-        if (mobileDashboardBtn) {
+        if (mobileDashboardBtn && mobileDashboardBtn.parentElement) {
             mobileDashboardBtn.remove();
         }
     }
@@ -692,7 +698,10 @@ class AuthManager {
     showMobileLoginButton() {
         this.removeMobileDashboardButton();
         
-        const mobileLoginBtn = document.querySelector('.mobile-login-btn-header');
+        const mobileHeaderGroup = document.querySelector('.mobile-header-right-group');
+        if (!mobileHeaderGroup) return;
+        
+        const mobileLoginBtn = mobileHeaderGroup.querySelector('.mobile-login-btn-header');
         if (mobileLoginBtn) {
             mobileLoginBtn.style.display = 'block';
             
@@ -706,7 +715,10 @@ class AuthManager {
     }
 
     removeMobileLoginButton() {
-        const mobileLoginBtn = document.querySelector('.mobile-login-btn-header');
+        const mobileHeaderGroup = document.querySelector('.mobile-header-right-group');
+        if (!mobileHeaderGroup) return;
+        
+        const mobileLoginBtn = mobileHeaderGroup.querySelector('.mobile-login-btn-header');
         if (mobileLoginBtn) {
             mobileLoginBtn.style.display = 'none';
         }

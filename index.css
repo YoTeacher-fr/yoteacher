@@ -146,19 +146,22 @@
         font-weight: 700 !important;
     }
     
-    /* Groupe de droite sur mobile */
+    /* Groupe de droite sur mobile - RÉORGANISATION COMPLÈTE */
     .mobile-header-right-group {
         display: flex !important;
         align-items: center !important;
         gap: 8px !important;
-        margin-left: auto !important;
         order: 2;
+        width: auto;
+        justify-content: flex-end;
+        flex: 1;
     }
     
     /* Devise mobile */
     .currency-selector-mobile {
         display: flex !important;
         align-items: center !important;
+        order: 1;
     }
     
     .currency-selector-mobile select {
@@ -185,6 +188,7 @@
     .language-switcher-mobile {
         display: flex !important;
         align-items: center !important;
+        order: 2;
     }
     
     .language-switcher-mobile span {
@@ -206,7 +210,7 @@
         display: none !important;
     }
     
-    /* Bouton connexion/dashboard mobile */
+    /* Bouton connexion/dashboard mobile - POSITION DROITE */
     .mobile-login-btn-header {
         display: block !important;
         padding: 4px 10px !important;
@@ -222,6 +226,7 @@
         height: 26px !important;
         min-width: 70px;
         text-align: center;
+        order: 3; /* Toujours à droite */
     }
     
     /* Styles pour le bouton dashboard mobile (quand connecté) */
@@ -238,7 +243,8 @@
         font-weight: 600 !important;
         height: 26px !important;
         min-width: 90px;
-        position: relative;
+        order: 3; /* Même position que login */
+        margin-left: 0 !important; /* Supprimer le margin-left */
     }
     
     .mobile-dashboard-btn .avatar-img {
@@ -253,6 +259,15 @@
         font-size: 0.6rem !important;
         font-weight: bold;
         flex-shrink: 0;
+    }
+    
+    /* Cacher le bouton connexion quand dashboard est affiché */
+    .mobile-header-right-group .mobile-login-btn-header {
+        display: none !important;
+    }
+    
+    .mobile-header-right-group .mobile-dashboard-btn {
+        display: flex !important;
     }
     
     /* Cacher le groupe de droite desktop sur mobile */
@@ -318,4 +333,10 @@
     .language-switcher-mobile {
         display: none !important;
     }
+}
+
+/* Correction pour s'assurer que le dashboard remplace bien le login */
+.mobile-header-right-group .mobile-login-btn-header[style*="display: none"],
+.mobile-header-right-group .mobile-dashboard-btn[style*="display: none"] {
+    display: none !important;
 }
