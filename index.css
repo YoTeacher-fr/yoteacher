@@ -108,20 +108,18 @@
         height: 60px !important;
     }
     
-    /* HEADER CONTENT - STRUCTURE CORRECTE */
+    /* HEADER CONTENT - GRILLE 3 COLONNES ÉQUILIBRÉE */
     .header-content {
-        display: flex !important;
-        justify-content: flex-start !important;
+        display: grid !important;
+        grid-template-columns: 1fr auto 1fr !important;
         align-items: center !important;
         padding: 0 15px !important;
         width: 100% !important;
         height: 60px !important;
-        grid-template-columns: none !important;
-        grid: none !important;
-        position: relative !important;
+        gap: 10px !important;
     }
     
-    /* HAMBURGER MENU À GAUCHE */
+    /* HAMBURGER MENU À GAUCHE - COLONNE 1 */
     .hamburger-menu {
         display: block !important;
         background: none !important;
@@ -129,9 +127,8 @@
         cursor: pointer !important;
         padding: 8px !important;
         margin: 0 !important;
-        order: 1 !important;
-        flex: 0 0 auto !important;
-        z-index: 10 !important;
+        justify-self: start !important;
+        grid-column: 1 !important;
     }
     
     .hamburger-menu span {
@@ -144,23 +141,17 @@
         transition: 0.3s !important;
     }
     
-    /* LOGO CENTRÉ ABSOLUMENT - SANS ÉCRASER */
+    /* LOGO CENTRÉ - COLONNE 2 */
     .logo-section {
-        position: absolute !important;
-        left: 50% !important;
-        top: 50% !important;
-        transform: translate(-50%, -50%) !important;
+        position: static !important;
+        transform: none !important;
         display: flex !important;
         align-items: center !important;
+        justify-content: center !important;
         gap: 10px !important;
         width: auto !important;
-        max-width: 35% !important;
-        z-index: 5 !important;
-        pointer-events: none !important;
-    }
-    
-    .logo-section * {
-        pointer-events: auto !important;
+        grid-column: 2 !important;
+        justify-self: center !important;
     }
     
     .logo {
@@ -170,46 +161,35 @@
         white-space: nowrap !important;
     }
     
-    /* GROUPE DE DROITE - SANS ÊTRE ÉCRASÉ */
+    /* GROUPE DE DROITE - COLONNE 3 */
     .mobile-header-right-group {
         display: flex !important;
         align-items: center !important;
         gap: 8px !important;
-        order: 2 !important;
-        width: auto !important;
         justify-content: flex-end !important;
-        flex: 0 0 auto !important;
-        margin-left: auto !important;
-        padding: 0 !important;
-        z-index: 10 !important;
+        grid-column: 3 !important;
+        justify-self: end !important;
     }
     
-    /* DEVISE MOBILE - TAILLE RÉDUITE BOOKING */
+    /* DEVISE MOBILE - EXACTEMENT COMME BOOKING */
     .currency-selector-mobile {
         display: flex !important;
         align-items: center !important;
         order: 1 !important;
-        height: 26px !important;
-        flex: 0 0 auto !important;
     }
     
     .currency-selector-mobile select {
-        padding: 2px 5px !important;
+        padding: 3px 6px !important;
         font-size: 0.7rem !important;
-        min-width: 58px !important;
-        max-width: 65px !important;
+        width: 65px !important;
         background: white !important;
-        border: 1px solid rgba(0, 0, 0, 0.12) !important;
-        border-radius: 11px !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 12px !important;
         color: #333 !important;
-        display: block !important;
-        height: 24px !important;
+        height: 26px !important;
         font-weight: 600 !important;
         text-align: center !important;
         text-align-last: center !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
         line-height: 20px !important;
         box-sizing: border-box !important;
         appearance: none !important;
@@ -221,27 +201,25 @@
         display: none !important;
     }
     
-    /* LANGUE MOBILE - TAILLE RÉDUITE BOOKING */
+    /* LANGUE MOBILE - EXACTEMENT COMME BOOKING */
     .language-switcher-mobile {
         display: flex !important;
         align-items: center !important;
         order: 2 !important;
-        height: 26px !important;
-        flex: 0 0 auto !important;
     }
     
     .language-switcher-mobile span {
         font-size: 0.7rem !important;
-        padding: 2px 7px !important;
+        padding: 3px 8px !important;
         color: #333 !important;
         background: white !important;
-        border: 1px solid rgba(0, 0, 0, 0.12) !important;
-        border-radius: 11px !important;
-        height: 24px !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 12px !important;
+        height: 26px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        min-width: 38px !important;
+        min-width: 40px !important;
         font-weight: 600 !important;
         line-height: 20px !important;
         box-sizing: border-box !important;
@@ -252,64 +230,61 @@
         display: none !important;
     }
     
-    /* BOUTON CONNEXION MOBILE - BOOKING */
+    /* BOUTON CONNEXION MOBILE - EXACTEMENT COMME BOOKING */
     .mobile-login-btn-header {
         display: block !important;
-        padding: 5px 11px !important;
+        padding: 6px 12px !important;
         font-size: 0.85rem !important;
         font-weight: 600 !important;
         background: #4f9ad1 !important;
         color: white !important;
-        border-radius: 18px !important;
+        border-radius: 20px !important;
         text-decoration: none !important;
         white-space: nowrap !important;
         border: none !important;
         cursor: pointer !important;
-        min-width: 68px !important;
+        min-width: 70px !important;
         text-align: center !important;
         order: 3 !important;
-        height: 28px !important;
+        height: auto !important;
         line-height: 1.2 !important;
         box-sizing: border-box !important;
-        flex: 0 0 auto !important;
     }
     
-    /* BOUTON DASHBOARD MOBILE - BOOKING */
+    /* BOUTON DASHBOARD MOBILE - EXACTEMENT COMME BOOKING */
     .mobile-dashboard-btn {
         display: flex !important;
         align-items: center !important;
-        gap: 5px !important;
-        padding: 5px 11px 5px 5px !important;
+        gap: 6px !important;
+        padding: 6px 12px 6px 6px !important;
         background: #4f9ad1 !important;
         color: white !important;
-        border-radius: 18px !important;
+        border-radius: 20px !important;
         text-decoration: none !important;
         font-size: 0.85rem !important;
         font-weight: 600 !important;
-        min-width: 88px !important;
+        min-width: 90px !important;
         order: 3 !important;
-        margin-left: 0 !important;
-        height: 28px !important;
+        height: auto !important;
         line-height: 1.2 !important;
         box-sizing: border-box !important;
-        flex: 0 0 auto !important;
     }
     
     .mobile-dashboard-btn .avatar-img {
-        width: 22px !important;
-        height: 22px !important;
+        width: 24px !important;
+        height: 24px !important;
         border-radius: 50% !important;
         background: linear-gradient(135deg, #3c84f6, #1e88e5) !important;
         color: white !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 0.7rem !important;
+        font-size: 0.75rem !important;
         font-weight: bold !important;
         flex-shrink: 0 !important;
     }
     
-    /* LOGIQUE D'AFFICHAGE - COMME BOOKING */
+    /* LOGIQUE D'AFFICHAGE */
     .mobile-header-right-group .mobile-login-btn-header {
         display: none !important;
     }
@@ -371,10 +346,7 @@
     
     .logo-section {
         justify-self: start !important;
-        position: static !important;
-        transform: none !important;
-        max-width: none !important;
-        pointer-events: auto !important;
+        grid-column: 1 !important;
     }
     
     .header-right-group {
