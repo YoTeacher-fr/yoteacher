@@ -1,99 +1,95 @@
-// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION CORRIGÉE
+// Gestion de l'authentification avec gestion des paiements et codes VIP - VERSION COMPLÈTE
 class AuthManager {
     constructor() {
         this.user = null;
         this.supabaseReady = false;
         this.pendingPayment = null;
         this.invitationCode = null; // Code d'invitation VIP
+        this.isMobile = window.innerWidth <= 768;
         this.init();
     }
 
     async init() {
-    console.log('🔍 DEBUG INIT - Démarrage de l\'initialisation');
-    console.log('🔍 DEBUG INIT - window.supabase existe:', !!window.supabase);
-    console.log('🔍 DEBUG INIT - window.supabaseReady:', window.supabaseReady);
-    console.log('🔍 DEBUG INIT - window.supabaseInitialized:', !!window.supabaseInitialized);
-    
-    try {
-        // Vérifier code d'invitation dans l'URL
-        this.checkInvitationCode();
-        
-        // Attendre que Supabase soit prêt
-        await this.waitForSupabase();
-        
-        console.log('🔍 DEBUG INIT - Après waitForSupabase, supabaseReady:', this.supabaseReady);
-        
-        if (!this.supabaseReady) {
-            console.warn('⚠️ Mode dégradé activé : Supabase non disponible');
-            this.setupDegradedMode();
-            return;
-        }
-
-        // ✅ SUPABASE EST PRÊT - Attendre un peu avant d'utiliser l'API
-        console.log('✅ Supabase prêt, attente stabilisation...');
-        await new Promise(resolve => setTimeout(resolve, 500)); // 500ms de délai
-        
-        console.log('✅ Vérification de la session...');
+        console.log('🔍 DEBUG INIT - Démarrage de l\'initialisation');
+        console.log('🔍 DEBUG INIT - window.supabase existe:', !!window.supabase);
         
         try {
-            const { data: { session }, error } = await supabase.auth.getSession();
+            // Vérifier code d'invitation dans l'URL
+            this.checkInvitationCode();
             
-            console.log('🔍 DEBUG SESSION - error:', error);
-            console.log('🔍 DEBUG SESSION - session:', !!session);
+            // Attendre que Supabase soit prêt
+            await this.waitForSupabase();
             
-            if (error) {
-                console.warn('⚠️ Erreur getSession:', error.message);
-                // Si l'erreur est une AbortError, on ignore et on continue
-                if (error.message.includes('aborted')) {
-                    console.log('ℹ️ Erreur abort ignorée, aucune session active');
-                }
-            }
+            console.log('🔍 DEBUG INIT - Après waitForSupabase, supabaseReady:', this.supabaseReady);
             
-            if (session) {
-                this.user = session.user;
-                await this.loadUserProfile();
-                this.updateUI();
-                this.emitAuthEvent('login', this.user);
-                console.log('✅ Session restaurée pour:', this.user.email);
-            } else {
-                console.log('ℹ️ Aucune session active');
+            if (!this.supabaseReady) {
+                console.warn('⚠️ Mode dégradé activé : Supabase non disponible');
+                this.setupDegradedMode();
+                return;
             }
 
-            // Écouter les changements d'authentification
-            supabase.auth.onAuthStateChange(async (event, session) => {
-                console.log('🔄 Auth state changed:', event, !!session);
+            // ✅ SUPABASE EST PRÊT
+            console.log('✅ Supabase prêt, attente stabilisation...');
+            await new Promise(resolve => setTimeout(resolve, 500)); // 500ms de délai
+            
+            console.log('✅ Vérification de la session...');
+            
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                console.log('🔍 DEBUG SESSION - error:', error);
+                console.log('🔍 DEBUG SESSION - session:', !!session);
+                
+                if (error) {
+                    console.warn('⚠️ Erreur getSession:', error.message);
+                    if (error.message.includes('aborted')) {
+                        console.log('ℹ️ Erreur abort ignorée, aucune session active');
+                    }
+                }
+                
                 if (session) {
                     this.user = session.user;
                     await this.loadUserProfile();
                     this.updateUI();
                     this.emitAuthEvent('login', this.user);
-                    await this.applyPendingInvitation();
+                    console.log('✅ Session restaurée pour:', this.user.email);
                 } else {
-                    this.user = null;
-                    this.removeUserFromStorage();
-                    this.updateUI();
-                    this.emitAuthEvent('logout');
+                    console.log('ℹ️ Aucune session active');
                 }
-            });
-            
-        } catch (sessionError) {
-            console.error('❌ Exception lors de la vérification de session:', sessionError);
-            
-            // Si c'est une AbortError, on ne passe PAS en mode dégradé
-            if (sessionError.message && sessionError.message.includes('aborted')) {
-                console.log('ℹ️ Erreur abort - continuité normale sans session');
-                this.updateUI();
-            } else {
-                // Pour les autres erreurs, mode dégradé
-                this.setupDegradedMode();
+
+                // Écouter les changements d'authentification
+                supabase.auth.onAuthStateChange(async (event, session) => {
+                    console.log('🔄 Auth state changed:', event, !!session);
+                    if (session) {
+                        this.user = session.user;
+                        await this.loadUserProfile();
+                        this.updateUI();
+                        this.emitAuthEvent('login', this.user);
+                        await this.applyPendingInvitation();
+                    } else {
+                        this.user = null;
+                        this.removeUserFromStorage();
+                        this.updateUI();
+                        this.emitAuthEvent('logout');
+                    }
+                });
+                
+            } catch (sessionError) {
+                console.error('❌ Exception lors de la vérification de session:', sessionError);
+                
+                if (sessionError.message && sessionError.message.includes('aborted')) {
+                    console.log('ℹ️ Erreur abort - continuité normale sans session');
+                    this.updateUI();
+                } else {
+                    this.setupDegradedMode();
+                }
             }
+            
+        } catch (error) {
+            console.error('❌ Erreur lors de l\'initialisation de l\'auth:', error);
+            this.setupDegradedMode();
         }
-        
-    } catch (error) {
-        console.error('❌ Erreur lors de l\'initialisation de l\'auth:', error);
-        this.setupDegradedMode();
     }
-}
 
     // ===== GESTION DES CODES D'INVITATION VIP =====
     
@@ -196,7 +192,7 @@ class AuthManager {
         try {
             console.log(`🔍 Vérification du code VIP: ${code}`);
             
-            // 1. Vérifier que le code existe dans la table (au moins 1 prix template)
+            // 1. Vérifier que le code existe dans la table
             const { data: templatePrices, error: pricesError } = await supabase
                 .from('vip_pricing')
                 .select('*')
@@ -234,7 +230,7 @@ class AuthManager {
                 return { success: true, message: 'Déjà appliqué' };
             }
             
-            // 3. CRÉER OU METTRE À JOUR LE PROFIL AVANT TOUTE CHOSE
+            // 3. CRÉER OU METTRE À JOUR LE PROFIL
             console.log('🔄 Vérification/création du profil...');
             
             const { data: existingProfile } = await supabase
@@ -482,7 +478,6 @@ class AuthManager {
         console.log('⏳ Attente de Supabase...');
         
         try {
-            // Attendre la promesse d'initialisation
             const initialized = await window.supabaseInitialized;
             
             console.log('🔍 DEBUG waitForSupabase - initialized:', initialized);
@@ -497,9 +492,9 @@ class AuthManager {
             console.warn('⚠️ Erreur supabaseInitialized:', error.message);
         }
 
-        // Vérification de secours (max 3 secondes)
+        // Vérification de secours
         let attempts = 0;
-        const maxAttempts = 15; // 15 x 200ms = 3 secondes max
+        const maxAttempts = 15;
         
         return new Promise((resolve) => {
             const checkSupabase = () => {
@@ -531,46 +526,46 @@ class AuthManager {
     }
 
     setupDegradedMode() {
-    const storedUser = localStorage.getItem('yoteacher_user');
-    if (storedUser) {
-        try {
-            this.user = JSON.parse(storedUser);
-            console.log('ℹ️ Mode dégradé : utilisateur restauré depuis localStorage');
-            this.updateUI();
-            return; // Sortir si l'utilisateur est restauré
-        } catch (error) {
-            console.warn('Erreur lecture localStorage:', error);
-            this.user = null;
+        const storedUser = localStorage.getItem('yoteacher_user');
+        if (storedUser) {
+            try {
+                this.user = JSON.parse(storedUser);
+                console.log('ℹ️ Mode dégradé : utilisateur restauré depuis localStorage');
+                this.updateUI();
+                return;
+            } catch (error) {
+                console.warn('Erreur lecture localStorage:', error);
+                this.user = null;
+            }
+        }
+        
+        // Si on arrive ici, l'utilisateur n'est PAS authentifié
+        console.log('❌ Mode dégradé : utilisateur non authentifié');
+        this.user = null;
+        
+        const isIndexPage = window.location.pathname.includes('index.html') || 
+                           window.location.pathname === '/' || 
+                           window.location.pathname.endsWith('/');
+        
+        const isAuthPage = window.location.pathname.includes('login.html') ||
+                          window.location.pathname.includes('signup.html') ||
+                          window.location.pathname.includes('reset-password.html');
+        
+        // Rediriger vers login si pas sur une page d'authentification
+        if (!isIndexPage && !isAuthPage) {
+            console.log('🔄 Redirection vers login.html (mode dégradé)');
+            const currentUrl = encodeURIComponent(window.location.href);
+            setTimeout(() => {
+                window.location.replace(`login.html?redirect=${currentUrl}`);
+            }, 500);
+        }
+        
+        // Afficher l'avertissement de mode dégradé
+        if (!isIndexPage) {
+            this.showDegradedModeWarning();
         }
     }
-    
-    // Si on arrive ici, l'utilisateur n'est PAS authentifié
-    console.log('❌ Mode dégradé : utilisateur non authentifié');
-    this.user = null;
-    
-    // NE PAS rediriger si on est sur index.html ou login/signup pages
-    const isIndexPage = window.location.pathname.includes('index.html') || 
-                       window.location.pathname === '/' || 
-                       window.location.pathname.endsWith('/');
-    
-    const isAuthPage = window.location.pathname.includes('login.html') ||
-                      window.location.pathname.includes('signup.html') ||
-                      window.location.pathname.includes('reset-password.html');
-    
-    // Rediriger vers login si pas sur une page d'authentification
-    if (!isIndexPage && !isAuthPage) {
-        console.log('🔄 Redirection vers login.html (mode dégradé)');
-        const currentUrl = encodeURIComponent(window.location.href);
-        setTimeout(() => {
-            window.location.replace(`login.html?redirect=${currentUrl}`);
-        }, 500);
-    }
-    
-    // Afficher l'avertissement de mode dégradé
-    if (!isIndexPage) {
-        this.showDegradedModeWarning();
-    }
-}
+
     showDegradedModeWarning() {
         if (document.getElementById('degraded-mode-warning')) return;
         
@@ -934,34 +929,160 @@ class AuthManager {
         }
     }
 
+    // ===== MISE À JOUR DE L'INTERFACE UTILISATEUR - VERSION COMPLÈTE =====
     updateUI() {
         const user = this.user;
+        this.isMobile = window.innerWidth <= 768;
         const isIndexPage = window.location.pathname.includes('index.html') || 
                            window.location.pathname === '/' || 
                            window.location.pathname.endsWith('/');
         
+        console.log(`📱 Mise à jour UI: utilisateur ${user ? 'connecté' : 'déconnecté'}, mobile: ${this.isMobile}, index: ${isIndexPage}`);
+        
         if (user) {
+            // UTILISATEUR CONNECTÉ
             this.removeLoginButtonFromHeader();
             this.addUserAvatar();
             
+            // Gestion spéciale mobile
+            if (this.isMobile) {
+                this.updateMobileButtonForConnectedUser();
+            }
+            
             if (isIndexPage) {
+                // Sur la page d'accueil, modifier les boutons CTA
+                this.updateIndexPageForConnectedUser();
                 return;
             }
             
+            // Sur les autres pages
             this.updateAllButtonsForConnectedUser();
             
         } else {
+            // UTILISATEUR DÉCONNECTÉ
             this.removeUserAvatar();
             this.restoreLoginButtonInHeader();
             
+            // Gestion spéciale mobile
+            if (this.isMobile) {
+                this.updateMobileButtonForDisconnectedUser();
+            }
+            
             if (!isIndexPage) {
+                // Sur les pages non-index, restaurer les boutons
                 this.restoreAllButtonsForDisconnectedUser();
             }
         }
     }
 
+    // Mettre à jour le bouton mobile pour utilisateur connecté
+    updateMobileButtonForConnectedUser() {
+        console.log('📱 Mise à jour bouton mobile pour utilisateur connecté');
+        
+        // 1. Mettre à jour le bouton mobile dans le header
+        const mobileBtn = document.querySelector('.mobile-login-btn-header, .mobile-dashboard-btn');
+        if (mobileBtn) {
+            console.log('✅ Bouton mobile trouvé, mise à jour en Dashboard');
+            mobileBtn.textContent = 'Dashboard';
+            mobileBtn.href = 'dashboard.html';
+            mobileBtn.className = 'mobile-dashboard-btn';
+            
+            // Ajouter un style spécifique
+            mobileBtn.style.backgroundColor = '#4CAF50';
+            mobileBtn.style.color = 'white';
+        } else {
+            console.log('⚠️ Bouton mobile non trouvé, création si nécessaire');
+            this.createMobileDashboardButton();
+        }
+    }
+
+    // Mettre à jour le bouton mobile pour utilisateur déconnecté
+    updateMobileButtonForDisconnectedUser() {
+        console.log('📱 Mise à jour bouton mobile pour utilisateur déconnecté');
+        
+        const mobileBtn = document.querySelector('.mobile-dashboard-btn, .mobile-login-btn-header');
+        if (mobileBtn) {
+            console.log('✅ Bouton mobile trouvé, mise à jour en Connexion');
+            mobileBtn.textContent = 'Connexion';
+            mobileBtn.href = 'login.html';
+            mobileBtn.className = 'mobile-login-btn-header';
+            
+            // Restaurer le style original
+            mobileBtn.style.backgroundColor = '';
+            mobileBtn.style.color = '';
+        }
+    }
+
+    // Créer un bouton dashboard mobile si nécessaire
+    createMobileDashboardButton() {
+        // Rechercher le conteneur header-content
+        const headerContent = document.querySelector('.header-content');
+        if (!headerContent) return;
+        
+        // Vérifier si un bouton existe déjà
+        const existingBtn = headerContent.querySelector('.mobile-dashboard-btn');
+        if (existingBtn) return;
+        
+        // Créer le bouton
+        const dashboardBtn = document.createElement('a');
+        dashboardBtn.href = 'dashboard.html';
+        dashboardBtn.className = 'mobile-dashboard-btn';
+        dashboardBtn.textContent = 'Dashboard';
+        dashboardBtn.style.cssText = `
+            display: block !important;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            background: #4CAF50;
+            color: white;
+            border-radius: 20px;
+            text-decoration: none;
+            margin-left: auto;
+            z-index: 1001;
+            font-weight: 600;
+        `;
+        
+        // Ajouter au header (à la fin)
+        headerContent.appendChild(dashboardBtn);
+        
+        console.log('✅ Bouton dashboard mobile créé');
+    }
+
+    // Mettre à jour la page d'accueil pour utilisateur connecté
+    updateIndexPageForConnectedUser() {
+        console.log('🏠 Mise à jour page d\'accueil pour utilisateur connecté');
+        
+        // Modifier les boutons CTA
+        document.querySelectorAll('.btn-secondary, .btn-outline-white').forEach(btn => {
+            if (!btn || !btn.textContent) return;
+            
+            const text = btn.textContent.toLowerCase();
+            if (text.includes('créer') || text.includes('creer') || 
+                (btn.href && (btn.href.includes('signup.html') || btn.href === '#'))) {
+                btn.textContent = 'Mon dashboard';
+                btn.href = 'dashboard.html';
+                
+                if (btn.classList.contains('btn-outline-white')) {
+                    btn.classList.remove('btn-outline-white');
+                    btn.classList.add('btn-outline');
+                } else if (btn.classList.contains('btn-secondary')) {
+                    btn.classList.remove('btn-secondary');
+                    btn.classList.add('btn-primary');
+                }
+            }
+        });
+        
+        // Modifier le bouton d'essai dans le CTA final
+        const essaiBtn = document.querySelector('.final-cta-buttons .btn-outline-white');
+        if (essaiBtn && essaiBtn.textContent.includes('Créer')) {
+            essaiBtn.textContent = 'Mon dashboard';
+            essaiBtn.href = 'dashboard.html';
+            essaiBtn.classList.remove('btn-outline-white');
+            essaiBtn.classList.add('btn-outline');
+        }
+    }
+
     removeLoginButtonFromHeader() {
-        const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header, .mobile-login-btn');
+        const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header');
         loginButtons.forEach(btn => {
             if (btn && btn.parentElement) {
                 btn.style.display = 'none';
@@ -970,11 +1091,12 @@ class AuthManager {
     }
 
     restoreLoginButtonInHeader() {
-        const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header, .mobile-login-btn');
+        const loginButtons = document.querySelectorAll('.login-btn, .mobile-login-btn-header');
         loginButtons.forEach(btn => {
             if (btn) {
                 btn.style.display = 'flex';
                 
+                // Ajouter redirect URL si nécessaire
                 if (!window.location.pathname.includes('login.html') && 
                     !window.location.pathname.includes('signup.html') &&
                     btn.href && btn.href.includes('login.html')) {
@@ -1052,6 +1174,7 @@ class AuthManager {
         
         container.appendChild(avatar);
         
+        // Gestionnaire d'événements pour la déconnexion
         const logoutBtn = document.getElementById('logoutBtnIcon');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
@@ -1493,6 +1616,8 @@ class AuthManager {
     }
 }
 
+// ===== GESTION GLOBALE DES ÉVÉNEMENTS =====
+
 // Écouteurs globaux pour le débogage
 window.addEventListener('auth:login', function(e) {
     console.log('✅ Événement global auth:login reçu', e.detail?.user?.email || 'sans email');
@@ -1506,132 +1631,59 @@ window.addEventListener('vip:applied', function(e) {
     console.log('🎉 Code VIP appliqué:', e.detail.code);
 });
 
-// Fonction de diagnostic des problèmes de base de données
-window.diagnoseBookingIssues = async function() {
-    console.group('🔍 DIAGNOSTIC DES RÉSERVATIONS');
-    
-    if (!window.supabase) {
-        console.error('❌ Supabase non initialisé');
-        console.groupEnd();
-        return;
-    }
-    
-    const user = window.authManager?.getCurrentUser();
-    if (!user) {
-        console.error('❌ Utilisateur non connecté');
-        console.groupEnd();
-        return;
-    }
-    
-    try {
-        const { data: bookings, error: bookingsError } = await supabase
-            .from('bookings')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(5);
-        
-        if (bookingsError) {
-            console.error('❌ Erreur accès à bookings:', bookingsError.message);
-        } else {
-            console.log(`📋 ${bookings.length} réservation(s) trouvée(s) dans bookings:`);
-            bookings.forEach((b, i) => {
-                console.log(`  ${i+1}. ${b.booking_number} - ${b.course_type} - ${b.status} - ${b.price_paid} ${b.currency}`);
-            });
-        }
-        
-        const { data: packages, error: packagesError } = await supabase
-            .from('packages')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('purchased_at', { ascending: false });
-        
-        if (packagesError) {
-            console.error('❌ Erreur accès à packages:', packagesError.message);
-        } else {
-            console.log(`📦 ${packages.length} package(s) trouvé(s) pour l\'utilisateur:`);
-            packages.forEach((p, i) => {
-                console.log(`  ${i+1}. ${p.course_type} - ${p.remaining_credits}/${p.total_credits} crédits - ${p.status} - Expire: ${new Date(p.expires_at).toLocaleDateString()}`);
-            });
-        }
-        
-        const { data: transactions, error: transactionsError } = await supabase
-            .from('credit_transactions')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(5);
-        
-        if (transactionsError) {
-            console.error('❌ Erreur accès à credit_transactions:', transactionsError.message);
-        } else {
-            console.log(`💳 ${transactions.length} transaction(s) de crédit trouvée(s):`);
-            transactions.forEach((t, i) => {
-                console.log(`  ${i+1}. ${t.transaction_type} - ${t.credits_change} crédits - ${t.reason}`);
-            });
-        }
-        
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-        
-        if (profileError) {
-            console.error('❌ Erreur accès au profil:', profileError.message);
-        } else {
-            console.log(`👤 Profil trouvé: ${profile.full_name} - VIP: ${profile.is_vip}`);
-        }
-        
-    } catch (error) {
-        console.error('❌ Erreur diagnostic:', error);
-    }
-    
-    console.groupEnd();
-};
-
-// Fonction de diagnostic d'authentification
-window.diagnoseAuth = function() {
-    console.group('🔍 DIAGNOSTIC AUTH');
-    
-    const storedUser = localStorage.getItem('yoteacher_user');
-    console.log('1. localStorage user:', storedUser ? 'PRÉSENT' : 'ABSENT');
-    if (storedUser) {
-        try {
-            const user = JSON.parse(storedUser);
-            console.log('   Email:', user.email);
-            console.log('   Timestamp:', user._timestamp ? new Date(user._timestamp).toLocaleString() : 'N/A');
-        } catch (e) {
-            console.log('   ERREUR parsing:', e.message);
-        }
-    }
-    
-    console.log('2. authManager:', window.authManager ? 'PRÉSENT' : 'ABSENT');
+// Écouter les changements de taille d'écran pour mettre à jour l'UI
+window.addEventListener('resize', function() {
     if (window.authManager) {
-        console.log('   User:', window.authManager.user ? 'PRÉSENT' : 'ABSENT');
-        console.log('   isAuthenticated:', typeof window.authManager.isAuthenticated);
-        if (typeof window.authManager.isAuthenticated === 'function') {
-            console.log('   isAuthenticated():', window.authManager.isAuthenticated());
+        const isNowMobile = window.innerWidth <= 768;
+        if (isNowMobile !== window.authManager.isMobile) {
+            window.authManager.isMobile = isNowMobile;
+            window.authManager.updateUI();
         }
     }
-    
-    const sessionCode = sessionStorage.getItem('invitation_code');
-    console.log('3. Session code:', sessionCode || 'ABSENT');
-    
-    console.log('4. URL actuelle:', window.location.href);
-    console.log('   Path:', window.location.pathname);
-    const params = new URLSearchParams(window.location.search);
-    console.log('   Paramètres:', Object.fromEntries(params.entries()));
-    
-    console.groupEnd();
-};
+});
 
+// Détecter les changements de connexion en mobile
+window.addEventListener('auth:login', function() {
+    if (window.innerWidth <= 768 && window.authManager) {
+        const user = window.authManager.getCurrentUser();
+        if (user) {
+            setTimeout(() => {
+                const mobileBtn = document.querySelector('.mobile-login-btn-header, .mobile-dashboard-btn');
+                if (mobileBtn) {
+                    mobileBtn.textContent = 'Dashboard';
+                    mobileBtn.href = 'dashboard.html';
+                    mobileBtn.className = 'mobile-dashboard-btn';
+                    
+                    // Style pour dashboard mobile
+                    mobileBtn.style.backgroundColor = '#4CAF50';
+                    mobileBtn.style.color = 'white';
+                }
+            }, 300);
+        }
+    }
+});
+
+window.addEventListener('auth:logout', function() {
+    if (window.innerWidth <= 768) {
+        setTimeout(() => {
+            const mobileBtn = document.querySelector('.mobile-dashboard-btn, .mobile-login-btn-header');
+            if (mobileBtn) {
+                mobileBtn.textContent = 'Connexion';
+                mobileBtn.href = 'login.html';
+                mobileBtn.className = 'mobile-login-btn-header';
+                
+                // Restaurer le style original
+                mobileBtn.style.backgroundColor = '';
+                mobileBtn.style.color = '';
+            }
+        }, 300);
+    }
+});
+
+// Initialisation
 document.addEventListener('DOMContentLoaded', function() {
     const isAuthPage = window.location.pathname.includes('login.html') || 
                       window.location.pathname.includes('signup.html');
-    
-    const isDashboardPage = window.location.pathname.includes('dashboard.html') ||
-                           window.location.pathname.includes('profile.html');
     
     const delay = window.innerWidth <= 768 ? 500 : 100;
     
@@ -1641,10 +1693,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }, delay);
 });
 
+// Export pour Node.js si nécessaire
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { AuthManager };
 }
 
+// Fonctions de débogage
 window.debugVipPrices = async function() {
     const authMgr = window.authManager;
     
@@ -1688,4 +1742,41 @@ window.debugVipPrices = async function() {
     console.groupEnd();
 };
 
-console.log('✅ auth.js chargé avec système de codes d\'invitation VIP - Version corrigée avec debug complet');
+window.diagnoseAuth = function() {
+    console.group('🔍 DIAGNOSTIC AUTH');
+    
+    const storedUser = localStorage.getItem('yoteacher_user');
+    console.log('1. localStorage user:', storedUser ? 'PRÉSENT' : 'ABSENT');
+    if (storedUser) {
+        try {
+            const user = JSON.parse(storedUser);
+            console.log('   Email:', user.email);
+            console.log('   Timestamp:', user._timestamp ? new Date(user._timestamp).toLocaleString() : 'N/A');
+        } catch (e) {
+            console.log('   ERREUR parsing:', e.message);
+        }
+    }
+    
+    console.log('2. authManager:', window.authManager ? 'PRÉSENT' : 'ABSENT');
+    if (window.authManager) {
+        console.log('   User:', window.authManager.user ? 'PRÉSENT' : 'ABSENT');
+        console.log('   isAuthenticated:', window.authManager.isAuthenticated());
+        console.log('   isMobile:', window.authManager.isMobile);
+    }
+    
+    const sessionCode = sessionStorage.getItem('invitation_code');
+    console.log('3. Session code:', sessionCode || 'ABSENT');
+    
+    console.log('4. URL actuelle:', window.location.href);
+    console.log('   Path:', window.location.pathname);
+    const params = new URLSearchParams(window.location.search);
+    console.log('   Paramètres:', Object.fromEntries(params.entries()));
+    
+    // Vérifier les boutons mobiles
+    const mobileBtn = document.querySelector('.mobile-login-btn-header, .mobile-dashboard-btn');
+    console.log('5. Bouton mobile:', mobileBtn ? `${mobileBtn.textContent} (${mobileBtn.className})` : 'ABSENT');
+    
+    console.groupEnd();
+};
+
+console.log('✅ auth.js chargé avec gestion complète des boutons mobile - Version finale');
