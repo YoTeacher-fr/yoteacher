@@ -97,9 +97,11 @@
     border-radius: 50px;
 }
 
-/* ===== HEADER MOBILE - PIXEL PERFECT AVEC BOOKING ===== */
+/* ===============================
+   HEADER MOBILE — ALIGNÉ SUR BOOKING
+   =============================== */
 @media (max-width: 768px) {
-    /* HEADER - IDENTIQUE À BOOKING */
+
     .main-header {
         background-color: rgba(255, 255, 255, 0.98) !important;
         box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
@@ -107,258 +109,86 @@
         min-height: 60px !important;
         height: 60px !important;
     }
-    
-    /* HEADER CONTENT - FLEX SIMPLE */
+
     .header-content {
         display: flex !important;
-        justify-content: space-between !important;
         align-items: center !important;
-        padding: 0 15px !important;
+        justify-content: space-between !important;
+        padding: 8px 15px !important;
         width: 100% !important;
-        height: 60px !important;
-        gap: 10px !important;
     }
-    
-    /* PAS DE HAMBURGER MENU */
-    .hamburger-menu {
-        display: none !important;
-    }
-    
-    /* LOGO À GAUCHE */
+
+    /* Logo centré EXACTEMENT comme booking */
     .logo-section {
+        position: absolute !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
         display: flex !important;
         align-items: center !important;
         gap: 10px !important;
-        order: 1 !important;
-        flex: 0 0 auto !important;
     }
-    
+
     .logo {
         font-size: 1.5rem !important;
-        color: #333 !important;
         font-weight: 700 !important;
-        white-space: nowrap !important;
+        color: #333 !important;
     }
-    
-    /* GROUPE DE DROITE - DEVISE + LANGUE + BOUTON */
+
+    /* Groupe droit mobile IDENTIQUE booking */
     .mobile-header-right-group {
         display: flex !important;
         align-items: center !important;
         gap: 8px !important;
-        order: 2 !important;
-        flex: 0 0 auto !important;
-        margin-left: auto !important;
+        justify-content: flex-end !important;
+        flex: 1 !important;
     }
-    
-    /* DEVISE MOBILE - EXACTEMENT COMME BOOKING */
-    .currency-selector-mobile {
-        display: flex !important;
-        align-items: center !important;
-        order: 1 !important;
-    }
-    
-    .currency-selector-mobile select {
-        padding: 3px 6px !important;
-        font-size: 0.7rem !important;
-        width: 65px !important;
-        min-width: 65px !important;
-        max-width: 65px !important;
-        background: white !important;
-        border: 1px solid rgba(0, 0, 0, 0.15) !important;
-        border-radius: 12px !important;
-        color: #333 !important;
-        height: 26px !important;
-        font-weight: 600 !important;
-        text-align: center !important;
-        text-align-last: center !important;
-        line-height: 20px !important;
-        box-sizing: border-box !important;
-        appearance: none !important;
-        -webkit-appearance: none !important;
-        cursor: pointer !important;
-    }
-    
-    .currency-selector-mobile i {
-        display: none !important;
-    }
-    
-    /* LANGUE MOBILE - EXACTEMENT COMME BOOKING */
-    .language-switcher-mobile {
-        display: flex !important;
-        align-items: center !important;
-        order: 2 !important;
-    }
-    
-    .language-switcher-mobile span {
-        font-size: 0.7rem !important;
-        padding: 3px 8px !important;
-        color: #333 !important;
-        background: white !important;
-        border: 1px solid rgba(0, 0, 0, 0.15) !important;
-        border-radius: 12px !important;
-        height: 26px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        min-width: 40px !important;
-        font-weight: 600 !important;
-        line-height: 20px !important;
-        box-sizing: border-box !important;
-        cursor: pointer !important;
-    }
-    
-    .language-switcher-mobile .flag {
-        display: none !important;
-    }
-    
-    /* BOUTON CONNEXION MOBILE - EXACTEMENT COMME BOOKING */
+
+    /* Bouton login booking-style */
     .mobile-login-btn-header {
         display: block !important;
         padding: 6px 12px !important;
         font-size: 0.85rem !important;
-        font-weight: 600 !important;
         background: #4f9ad1 !important;
         color: white !important;
         border-radius: 20px !important;
         text-decoration: none !important;
-        white-space: nowrap !important;
-        border: none !important;
-        cursor: pointer !important;
-        min-width: 70px !important;
-        text-align: center !important;
-        order: 3 !important;
-        height: auto !important;
-        line-height: 1.2 !important;
-        box-sizing: border-box !important;
     }
-    
-    /* BOUTON DASHBOARD MOBILE - EXACTEMENT COMME BOOKING */
+
+    /* Dashboard booking-style */
     .mobile-dashboard-btn {
         display: flex !important;
         align-items: center !important;
         gap: 6px !important;
-        padding: 6px 12px 6px 6px !important;
+        padding: 6px 12px !important;
         background: #4f9ad1 !important;
         color: white !important;
         border-radius: 20px !important;
-        text-decoration: none !important;
         font-size: 0.85rem !important;
         font-weight: 600 !important;
-        min-width: 90px !important;
-        order: 3 !important;
-        height: auto !important;
-        line-height: 1.2 !important;
-        box-sizing: border-box !important;
     }
-    
+
     .mobile-dashboard-btn .avatar-img {
         width: 24px !important;
         height: 24px !important;
-        border-radius: 50% !important;
-        background: linear-gradient(135deg, #3c84f6, #1e88e5) !important;
-        color: white !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
         font-size: 0.75rem !important;
-        font-weight: bold !important;
-        flex-shrink: 0 !important;
     }
-    
-    /* LOGIQUE D'AFFICHAGE */
-    .mobile-header-right-group .mobile-login-btn-header {
-        display: none !important;
-    }
-    
-    .mobile-header-right-group .mobile-dashboard-btn {
-        display: none !important;
-    }
-    
-    .mobile-header-right-group .mobile-login-btn-header:not([style*="display: none"]) {
-        display: block !important;
-    }
-    
-    .mobile-header-right-group .mobile-dashboard-btn:not([style*="display: none"]) {
-        display: flex !important;
-    }
-    
-    /* CACHER LES ÉLÉMENTS DESKTOP */
-    .header-right-group {
-        display: none !important;
-    }
-    
-    .nav-menu.desktop-menu {
-        display: none !important;
-    }
-    
-    .currency-selector {
-        display: none !important;
-    }
-    
-    .language-switcher {
-        display: none !important;
-    }
-    
-    .login-btn {
-        display: none !important;
-    }
-    
+
+    /* Cacher desktop sur mobile */
+    .header-right-group,
+    .nav-menu.desktop-menu,
+    .nav-link,
+    .currency-selector,
+    .language-switcher,
     .user-avatar {
         display: none !important;
     }
-    
-    /* BODY PADDING */
+
+    /* Hamburger IDENTIQUE booking */
+    .hamburger-menu {
+        display: block !important;
+    }
+
     body {
         padding-top: 60px !important;
-    }
-    
-    /* NAV SPACER */
-    .nav-spacer {
-        display: none !important;
-    }
-}
-
-/* ===== DESKTOP - INCHANGÉ ===== */
-@media (min-width: 769px) {
-    .header-content {
-        display: grid !important;
-        grid-template-columns: 200px 1fr 220px !important;
-    }
-    
-    .logo-section {
-        justify-self: start !important;
-    }
-    
-    .header-right-group {
-        display: flex !important;
-        justify-self: end !important;
-    }
-    
-    .mobile-login-btn-header {
-        display: none !important;
-    }
-    
-    .mobile-dashboard-btn {
-        display: none !important;
-    }
-    
-    .mobile-header-right-group {
-        display: none !important;
-    }
-    
-    .currency-selector-mobile {
-        display: none !important;
-    }
-    
-    .language-switcher-mobile {
-        display: none !important;
-    }
-    
-    .hamburger-menu {
-        display: none !important;
-    }
-    
-    .nav-menu.desktop-menu {
-        display: block !important;
     }
 }
