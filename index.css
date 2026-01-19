@@ -150,7 +150,7 @@
     .mobile-header-right-group {
         display: flex !important;
         align-items: center !important;
-        gap: 8px !important;
+        gap: 6px !important;
         order: 2;
         width: auto;
         justify-content: flex-end;
@@ -162,13 +162,14 @@
         display: flex !important;
         align-items: center !important;
         order: 1;
+min-width: 65px;
     }
     
     .currency-selector-mobile select {
         padding: 3px 6px !important;
         font-size: 0.7rem !important;
-        min-width: 45px !important;
-        max-width: 50px !important;
+        min-width: 60px !important;
+        max-width: 70px !important;
         background: white !important;
         border: 1px solid rgba(0, 0, 0, 0.15) !important;
         border-radius: 12px !important;
@@ -178,6 +179,9 @@
         font-weight: 600;
         text-align: center;
         text-align-last: center;
+white-space: nowrap; /* Empêcher le retour à la ligne */
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .currency-selector-mobile i {
