@@ -14,92 +14,103 @@
 </head>
 <body>
     <script>
-        document.body.style.opacity = '0';
-        document.body.style.visibility = 'hidden';
+    document.body.style.opacity = '0';
+    document.body.style.visibility = 'hidden';
+    
+    function checkAuthentication() {
+        console.log('🔐 Vérification de l\'authentification pour profile...');
         
-        function checkAuthentication() {
-            console.log('🔐 Vérification de l\'authentification pour profile...');
-            
-            let attempts = 0;
-            const maxAttempts = 50;
-            
-            function check() {
-                attempts++;
+        // 1. Vérifier d'abord localStorage (le plus fiable)
+        const storedUser = localStorage.getItem('yoteacher_user');
+        
+        if (storedUser) {
+            try {
+                const userData = JSON.parse(storedUser);
+                console.log('✅ Utilisateur trouvé dans localStorage:', userData.email);
                 
-                // Vérifier si authManager existe et est prêt
-                if (window.authManager && typeof window.authManager.isAuthenticated === 'function') {
-                    if (window.authManager.isAuthenticated()) {
-                        console.log('✅ Utilisateur authentifié pour profile');
-                        document.body.classList.add('loaded');
-                        document.body.style.opacity = '1';
-                        document.body.style.visibility = 'visible';
-                        
-                        setTimeout(() => {
-                            if (window.loadProfile) window.loadProfile();
-                        }, 100);
-                        return;
-                    } else {
-                        console.log('❌ Utilisateur non authentifié');
-                        redirectToLogin();
-                        return;
+                // Forcer l'initialisation de authManager si nécessaire
+                if (!window.authManager) {
+                    window.authManager = {
+                        user: userData,
+                        isAuthenticated: () => true,
+                        getCurrentUser: () => userData
+                    };
+                } else if (!window.authManager.user) {
+                    window.authManager.user = userData;
+                }
+                
+                // Afficher la page
+                document.body.style.opacity = '1';
+                document.body.style.visibility = 'visible';
+                
+                setTimeout(() => {
+                    if (window.loadProfile) {
+                        window.loadProfile();
                     }
-                }
+                }, 100);
                 
-                if (attempts >= maxAttempts) {
-                    console.log('⚠️ AuthManager non disponible après ' + maxAttempts + ' tentatives');
-                    // Vérifier le localStorage en mode dégradé
-                    checkDegradedMode();
-                    return;
-                }
-                
-                setTimeout(check, 100);
+                return;
+            } catch (error) {
+                console.error('❌ Erreur lecture localStorage:', error);
             }
-            
-            function checkDegradedMode() {
-                const storedUser = localStorage.getItem('yoteacher_user');
-                
-                if (storedUser) {
-                    try {
-                        const userData = JSON.parse(storedUser);
-                        console.log('✅ Utilisateur trouvé dans localStorage:', userData.email);
-                        
-                        // Créer un authManager temporaire en mode dégradé
-                        if (!window.authManager) {
-                            window.authManager = {
-                                getCurrentUser: () => userData,
-                                isAuthenticated: () => true
-                            };
-                        }
-                        
-                        document.body.classList.add('loaded');
-                        document.body.style.opacity = '1';
-                        document.body.style.visibility = 'visible';
-                        
-                        setTimeout(() => {
-                            if (window.loadProfile) window.loadProfile();
-                        }, 100);
-                        
-                    } catch (error) {
-                        console.error('❌ Erreur lecture localStorage:', error);
-                        redirectToLogin();
-                    }
-                } else {
-                    console.log('❌ Aucun utilisateur dans localStorage');
-                    redirectToLogin();
-                }
-            }
-            
-            function redirectToLogin() {
-                console.log('🔄 Redirection vers login...');
-                const currentUrl = encodeURIComponent(window.location.href);
-                window.location.replace(`login.html?redirect=${currentUrl}`);
-            }
-            
-            setTimeout(check, 200);
         }
         
-        setTimeout(checkAuthentication, 200);
-    </script>
+        // 2. Si pas dans localStorage, vérifier authManager
+        let attempts = 0;
+        const maxAttempts = 30;
+        
+        function checkAuthManager() {
+            attempts++;
+            
+            if (window.authManager && typeof window.authManager.isAuthenticated === 'function') {
+                if (window.authManager.isAuthenticated()) {
+                    console.log('✅ Utilisateur authentifié via authManager');
+                    document.body.style.opacity = '1';
+                    document.body.style.visibility = 'visible';
+                    
+                    setTimeout(() => {
+                        if (window.loadProfile) {
+                            window.loadProfile();
+                        }
+                    }, 100);
+                } else {
+                    console.log('❌ AuthManager dit non authentifié');
+                    redirectToLogin();
+                }
+            } else if (attempts >= maxAttempts) {
+                console.log('⚠️ AuthManager non initialisé après 3s');
+                redirectToLogin();
+            } else {
+                console.log(`⏳ Attente authManager (${attempts}/${maxAttempts})`);
+                setTimeout(checkAuthManager, 100);
+            }
+        }
+        
+        function redirectToLogin() {
+            console.log('🔄 Redirection vers login...');
+            const currentUrl = encodeURIComponent(window.location.href);
+            window.location.replace(`login.html?redirect=${currentUrl}`);
+        }
+        
+        setTimeout(checkAuthManager, 200);
+    }
+    
+    // Écouter les événements d'authentification
+    window.addEventListener('auth:login', function() {
+        console.log('✅ Événement auth:login reçu pour profile');
+        if (window.loadProfile) {
+            window.loadProfile();
+        }
+    });
+    
+    window.addEventListener('auth:logout', function() {
+        console.log('⚠️ Événement auth:logout reçu, redirection...');
+        const currentUrl = encodeURIComponent(window.location.href);
+        window.location.replace(`login.html?redirect=${currentUrl}`);
+    });
+    
+    setTimeout(checkAuthentication, 200);
+</script>
 
     <!-- Header comme login.html sans bouton profil -->
     <header class="main-header scrolled">
