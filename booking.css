@@ -887,52 +887,7 @@ body .mobile-login-btn:hover {
         justify-content: space-between;
     }
 }
-/* Cacher le bouton connexion standard sur mobile */
-    .login-btn:not(.mobile-login-btn-header) {
-        display: none !important;
-    }
-    
-    /* Le bouton mobile connexion ne s'affiche que si déconnecté */
-    body:not(.user-logged-in) .mobile-login-btn-header {
-        display: block !important;
-    }
-    
-    body.user-logged-in .mobile-login-btn-header {
-        display: none !important;
-    }
-    
-    /* Avatar/Dashboard visible seulement si connecté */
-    body:not(.user-logged-in) .user-avatar,
-    body:not(.user-logged-in) .dashboard-btn {
-        display: none !important;
-    }
-    
-    body.user-logged-in .user-avatar,
-    body.user-logged-in .dashboard-btn {
-        display: flex !important;
-    }
-    
-    /* === 2. TAILLE DU BOUTON DASHBOARD MOBILE === */
-    .dashboard-btn {
-        padding: 6px 35px 6px 6px !important;
-        font-size: 0.85rem !important;
-        height: 32px !important;
-        min-width: 110px !important;
-    }
-    
-    .dashboard-btn .avatar-img {
-        width: 24px !important;
-        height: 24px !important;
-        font-size: 0.75rem !important;
-    }
-    
-    .logout-btn-icon {
-        width: 20px !important;
-        height: 20px !important;
-        font-size: 0.85rem !important;
-        right: -2px !important;
-        top: -2px !important;
-    }
+
 @media (max-width: 480px) {
     body .booking-card {
         padding: 20px 15px;
