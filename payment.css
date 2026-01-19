@@ -8,11 +8,13 @@
 
 /* CORRECTION COMPLÈTE DU HEADER POUR ALIGNEMENT À DROITE */
 .header-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     padding: 8px 0 !important;
     width: 100%;
+    grid-template-columns: none !important; /* Désactiver le grid */
+    grid: none !important;
 }
 
 .logo-section {
