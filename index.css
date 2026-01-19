@@ -132,13 +132,12 @@
     
     /* Logo centré */
     .logo-section {
-flex: 0 0 auto;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
         display: flex;
         align-items: center;
-        gap: 10px;
-        position: static !important;
-        transform: none !important;
-        left: auto !important;
+        gap: 5px;
     }
     
     .logo {
