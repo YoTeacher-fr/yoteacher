@@ -559,11 +559,11 @@ body {
     padding: 15px;
     background: linear-gradient(
         135deg, 
-        rgba(220, 38, 38, 0.15), 
-        rgba(185, 28, 28, 0.08)
+        rgba(220, 38, 38, 0.4), 
+        rgba(185, 28, 28, 0.35)
     ) !important;
     border-radius: 12px !important;
-    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border: 1px solid rgba(255, 255, 255, 0.55) !important;
     grid-column: span 2;
     
     /* Effet glass rouge */
