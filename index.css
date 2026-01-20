@@ -131,7 +131,7 @@
     .logo-section {
     flex: 0 0 auto !important;
     margin-right: auto !important; /* Pousse tout le reste vers la droite */
-    margin-left: -5px !important;
+    margin-left: -15px !important;
     }
     
     .logo {
