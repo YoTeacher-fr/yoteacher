@@ -178,26 +178,6 @@ body .user-menu .logout-btn:hover {
     background: #ffeaea;
 }
 
-/* Menu hamburger */
-body .hamburger-menu {
-    display: none;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-    margin-right: 10px;
-}
-
-body .hamburger-menu span {
-    display: block;
-    width: 25px;
-    height: 3px;
-    background: #333;
-    margin: 4px 0;
-    border-radius: 2px;
-    transition: 0.3s;
-}
-
 /* Menu mobile */
 body .mobile-menu-overlay {
     position: fixed;
@@ -842,11 +822,6 @@ body .mobile-login-btn:hover {
         min-width: 70px;
         padding: 10px 12px;
         font-size: 0.9rem;
-    }
-    
-    /* Header mobile */
-    body .hamburger-menu {
-        display: block;
     }
     
     body .mobile-login-btn-header {
