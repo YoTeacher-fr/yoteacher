@@ -612,8 +612,7 @@ body.loaded {
 }
 
 .btn-profile {
-    width: auto;
-    padding: 12px;
+    padding: 10px 20px; /* Réduire le padding horizontal */
     background: #3c84f6;
     color: white;
     border: none;
@@ -622,12 +621,14 @@ body.loaded {
     font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.3s;
-    display: flex;
+    display: inline-flex; /* Changer de flex à inline-flex */
     align-items: center;
     justify-content: center;
     gap: 8px;
     text-decoration: none;
-    margin-top: auto;
+    margin-top: 15px; /* Ajouter un peu d'espace au-dessus */
+    width: auto; /* Remplacer width: 100% par auto */
+    min-width: fit-content; /* S'assurer qu'il s'adapte au contenu */
 }
 
 .btn-profile:hover {
