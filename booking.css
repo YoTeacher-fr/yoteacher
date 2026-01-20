@@ -969,7 +969,7 @@ body .booking-card {
 /* ===== STYLES VIP AJOUTÉS ===== */
 /* Style pour les prix VIP */
 body .vip-price-display {
-    color: #fff !important;
+    color: #000 !important;
     font-weight: bold !important;
     position: relative;
 }
