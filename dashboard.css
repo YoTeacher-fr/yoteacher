@@ -134,10 +134,10 @@ body.loaded {
 .vip-badge {
     background: linear-gradient(135deg, #ffd700, #ff9800);
     color: #333;
-    padding: 4px 12px;
+    padding: 8px 20px;
     border-radius: 50px;
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -146,8 +146,7 @@ body.loaded {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
     vertical-align: middle !important;
-    line-height: 1 !important;
-}
+    line-height: 1 !important;}
 
 .dashboard-actions {
     display: flex;
