@@ -560,15 +560,15 @@ body {
        background: linear-gradient(
         135deg, 
         rgba(255, 0, 0, 0.25),   /* Rouge vif, très opaque */
-        rgba(245, 0, 0, 0.15)
+        rgba(220, 0, 0, 0.15)
     ) !important;
     border-radius: 12px !important;
-    border: 1px solid rgba(255, 255, 255, 0.35) !important; /* Bordure plus visible */
+    border: 1px solid rgba(255, 100, 100, 0.35) !important; /* Bordure plus visible */
     grid-column: span 2;
     
     /* Effet glass rouge avec moins de transparence */
-    backdrop-filter: blur(10px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    backdrop-filter: blur(8px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(200%) !important;
     
     /* Transition fluide */
     transition: all 0.3s ease;
