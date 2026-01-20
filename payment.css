@@ -564,7 +564,7 @@ body {
 }
 
 .payment-notice p {
-    color: #5d4037 !important;
+    color: #000 !important;
     margin: 0;
     font-size: 0.95rem;
     display: flex;
