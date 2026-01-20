@@ -515,58 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(updateSubmitButtonText, 1000);
     }
     
-    function initMobileMenu() {
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const closeMenuBtn = document.getElementById('closeMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        if (hamburgerBtn && mobileMenu) {
-            hamburgerBtn.addEventListener('click', () => {
-                mobileMenu.classList.add('active');
-            });
-        }
-        
-        if (closeMenuBtn && mobileMenu) {
-            closeMenuBtn.addEventListener('click', () => {
-                mobileMenu.classList.remove('active');
-            });
-        }
-        
-        if (mobileMenu) {
-            mobileMenu.addEventListener('click', (e) => {
-                if (e.target === mobileMenu) {
-                    mobileMenu.classList.remove('active');
-                }
-            });
-        }
-        
-        const mobileLanguageSwitcher = document.getElementById('languageSwitcherMobile');
-        if (mobileLanguageSwitcher) {
-            mobileLanguageSwitcher.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (window.translationManager) {
-                    window.translationManager.toggleLanguage();
-                }
-                
-                if (mobileMenu) {
-                    mobileMenu.classList.remove('active');
-                }
-            });
-        }
-        
-        const desktopLanguageSwitcher = document.getElementById('languageSwitcherDesktop');
-        if (desktopLanguageSwitcher) {
-            desktopLanguageSwitcher.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (window.translationManager) {
-                    window.translationManager.toggleLanguage();
-                }
-            });
-        }
-    }
-    
+
     function preselectDefaults() {
         // Pré-sélectionner 60 min
         const duration60Btn = document.querySelector('.duration-option[data-duration="60"]');
