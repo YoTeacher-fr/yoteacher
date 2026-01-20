@@ -121,13 +121,9 @@
     }
     
     .header-content {
-        display: flex !important;
-        justify-content: flex-start !important;
-        align-items: center !important;
-        padding: 0 10px !important;
-        height: 55px !important;
-        width: 100% !important;
-        gap: 20px;
+    justify-content: flex-start !important; /* Aligne tout à gauche */
+    gap: 20px !important; /* Espace entre le logo et les éléments de droite */
+    padding: 0 10px !important; /* Réduit le padding latéral */
 
     }
     
@@ -144,9 +140,13 @@ font-size: 1.5rem !important;
     
     /* Groupe de droite sur mobile - RÉORGANISATION COMPLÈTE */
     .mobile-header-right-group {
-    flex: 0 0 auto !important;
-    justify-content: flex-end !important;
-    gap: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        order: 2;
+        width: auto;
+        justify-content: flex-end;
+        flex: 1;
     }
     
     /* Devise mobile */
