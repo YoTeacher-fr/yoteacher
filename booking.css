@@ -975,7 +975,16 @@ body .vip-price-display {
 }
 
 body .vip-price-display::before {
-    content: '💰 ';
+    content: 'VIP ';
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
+    margin-right: 8px;
+    border: 1px solid #FFA500;
+    vertical-align: middle;
 }
 
 body .vip-badge-booking {
