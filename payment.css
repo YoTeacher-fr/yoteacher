@@ -557,21 +557,11 @@ body {
 .payment-notice {
     margin-top: 15px;
     padding: 15px;
-       background: linear-gradient(
-        135deg, 
-        rgba(255, 0, 0, 0.7),   /* Rouge vif, très opaque */
-        rgba(220, 0, 0, 0.6)
-    ) !important;
+       background: rgba(255, 0, 0, 0.7);
     border-radius: 12px !important;
-    border: 1px solid rgba(255, 100, 100, 0.35) !important; /* Bordure plus visible */
     grid-column: span 2;
     
-    /* Effet glass rouge avec moins de transparence */
-    backdrop-filter: blur(8px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(8px) saturate(200%) !important;
-    
-    /* Transition fluide */
-    transition: all 0.3s ease;
+
 }
 
 .payment-notice p {
