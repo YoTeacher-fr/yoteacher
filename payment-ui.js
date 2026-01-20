@@ -1,4 +1,4 @@
-// payment-ui.js - Version corrigée
+// payment-ui.js - Version corrigée (Sans menu hamburger)
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initialisation page paiement...');
     
@@ -39,33 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = 'booking.html';
         }, 3000);
         return;
-    }
-    
-    // Initialiser le menu mobile
-    function initMobileMenu() {
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const closeMenuBtn = document.getElementById('closeMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        if (hamburgerBtn && mobileMenu) {
-            hamburgerBtn.addEventListener('click', () => {
-                mobileMenu.classList.add('active');
-            });
-        }
-        
-        if (closeMenuBtn && mobileMenu) {
-            closeMenuBtn.addEventListener('click', () => {
-                mobileMenu.classList.remove('active');
-            });
-        }
-        
-        if (mobileMenu) {
-            mobileMenu.addEventListener('click', (e) => {
-                if (e.target === mobileMenu) {
-                    mobileMenu.classList.remove('active');
-                }
-            });
-        }
     }
     
     // Initialiser les sélecteurs de devise
@@ -109,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
-            // Initialiser le sélecteur mobile
+            // Initialiser le sélecteur mobile (si l'élément existe toujours dans le DOM hors menu)
             const mobileSelector = document.getElementById('currencySelectorMobile');
             if (mobileSelector) {
                 mobileSelector.innerHTML = '';
@@ -134,12 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (currencyManager.setCurrency(newCurrency)) {
                         currentCurrency = newCurrency;
                         updatePaymentDisplay();
-                        
-                        // Fermer le menu mobile
-                        const mobileMenu = document.getElementById('mobileMenu');
-                        if (mobileMenu) {
-                            mobileMenu.classList.remove('active');
-                        }
                     }
                 });
             }
@@ -769,7 +736,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeAll() {
         console.log('🔧 Initialisation des fonctionnalités...');
         
-        initMobileMenu();
+        // initMobileMenu(); // Supprimé
         initCurrencySelectors();
         updateUserInterface();
         setupPaymentMethodButtons();
