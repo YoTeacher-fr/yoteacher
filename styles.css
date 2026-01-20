@@ -284,7 +284,7 @@ button {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    gap: 10px;
+    gap: 20px;
     margin-bottom: 40px;
     max-width: 100%;
     flex-wrap: wrap;
@@ -322,7 +322,7 @@ button {
 }
 
 .stat-label {
-    font-size: 0.9rem;
+    font-size: 0.6rem;
     color: rgba(255, 255, 255, 0.95);
     text-transform: uppercase;
     letter-spacing: 1px;
