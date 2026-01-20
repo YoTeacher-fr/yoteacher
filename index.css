@@ -136,6 +136,8 @@
     
     .logo {
 font-size: 1.5rem !important;
+        font-weight: bold;
+
     }
     
     /* Groupe de droite sur mobile - RÉORGANISATION COMPLÈTE */
@@ -246,7 +248,7 @@ white-space: nowrap; /* Empêcher le retour à la ligne */
         color: white !important;
         border-radius: 20px !important;
         text-decoration: none !important;
-        font-size: 0.85rem !important;
+        font-size: 0.80rem !important;
         font-weight: 600 !important;
         height: 36px !important;
         order: 2; /* Même position que login */
