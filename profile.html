@@ -343,6 +343,10 @@
             }
         }
         
+        // Variables pour suivre l'état des sauvegardes
+        let isSavingPersonal = false;
+        let isSavingLanguage = false;
+        
         async function loadProfile() {
             console.log('🔍 Chargement du profil...');
             
@@ -399,8 +403,17 @@
                 document.getElementById('personalForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
+                    // Empêcher les doubles clics
+                    if (isSavingPersonal) {
+                        console.log('⚠️ Sauvegarde déjà en cours...');
+                        return;
+                    }
+                    
                     const submitBtn = this.querySelector('.btn-save');
                     const originalText = submitBtn.innerHTML;
+                    
+                    // Marquer comme en cours de sauvegarde
+                    isSavingPersonal = true;
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
                     submitBtn.disabled = true;
                     
@@ -414,6 +427,7 @@
                     // Validation
                     if (!firstName || !lastName) {
                         showError('Le prénom et le nom sont obligatoires');
+                        isSavingPersonal = false;
                         submitBtn.innerHTML = originalText;
                         submitBtn.disabled = false;
                         return;
@@ -421,6 +435,7 @@
                     
                     if (!country) {
                         showError('Veuillez sélectionner un pays');
+                        isSavingPersonal = false;
                         submitBtn.innerHTML = originalText;
                         submitBtn.disabled = false;
                         return;
@@ -455,7 +470,7 @@
                             console.log('💾 Données sauvegardées localStorage');
                         }
                         
-                        // 4. Mettre à jour les métadonnées auth (en arrière-plan)
+                        // 4. Mettre à jour les métadonnées auth (en arrière-plan, sans attendre)
                         setTimeout(() => {
                             supabase.auth.updateUser({
                                 data: { 
@@ -486,8 +501,13 @@
                         console.error('❌ Erreur sauvegarde profil:', error);
                         showError('Erreur: ' + (error.message || 'Impossible de sauvegarder les données'));
                     } finally {
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
+                        // Toujours réactiver le bouton après 1 seconde maximum
+                        setTimeout(() => {
+                            isSavingPersonal = false;
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.disabled = false;
+                            console.log('✅ Bouton réactivé');
+                        }, 500);
                     }
                 });
                 
@@ -495,8 +515,17 @@
                 document.getElementById('languageForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
+                    // Empêcher les doubles clics
+                    if (isSavingLanguage) {
+                        console.log('⚠️ Sauvegarde déjà en cours...');
+                        return;
+                    }
+                    
                     const submitBtn = this.querySelector('.btn-save');
                     const originalText = submitBtn.innerHTML;
+                    
+                    // Marquer comme en cours de sauvegarde
+                    isSavingLanguage = true;
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
                     submitBtn.disabled = true;
                     
@@ -507,6 +536,7 @@
                     
                     if (!frenchLevel) {
                         showError('Veuillez sélectionner votre niveau');
+                        isSavingLanguage = false;
                         submitBtn.innerHTML = originalText;
                         submitBtn.disabled = false;
                         return;
@@ -515,6 +545,7 @@
                     // Validation optionnelle pour les objectifs
                     if (learningGoals && learningGoals.length < 10) {
                         showError('Veuillez décrire vos objectifs en au moins 10 caractères (ou laissez vide)');
+                        isSavingLanguage = false;
                         submitBtn.innerHTML = originalText;
                         submitBtn.disabled = false;
                         return;
@@ -568,8 +599,13 @@
                         console.error('❌ Erreur sauvegarde niveau:', error);
                         showError('Erreur: ' + error.message);
                     } finally {
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
+                        // Toujours réactiver le bouton
+                        setTimeout(() => {
+                            isSavingLanguage = false;
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.disabled = false;
+                            console.log('✅ Bouton réactivé');
+                        }, 500);
                     }
                 });
                 
@@ -579,6 +615,7 @@
                     
                     const submitBtn = this.querySelector('.btn-save');
                     const originalText = submitBtn.innerHTML;
+                    
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
                     submitBtn.disabled = true;
                     
@@ -614,8 +651,10 @@
                         console.error('❌ Erreur changement mot de passe:', error);
                         showError('Erreur: ' + error.message);
                     } finally {
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
+                        setTimeout(() => {
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.disabled = false;
+                        }, 500);
                     }
                 });
                 
