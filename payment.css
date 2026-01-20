@@ -557,11 +557,26 @@ body {
 .payment-notice {
     margin-top: 15px;
     padding: 15px;
-       background: rgba(255, 0, 0, 0.7);
-    border-radius: 12px !important;
+background: linear-gradient(
+        135deg, 
+        rgba(255, 0, 0, 0.85),      /* Rouge YouTube très opaque */
+        rgba(204, 0, 0, 0.75)       /* Rouge légèrement plus foncé */
+    ) !important;
+    border-radius: 8px !important; /* Arrondis plus doux comme YouTube */
+    border: 1px solid rgba(255, 50, 50, 0.9) !important; /* Bordure rouge vif */
     grid-column: span 2;
     
-
+    /* Effet glass léger pour garder l'intensité du rouge */
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    
+    /* Ombres simples comme YouTube */
+    box-shadow: 
+        0 4px 12px rgba(255, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    
+    /* Transition fluide */
+    transition: all 0.2s ease;    
 }
 
 .payment-notice p {
