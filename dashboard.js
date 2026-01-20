@@ -276,50 +276,57 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    async function loadUserData(user) {
-        const welcomeDiv = document.getElementById('welcomeMessage');
-        const userName = user.profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0];
-        const now = new Date();
-        const hour = now.getHours();
-        
-        let greeting;
-        if (window.translationManager?.getCurrentLanguage() === 'en') {
-            greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-        } else {
-            greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
-        }
+async function loadUserData(user) {
+    const welcomeDiv = document.getElementById('welcomeMessage');
+    const userName = user.profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0];
+    const now = new Date();
+    const hour = now.getHours();
+    
+    let greeting;
+    if (window.translationManager?.getCurrentLanguage() === 'en') {
+        greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    } else {
+        greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
+    }
+    
+    // Construire le HTML du message d'accueil
+    let welcomeHTML = `
+        <div class="welcome-message">
+            <h1>${greeting} ${userName} !`;
+    
+    // Ajouter le badge VIP si l'utilisateur est VIP, sinon ajouter l'émoji
+    if (user.profile?.is_vip) {
+        welcomeHTML += ` <span class="vip-badge">
+                <i class="fas fa-crown"></i>
+                <span>Membre VIP</span>
+            </span>`;
+    } else {
+        welcomeHTML += ' 👋';
+    }
+    
+    welcomeHTML += `</h1>
+            <p>Voici un aperçu de votre tableau de bord</p>
+        </div>
+    `;
                     
-        welcomeDiv.innerHTML = `
-            <div class="welcome-message">
-                <h1>${greeting} ${userName} ! 👋</h1>
-                <div id="vipBadge" style="display: none;" class="vip-badge">
-                    <i class="fas fa-crown"></i>
-                    <span>Membre VIP</span>
-                </div>
-            </div>
-        `;
-        
-        // Mettre à jour les informations du profil
-        updateProfileInfo(user);
-        
-        // Afficher le badge VIP si l'utilisateur est VIP
-        if (user.profile?.is_vip) {
-            document.getElementById('vipBadge').style.display = 'inline-flex';
-        }
-        
-        if (window.supabase) {
-            try {
-                // Charger les forfaits
-                await loadUserPackages(user.id);
-                
-                // Charger les réservations à venir
-                await loadUpcomingLessons(user.id);
-                
-            } catch (error) {
-                console.error('Erreur chargement données:', error);
-            }
+    welcomeDiv.innerHTML = welcomeHTML;
+    
+    // Mettre à jour les informations du profil
+    updateProfileInfo(user);
+    
+    if (window.supabase) {
+        try {
+            // Charger les forfaits
+            await loadUserPackages(user.id);
+            
+            // Charger les réservations à venir
+            await loadUpcomingLessons(user.id);
+            
+        } catch (error) {
+            console.error('Erreur chargement données:', error);
         }
     }
+}
     
     function updateProfileInfo(user) {
         const profileInfo = document.getElementById('profileInfo');
