@@ -1494,7 +1494,7 @@ button {
         text-align: center;
         min-width: 100px;
         padding: 12px 15px;
-        flex: 0 0 calc(50% - 10px);
+        flex: 0 0 calc(33.333% - 10px);
     }
     
     .stat-number {
@@ -1503,7 +1503,7 @@ button {
     
     .stat-label {
         font-size: 0.7rem;
-        letter-spacing: 0.48px;
+        letter-spacing: 0.50px;
         white-space: normal;
     }
     
