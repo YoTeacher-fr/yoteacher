@@ -300,7 +300,7 @@ class TranslationManager {
                 'payment.reference': 'Référence',
                 'payment.amount': 'Montant',
                 'payment.important': 'Important',
-                'payment.revolut_notice': ': Après paiement, cliquez sur "J\'ai payé avec Revolut" pour confirmer votre réservation.',
+                'payment.revolut_notice': 'Cliquez sur "J\'ai payé avec Revolut" \n après paiement, pour confirmer votre réservation.',
                 'payment.paid_revolut': 'J\'ai payé avec Revolut',
                 'payment.wise_qr': 'Cliquez sur le QR code pour ouvrir Wise',
                 'payment.wise_link': 'Lien Wise',
