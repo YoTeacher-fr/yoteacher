@@ -302,7 +302,6 @@ body {
         cursor: pointer !important;
         height: 26px !important;
         min-width: 70px;
-        text-align: center;
         order: 3;
     }
     
