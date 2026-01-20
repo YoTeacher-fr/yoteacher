@@ -112,10 +112,11 @@
 
 /* ===== CORRECTION HEADER MOBILE POUR INDEX.HTML ===== */
 @media (max-width: 768px) {
-    /* Header mobile - IDENTIQUE À BOOKING.CSS */
+    /* Header mobile - COMME BOOKING.CSS */
     .main-header {
         background-color: rgba(255, 255, 255, 0.98) !important;
         box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
+        backdrop-filter: blur(10px) !important;
         min-height: 60px !important;
         height: 60px !important;
     }
@@ -130,7 +131,7 @@
         grid: none !important;
     }
     
-    /* Logo centré - IDENTIQUE À BOOKING.CSS */
+    /* Logo centré - COMME BOOKING.CSS */
     .logo-section {
         position: absolute !important;
         left: 50% !important;
@@ -139,13 +140,14 @@
         align-items: center !important;
         gap: 10px !important;
         justify-content: center !important;
+        flex: 0 0 auto !important;
     }
     
     .logo {
         color: #333 !important;
         font-weight: 700 !important;
         font-size: 1.5rem !important;
-        font-family: 'Playfair Display', serif !important; /* Texte différent */
+        font-family: 'Playfair Display', serif !important; /* Texte différent comme demandé */
     }
     
     /* Cacher la navigation desktop */
@@ -161,7 +163,7 @@
         display: none !important;
     }
     
-    /* Groupe de droite - SIMPLIFIÉ COMME BOOKING.CSS */
+    /* Groupe de droite - COMME BOOKING.CSS */
     .header-right-group {
         display: flex !important;
         align-items: center !important;
@@ -170,10 +172,11 @@
         flex: 0 0 auto !important;
     }
     
-    /* Devise - PLUS PETIT, SANS ICÔNE V */
+    /* Devise - PLUS PETIT, SANS ICÔNE V (comme booking.css) */
     .currency-selector {
         display: flex !important;
         align-items: center !important;
+        gap: 4px !important;
     }
     
     .currency-selector i {
@@ -200,7 +203,7 @@
         height: 32px !important; /* Plus petit */
     }
     
-    /* Langue - PLUS PETIT */
+    /* Langue - PLUS PETIT (comme booking.css) */
     .language-switcher {
         font-size: 0.8rem !important;
         display: flex !important;
@@ -222,7 +225,7 @@
     }
     
     .language-switcher .flag {
-        display: none !important; /* Cacher le drapeau si présent */
+        display: none !important; /* Cacher le drapeau */
     }
     
     /* Bouton Connexion/Dashboard - PLUS GROS COMME BOOKING.CSS */
@@ -237,7 +240,7 @@
         transition: all 0.3s ease !important;
         text-decoration: none !important;
         white-space: nowrap !important;
-        height: 36px !important; /* Plus gros */
+        height: 36px !important; /* Plus gros comme booking */
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -249,15 +252,15 @@
         box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3) !important;
     }
     
-    /* Styles spécifiques pour le bouton dashboard (quand connecté) */
+    /* Styles spécifiques pour le bouton dashboard (quand connecté) - COMME BOOKING.CSS */
     .dashboard-btn {
         padding: 6px 35px 6px 6px !important; /* Espace pour la croix de déconnexion */
         position: relative !important;
     }
     
     .dashboard-btn .avatar-img {
-        width: 24px !important; /* Plus gros */
-        height: 24px !important; /* Plus gros */
+        width: 24px !important; /* Plus gros comme booking */
+        height: 24px !important; /* Plus gros comme booking */
         border-radius: 50% !important;
         background: linear-gradient(135deg, #3c84f6, #1e88e5) !important;
         color: white !important;
@@ -273,8 +276,8 @@
         position: absolute !important;
         right: -1px !important;
         top: -1px !important;
-        width: 24px !important; /* Plus gros */
-        height: 24px !important; /* Plus gros */
+        width: 24px !important; /* Plus gros comme booking */
+        height: 24px !important; /* Plus gros comme booking */
         border-radius: 50% !important;
         background-color: rgba(255, 255, 255, 0.6) !important;
         backdrop-filter: blur(10px) !important;
@@ -290,6 +293,14 @@
         transition: all 0.3s !important;
         font-weight: bold !important;
         z-index: 2 !important;
+    }
+    
+    .logout-btn-icon:hover {
+        background-color: rgba(231, 76, 60, 0.95) !important;
+        color: white !important;
+        border-color: rgba(255, 255, 255, 0.7) !important;
+        transform: scale(1.15) !important;
+        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4) !important;
     }
     
     /* Cacher les éléments mobiles redondants */
@@ -321,4 +332,49 @@
     body {
         padding-top: 60px !important;
     }
+}
+
+@media (min-width: 769px) {
+    /* Rétablir le header desktop */
+    .header-content {
+        display: grid !important;
+        grid-template-columns: 200px 1fr 220px !important;
+    }
+    
+    .logo-section {
+        justify-self: start !important;
+        position: static !important;
+        transform: none !important;
+    }
+    
+    .header-right-group {
+        display: flex !important;
+        justify-self: end !important;
+    }
+    
+    .mobile-login-btn-header {
+        display: none !important;
+    }
+    
+    .mobile-dashboard-btn {
+        display: none !important;
+    }
+    
+    .mobile-header-right-group {
+        display: none !important;
+    }
+    
+    .currency-selector-mobile {
+        display: none !important;
+    }
+    
+    .language-switcher-mobile {
+        display: none !important;
+    }
+}
+
+/* Correction pour s'assurer que le dashboard remplace bien le login */
+.mobile-header-right-group .mobile-login-btn-header[style*="display: none"],
+.mobile-header-right-group .mobile-dashboard-btn[style*="display: none"] {
+    display: none !important;
 }
