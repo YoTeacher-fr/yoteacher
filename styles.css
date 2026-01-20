@@ -1963,7 +1963,7 @@ button {
     .user-avatar {
         margin-left: auto !important;
         margin-right: 10px !important;
-        order: 2; /* Position dans le header mobile */
+        order: 1; /* Position dans le header mobile */
     }
     
     .user-menu {
@@ -1977,18 +1977,14 @@ button {
     }
     
     .mobile-login-btn-header {
-        order: 3;
+        order: 2;
         z-index: 1001;
     }
     
     .logo-section {
-        order: 2;
-    }
-    
-    .hamburger-menu {
         order: 1;
     }
-    
+
     /* Menu mobile - section utilisateur */
     .mobile-user-section {
         background: white;
