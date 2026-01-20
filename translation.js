@@ -19,6 +19,7 @@ class TranslationManager {
                 'hero.stat1': 'Ans d\'expérience',
                 'hero.stat2': 'Étudiants',
                 'hero.stat3': 'Leçons données',
+                'hero.stat4': 'Étudiants accompagnés',
                 'hero.trial': 'Réserver un cours d\'essai',
                 'hero.signup': 'Créer un compte gratuit',
                 
@@ -376,6 +377,7 @@ class TranslationManager {
                 'hero.stat1': 'Years of experience',
                 'hero.stat2': 'Students',
                 'hero.stat3': 'Lessons given',
+                'hero.stat4': 'Guided students',
                 'hero.trial': 'Book a trial lesson',
                 'hero.signup': 'Create a free account',
                 
