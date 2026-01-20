@@ -303,11 +303,6 @@ async function loadUserData(user) {
     } else {
         welcomeHTML += ' 👋';
     }
-    
-    welcomeHTML += `</h1>
-            <p>Voici un aperçu de votre tableau de bord</p>
-        </div>
-    `;
                     
     welcomeDiv.innerHTML = welcomeHTML;
     
