@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="profile.title">Mon profil - YoTeach</title>
+    <title>Mon profil - YoTeach</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,7 +20,6 @@
     function checkAuthentication() {
         console.log('🔐 Vérification de l\'authentification pour profile...');
         
-        // 1. Vérifier d'abord localStorage (le plus fiable)
         const storedUser = localStorage.getItem('yoteacher_user');
         
         if (storedUser) {
@@ -28,7 +27,6 @@
                 const userData = JSON.parse(storedUser);
                 console.log('✅ Utilisateur trouvé dans localStorage:', userData.email);
                 
-                // Forcer l'initialisation de authManager si nécessaire
                 if (!window.authManager) {
                     window.authManager = {
                         user: userData,
@@ -39,7 +37,6 @@
                     window.authManager.user = userData;
                 }
                 
-                // Afficher la page
                 document.body.style.opacity = '1';
                 document.body.style.visibility = 'visible';
                 
@@ -55,7 +52,6 @@
             }
         }
         
-        // 2. Si pas dans localStorage, vérifier authManager
         let attempts = 0;
         const maxAttempts = 30;
         
@@ -81,13 +77,11 @@
                 console.log('⚠️ AuthManager non initialisé après 3s');
                 redirectToLogin();
             } else {
-                console.log(`⏳ Attente authManager (${attempts}/${maxAttempts})`);
                 setTimeout(checkAuthManager, 100);
             }
         }
         
         function redirectToLogin() {
-            console.log('🔄 Redirection vers login...');
             const currentUrl = encodeURIComponent(window.location.href);
             window.location.replace(`login.html?redirect=${currentUrl}`);
         }
@@ -95,7 +89,6 @@
         setTimeout(checkAuthManager, 200);
     }
     
-    // Écouter les événements d'authentification
     window.addEventListener('auth:login', function() {
         console.log('✅ Événement auth:login reçu pour profile');
         if (window.loadProfile) {
@@ -104,7 +97,6 @@
     });
     
     window.addEventListener('auth:logout', function() {
-        console.log('⚠️ Événement auth:logout reçu, redirection...');
         const currentUrl = encodeURIComponent(window.location.href);
         window.location.replace(`login.html?redirect=${currentUrl}`);
     });
@@ -112,22 +104,18 @@
     setTimeout(checkAuthentication, 200);
 </script>
 
-    <!-- Header comme login.html sans bouton profil -->
     <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
-                <!-- Logo à gauche -->
                 <div class="logo-section">
                     <a href="index.html" class="logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-                <!-- Groupe de droite avec seulement le sélecteur de langue -->
                 <div class="header-right-group">
-                    <!-- Sélecteur de langue -->
                     <div class="language-switcher" id="languageSwitcherDesktop">
                         <span class="flag">🌐</span>
-                        <span data-i18n="header.language">EN</span>
+                        <span>EN</span>
                     </div>
                 </div>
             </div>
@@ -137,7 +125,6 @@
     <section class="profile-section">
         <div class="profile-container">
             <div class="profile-grid">
-                <!-- Sidebar -->
                 <div class="profile-sidebar">
                     <div class="profile-avatar">
                         <div class="avatar-large" id="userAvatar"></div>
@@ -145,20 +132,18 @@
 
                     <nav class="profile-nav">
                         <a href="#" class="nav-item active" data-tab="personal">
-                            <i class="fas fa-user"></i> <span data-i18n="profile.personal_info">Informations</span>
+                            <i class="fas fa-user"></i> <span>Informations</span>
                         </a>
                         <a href="#" class="nav-item" data-tab="language">
-                            <i class="fas fa-language"></i> <span data-i18n="profile.french_level">Niveau français</span>
+                            <i class="fas fa-language"></i> <span>Niveau français</span>
                         </a>
                         <a href="#" class="nav-item" data-tab="password">
-                            <i class="fas fa-key"></i> <span data-i18n="profile.password">Mot de passe</span>
+                            <i class="fas fa-key"></i> <span>Mot de passe</span>
                         </a>
                     </nav>
                 </div>
 
-                <!-- Contenu principal - COLONNE PLUS LARGE -->
                 <div class="profile-content">
-                    <!-- Messages -->
                     <div class="error-message" id="errorMessage">
                         <i class="fas fa-exclamation-circle"></i>
                         <span id="errorText"></span>
@@ -169,36 +154,34 @@
                         <span id="successText"></span>
                     </div>
 
-                    <!-- Onglet: Informations personnelles -->
                     <div class="tab-content active" id="personalTab">
                         <div class="tab-header">
-                            <h2 data-i18n="profile.personal_info">Informations personnelles</h2>
-                            <p data-i18n="profile.personal_subtitle">Mettez à jour vos informations de contact</p>
+                            <h2>Informations personnelles</h2>
+                            <p>Mettez à jour vos informations de contact</p>
                         </div>
 
                         <form id="personalForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="firstName" class="form-label" data-i18n="profile.first_name">Prénom</label>
+                                    <label for="firstName" class="form-label">Prénom</label>
                                     <input type="text" id="firstName" class="form-input" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="lastName" class="form-label" data-i18n="profile.last_name">Nom</label>
+                                    <label for="lastName" class="form-label">Nom</label>
                                     <input type="text" id="lastName" class="form-input" required>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label for="email" class="form-label" data-i18n="login.email">Adresse email</label>
+                                <label for="email" class="form-label">Adresse email</label>
                                 <input type="email" id="email" class="form-input" required disabled>
                                 <small style="color: #888; font-size: 0.85rem;">L'email ne peut pas être modifié</small>
                             </div>
 
                             <div class="form-group">
-                                <label for="country" class="form-label" data-i18n="profile.country">Pays</label>
+                                <label for="country" class="form-label">Pays</label>
                                 <select id="country" class="form-select country-select">
-                                    <option value="" data-i18n="profile.select_country">Sélectionnez votre pays</option>
-                                    <!-- Les pays seront chargés dynamiquement -->
+                                    <option value="">Sélectionnez votre pays</option>
                                 </select>
                                 <small style="color: #888; font-size: 0.85rem; display: block; margin-top: 5px;" id="countryInfo">
                                     Sélectionnez votre pays de résidence
@@ -206,23 +189,22 @@
                             </div>
 
                             <button type="submit" class="btn-save">
-                                <i class="fas fa-save"></i> <span data-i18n="profile.save_changes">Enregistrer les modifications</span>
+                                <i class="fas fa-save"></i> <span>Enregistrer les modifications</span>
                             </button>
                         </form>
                     </div>
 
-                    <!-- Onglet: Niveau de français -->
                     <div class="tab-content" id="languageTab">
                         <div class="tab-header">
-                            <h2 data-i18n="profile.french_level">Niveau de français</h2>
-                            <p data-i18n="profile.level_subtitle">Définissez votre niveau actuel en français</p>
+                            <h2>Niveau de français</h2>
+                            <p>Définissez votre niveau actuel en français</p>
                         </div>
 
                         <form id="languageForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-group">
-                                <label for="frenchLevel" class="form-label" data-i18n="profile.current_level">Niveau actuel (CEFR)</label>
+                                <label for="frenchLevel" class="form-label">Niveau actuel (CEFR)</label>
                                 <select id="frenchLevel" class="form-select">
-                                    <option value="" data-i18n="profile.select_level">Sélectionnez votre niveau</option>
+                                    <option value="">Sélectionnez votre niveau</option>
                                     <option value="A1">A1 - Débutant</option>
                                     <option value="A2">A2 - Élémentaire</option>
                                     <option value="B1">B1 - Intermédiaire</option>
@@ -233,43 +215,42 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="learningGoals" class="form-label" data-i18n="profile.learning_goals">Objectifs d'apprentissage</label>
-                                <textarea id="learningGoals" class="form-textarea large-textarea" data-i18n-placeholder="profile.goals_placeholder" placeholder="Ex: Préparer le DELF B2, Améliorer mon français professionnel, Préparer un examen, Voyager en France... (minimum 50 caractères)"></textarea>
-                                <small style="color: #888; font-size: 0.85rem;">Décrivez vos objectifs en détail pour une meilleure expérience d'apprentissage</small>
+                                <label for="learningGoals" class="form-label">Objectifs d'apprentissage</label>
+                                <textarea id="learningGoals" class="form-textarea large-textarea" placeholder="Ex: Préparer le DELF B2, Améliorer mon français professionnel, Préparer un examen, Voyager en France... (optionnel)"></textarea>
+                                <small style="color: #888; font-size: 0.85rem;">Décrivez vos objectifs en détail (optionnel)</small>
                             </div>
 
                             <button type="submit" class="btn-save">
-                                <i class="fas fa-save"></i> <span data-i18n="profile.save_preferences">Enregistrer les préférences</span>
+                                <i class="fas fa-save"></i> <span>Enregistrer les préférences</span>
                             </button>
                         </form>
                     </div>
 
-                    <!-- Onglet: Mot de passe -->
                     <div class="tab-content" id="passwordTab">
                         <div class="tab-header">
-                            <h2 data-i18n="profile.change_password">Changer le mot de passe</h2>
-                            <p data-i18n="profile.password_subtitle">Mettez à jour votre mot de passe de connexion</p>
+                            <h2>Changer le mot de passe</h2>
+                            <p>Mettez à jour votre mot de passe de connexion</p>
                         </div>
 
                         <form id="passwordForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-group">
-                                <label for="currentPassword" class="form-label" data-i18n="profile.current_password">Mot de passe actuel</label>
+                                <label for="currentPassword" class="form-label">Mot de passe actuel</label>
                                 <input type="password" id="currentPassword" class="form-input" required>
                             </div>
 
                             <div class="form-group">
-                                <label for="newPassword" class="form-label" data-i18n="profile.new_password">Nouveau mot de passe</label>
+                                <label for="newPassword" class="form-label">Nouveau mot de passe</label>
                                 <input type="password" id="newPassword" class="form-input" required>
-                                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;" data-i18n="profile.password_min">Minimum 8 caractères</small>
+                                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">Minimum 8 caractères</small>
                             </div>
 
                             <div class="form-group">
-                                <label for="confirmPassword" class="form-label" data-i18n="profile.confirm_password">Confirmer le nouveau mot de passe</label>
+                                <label for="confirmPassword" class="form-label">Confirmer le nouveau mot de passe</label>
                                 <input type="password" id="confirmPassword" class="form-input" required>
                             </div>
 
                             <button type="submit" class="btn-save">
-                                <i class="fas fa-key"></i> <span data-i18n="profile.change_password_button">Changer le mot de passe</span>
+                                <i class="fas fa-key"></i> <span>Changer le mot de passe</span>
                             </button>
                         </form>
                     </div>
@@ -282,9 +263,7 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
     <script src="auth.js"></script>
-    <script src="booking.js"></script>
     <script src="common.js"></script>
-    <script src="translation.js"></script>
     <script src="pays.js"></script>
     
     <script>
@@ -308,15 +287,19 @@
         }
         
         async function loadProfile() {
+            console.log('🔍 Chargement du profil...');
+            
             try {
                 await waitForAuthManager();
                 const user = window.authManager?.getCurrentUser();
                 
                 if (!user) {
                     console.error('❌ Aucun utilisateur trouvé');
-                    showError(window.translationManager?.getTranslation('profile.no_user') || 'Aucun utilisateur trouvé');
+                    showError('Aucun utilisateur trouvé. Veuillez vous reconnecter.');
                     return;
                 }
+                
+                console.log('✅ Utilisateur trouvé:', user.email);
                 
                 // Initialiser l'avatar
                 const initials = user.email.substring(0, 2).toUpperCase();
@@ -327,11 +310,14 @@
                 
                 // Charger les pays dans le select
                 if (window.loadCountriesIntoSelect) {
+                    console.log('🌍 Chargement des pays dans le select...');
                     window.loadCountriesIntoSelect('country', userCountry);
                     const countryInfo = document.getElementById('countryInfo');
                     if (countryInfo) {
                         countryInfo.textContent = window.YOTEACHER_COUNTRIES.length + ' pays disponibles';
                     }
+                } else {
+                    console.error('❌ Fonction loadCountriesIntoSelect non disponible');
                 }
                 
                 // Gestion des onglets
@@ -352,7 +338,7 @@
                     });
                 });
                 
-                // Formulaire informations personnelles (SAVE dans table profiles)
+                // Formulaire informations personnelles - VERSION CORRIGÉE
                 document.getElementById('personalForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
@@ -361,18 +347,21 @@
                     const fullName = `${firstName} ${lastName}`;
                     const country = document.getElementById('country').value;
                     
+                    console.log('📋 Données à sauvegarder:', { firstName, lastName, fullName, country });
+                    
+                    // Validation
                     if (!firstName || !lastName) {
-                        showError(window.translationManager?.getTranslation('profile.name_required') || 'Le prénom et le nom sont obligatoires');
+                        showError('Le prénom et le nom sont obligatoires');
                         return;
                     }
                     
                     if (!country) {
-                        showError(window.translationManager?.getTranslation('profile.country_required') || 'Veuillez sélectionner un pays');
+                        showError('Veuillez sélectionner un pays');
                         return;
                     }
                     
                     try {
-                        // 1. Mettre à jour les métadonnées auth
+                        // 1. Mettre à jour les métadonnées dans Supabase Auth
                         const { error: authError } = await supabase.auth.updateUser({
                             data: { 
                                 full_name: fullName,
@@ -381,21 +370,56 @@
                             }
                         });
                         
-                        if (authError) throw authError;
+                        if (authError) {
+                            console.error('❌ Erreur auth.updateUser:', authError);
+                            throw authError;
+                        }
+                        
+                        console.log('✅ Métadonnées auth mises à jour');
                         
                         // 2. Mettre à jour la table profiles
+                        const updateData = {
+                            full_name: fullName,
+                            country: country,
+                            updated_at: new Date().toISOString()
+                        };
+                        
+                        console.log('📤 Envoi à Supabase profiles.update:', updateData);
+                        
                         const { error: profileError } = await supabase
                             .from('profiles')
-                            .update({ 
-                                full_name: fullName,
-                                country: country,
-                                updated_at: new Date().toISOString()
-                            })
+                            .update(updateData)
                             .eq('id', user.id);
                         
-                        if (profileError) throw profileError;
+                        if (profileError) {
+                            console.error('❌ Erreur profiles.update:', profileError);
+                            
+                            // Essayer d'insérer si le profil n'existe pas
+                            if (profileError.code === 'PGRST116') {
+                                console.log('🔄 Tentative de création du profil...');
+                                const { error: insertError } = await supabase
+                                    .from('profiles')
+                                    .insert({
+                                        id: user.id,
+                                        full_name: fullName,
+                                        country: country,
+                                        created_at: new Date().toISOString(),
+                                        updated_at: new Date().toISOString()
+                                    });
+                                
+                                if (insertError) {
+                                    console.error('❌ Erreur insertion profil:', insertError);
+                                    throw insertError;
+                                }
+                                console.log('✅ Profil créé avec succès');
+                            } else {
+                                throw profileError;
+                            }
+                        } else {
+                            console.log('✅ Profil mis à jour dans Supabase');
+                        }
                         
-                        // 3. Mettre à jour l'objet user local
+                        // 3. Mettre à jour les données locales
                         if (!user.user_metadata) user.user_metadata = {};
                         user.user_metadata.full_name = fullName;
                         user.user_metadata.first_name = firstName;
@@ -404,19 +428,26 @@
                         if (!user.profile) user.profile = {};
                         user.profile.full_name = fullName;
                         user.profile.country = country;
+                        user.profile.updated_at = new Date().toISOString();
                         
                         // 4. Sauvegarder dans localStorage
-                        window.authManager.saveUserToStorage();
+                        if (window.authManager && window.authManager.saveUserToStorage) {
+                            window.authManager.saveUserToStorage();
+                            console.log('💾 Données sauvegardées localStorage');
+                        } else {
+                            localStorage.setItem('yoteacher_user', JSON.stringify(user));
+                        }
                         
-                        showSuccess(window.translationManager?.getTranslation('profile.update_success') || 'Profil mis à jour avec succès !');
+                        // 5. Afficher succès
+                        showSuccess('Profil mis à jour avec succès !');
                         
                     } catch (error) {
-                        console.error('Erreur mise à jour profil:', error);
-                        showError(window.translationManager?.getTranslation('profile.update_error') || 'Erreur: ' + error.message);
+                        console.error('❌ Erreur complète mise à jour profil:', error);
+                        showError('Erreur: ' + (error.message || 'Impossible de sauvegarder'));
                     }
                 });
                 
-                // Formulaire niveau français (SAVE dans table profiles)
+                // Formulaire niveau français
                 document.getElementById('languageForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
@@ -424,41 +455,63 @@
                     const learningGoals = document.getElementById('learningGoals').value.trim();
                     
                     if (!frenchLevel) {
-                        showError(window.translationManager?.getTranslation('profile.level_required') || 'Veuillez sélectionner votre niveau');
+                        showError('Veuillez sélectionner votre niveau');
                         return;
                     }
                     
-                    if (learningGoals && learningGoals.length < 50) {
-                        showError(window.translationManager?.getTranslation('profile.goals_length_error') || 'Veuillez décrire vos objectifs en au moins 50 caractères (ou laissez vide)');
-                        return;
+                    // VALIDATION AMÉLIORÉE POUR LES OBJECTIFS
+                    if (learningGoals) {
+                        // Si l'utilisateur a écrit quelque chose, vérifier qu'il y a au moins 10 caractères
+                        if (learningGoals.length < 10) {
+                            showError('Veuillez décrire vos objectifs en au moins 10 caractères (ou laissez vide)');
+                            return;
+                        }
                     }
+                    // Si learningGoals est vide, on accepte (champ optionnel)
                     
                     try {
                         // Mettre à jour la table profiles
+                        const updateData = {
+                            french_level: frenchLevel,
+                            updated_at: new Date().toISOString()
+                        };
+                        
+                        // Ajouter learningGoals seulement si rempli
+                        if (learningGoals) {
+                            updateData.learning_goals = learningGoals;
+                        }
+                        
+                        console.log('📤 Envoi données niveau:', updateData);
+                        
                         const { error } = await supabase
                             .from('profiles')
-                            .update({ 
-                                french_level: frenchLevel,
-                                learning_goals: learningGoals || null,
-                                updated_at: new Date().toISOString()
-                            })
+                            .update(updateData)
                             .eq('id', user.id);
                         
-                        if (error) throw error;
+                        if (error) {
+                            console.error('❌ Erreur mise à jour niveau:', error);
+                            throw error;
+                        }
+                        
+                        console.log('✅ Niveau français mis à jour');
                         
                         // Mettre à jour l'objet user local
                         if (!user.profile) user.profile = {};
                         user.profile.french_level = frenchLevel;
-                        user.profile.learning_goals = learningGoals || null;
+                        if (learningGoals) {
+                            user.profile.learning_goals = learningGoals;
+                        }
                         
                         // Sauvegarder dans localStorage
-                        window.authManager.saveUserToStorage();
+                        if (window.authManager && window.authManager.saveUserToStorage) {
+                            window.authManager.saveUserToStorage();
+                        }
                         
-                        showSuccess(window.translationManager?.getTranslation('profile.level_update_success') || 'Niveau de français mis à jour !');
+                        showSuccess('Niveau de français mis à jour !');
                         
                     } catch (error) {
                         console.error('Erreur mise à jour niveau:', error);
-                        showError(window.translationManager?.getTranslation('profile.update_error') || 'Erreur: ' + error.message);
+                        showError('Erreur: ' + error.message);
                     }
                 });
                 
@@ -471,12 +524,12 @@
                     const confirmPassword = document.getElementById('confirmPassword').value;
                     
                     if (newPassword.length < 8) {
-                        showError(window.translationManager?.getTranslation('profile.password_length_error') || 'Le mot de passe doit contenir au moins 8 caractères');
+                        showError('Le mot de passe doit contenir au moins 8 caractères');
                         return;
                     }
                     
                     if (newPassword !== confirmPassword) {
-                        showError(window.translationManager?.getTranslation('profile.password_match_error') || 'Les mots de passe ne correspondent pas');
+                        showError('Les mots de passe ne correspondent pas');
                         return;
                     }
                     
@@ -487,23 +540,25 @@
                         
                         if (error) throw error;
                         
-                        showSuccess(window.translationManager?.getTranslation('profile.password_success') || 'Mot de passe mis à jour avec succès !');
+                        showSuccess('Mot de passe mis à jour avec succès !');
                         document.getElementById('passwordForm').reset();
                         
                     } catch (error) {
                         console.error('Erreur changement mot de passe:', error);
-                        showError(window.translationManager?.getTranslation('profile.update_error') || 'Erreur: ' + error.message);
+                        showError('Erreur: ' + error.message);
                     }
                 });
                 
             } catch (error) {
-                console.error('Erreur:', error);
-                showError(window.translationManager?.getTranslation('profile.load_error') || 'Erreur lors du chargement du profil');
+                console.error('Erreur chargement profil:', error);
+                showError('Erreur lors du chargement du profil');
             }
         }
         
         async function loadUserProfile(user) {
             try {
+                console.log('🔍 Chargement profil depuis Supabase...');
+                
                 // Récupérer les données du profil depuis la table profiles
                 const { data: profile, error } = await supabase
                     .from('profiles')
@@ -511,8 +566,8 @@
                     .eq('id', user.id)
                     .single();
                 
-                if (error && error.code !== 'PGRST116') {
-                    console.error('Erreur chargement profil:', error);
+                if (error) {
+                    console.log('ℹ️ Profil non trouvé ou erreur:', error.message);
                 }
                 
                 // Fusionner les données
@@ -520,6 +575,8 @@
                     ...user,
                     profile: profile || user.profile || {}
                 };
+                
+                console.log('📊 Données profil chargées:', userData.profile);
                 
                 // Remplir le formulaire informations personnelles
                 const fullName = userData.profile.full_name || userData.user_metadata?.full_name || '';
@@ -535,7 +592,7 @@
                 return userData.profile.country || '';
                 
             } catch (error) {
-                console.error('Erreur chargement profil détaillé:', error);
+                console.error('❌ Erreur chargement profil détaillé:', error);
                 
                 // Fallback aux métadonnées de base
                 const fullName = user.user_metadata?.full_name || '';
