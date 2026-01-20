@@ -186,14 +186,8 @@ white-space: nowrap; /* Empêcher le retour à la ligne */
     }
     
     .currency-selector-mobile i {
-        display: none !important;
+        display: block !important;
     }
-.currency-selector-mobile label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #333;
-}
 
     /* Langue mobile */
     .language-switcher-mobile {
@@ -245,31 +239,29 @@ white-space: nowrap; /* Empêcher le retour à la ligne */
         display: flex !important;
         align-items: center !important;
         gap: 6px;
-        padding: 3px 8px 3px 4px !important;
+        padding: 6px 12px !important;
         background: #4f9ad1 !important;
         color: white !important;
-        border-radius: 12px !important;
+        border-radius: 20px !important;
         text-decoration: none !important;
-        font-size: 0.65rem !important;
+        font-size: 0.85rem !important;
         font-weight: 600 !important;
         height: 36px !important;
-        min-width: 90px;
-        order: 3; /* Même position que login */
+        order: 2; /* Même position que login */
         margin-left: 0 !important; /* Supprimer le margin-left */
     }
     
     .mobile-dashboard-btn .avatar-img {
-        width: 20px !important;
-        height: 20px !important;
+        width: 24px !important;
+        height: 24px !important;
         border-radius: 50%;
         background: linear-gradient(135deg, #3c84f6, #1e88e5);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.6rem !important;
+        font-size: 0.75rem !important;
         font-weight: bold;
-        flex-shrink: 0;
     }
     
     /* Cacher le bouton connexion quand dashboard est affiché */
