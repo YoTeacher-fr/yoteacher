@@ -315,15 +315,16 @@ flex-wrap: nowrap;
 }
 
 .stat-label {
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.95);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 500;
-    white-space: nowrap;
-    width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+        font-size: 0.65rem;
+        letter-spacing: 0.5px;
+        white-space: normal;
+        line-height: 1.2;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-height: 2.4em;
 }
 
 /* MODIFICATION: Texte différent pour desktop/mobile */
