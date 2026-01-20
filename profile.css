@@ -408,8 +408,3 @@ body.loaded {
         justify-content: center;
     }
 }
-
-/* Cacher le hamburger menu */
-.hamburger-menu {
-    display: none !important;
-}

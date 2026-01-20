@@ -1286,19 +1286,6 @@ button {
         font-size: 1.2rem;
     }
     
-    /* MENU HAMBURGER SUR TABLETTE */
-    .desktop-menu {
-        display: none !important;
-    }
-    
-    .hamburger-menu {
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
-        width: 30px !important;
-        height: 22px !important;
-    }
-    
     .logo-section {
         justify-content: center;
         text-align: center;
@@ -1468,10 +1455,6 @@ button {
     
     /* Cacher les éléments mobiles redondants - IDENTIQUE À BOOKING.CSS */
     .mobile-login-btn-header {
-        display: none !important;
-    }
-    
-    .hamburger-menu {
         display: none !important;
     }
     
