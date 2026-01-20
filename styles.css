@@ -282,19 +282,21 @@ button {
 /* CORRECTION DES STATISTIQUES HERO */
 .stats-left {
     display: flex;
-    flex-direction: row;
+    flex-direction: row !important;
     align-items: flex-start;
-    gap: 10px;
+    gap: 10px !important;
+        justify-content: space-between; /* Répartit l'espace également */
     margin-bottom: 40px;
-    max-width: 200%;
-    flex-wrap: wrap;
+        width: 100%;
+    max-width: 300%;
+    flex-wrap: no-wrap;
 }
 
 .stat-item {
     background-color: rgba(255, 255, 255, 0.15);
     padding: 20px 25px;
     border-radius: 12px;
-    min-width: 100px;
+    min-width: 0px;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     transition: transform 0.3s;
