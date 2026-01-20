@@ -41,33 +41,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Initialiser le menu mobile
-    function initMobileMenu() {
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const closeMenuBtn = document.getElementById('closeMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        if (hamburgerBtn && mobileMenu) {
-            hamburgerBtn.addEventListener('click', () => {
-                mobileMenu.classList.add('active');
-            });
-        }
-        
-        if (closeMenuBtn && mobileMenu) {
-            closeMenuBtn.addEventListener('click', () => {
-                mobileMenu.classList.remove('active');
-            });
-        }
-        
-        if (mobileMenu) {
-            mobileMenu.addEventListener('click', (e) => {
-                if (e.target === mobileMenu) {
-                    mobileMenu.classList.remove('active');
-                }
-            });
-        }
-    }
-    
     // Initialiser les sélecteurs de devise
     function initCurrencySelectors() {
         // Initialiser les sélecteurs quand CurrencyManager est prêt

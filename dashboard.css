@@ -966,11 +966,6 @@ body.loaded {
     }
 }
 
-/* Cacher le menu hamburger sur la page dashboard */
-.hamburger-menu {
-    display: none !important;
-}
-
 /* Cacher le bouton mobile sur desktop */
 @media (min-width: 769px) {
     .mobile-login-btn-header {
