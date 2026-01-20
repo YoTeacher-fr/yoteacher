@@ -77,8 +77,7 @@ class PaymentManager {
     async handlePaymentMethod(method) {
         try {
             console.log(`💳 Traitement paiement ${method}...`);
-                    await this.testBookingCreation();
-
+            
             if (!this.currentBooking) {
                 this.currentBooking = JSON.parse(localStorage.getItem('pendingBooking')) || null;
             }
@@ -533,48 +532,3 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 console.log('✅ PaymentManager chargé (version corrigée)');
-async testBookingCreation() {
-    console.group('🧪 Test création réservation');
-    
-    try {
-        // Vérifier que bookingManager existe
-        console.log('1. BookingManager:', window.bookingManager ? '✅ PRÉSENT' : '❌ ABSENT');
-        
-        // Vérifier que l'utilisateur est connecté
-        const user = window.authManager?.getCurrentUser();
-        console.log('2. Utilisateur:', user?.email || '❌ NON CONNECTÉ');
-        
-        // Vérifier que currentBooking existe
-        console.log('3. Réservation actuelle:', this.currentBooking);
-        
-        // Tester createBookingAfterPayment directement
-        if (window.bookingManager?.createBookingAfterPayment) {
-            console.log('4. Fonction createBookingAfterPayment: ✅ DISPONIBLE');
-            
-            // Créer une réservation test
-            const testBooking = {
-                courseType: 'conversation',
-                duration: 60,
-                startTime: new Date(Date.now() + 86400000).toISOString(), // Demain
-                price: 28.50,
-                currency: 'USD',
-                isVip: true,
-                packageQuantity: 10,
-                discountPercent: 5,
-                email: user?.email,
-                name: user?.user_metadata?.full_name || 'Test User'
-            };
-            
-            console.log('5. Test création réservation...');
-            const result = await window.bookingManager.createBookingAfterPayment(testBooking);
-            console.log('6. Résultat:', result);
-        } else {
-            console.log('4. Fonction createBookingAfterPayment: ❌ ABSENTE');
-        }
-        
-        console.groupEnd();
-    } catch (error) {
-        console.error('❌ Erreur test:', error);
-        console.groupEnd();
-    }
-}
