@@ -1488,7 +1488,7 @@ button {
         justify-content: space-between; /* Répartit l'espace également */
         align-items: stretch;
         gap: 8px;
-        margin: 25px auto 40px auto;
+        margin: 25px auto 50px auto;
     }
     
     .stat-item {
