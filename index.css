@@ -122,29 +122,19 @@
     
     .header-content {
         display: flex !important;
-        justify-content: space-between !important;
+        justify-content: flex-start !important;
         align-items: center !important;
         padding: 0 15px !important;
         height: 55px !important;
         width: 100% !important;
-        gap: 10px;
+        gap: 20px;
     }
     
     /* Logo centré */
     .logo-section {
-      flex: 0 0 auto;
-        display: flex;
-        align-items: center;
-        text-align: left !important;
-        position: static !important;
-        transform: none !important;
-        left: auto !important;
-        top: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: auto !important;
-        order: 1 !important;
-	gap: 10px;
+    flex: 0 0 auto !important;
+    margin-right: auto !important; /* Pousse tout le reste vers la droite */
+    margin-left: 0 !important;
     }
     
     .logo {
