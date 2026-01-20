@@ -112,235 +112,213 @@
 
 /* ===== CORRECTION HEADER MOBILE POUR INDEX.HTML ===== */
 @media (max-width: 768px) {
-    /* Header mobile simplifié */
+    /* Header mobile - IDENTIQUE À BOOKING.CSS */
     .main-header {
         background-color: rgba(255, 255, 255, 0.98) !important;
         box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1) !important;
-        min-height: 55px !important;
-        height: 55px !important;
+        min-height: 60px !important;
+        height: 60px !important;
     }
     
     .header-content {
         display: flex !important;
-        justify-content: space-between !important;
         align-items: center !important;
-        padding: 0 15px !important;
-        height: 55px !important;
+        justify-content: space-between !important;
+        padding: 8px 15px !important;
         width: 100% !important;
-        gap: 10px;
+        grid-template-columns: none !important;
+        grid: none !important;
     }
     
-    /* Logo centré */
+    /* Logo centré - IDENTIQUE À BOOKING.CSS */
     .logo-section {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        align-items: center;
-        gap: 5px;
+        position: absolute !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        justify-content: center !important;
     }
     
     .logo {
-        font-size: 1.5rem !important;
         color: #333 !important;
         font-weight: 700 !important;
+        font-size: 1.5rem !important;
+        font-family: 'Playfair Display', serif !important; /* Texte différent */
     }
     
-    /* Groupe de droite sur mobile - RÉORGANISATION COMPLÈTE */
-    .mobile-header-right-group {
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        order: 2;
-        width: auto;
-        justify-content: flex-end;
-        flex: 1;
-    }
-    
-    /* Devise mobile */
-    .currency-selector-mobile {
-        display: flex !important;
-        align-items: center !important;
-        order: 1;
-min-width: 65px;
-    }
-    
-    .currency-selector-mobile select {
-        padding: 3px 6px !important;
-        font-size: 0.7rem !important;
-        min-width: 60px !important;
-        max-width: 70px !important;
-        background: white !important;
-        border: 1px solid rgba(0, 0, 0, 0.15) !important;
-        border-radius: 12px !important;
-        color: #333 !important;
-        display: block !important;
-        height: 26px !important;
-        font-weight: 600;
-        text-align: center;
-        text-align-last: center;
-white-space: nowrap; /* Empêcher le retour à la ligne */
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
-    .currency-selector-mobile i {
+    /* Cacher la navigation desktop */
+    .nav-menu.desktop-menu {
         display: none !important;
     }
     
-    /* Langue mobile */
-    .language-switcher-mobile {
-        display: flex !important;
-        align-items: center !important;
-        order: 2;
-    }
-    
-    .language-switcher-mobile span {
-        font-size: 0.7rem !important;
-        padding: 3px 8px !important;
-        color: #333 !important;
-        background: white !important;
-        border: 1px solid rgba(0, 0, 0, 0.15) !important;
-        border-radius: 12px !important;
-        height: 26px !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 40px;
-        font-weight: 600;
-    }
-    
-    .language-switcher-mobile .flag {
+    .nav-link {
         display: none !important;
     }
     
-    /* Bouton connexion/dashboard mobile - POSITION DROITE */
-    .mobile-login-btn-header {
-        display: block !important;
-        padding: 4px 10px !important;
-        font-size: 0.7rem !important;
+    .nav-spacer {
+        display: none !important;
+    }
+    
+    /* Groupe de droite - SIMPLIFIÉ COMME BOOKING.CSS */
+    .header-right-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin-left: auto !important;
+        flex: 0 0 auto !important;
+    }
+    
+    /* Devise - PLUS PETIT, SANS ICÔNE V */
+    .currency-selector {
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    .currency-selector i {
+        display: none !important; /* Cacher l'icône V */
+    }
+    
+    .currency-selector select {
+        background: white !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 20px !important;
+        padding: 4px 8px !important;
+        color: #333 !important;
+        font-size: 0.8rem !important;
         font-weight: 600 !important;
+        cursor: pointer !important;
+        outline: none !important;
+        width: auto !important;
+        min-width: 70px !important;
+        text-align: center !important;
+        text-align-last: center !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        transition: all 0.3s ease !important;
+        height: 32px !important; /* Plus petit */
+    }
+    
+    /* Langue - PLUS PETIT */
+    .language-switcher {
+        font-size: 0.8rem !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        color: #333 !important;
+        padding: 4px 8px !important;
+        cursor: pointer !important;
+        border-radius: 20px !important;
+        transition: all 0.3s ease !important;
+        user-select: none !important;
+        height: 32px !important; /* Plus petit */
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        background: white !important;
+    }
+    
+    .language-switcher:hover {
+        background: rgba(0, 0, 0, 0.05) !important;
+    }
+    
+    .language-switcher .flag {
+        display: none !important; /* Cacher le drapeau si présent */
+    }
+    
+    /* Bouton Connexion/Dashboard - PLUS GROS COMME BOOKING.CSS */
+    .login-btn, .dashboard-btn {
+        padding: 8px 20px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        border-radius: 50px !important;
         background: #4f9ad1 !important;
         color: white !important;
-        border-radius: 12px !important;
+        border: none !important;
+        transition: all 0.3s ease !important;
         text-decoration: none !important;
         white-space: nowrap !important;
-        border: none !important;
-        cursor: pointer !important;
-        height: 26px !important;
-        min-width: 70px;
-        text-align: center;
-        order: 3; /* Toujours à droite */
-    }
-    
-    /* Styles pour le bouton dashboard mobile (quand connecté) */
-    .mobile-dashboard-btn {
+        height: 36px !important; /* Plus gros */
         display: flex !important;
         align-items: center !important;
-        gap: 6px;
-        padding: 3px 8px 3px 4px !important;
-        background: #4f9ad1 !important;
+        justify-content: center !important;
+    }
+    
+    .login-btn:hover, .dashboard-btn:hover {
+        background: #3c84f6 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3) !important;
+    }
+    
+    /* Styles spécifiques pour le bouton dashboard (quand connecté) */
+    .dashboard-btn {
+        padding: 6px 35px 6px 6px !important; /* Espace pour la croix de déconnexion */
+        position: relative !important;
+    }
+    
+    .dashboard-btn .avatar-img {
+        width: 24px !important; /* Plus gros */
+        height: 24px !important; /* Plus gros */
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, #3c84f6, #1e88e5) !important;
         color: white !important;
-        border-radius: 12px !important;
-        text-decoration: none !important;
-        font-size: 0.65rem !important;
-        font-weight: 600 !important;
-        height: 26px !important;
-        min-width: 90px;
-        order: 3; /* Même position que login */
-        margin-left: 0 !important; /* Supprimer le margin-left */
-    }
-    
-    .mobile-dashboard-btn .avatar-img {
-        width: 20px !important;
-        height: 20px !important;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #3c84f6, #1e88e5);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.6rem !important;
-        font-weight: bold;
-        flex-shrink: 0;
-    }
-    
-    /* Cacher le bouton connexion quand dashboard est affiché */
-    .mobile-header-right-group .mobile-login-btn-header {
-        display: none !important;
-    }
-    
-    .mobile-header-right-group .mobile-dashboard-btn {
         display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+        margin-right: 8px !important;
     }
     
-    /* Cacher le groupe de droite desktop sur mobile */
-    .header-right-group {
+    .logout-btn-icon {
+        position: absolute !important;
+        right: -1px !important;
+        top: -1px !important;
+        width: 24px !important; /* Plus gros */
+        height: 24px !important; /* Plus gros */
+        border-radius: 50% !important;
+        background-color: rgba(255, 255, 255, 0.6) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        color: #e74c3c !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1rem !important;
+        cursor: pointer !important;
+        border: 1px solid rgba(255, 255, 255, 0.5) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+        transition: all 0.3s !important;
+        font-weight: bold !important;
+        z-index: 2 !important;
+    }
+    
+    /* Cacher les éléments mobiles redondants */
+    .mobile-login-btn-header {
         display: none !important;
     }
     
-    /* Cacher le menu desktop sur mobile */
-    .nav-menu.desktop-menu {
+    .mobile-dashboard-btn {
+        display: none !important;
+    }
+    
+    .mobile-header-right-group {
+        display: none !important;
+    }
+    
+    .currency-selector-mobile {
+        display: none !important;
+    }
+    
+    .language-switcher-mobile {
+        display: none !important;
+    }
+    
+    .hamburger-menu {
         display: none !important;
     }
     
     /* Ajuster le padding du body */
     body {
-        padding-top: 55px !important;
+        padding-top: 60px !important;
     }
-    
-    /* Cacher tout code résiduel hamburger */
-    .hamburger-menu {
-        display: none !important;
-    }
-    
-    /* Cacher devise desktop sur mobile */
-    .currency-selector { 
-        display: none !important; 
-    }
-}
-
-@media (min-width: 769px) {
-    /* Rétablir le header desktop */
-    .header-content {
-        display: grid !important;
-        grid-template-columns: 200px 1fr 220px !important;
-    }
-    
-    .logo-section {
-        justify-self: start !important;
-        position: static !important;
-        transform: none !important;
-    }
-    
-    .header-right-group {
-        display: flex !important;
-        justify-self: end !important;
-    }
-    
-    .mobile-login-btn-header {
-        display: none !important;
-    }
-    
-    .mobile-dashboard-btn {
-        display: none !important;
-    }
-    
-    .mobile-header-right-group {
-        display: none !important;
-    }
-    
-    .currency-selector-mobile {
-        display: none !important;
-    }
-    
-    .language-switcher-mobile {
-        display: none !important;
-    }
-}
-
-/* Correction pour s'assurer que le dashboard remplace bien le login */
-.mobile-header-right-group .mobile-login-btn-header[style*="display: none"],
-.mobile-header-right-group .mobile-dashboard-btn[style*="display: none"] {
-    display: none !important;
 }
