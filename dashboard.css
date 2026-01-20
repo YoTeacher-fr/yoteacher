@@ -157,7 +157,7 @@ body.loaded {
     background: rgba(255, 255, 255, 0.15);
     border: 2px solid rgba(255, 255, 255, 0.3);
     color: white;
-    padding: 10px 10px;
+    padding: 10px 20px;
     border-radius: 50px;
     font-weight: 600;
     font-size: 0.9rem;
@@ -612,7 +612,7 @@ body.loaded {
 }
 
 .btn-profile {
-    width: 100%;
+    width: auto;
     padding: 12px;
     background: #3c84f6;
     color: white;
