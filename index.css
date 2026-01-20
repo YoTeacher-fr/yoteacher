@@ -121,13 +121,10 @@
     }
     
     .header-content {
-        display: flex !important;
         justify-content: flex-start !important;
-        align-items: center !important;
-        padding: 0 15px !important;
-        height: 55px !important;
-        width: 100% !important;
+        padding: 0 10px !important;
         gap: 20px;
+
     }
     
     /* Logo centré */
@@ -139,24 +136,13 @@
     
     .logo {
 font-size: 1.5rem !important;
-        color: #333 !important;
-        font-weight: 700 !important;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 130px;
-        display: block !important;
     }
     
     /* Groupe de droite sur mobile - RÉORGANISATION COMPLÈTE */
     .mobile-header-right-group {
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        order: 2;
-        width: auto;
-        justify-content: flex-end;
-        flex: 1;
+    flex: 0 0 auto !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
     }
     
     /* Devise mobile */
