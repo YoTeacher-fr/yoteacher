@@ -141,7 +141,6 @@
                 <div class="profile-sidebar">
                     <div class="profile-avatar">
                         <div class="avatar-large" id="userAvatar"></div>
-                        
                     </div>
 
                     <nav class="profile-nav">
@@ -191,12 +190,19 @@
 
                             <div class="form-group">
                                 <label for="email" class="form-label" data-i18n="login.email">Adresse email</label>
-                                <input type="email" id="email" class="form-input" required>
+                                <input type="email" id="email" class="form-input" required disabled>
+                                <small style="color: #888; font-size: 0.85rem;">L'email ne peut pas être modifié</small>
                             </div>
 
                             <div class="form-group">
-                                <label for="description" class="form-label" data-i18n="profile.description">Description (optionnel)</label>
-                                <textarea id="description" class="form-textarea" data-i18n-placeholder="profile.description_placeholder" placeholder="Parlez-nous un peu de vous..."></textarea>
+                                <label for="country" class="form-label" data-i18n="profile.country">Pays</label>
+                                <select id="country" class="form-select country-select">
+                                    <option value="" data-i18n="profile.select_country">Sélectionnez votre pays</option>
+                                    <!-- Les pays seront chargés dynamiquement -->
+                                </select>
+                                <small style="color: #888; font-size: 0.85rem; display: block; margin-top: 5px;" id="countryInfo">
+                                    Sélectionnez votre pays de résidence
+                                </small>
                             </div>
 
                             <button type="submit" class="btn-save">
@@ -214,8 +220,8 @@
 
                         <form id="languageForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-group">
-                                <label for="currentLevel" class="form-label" data-i18n="profile.current_level">Niveau actuel (CEFR)</label>
-                                <select id="currentLevel" class="form-select">
+                                <label for="frenchLevel" class="form-label" data-i18n="profile.current_level">Niveau actuel (CEFR)</label>
+                                <select id="frenchLevel" class="form-select">
                                     <option value="" data-i18n="profile.select_level">Sélectionnez votre niveau</option>
                                     <option value="A1">A1 - Débutant</option>
                                     <option value="A2">A2 - Élémentaire</option>
@@ -228,7 +234,8 @@
 
                             <div class="form-group">
                                 <label for="learningGoals" class="form-label" data-i18n="profile.learning_goals">Objectifs d'apprentissage</label>
-                                <textarea id="learningGoals" class="form-textarea" data-i18n-placeholder="profile.goals_placeholder" placeholder="Ex: Préparer le DELF B2, Améliorer mon français professionnel..."></textarea>
+                                <textarea id="learningGoals" class="form-textarea large-textarea" data-i18n-placeholder="profile.goals_placeholder" placeholder="Ex: Préparer le DELF B2, Améliorer mon français professionnel, Préparer un examen, Voyager en France... (minimum 50 caractères)"></textarea>
+                                <small style="color: #888; font-size: 0.85rem;">Décrivez vos objectifs en détail pour une meilleure expérience d'apprentissage</small>
                             </div>
 
                             <button type="submit" class="btn-save">
@@ -278,6 +285,7 @@
     <script src="booking.js"></script>
     <script src="common.js"></script>
     <script src="translation.js"></script>
+    <script src="pays.js"></script>
     
     <script>
         function waitForAuthManager() {
@@ -314,8 +322,17 @@
                 const initials = user.email.substring(0, 2).toUpperCase();
                 document.getElementById('userAvatar').textContent = initials;
                 
-                // Charger les données
-                await loadUserProfile(user);
+                // Charger les données du profil
+                const userCountry = await loadUserProfile(user);
+                
+                // Charger les pays dans le select
+                if (window.loadCountriesIntoSelect) {
+                    window.loadCountriesIntoSelect('country', userCountry);
+                    const countryInfo = document.getElementById('countryInfo');
+                    if (countryInfo) {
+                        countryInfo.textContent = window.YOTEACHER_COUNTRIES.length + ' pays disponibles';
+                    }
+                }
                 
                 // Gestion des onglets
                 document.querySelectorAll('.nav-item').forEach(item => {
@@ -335,49 +352,112 @@
                     });
                 });
                 
-               
-                // Formulaire informations
+                // Formulaire informations personnelles (SAVE dans table profiles)
                 document.getElementById('personalForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
-                    const firstName = document.getElementById('firstName').value;
-                    const lastName = document.getElementById('lastName').value;
+                    const firstName = document.getElementById('firstName').value.trim();
+                    const lastName = document.getElementById('lastName').value.trim();
                     const fullName = `${firstName} ${lastName}`;
+                    const country = document.getElementById('country').value;
+                    
+                    if (!firstName || !lastName) {
+                        showError(window.translationManager?.getTranslation('profile.name_required') || 'Le prénom et le nom sont obligatoires');
+                        return;
+                    }
+                    
+                    if (!country) {
+                        showError(window.translationManager?.getTranslation('profile.country_required') || 'Veuillez sélectionner un pays');
+                        return;
+                    }
                     
                     try {
-                        const { error } = await supabase.auth.updateUser({
+                        // 1. Mettre à jour les métadonnées auth
+                        const { error: authError } = await supabase.auth.updateUser({
                             data: { 
                                 full_name: fullName,
-                                description: document.getElementById('description').value
+                                first_name: firstName,
+                                last_name: lastName
                             }
                         });
                         
-                        if (error) throw error;
+                        if (authError) throw authError;
+                        
+                        // 2. Mettre à jour la table profiles
+                        const { error: profileError } = await supabase
+                            .from('profiles')
+                            .update({ 
+                                full_name: fullName,
+                                country: country,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('id', user.id);
+                        
+                        if (profileError) throw profileError;
+                        
+                        // 3. Mettre à jour l'objet user local
+                        if (!user.user_metadata) user.user_metadata = {};
+                        user.user_metadata.full_name = fullName;
+                        user.user_metadata.first_name = firstName;
+                        user.user_metadata.last_name = lastName;
+                        
+                        if (!user.profile) user.profile = {};
+                        user.profile.full_name = fullName;
+                        user.profile.country = country;
+                        
+                        // 4. Sauvegarder dans localStorage
+                        window.authManager.saveUserToStorage();
                         
                         showSuccess(window.translationManager?.getTranslation('profile.update_success') || 'Profil mis à jour avec succès !');
                         
                     } catch (error) {
+                        console.error('Erreur mise à jour profil:', error);
                         showError(window.translationManager?.getTranslation('profile.update_error') || 'Erreur: ' + error.message);
                     }
                 });
                 
-                // Formulaire niveau français
+                // Formulaire niveau français (SAVE dans table profiles)
                 document.getElementById('languageForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
+                    const frenchLevel = document.getElementById('frenchLevel').value;
+                    const learningGoals = document.getElementById('learningGoals').value.trim();
+                    
+                    if (!frenchLevel) {
+                        showError(window.translationManager?.getTranslation('profile.level_required') || 'Veuillez sélectionner votre niveau');
+                        return;
+                    }
+                    
+                    if (learningGoals && learningGoals.length < 50) {
+                        showError(window.translationManager?.getTranslation('profile.goals_length_error') || 'Veuillez décrire vos objectifs en au moins 50 caractères (ou laissez vide)');
+                        return;
+                    }
+                    
                     try {
-                        const { error } = await supabase.auth.updateUser({
-                            data: { 
-                                currentLevel: document.getElementById('currentLevel').value,
-                                learningGoals: document.getElementById('learningGoals').value
-                            }
-                        });
+                        // Mettre à jour la table profiles
+                        const { error } = await supabase
+                            .from('profiles')
+                            .update({ 
+                                french_level: frenchLevel,
+                                learning_goals: learningGoals || null,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('id', user.id);
                         
                         if (error) throw error;
+                        
+                        // Mettre à jour l'objet user local
+                        if (!user.profile) user.profile = {};
+                        user.profile.french_level = frenchLevel;
+                        user.profile.learning_goals = learningGoals || null;
+                        
+                        // Sauvegarder dans localStorage
+                        window.authManager.saveUserToStorage();
                         
                         showSuccess(window.translationManager?.getTranslation('profile.level_update_success') || 'Niveau de français mis à jour !');
                         
                     } catch (error) {
+                        console.error('Erreur mise à jour niveau:', error);
                         showError(window.translationManager?.getTranslation('profile.update_error') || 'Erreur: ' + error.message);
                     }
                 });
@@ -411,6 +491,7 @@
                         document.getElementById('passwordForm').reset();
                         
                     } catch (error) {
+                        console.error('Erreur changement mot de passe:', error);
                         showError(window.translationManager?.getTranslation('profile.update_error') || 'Erreur: ' + error.message);
                     }
                 });
@@ -422,18 +503,49 @@
         }
         
         async function loadUserProfile(user) {
-            // Remplir les formulaires
-            const fullName = user.user_metadata?.full_name || '';
-            const nameParts = fullName.split(' ');
-            document.getElementById('firstName').value = nameParts[0] || '';
-            document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
-            document.getElementById('email').value = user.email;
-            document.getElementById('description').value = user.user_metadata?.description || '';
-            
-            // Niveau français
-            const metadata = user.user_metadata || {};
-            document.getElementById('currentLevel').value = metadata.currentLevel || '';
-            document.getElementById('learningGoals').value = metadata.learningGoals || '';
+            try {
+                // Récupérer les données du profil depuis la table profiles
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (error && error.code !== 'PGRST116') {
+                    console.error('Erreur chargement profil:', error);
+                }
+                
+                // Fusionner les données
+                const userData = {
+                    ...user,
+                    profile: profile || user.profile || {}
+                };
+                
+                // Remplir le formulaire informations personnelles
+                const fullName = userData.profile.full_name || userData.user_metadata?.full_name || '';
+                const nameParts = fullName.split(' ');
+                document.getElementById('firstName').value = nameParts[0] || '';
+                document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
+                document.getElementById('email').value = userData.email;
+                
+                // Remplir le formulaire niveau français
+                document.getElementById('frenchLevel').value = userData.profile.french_level || '';
+                document.getElementById('learningGoals').value = userData.profile.learning_goals || '';
+                
+                return userData.profile.country || '';
+                
+            } catch (error) {
+                console.error('Erreur chargement profil détaillé:', error);
+                
+                // Fallback aux métadonnées de base
+                const fullName = user.user_metadata?.full_name || '';
+                const nameParts = fullName.split(' ');
+                document.getElementById('firstName').value = nameParts[0] || '';
+                document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
+                document.getElementById('email').value = user.email;
+                
+                return '';
+            }
         }
         
         function showError(message) {
