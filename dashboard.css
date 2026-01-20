@@ -143,8 +143,7 @@ body.loaded {
     gap: 6px;
     box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
     margin-left: 10px !important;
-    margin-top: 0 !important;
-    margin-bottom: -10px !important;
+    margin-top: 20 !important;
     vertical-align: middle !important;
     line-height: 1 !important;}
 
