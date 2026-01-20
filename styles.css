@@ -1483,11 +1483,10 @@ button {
     
     /* Statistiques centrées */
     .stats-left {
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        justify-content: space-between; /* Répartit l'espace également */
-        align-items: stretch;
-        gap: 8px;
+        align-items: center;
+        flex-direction: row;
+        justify-content: center;
+        gap: 10px;
         margin: 30px 0;
     }
     
