@@ -285,6 +285,63 @@
                 check();
             });
         }
+
+        // Fonction utilitaire pour mettre à jour le profil sans conflit
+        async function updateProfileSafely(userId, updateData) {
+            console.log('🛡️ Mise à jour sécurisée du profil pour:', userId);
+            
+            try {
+                // Ajouter updated_at automatiquement
+                const dataToUpdate = {
+                    ...updateData,
+                    updated_at: new Date().toISOString()
+                };
+                
+                console.log('📤 Données à mettre à jour:', dataToUpdate);
+                
+                // Essayer la mise à jour
+                const { error, data } = await supabase
+                    .from('profiles')
+                    .update(dataToUpdate)
+                    .eq('id', userId)
+                    .select();
+                
+                if (error) {
+                    console.error('❌ Erreur mise à jour profil:', error);
+                    
+                    // Si le profil n'existe pas, le créer
+                    if (error.code === 'PGRST116' || error.message.includes('row') || error.message.includes('not found')) {
+                        console.log('🔄 Création du profil car il n\'existe pas...');
+                        const profileData = {
+                            id: userId,
+                            ...dataToUpdate,
+                            created_at: new Date().toISOString()
+                        };
+                        
+                        const { error: insertError, data: insertData } = await supabase
+                            .from('profiles')
+                            .insert(profileData)
+                            .select();
+                        
+                        if (insertError) {
+                            console.error('❌ Erreur création profil:', insertError);
+                            throw insertError;
+                        }
+                        console.log('✅ Profil créé avec succès');
+                        return { success: true, data: insertData };
+                    } else {
+                        throw error;
+                    }
+                } else {
+                    console.log('✅ Profil mis à jour avec succès');
+                    return { success: true, data };
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur mise à jour sécurisée:', error);
+                return { success: false, error: error.message };
+            }
+        }
         
         async function loadProfile() {
             console.log('🔍 Chargement du profil...');
@@ -338,112 +395,99 @@
                     });
                 });
                 
-                // Formulaire informations personnelles - VERSION CORRIGÉE
+                // Formulaire informations personnelles
                 document.getElementById('personalForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
+                    
+                    const submitBtn = this.querySelector('.btn-save');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
+                    submitBtn.disabled = true;
                     
                     const firstName = document.getElementById('firstName').value.trim();
                     const lastName = document.getElementById('lastName').value.trim();
                     const fullName = `${firstName} ${lastName}`;
                     const country = document.getElementById('country').value;
                     
-                    console.log('📋 Données à sauvegarder:', { firstName, lastName, fullName, country });
+                    console.log('📋 Données personnelles à sauvegarder:', { firstName, lastName, fullName, country });
                     
                     // Validation
                     if (!firstName || !lastName) {
                         showError('Le prénom et le nom sont obligatoires');
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                         return;
                     }
                     
                     if (!country) {
                         showError('Veuillez sélectionner un pays');
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                         return;
                     }
                     
                     try {
-                        // 1. Mettre à jour les métadonnées dans Supabase Auth
-                        const { error: authError } = await supabase.auth.updateUser({
-                            data: { 
-                                full_name: fullName,
-                                first_name: firstName,
-                                last_name: lastName
-                            }
+                        // 1. Mettre à jour le profil avec la fonction sécurisée
+                        const result = await updateProfileSafely(user.id, {
+                            full_name: fullName,
+                            country: country
                         });
                         
-                        if (authError) {
-                            console.error('❌ Erreur auth.updateUser:', authError);
-                            throw authError;
+                        if (!result.success) {
+                            throw new Error(result.error || 'Erreur lors de la sauvegarde');
                         }
                         
-                        console.log('✅ Métadonnées auth mises à jour');
-                        
-                        // 2. Mettre à jour la table profiles
-                        const updateData = {
-                            full_name: fullName,
-                            country: country,
-                            updated_at: new Date().toISOString()
-                        };
-                        
-                        console.log('📤 Envoi à Supabase profiles.update:', updateData);
-                        
-                        const { error: profileError } = await supabase
-                            .from('profiles')
-                            .update(updateData)
-                            .eq('id', user.id);
-                        
-                        if (profileError) {
-                            console.error('❌ Erreur profiles.update:', profileError);
-                            
-                            // Essayer d'insérer si le profil n'existe pas
-                            if (profileError.code === 'PGRST116') {
-                                console.log('🔄 Tentative de création du profil...');
-                                const { error: insertError } = await supabase
-                                    .from('profiles')
-                                    .insert({
-                                        id: user.id,
-                                        full_name: fullName,
-                                        country: country,
-                                        created_at: new Date().toISOString(),
-                                        updated_at: new Date().toISOString()
-                                    });
-                                
-                                if (insertError) {
-                                    console.error('❌ Erreur insertion profil:', insertError);
-                                    throw insertError;
-                                }
-                                console.log('✅ Profil créé avec succès');
-                            } else {
-                                throw profileError;
-                            }
-                        } else {
-                            console.log('✅ Profil mis à jour dans Supabase');
-                        }
-                        
-                        // 3. Mettre à jour les données locales
-                        if (!user.user_metadata) user.user_metadata = {};
-                        user.user_metadata.full_name = fullName;
-                        user.user_metadata.first_name = firstName;
-                        user.user_metadata.last_name = lastName;
-                        
+                        // 2. Mettre à jour les données locales
                         if (!user.profile) user.profile = {};
                         user.profile.full_name = fullName;
                         user.profile.country = country;
                         user.profile.updated_at = new Date().toISOString();
                         
-                        // 4. Sauvegarder dans localStorage
+                        // Mettre à jour les métadonnées auth
+                        if (!user.user_metadata) user.user_metadata = {};
+                        user.user_metadata.full_name = fullName;
+                        user.user_metadata.first_name = firstName;
+                        user.user_metadata.last_name = lastName;
+                        
+                        // 3. Sauvegarder dans localStorage
                         if (window.authManager && window.authManager.saveUserToStorage) {
                             window.authManager.saveUserToStorage();
                             console.log('💾 Données sauvegardées localStorage');
-                        } else {
-                            localStorage.setItem('yoteacher_user', JSON.stringify(user));
                         }
                         
-                        // 5. Afficher succès
+                        // 4. Mettre à jour les métadonnées auth (en arrière-plan)
+                        setTimeout(() => {
+                            supabase.auth.updateUser({
+                                data: { 
+                                    full_name: fullName,
+                                    first_name: firstName,
+                                    last_name: lastName
+                                }
+                            }).then(() => {
+                                console.log('✅ Métadonnées auth mises à jour');
+                            }).catch(err => {
+                                console.warn('⚠️ Erreur métadonnées auth (non critique):', err.message);
+                            });
+                        }, 100);
+                        
                         showSuccess('Profil mis à jour avec succès !');
                         
+                        // Vérification
+                        setTimeout(async () => {
+                            const { data: checkData } = await supabase
+                                .from('profiles')
+                                .select('full_name, country')
+                                .eq('id', user.id)
+                                .single();
+                            console.log('✅ Vérification données:', checkData);
+                        }, 500);
+                        
                     } catch (error) {
-                        console.error('❌ Erreur complète mise à jour profil:', error);
-                        showError('Erreur: ' + (error.message || 'Impossible de sauvegarder'));
+                        console.error('❌ Erreur sauvegarde profil:', error);
+                        showError('Erreur: ' + (error.message || 'Impossible de sauvegarder les données'));
+                    } finally {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                     }
                 });
                 
@@ -451,67 +495,81 @@
                 document.getElementById('languageForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
+                    const submitBtn = this.querySelector('.btn-save');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
+                    submitBtn.disabled = true;
+                    
                     const frenchLevel = document.getElementById('frenchLevel').value;
                     const learningGoals = document.getElementById('learningGoals').value.trim();
                     
+                    console.log('📋 Données niveau français à sauvegarder:', { frenchLevel, learningGoals });
+                    
                     if (!frenchLevel) {
                         showError('Veuillez sélectionner votre niveau');
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                         return;
                     }
                     
-                    // VALIDATION AMÉLIORÉE POUR LES OBJECTIFS
-                    if (learningGoals) {
-                        // Si l'utilisateur a écrit quelque chose, vérifier qu'il y a au moins 10 caractères
-                        if (learningGoals.length < 10) {
-                            showError('Veuillez décrire vos objectifs en au moins 10 caractères (ou laissez vide)');
-                            return;
-                        }
+                    // Validation optionnelle pour les objectifs
+                    if (learningGoals && learningGoals.length < 10) {
+                        showError('Veuillez décrire vos objectifs en au moins 10 caractères (ou laissez vide)');
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                        return;
                     }
-                    // Si learningGoals est vide, on accepte (champ optionnel)
                     
                     try {
-                        // Mettre à jour la table profiles
+                        // Préparer les données
                         const updateData = {
-                            french_level: frenchLevel,
-                            updated_at: new Date().toISOString()
+                            french_level: frenchLevel
                         };
                         
-                        // Ajouter learningGoals seulement si rempli
+                        // Ajouter les objectifs seulement si remplis
                         if (learningGoals) {
                             updateData.learning_goals = learningGoals;
                         }
                         
-                        console.log('📤 Envoi données niveau:', updateData);
+                        // Mettre à jour avec la fonction sécurisée
+                        const result = await updateProfileSafely(user.id, updateData);
                         
-                        const { error } = await supabase
-                            .from('profiles')
-                            .update(updateData)
-                            .eq('id', user.id);
-                        
-                        if (error) {
-                            console.error('❌ Erreur mise à jour niveau:', error);
-                            throw error;
+                        if (!result.success) {
+                            throw new Error(result.error || 'Erreur lors de la sauvegarde');
                         }
                         
-                        console.log('✅ Niveau français mis à jour');
-                        
-                        // Mettre à jour l'objet user local
+                        // Mettre à jour localement
                         if (!user.profile) user.profile = {};
                         user.profile.french_level = frenchLevel;
                         if (learningGoals) {
                             user.profile.learning_goals = learningGoals;
                         }
+                        user.profile.updated_at = new Date().toISOString();
                         
-                        // Sauvegarder dans localStorage
+                        // Sauvegarder localStorage
                         if (window.authManager && window.authManager.saveUserToStorage) {
                             window.authManager.saveUserToStorage();
+                            console.log('💾 Données sauvegardées localStorage');
                         }
                         
                         showSuccess('Niveau de français mis à jour !');
                         
+                        // Vérification
+                        setTimeout(async () => {
+                            const { data: checkData } = await supabase
+                                .from('profiles')
+                                .select('french_level, learning_goals')
+                                .eq('id', user.id)
+                                .single();
+                            console.log('✅ Vérification données niveau:', checkData);
+                        }, 500);
+                        
                     } catch (error) {
-                        console.error('Erreur mise à jour niveau:', error);
+                        console.error('❌ Erreur sauvegarde niveau:', error);
                         showError('Erreur: ' + error.message);
+                    } finally {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                     }
                 });
                 
@@ -519,17 +577,26 @@
                 document.getElementById('passwordForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
+                    const submitBtn = this.querySelector('.btn-save');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
+                    submitBtn.disabled = true;
+                    
                     const currentPassword = document.getElementById('currentPassword').value;
                     const newPassword = document.getElementById('newPassword').value;
                     const confirmPassword = document.getElementById('confirmPassword').value;
                     
                     if (newPassword.length < 8) {
                         showError('Le mot de passe doit contenir au moins 8 caractères');
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                         return;
                     }
                     
                     if (newPassword !== confirmPassword) {
                         showError('Les mots de passe ne correspondent pas');
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                         return;
                     }
                     
@@ -544,13 +611,16 @@
                         document.getElementById('passwordForm').reset();
                         
                     } catch (error) {
-                        console.error('Erreur changement mot de passe:', error);
+                        console.error('❌ Erreur changement mot de passe:', error);
                         showError('Erreur: ' + error.message);
+                    } finally {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                     }
                 });
                 
             } catch (error) {
-                console.error('Erreur chargement profil:', error);
+                console.error('❌ Erreur chargement profil:', error);
                 showError('Erreur lors du chargement du profil');
             }
         }
@@ -568,6 +638,8 @@
                 
                 if (error) {
                     console.log('ℹ️ Profil non trouvé ou erreur:', error.message);
+                    // Si le profil n'existe pas, on retourne des données vides
+                    return '';
                 }
                 
                 // Fusionner les données
@@ -576,7 +648,12 @@
                     profile: profile || user.profile || {}
                 };
                 
-                console.log('📊 Données profil chargées:', userData.profile);
+                console.log('📊 Données profil chargées:', {
+                    full_name: userData.profile.full_name,
+                    country: userData.profile.country,
+                    french_level: userData.profile.french_level,
+                    learning_goals: userData.profile.learning_goals ? 'présents' : 'absents'
+                });
                 
                 // Remplir le formulaire informations personnelles
                 const fullName = userData.profile.full_name || userData.user_metadata?.full_name || '';
@@ -634,6 +711,37 @@
         }
         
         window.loadProfile = loadProfile;
+        
+        // Fonction de débogage pour vérifier l'état du profil
+        window.debugProfile = async function() {
+            const user = window.authManager?.getCurrentUser();
+            if (!user) {
+                console.error('❌ Aucun utilisateur connecté');
+                return;
+            }
+            
+            console.group('🔍 DEBUG PROFIL');
+            console.log('User ID:', user.id);
+            console.log('Email:', user.email);
+            console.log('Profil local:', user.profile);
+            
+            try {
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (error) {
+                    console.error('❌ Erreur récupération profil:', error);
+                } else {
+                    console.log('✅ Profil Supabase:', profile);
+                }
+            } catch (error) {
+                console.error('❌ Exception:', error);
+            }
+            console.groupEnd();
+        };
     </script>
 </body>
 </html>
