@@ -557,9 +557,9 @@ body {
 .payment-notice {
     margin-top: 15px;
     padding: 15px;
-    background: rgba(173, 84, 79, 0.6) !important; /* #ad544f avec 60% d'opacité */
+    background: rgba(173, 84, 79, 0.2) !important; /* #ad544f avec 60% d'opacité */
     border-radius: 8px;
-    border: 1px solid rgba(173, 84, 79, 0.8) !important; /* Bordure un peu plus opaque */
+    border: 1px solid rgba(173, 84, 79, 0.4) !important; /* Bordure un peu plus opaque */
     grid-column: span 2;
     backdrop-filter: blur(5px); /* Effet de flou pour améliorer la transparence */
 }
