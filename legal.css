@@ -290,20 +290,18 @@ body {
     /* Bouton connexion/dashboard mobile */
     .mobile-login-btn-header {
         display: block !important;
-        padding: 4px 10px !important;
-        font-size: 0.7rem !important;
-        font-weight: 600 !important;
-        background: #4f9ad1 !important;
-        color: white !important;
-        border-radius: 12px !important;
-        text-decoration: none !important;
-        white-space: nowrap !important;
-        border: none !important;
-        cursor: pointer !important;
-        height: 26px !important;
-        min-width: 90px;
-        text-align: center;
-        order: 3;
+        background-color: #4f9ad1;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-decoration: none;
+        margin-left: auto;
+        z-index: 1001;
+        border: none;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
     }
     
     /* Styles pour le bouton dashboard mobile (quand connecté) */
