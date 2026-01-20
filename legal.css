@@ -297,11 +297,9 @@ body {
         color: white !important;
         border-radius: 20px !important;
         text-decoration: none !important;
-        white-space: nowrap !important;
         border: none !important;
         cursor: pointer !important;
         height: 26px !important;
-        min-width: 70px;
         order: 3;
     }
     
