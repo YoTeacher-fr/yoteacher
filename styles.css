@@ -1324,30 +1324,16 @@ button {
     
     /* Logo à gauche - IDENTIQUE À BOOKING.CSS */
     .logo-section {
-        flex: 0 0 auto !important;
-        display: flex !important;
-        justify-content: flex-start !important;
-        align-items: center !important;
-        text-align: left !important;
-        position: static !important;
-        transform: none !important;
-        left: auto !important;
-        top: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: auto !important;
-        order: 1 !important;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
     }
     
     .logo {
         font-size: 1.5rem !important;
         color: #333 !important;
         font-weight: 700 !important;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 130px;
-        display: block !important;
+        font-family: 'Playfair Display', serif !important; /* Texte différent */
     }
     
     /* Éléments de droite - IDENTIQUE À BOOKING.CSS */
