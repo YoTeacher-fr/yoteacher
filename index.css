@@ -121,8 +121,12 @@
     }
     
     .header-content {
+        display: flex !important;
         justify-content: flex-start !important;
+        align-items: center !important;
         padding: 0 10px !important;
+        height: 55px !important;
+        width: 100% !important;
         gap: 20px;
 
     }
