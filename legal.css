@@ -266,6 +266,7 @@ body {
         display: flex !important;
         align-items: center !important;
         order: 2;
+	margin-left: 40px;
     }
     
     .language-switcher-mobile span {
