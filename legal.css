@@ -340,7 +340,7 @@ body {
     
     /* Cacher le bouton connexion quand dashboard est affiché */
     .mobile-header-right-group .mobile-login-btn-header {
-        display: none !important;
+        display: flex !important;
     }
     
     .mobile-header-right-group .mobile-dashboard-btn {
