@@ -12,31 +12,33 @@ body {
 }
 
 body .success-section {
-    padding: 60px 20px 40px;
+    padding: 30px 20px 20px;
     background: #97b4d4;
     min-height: 100vh;
     color: white;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     text-align: center;
+    overflow-y: auto;
 }
 
 body .success-container {
     max-width: 550px;
-    margin: 0 auto;
+    margin: 20px auto;
+    padding: 15px;
 }
 
 body .success-icon {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     background: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 25px;
-    font-size: 2.5rem;
+    margin: 0 auto 20px;
+    font-size: 2rem;
     color: #4CAF50;
     animation: bounce 1s infinite alternate;
 }
@@ -47,25 +49,26 @@ body .success-icon {
 }
 
 body .success-title {
-    font-size: 2.2rem;
-    margin-bottom: 15px;
+    font-size: 1.8rem;
+    margin-bottom: 12px;
     color: white;
 }
 
 body .success-message {
-    font-size: 1.1rem;
-    margin-bottom: 25px;
+    font-size: 1rem;
+    margin-bottom: 20px;
     opacity: 0.9;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
 body .success-details {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     border-radius: 16px;
-    padding: 20px;
-    margin: 25px 0;
+    padding: 15px;
+    margin: 15px 0;
     text-align: left;
+    font-size: 0.95rem;
 }
 
 body .success-details h3 {
@@ -87,10 +90,11 @@ body .detail-item:last-child {
 
 body .success-actions {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     justify-content: center;
-    margin-top: 30px;
+    margin-top: 20px;
     flex-wrap: wrap;
+    padding-bottom: 10px;
 }
 
 body .btn-success {
@@ -214,21 +218,40 @@ body .status-pending {
 
 @media (max-width: 768px) {
     body .success-section {
-        padding: 40px 15px 30px;
+        padding: 20px 15px 15px;
+        align-items: flex-start;
     }
     
     body .success-title {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
+    }
+    
+    body .success-message {
+        font-size: 0.9rem;
+        margin-bottom: 15px;
     }
     
     body .success-actions {
         flex-direction: column;
         align-items: center;
+        gap: 8px;
     }
     
     body .btn-success, body .btn-outline-white, body .btn-outline-blue {
         width: 100%;
         max-width: 280px;
         justify-content: center;
+        padding: 12px 20px;
+        font-size: 0.9rem;
+    }
+    
+    body .success-details {
+        padding: 12px;
+        margin: 10px 0;
+    }
+    
+    body .detail-item {
+        padding: 8px 0;
+        font-size: 0.9rem;
     }
 }
