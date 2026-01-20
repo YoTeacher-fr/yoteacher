@@ -188,9 +188,13 @@ white-space: nowrap; /* Empêcher le retour à la ligne */
     .currency-selector-mobile i {
         display: none !important;
     }
-        .currency-selector i {
-        display: none !important; /* Pas de V */
-    }
+.currency-selector-mobile label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
     /* Langue mobile */
     .language-switcher-mobile {
         display: flex !important;
@@ -248,7 +252,7 @@ white-space: nowrap; /* Empêcher le retour à la ligne */
         text-decoration: none !important;
         font-size: 0.65rem !important;
         font-weight: 600 !important;
-        height: 26px !important;
+        height: 36px !important;
         min-width: 90px;
         order: 3; /* Même position que login */
         margin-left: 0 !important; /* Supprimer le margin-left */
