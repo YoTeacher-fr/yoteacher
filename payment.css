@@ -567,8 +567,8 @@ background: linear-gradient(
     grid-column: span 2;
     
     /* Effet glass léger pour garder l'intensité du rouge */
-    backdrop-filter: blur(4px) !important;
-    -webkit-backdrop-filter: blur(4px) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
     
     /* Transition fluide */
     transition: all 0.2s ease;    
