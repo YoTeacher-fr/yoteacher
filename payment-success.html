@@ -49,32 +49,6 @@
 
     <script src="translation.js"></script>
     <script>
-        // Fonction pour formater la devise avec l'API Intl
-        function formatCurrency(amount, currencyCode) {
-            try {
-                // Utilise l'API Intl pour un formatage correct selon la locale
-                return new Intl.NumberFormat('fr-FR', {
-                    style: 'currency',
-                    currency: currencyCode,
-                    minimumFractionDigits: currencyCode === 'JPY' ? 0 : 2,
-                    maximumFractionDigits: currencyCode === 'JPY' ? 0 : 2
-                }).format(amount);
-            } catch (error) {
-                // Fallback si la devise n'est pas supportée
-                const currencySymbols = {
-                    'EUR': '€',
-                    'USD': '$',
-                    'GBP': '£',
-                    'CAD': 'CA$',
-                    'AUD': 'A$',
-                    'JPY': '¥',
-                    'CHF': 'CHF',
-                };
-                const symbol = currencySymbols[currencyCode] || currencyCode;
-                return `${symbol}${amount.toFixed(2)}`;
-            }
-        }
-
         // Vérifier l'authentification sur payment-success
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🔍 Vérification auth sur payment-success...');
@@ -182,16 +156,15 @@
                     courseType = booking.courseType;
             }
             
-            // Formatage du prix avec l'API Intl
+            // Formatage du prix
             let priceDisplay = '';
             if (booking.isCreditBooking) {
                 priceDisplay = '0 € (avec crédit)';
             } else if (booking.isPackage && booking.packageQuantity > 1) {
                 const pricePerCourse = booking.price / booking.packageQuantity;
-                // Utilisation de l'API Intl pour le formatage
-                priceDisplay = `${formatCurrency(booking.price, booking.currency)} (${formatCurrency(pricePerCourse, booking.currency)}/cours)`;
+                priceDisplay = `${booking.price} ${booking.currency} (${pricePerCourse.toFixed(2)} ${booking.currency}/cours)`;
             } else {
-                priceDisplay = formatCurrency(booking.price, booking.currency);
+                priceDisplay = `${booking.price} ${booking.currency}`;
             }
             
             let html = `
