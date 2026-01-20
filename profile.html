@@ -41,8 +41,8 @@
                 document.body.style.visibility = 'visible';
                 
                 setTimeout(() => {
-                    if (window.loadProfile) {
-                        window.loadProfile();
+                    if (window.initProfilePage) {
+                        window.initProfilePage();
                     }
                 }, 100);
                 
@@ -65,8 +65,8 @@
                     document.body.style.visibility = 'visible';
                     
                     setTimeout(() => {
-                        if (window.loadProfile) {
-                            window.loadProfile();
+                        if (window.initProfilePage) {
+                            window.initProfilePage();
                         }
                     }, 100);
                 } else {
@@ -89,17 +89,23 @@
         setTimeout(checkAuthManager, 200);
     }
     
-    window.addEventListener('auth:login', function() {
-        console.log('✅ Événement auth:login reçu pour profile');
-        if (window.loadProfile) {
-            window.loadProfile();
-        }
-    });
-    
-    window.addEventListener('auth:logout', function() {
-        const currentUrl = encodeURIComponent(window.location.href);
-        window.location.replace(`login.html?redirect=${currentUrl}`);
-    });
+    // Écouter UNE SEULE FOIS les événements
+    if (!window.profileEventListenersAttached) {
+        window.addEventListener('auth:login', function() {
+            console.log('✅ Événement auth:login reçu pour profile');
+            // NE PAS recharger toute la page, juste mettre à jour les données
+            if (window.updateProfileData) {
+                window.updateProfileData();
+            }
+        });
+        
+        window.addEventListener('auth:logout', function() {
+            const currentUrl = encodeURIComponent(window.location.href);
+            window.location.replace(`login.html?redirect=${currentUrl}`);
+        });
+        
+        window.profileEventListenersAttached = true;
+    }
     
     setTimeout(checkAuthentication, 200);
 </script>
@@ -267,13 +273,20 @@
     <script src="pays.js"></script>
     
     <script>
-        // Variables pour suivre l'état des sauvegardes - SCOPE LOCAL
-        let isSavingPersonal = false;
-        let isSavingLanguage = false;
-        let isSavingPassword = false;
-        let currentUser = null;
-        let supabaseClient = null;
+        // ===== ÉTAT GLOBAL DE LA PAGE =====
+        window.PROFILE_STATE = {
+            currentUser: null,
+            supabaseClient: null,
+            // Variables d'état PERSISTANTES
+            isSavingPersonal: false,
+            isSavingLanguage: false,
+            isSavingPassword: false,
+            // Prévenir les doubles initialisations
+            initialized: false,
+            eventsAttached: false
+        };
         
+        // ===== FONCTIONS UTILITAIRES =====
         function waitForSupabase() {
             return new Promise((resolve, reject) => {
                 let attempts = 0;
@@ -282,11 +295,10 @@
                 const check = () => {
                     attempts++;
                     if (window.supabase && typeof window.supabase.from === 'function') {
-                        supabaseClient = window.supabase;
+                        window.PROFILE_STATE.supabaseClient = window.supabase;
                         console.log('✅ Supabase prêt pour le profil');
                         resolve();
                     } else if (attempts >= maxAttempts) {
-                        console.error('❌ Timeout Supabase');
                         reject(new Error('Supabase non initialisé'));
                     } else {
                         setTimeout(check, 100);
@@ -304,7 +316,7 @@
                 const check = () => {
                     attempts++;
                     if (window.authManager && window.authManager.getCurrentUser !== undefined) {
-                        currentUser = window.authManager.getCurrentUser();
+                        window.PROFILE_STATE.currentUser = window.authManager.getCurrentUser();
                         resolve();
                     } else if (attempts >= maxAttempts) {
                         resolve();
@@ -315,74 +327,354 @@
                 check();
             });
         }
-
-        // Fonction utilitaire pour mettre à jour le profil sans conflit
-        async function updateProfileSafely(userId, updateData) {
-            console.log('🛡️ Mise à jour sécurisée du profil pour:', userId);
+        
+        // Fonction pour mettre à jour le profil - VERSION SIMPLIFIÉE
+        async function updateProfileField(field, value) {
+            const { currentUser, supabaseClient } = window.PROFILE_STATE;
+            
+            if (!currentUser || !supabaseClient) {
+                console.error('❌ Impossible de mettre à jour: utilisateur ou Supabase non disponible');
+                return { success: false, error: 'Non disponible' };
+            }
             
             try {
-                // Ajouter updated_at automatiquement
-                const dataToUpdate = {
-                    ...updateData,
+                const updateData = {
+                    [field]: value,
                     updated_at: new Date().toISOString()
                 };
                 
-                console.log('📤 Données à mettre à jour:', dataToUpdate);
+                console.log(`📤 Mise à jour ${field}:`, updateData);
                 
-                if (!supabaseClient) {
-                    throw new Error('Supabase non disponible');
-                }
-                
-                // Essayer la mise à jour
-                const { error, data } = await supabaseClient
+                const { error } = await supabaseClient
                     .from('profiles')
-                    .update(dataToUpdate)
-                    .eq('id', userId)
-                    .select();
+                    .update(updateData)
+                    .eq('id', currentUser.id);
                 
                 if (error) {
-                    console.error('❌ Erreur mise à jour profil:', error);
-                    
-                    // Si le profil n'existe pas, le créer
-                    if (error.code === 'PGRST116' || error.message.includes('row') || error.message.includes('not found')) {
-                        console.log('🔄 Création du profil car il n\'existe pas...');
-                        const profileData = {
-                            id: userId,
-                            ...dataToUpdate,
-                            created_at: new Date().toISOString()
-                        };
-                        
-                        const { error: insertError, data: insertData } = await supabaseClient
-                            .from('profiles')
-                            .insert(profileData)
-                            .select();
-                        
-                        if (insertError) {
-                            console.error('❌ Erreur création profil:', insertError);
-                            throw insertError;
-                        }
-                        console.log('✅ Profil créé avec succès');
-                        return { success: true, data: insertData };
-                    } else {
-                        throw error;
-                    }
-                } else {
-                    console.log('✅ Profil mis à jour avec succès');
-                    return { success: true, data };
+                    console.error(`❌ Erreur mise à jour ${field}:`, error);
+                    return { success: false, error: error.message };
                 }
                 
+                console.log(`✅ ${field} mis à jour avec succès`);
+                return { success: true };
+                
             } catch (error) {
-                console.error('❌ Erreur mise à jour sécurisée:', error);
+                console.error(`❌ Exception mise à jour ${field}:`, error);
                 return { success: false, error: error.message };
             }
         }
         
-        async function loadProfile() {
-            console.log('🔍 Chargement du profil...');
+        // ===== CHARGEMENT DES DONNÉES =====
+        async function loadProfileData() {
+            console.log('📥 Chargement des données du profil...');
+            
+            const { currentUser, supabaseClient } = window.PROFILE_STATE;
+            
+            if (!currentUser || !supabaseClient) {
+                console.error('❌ Impossible de charger: données manquantes');
+                return;
+            }
+            
+            try {
+                // Récupérer le profil
+                const { data: profile, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .maybeSingle();
+                
+                if (error) {
+                    console.error('❌ Erreur chargement profil:', error);
+                    return;
+                }
+                
+                // Stocker le profil
+                currentUser.profile = profile || {};
+                
+                // Remplir les formulaires
+                const fullName = currentUser.profile.full_name || currentUser.user_metadata?.full_name || '';
+                const nameParts = fullName.split(' ');
+                document.getElementById('firstName').value = nameParts[0] || '';
+                document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
+                document.getElementById('email').value = currentUser.email;
+                document.getElementById('frenchLevel').value = currentUser.profile.french_level || '';
+                document.getElementById('learningGoals').value = currentUser.profile.learning_goals || '';
+                
+                // Charger les pays
+                if (window.loadCountriesIntoSelect) {
+                    const userCountry = currentUser.profile.country || '';
+                    window.loadCountriesIntoSelect('country', userCountry);
+                    const countryInfo = document.getElementById('countryInfo');
+                    if (countryInfo) {
+                        countryInfo.textContent = window.YOTEACHER_COUNTRIES.length + ' pays disponibles';
+                    }
+                }
+                
+                console.log('✅ Données profil chargées');
+                
+            } catch (error) {
+                console.error('❌ Exception chargement données:', error);
+            }
+        }
+        
+        // ===== ATTACHEMENT DES ÉVÉNEMENTS (UNE SEULE FOIS) =====
+        function attachFormEvents() {
+            if (window.PROFILE_STATE.eventsAttached) {
+                console.log('⚠️ Événements déjà attachés');
+                return;
+            }
+            
+            console.log('🔗 Attachement des événements des formulaires...');
+            
+            // Gestion des onglets
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    document.querySelectorAll('.nav-item').forEach(i => {
+                        i.classList.remove('active');
+                    });
+                    document.querySelectorAll('.tab-content').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    
+                    this.classList.add('active');
+                    const tabId = this.dataset.tab + 'Tab';
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Formulaire informations personnelles - VERSION ULTRA SIMPLIFIÉE
+            document.getElementById('personalForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const { isSavingPersonal, currentUser } = window.PROFILE_STATE;
+                
+                if (isSavingPersonal) {
+                    console.log('⚠️ Ignoré: sauvegarde déjà en cours');
+                    return;
+                }
+                
+                // Marquer comme en cours
+                window.PROFILE_STATE.isSavingPersonal = true;
+                const submitBtn = document.getElementById('personalSaveBtn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
+                submitBtn.disabled = true;
+                
+                const firstName = document.getElementById('firstName').value.trim();
+                const lastName = document.getElementById('lastName').value.trim();
+                const fullName = `${firstName} ${lastName}`;
+                const country = document.getElementById('country').value;
+                
+                // Validation
+                if (!firstName || !lastName) {
+                    showError('Le prénom et le nom sont obligatoires');
+                    resetButton('personal', submitBtn, originalText);
+                    return;
+                }
+                
+                if (!country) {
+                    showError('Veuillez sélectionner un pays');
+                    resetButton('personal', submitBtn, originalText);
+                    return;
+                }
+                
+                try {
+                    // 1. Mettre à jour le nom complet et le pays
+                    const result1 = await updateProfileField('full_name', fullName);
+                    const result2 = await updateProfileField('country', country);
+                    
+                    if (!result1.success || !result2.success) {
+                        throw new Error('Erreur lors de la sauvegarde');
+                    }
+                    
+                    // 2. Mettre à jour localement
+                    if (!currentUser.profile) currentUser.profile = {};
+                    currentUser.profile.full_name = fullName;
+                    currentUser.profile.country = country;
+                    
+                    // 3. Sauvegarder dans localStorage
+                    if (window.authManager && window.authManager.saveUserToStorage) {
+                        window.authManager.saveUserToStorage();
+                        console.log('💾 Données sauvegardées localStorage');
+                    }
+                    
+                    showSuccess('Profil mis à jour avec succès !');
+                    
+                } catch (error) {
+                    console.error('❌ Erreur sauvegarde:', error);
+                    showError('Erreur: ' + error.message);
+                } finally {
+                    // Réactiver le bouton après 500ms
+                    setTimeout(() => {
+                        resetButton('personal', submitBtn, originalText);
+                    }, 500);
+                }
+            });
+            
+            // Formulaire niveau français - VERSION ULTRA SIMPLIFIÉE
+            document.getElementById('languageForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const { isSavingLanguage, currentUser } = window.PROFILE_STATE;
+                
+                if (isSavingLanguage) {
+                    console.log('⚠️ Ignoré: sauvegarde déjà en cours');
+                    return;
+                }
+                
+                // Marquer comme en cours
+                window.PROFILE_STATE.isSavingLanguage = true;
+                const submitBtn = document.getElementById('languageSaveBtn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
+                submitBtn.disabled = true;
+                
+                const frenchLevel = document.getElementById('frenchLevel').value;
+                const learningGoals = document.getElementById('learningGoals').value.trim();
+                
+                if (!frenchLevel) {
+                    showError('Veuillez sélectionner votre niveau');
+                    resetButton('language', submitBtn, originalText);
+                    return;
+                }
+                
+                try {
+                    // 1. Mettre à jour le niveau
+                    const result = await updateProfileField('french_level', frenchLevel);
+                    
+                    if (!result.success) {
+                        throw new Error('Erreur lors de la sauvegarde du niveau');
+                    }
+                    
+                    // 2. Mettre à jour les objectifs si remplis
+                    if (learningGoals) {
+                        const resultGoals = await updateProfileField('learning_goals', learningGoals);
+                        if (!resultGoals.success) {
+                            console.warn('⚠️ Erreur sauvegarde objectifs, mais niveau sauvegardé');
+                        }
+                    }
+                    
+                    // 3. Mettre à jour localement
+                    if (!currentUser.profile) currentUser.profile = {};
+                    currentUser.profile.french_level = frenchLevel;
+                    if (learningGoals) {
+                        currentUser.profile.learning_goals = learningGoals;
+                    }
+                    
+                    // 4. Sauvegarder dans localStorage
+                    if (window.authManager && window.authManager.saveUserToStorage) {
+                        window.authManager.saveUserToStorage();
+                    }
+                    
+                    showSuccess('Niveau de français mis à jour !');
+                    
+                } catch (error) {
+                    console.error('❌ Erreur sauvegarde niveau:', error);
+                    showError('Erreur: ' + error.message);
+                } finally {
+                    // Réactiver le bouton après 500ms
+                    setTimeout(() => {
+                        resetButton('language', submitBtn, originalText);
+                    }, 500);
+                }
+            });
+            
+            // Formulaire mot de passe - VERSION SIMPLIFIÉE
+            document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const { isSavingPassword, supabaseClient } = window.PROFILE_STATE;
+                
+                if (isSavingPassword) {
+                    console.log('⚠️ Ignoré: sauvegarde déjà en cours');
+                    return;
+                }
+                
+                // Marquer comme en cours
+                window.PROFILE_STATE.isSavingPassword = true;
+                const submitBtn = document.getElementById('passwordSaveBtn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
+                submitBtn.disabled = true;
+                
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                if (newPassword.length < 8) {
+                    showError('Le mot de passe doit contenir au moins 8 caractères');
+                    resetButton('password', submitBtn, originalText);
+                    return;
+                }
+                
+                if (newPassword !== confirmPassword) {
+                    showError('Les mots de passe ne correspondent pas');
+                    resetButton('password', submitBtn, originalText);
+                    return;
+                }
+                
+                try {
+                    if (!supabaseClient || !supabaseClient.auth) {
+                        throw new Error('Supabase non disponible');
+                    }
+                    
+                    const { error } = await supabaseClient.auth.updateUser({
+                        password: newPassword
+                    });
+                    
+                    if (error) throw error;
+                    
+                    showSuccess('Mot de passe mis à jour avec succès !');
+                    document.getElementById('passwordForm').reset();
+                    
+                } catch (error) {
+                    console.error('❌ Erreur changement mot de passe:', error);
+                    showError('Erreur: ' + error.message);
+                } finally {
+                    setTimeout(() => {
+                        resetButton('password', submitBtn, originalText);
+                    }, 500);
+                }
+            });
+            
+            window.PROFILE_STATE.eventsAttached = true;
+            console.log('✅ Événements attachés avec succès');
+        }
+        
+        // Fonction pour réinitialiser les boutons
+        function resetButton(type, button, originalText) {
+            switch(type) {
+                case 'personal':
+                    window.PROFILE_STATE.isSavingPersonal = false;
+                    break;
+                case 'language':
+                    window.PROFILE_STATE.isSavingLanguage = false;
+                    break;
+                case 'password':
+                    window.PROFILE_STATE.isSavingPassword = false;
+                    break;
+            }
+            button.innerHTML = originalText;
+            button.disabled = false;
+            console.log(`✅ Bouton ${type} réactivé (état: ${window.PROFILE_STATE[`isSaving${type.charAt(0).toUpperCase() + type.slice(1)}`]})`);
+        }
+        
+        // ===== INITIALISATION PRINCIPALE =====
+        async function initProfilePage() {
+            console.log('🚀 Initialisation de la page profil...');
+            
+            // Ne pas initialiser plusieurs fois
+            if (window.PROFILE_STATE.initialized) {
+                console.log('⚠️ Page déjà initialisée');
+                return;
+            }
             
             try {
                 // Attendre Supabase ET authManager
                 await Promise.all([waitForSupabase(), waitForAuthManager()]);
+                
+                const { currentUser } = window.PROFILE_STATE;
                 
                 if (!currentUser) {
                     console.error('❌ Aucun utilisateur trouvé');
@@ -390,385 +682,30 @@
                     return;
                 }
                 
-                console.log('✅ Utilisateur trouvé:', currentUser.email);
+                console.log('✅ Initialisation réussie pour:', currentUser.email);
                 
                 // Initialiser l'avatar
                 const initials = currentUser.email.substring(0, 2).toUpperCase();
                 document.getElementById('userAvatar').textContent = initials;
                 
-                // Charger les données du profil
-                await loadUserProfile();
+                // Charger les données
+                await loadProfileData();
                 
-                // Charger les pays dans le select
-                if (window.loadCountriesIntoSelect) {
-                    console.log('🌍 Chargement des pays dans le select...');
-                    const userCountry = currentUser.profile?.country || '';
-                    window.loadCountriesIntoSelect('country', userCountry);
-                    const countryInfo = document.getElementById('countryInfo');
-                    if (countryInfo) {
-                        countryInfo.textContent = window.YOTEACHER_COUNTRIES.length + ' pays disponibles';
-                    }
-                } else {
-                    console.error('❌ Fonction loadCountriesIntoSelect non disponible');
-                }
+                // Attacher les événements (une seule fois)
+                attachFormEvents();
                 
-                // Gestion des onglets
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        
-                        document.querySelectorAll('.nav-item').forEach(i => {
-                            i.classList.remove('active');
-                        });
-                        document.querySelectorAll('.tab-content').forEach(tab => {
-                            tab.classList.remove('active');
-                        });
-                        
-                        this.classList.add('active');
-                        const tabId = this.dataset.tab + 'Tab';
-                        document.getElementById(tabId).classList.add('active');
-                    });
-                });
+                // Marquer comme initialisé
+                window.PROFILE_STATE.initialized = true;
                 
-                // Formulaire informations personnelles - VERSION CORRIGÉE
-                document.getElementById('personalForm').addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    
-                    // Empêcher les doubles clics
-                    if (isSavingPersonal) {
-                        console.log('⚠️ Sauvegarde personnelle déjà en cours, ignore le clic');
-                        return;
-                    }
-                    
-                    const submitBtn = document.getElementById('personalSaveBtn');
-                    const originalText = submitBtn.innerHTML;
-                    
-                    // Marquer comme en cours de sauvegarde
-                    isSavingPersonal = true;
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
-                    submitBtn.disabled = true;
-                    
-                    const firstName = document.getElementById('firstName').value.trim();
-                    const lastName = document.getElementById('lastName').value.trim();
-                    const fullName = `${firstName} ${lastName}`;
-                    const country = document.getElementById('country').value;
-                    
-                    console.log('📋 Données personnelles à sauvegarder:', { firstName, lastName, fullName, country });
-                    
-                    // Validation
-                    if (!firstName || !lastName) {
-                        showError('Le prénom et le nom sont obligatoires');
-                        resetButton('personal', submitBtn, originalText);
-                        return;
-                    }
-                    
-                    if (!country) {
-                        showError('Veuillez sélectionner un pays');
-                        resetButton('personal', submitBtn, originalText);
-                        return;
-                    }
-                    
-                    try {
-                        // 1. Mettre à jour le profil avec la fonction sécurisée
-                        const result = await updateProfileSafely(currentUser.id, {
-                            full_name: fullName,
-                            country: country
-                        });
-                        
-                        if (!result.success) {
-                            throw new Error(result.error || 'Erreur lors de la sauvegarde');
-                        }
-                        
-                        // 2. Mettre à jour les données locales
-                        if (!currentUser.profile) currentUser.profile = {};
-                        currentUser.profile.full_name = fullName;
-                        currentUser.profile.country = country;
-                        currentUser.profile.updated_at = new Date().toISOString();
-                        
-                        // Mettre à jour les métadonnées auth
-                        if (!currentUser.user_metadata) currentUser.user_metadata = {};
-                        currentUser.user_metadata.full_name = fullName;
-                        currentUser.user_metadata.first_name = firstName;
-                        currentUser.user_metadata.last_name = lastName;
-                        
-                        // 3. Sauvegarder dans localStorage
-                        if (window.authManager && window.authManager.saveUserToStorage) {
-                            window.authManager.saveUserToStorage();
-                            console.log('💾 Données sauvegardées localStorage');
-                        }
-                        
-                        // 4. Mettre à jour les métadonnées auth (en arrière-plan, sans attendre)
-                        setTimeout(() => {
-                            if (supabaseClient && supabaseClient.auth) {
-                                supabaseClient.auth.updateUser({
-                                    data: { 
-                                        full_name: fullName,
-                                        first_name: firstName,
-                                        last_name: lastName
-                                    }
-                                }).then(() => {
-                                    console.log('✅ Métadonnées auth mises à jour');
-                                }).catch(err => {
-                                    console.warn('⚠️ Erreur métadonnées auth (non critique):', err.message);
-                                });
-                            }
-                        }, 100);
-                        
-                        showSuccess('Profil mis à jour avec succès !');
-                        
-                        // Vérification
-                        setTimeout(async () => {
-                            if (supabaseClient) {
-                                const { data: checkData } = await supabaseClient
-                                    .from('profiles')
-                                    .select('full_name, country')
-                                    .eq('id', currentUser.id)
-                                    .single();
-                                console.log('✅ Vérification données:', checkData);
-                            }
-                        }, 500);
-                        
-                    } catch (error) {
-                        console.error('❌ Erreur sauvegarde profil:', error);
-                        showError('Erreur: ' + (error.message || 'Impossible de sauvegarder les données'));
-                    } finally {
-                        // Réactiver le bouton après un court délai
-                        setTimeout(() => {
-                            resetButton('personal', submitBtn, originalText);
-                        }, 500);
-                    }
-                });
-                
-                // Formulaire niveau français
-                document.getElementById('languageForm').addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    
-                    // Empêcher les doubles clics
-                    if (isSavingLanguage) {
-                        console.log('⚠️ Sauvegarde niveau déjà en cours, ignore le clic');
-                        return;
-                    }
-                    
-                    const submitBtn = document.getElementById('languageSaveBtn');
-                    const originalText = submitBtn.innerHTML;
-                    
-                    // Marquer comme en cours de sauvegarde
-                    isSavingLanguage = true;
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
-                    submitBtn.disabled = true;
-                    
-                    const frenchLevel = document.getElementById('frenchLevel').value;
-                    const learningGoals = document.getElementById('learningGoals').value.trim();
-                    
-                    console.log('📋 Données niveau français à sauvegarder:', { frenchLevel, learningGoals });
-                    
-                    if (!frenchLevel) {
-                        showError('Veuillez sélectionner votre niveau');
-                        resetButton('language', submitBtn, originalText);
-                        return;
-                    }
-                    
-                    // Validation optionnelle pour les objectifs
-                    if (learningGoals && learningGoals.length < 10) {
-                        showError('Veuillez décrire vos objectifs en au moins 10 caractères (ou laissez vide)');
-                        resetButton('language', submitBtn, originalText);
-                        return;
-                    }
-                    
-                    try {
-                        // Préparer les données
-                        const updateData = {
-                            french_level: frenchLevel
-                        };
-                        
-                        // Ajouter les objectifs seulement si remplis
-                        if (learningGoals) {
-                            updateData.learning_goals = learningGoals;
-                        }
-                        
-                        // Mettre à jour avec la fonction sécurisée
-                        const result = await updateProfileSafely(currentUser.id, updateData);
-                        
-                        if (!result.success) {
-                            throw new Error(result.error || 'Erreur lors de la sauvegarde');
-                        }
-                        
-                        // Mettre à jour localement
-                        if (!currentUser.profile) currentUser.profile = {};
-                        currentUser.profile.french_level = frenchLevel;
-                        if (learningGoals) {
-                            currentUser.profile.learning_goals = learningGoals;
-                        }
-                        currentUser.profile.updated_at = new Date().toISOString();
-                        
-                        // Sauvegarder localStorage
-                        if (window.authManager && window.authManager.saveUserToStorage) {
-                            window.authManager.saveUserToStorage();
-                            console.log('💾 Données sauvegardées localStorage');
-                        }
-                        
-                        showSuccess('Niveau de français mis à jour !');
-                        
-                        // Vérification
-                        setTimeout(async () => {
-                            if (supabaseClient) {
-                                const { data: checkData } = await supabaseClient
-                                    .from('profiles')
-                                    .select('french_level, learning_goals')
-                                    .eq('id', currentUser.id)
-                                    .single();
-                                console.log('✅ Vérification données niveau:', checkData);
-                            }
-                        }, 500);
-                        
-                    } catch (error) {
-                        console.error('❌ Erreur sauvegarde niveau:', error);
-                        showError('Erreur: ' + error.message);
-                    } finally {
-                        // Réactiver le bouton après un court délai
-                        setTimeout(() => {
-                            resetButton('language', submitBtn, originalText);
-                        }, 500);
-                    }
-                });
-                
-                // Formulaire mot de passe
-                document.getElementById('passwordForm').addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    
-                    // Empêcher les doubles clics
-                    if (isSavingPassword) {
-                        console.log('⚠️ Sauvegarde mot de passe déjà en cours, ignore le clic');
-                        return;
-                    }
-                    
-                    const submitBtn = document.getElementById('passwordSaveBtn');
-                    const originalText = submitBtn.innerHTML;
-                    
-                    // Marquer comme en cours de sauvegarde
-                    isSavingPassword = true;
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
-                    submitBtn.disabled = true;
-                    
-                    const currentPassword = document.getElementById('currentPassword').value;
-                    const newPassword = document.getElementById('newPassword').value;
-                    const confirmPassword = document.getElementById('confirmPassword').value;
-                    
-                    if (newPassword.length < 8) {
-                        showError('Le mot de passe doit contenir au moins 8 caractères');
-                        resetButton('password', submitBtn, originalText);
-                        return;
-                    }
-                    
-                    if (newPassword !== confirmPassword) {
-                        showError('Les mots de passe ne correspondent pas');
-                        resetButton('password', submitBtn, originalText);
-                        return;
-                    }
-                    
-                    try {
-                        if (!supabaseClient || !supabaseClient.auth) {
-                            throw new Error('Supabase non disponible');
-                        }
-                        
-                        const { error } = await supabaseClient.auth.updateUser({
-                            password: newPassword
-                        });
-                        
-                        if (error) throw error;
-                        
-                        showSuccess('Mot de passe mis à jour avec succès !');
-                        document.getElementById('passwordForm').reset();
-                        
-                    } catch (error) {
-                        console.error('❌ Erreur changement mot de passe:', error);
-                        showError('Erreur: ' + error.message);
-                    } finally {
-                        setTimeout(() => {
-                            resetButton('password', submitBtn, originalText);
-                        }, 500);
-                    }
-                });
+                console.log('✅ Page profil initialisée avec succès');
                 
             } catch (error) {
-                console.error('❌ Erreur chargement profil:', error);
-                showError('Erreur lors du chargement du profil: ' + error.message);
+                console.error('❌ Erreur initialisation:', error);
+                showError('Erreur lors de l\'initialisation: ' + error.message);
             }
         }
         
-        // Fonction pour réinitialiser les boutons
-        function resetButton(type, button, originalText) {
-            switch(type) {
-                case 'personal':
-                    isSavingPersonal = false;
-                    break;
-                case 'language':
-                    isSavingLanguage = false;
-                    break;
-                case 'password':
-                    isSavingPassword = false;
-                    break;
-            }
-            button.innerHTML = originalText;
-            button.disabled = false;
-            console.log(`✅ Bouton ${type} réactivé`);
-        }
-        
-        async function loadUserProfile() {
-            try {
-                console.log('🔍 Chargement profil depuis Supabase...');
-                
-                if (!supabaseClient || !currentUser) {
-                    console.log('⚠️ Supabase ou utilisateur non disponible');
-                    return;
-                }
-                
-                // Récupérer les données du profil depuis la table profiles
-                const { data: profile, error } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', currentUser.id)
-                    .single();
-                
-                if (error) {
-                    console.log('ℹ️ Profil non trouvé ou erreur:', error.message);
-                    // Si le profil n'existe pas, on utilise les données locales
-                    return;
-                }
-                
-                // Fusionner les données
-                currentUser.profile = profile || currentUser.profile || {};
-                
-                console.log('📊 Données profil chargées:', {
-                    full_name: currentUser.profile.full_name,
-                    country: currentUser.profile.country,
-                    french_level: currentUser.profile.french_level,
-                    learning_goals: currentUser.profile.learning_goals ? 'présents' : 'absents'
-                });
-                
-                // Remplir le formulaire informations personnelles
-                const fullName = currentUser.profile.full_name || currentUser.user_metadata?.full_name || '';
-                const nameParts = fullName.split(' ');
-                document.getElementById('firstName').value = nameParts[0] || '';
-                document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
-                document.getElementById('email').value = currentUser.email;
-                
-                // Remplir le formulaire niveau français
-                document.getElementById('frenchLevel').value = currentUser.profile.french_level || '';
-                document.getElementById('learningGoals').value = currentUser.profile.learning_goals || '';
-                
-            } catch (error) {
-                console.error('❌ Erreur chargement profil détaillé:', error);
-                
-                // Fallback aux métadonnées de base
-                const fullName = currentUser.user_metadata?.full_name || '';
-                const nameParts = fullName.split(' ');
-                document.getElementById('firstName').value = nameParts[0] || '';
-                document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
-                document.getElementById('email').value = currentUser.email;
-            }
-        }
-        
+        // ===== FONCTIONS GLOBALES =====
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
@@ -797,39 +734,31 @@
             }, 3000);
         }
         
-        window.loadProfile = loadProfile;
+        // Fonction pour mettre à jour les données (appelée par auth:login)
+        window.updateProfileData = async function() {
+            console.log('🔄 Mise à jour des données du profil...');
+            
+            // Recharger l'utilisateur depuis authManager
+            if (window.authManager && window.authManager.getCurrentUser) {
+                window.PROFILE_STATE.currentUser = window.authManager.getCurrentUser();
+            }
+            
+            // Recharger les données
+            await loadProfileData();
+        };
         
-        // Fonction de débogage pour vérifier l'état du profil
-        window.debugProfile = async function() {
-            if (!currentUser) {
-                console.error('❌ Aucun utilisateur connecté');
-                return;
-            }
-            
-            console.group('🔍 DEBUG PROFIL');
-            console.log('User ID:', currentUser.id);
-            console.log('Email:', currentUser.email);
-            console.log('Profil local:', currentUser.profile);
-            
-            try {
-                if (supabaseClient) {
-                    const { data: profile, error } = await supabaseClient
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', currentUser.id)
-                        .single();
-                    
-                    if (error) {
-                        console.error('❌ Erreur récupération profil:', error);
-                    } else {
-                        console.log('✅ Profil Supabase:', profile);
-                    }
-                } else {
-                    console.error('❌ Supabase non disponible');
-                }
-            } catch (error) {
-                console.error('❌ Exception:', error);
-            }
+        // Exposer l'initialisation
+        window.initProfilePage = initProfilePage;
+        
+        // Débogage
+        window.debugProfileState = function() {
+            console.group('🔍 ÉTAT PROFIL');
+            console.log('Initialisé:', window.PROFILE_STATE.initialized);
+            console.log('Événements attachés:', window.PROFILE_STATE.eventsAttached);
+            console.log('Sauvegarde personnelle en cours:', window.PROFILE_STATE.isSavingPersonal);
+            console.log('Sauvegarde niveau en cours:', window.PROFILE_STATE.isSavingLanguage);
+            console.log('Utilisateur:', window.PROFILE_STATE.currentUser?.email);
+            console.log('Supabase:', window.PROFILE_STATE.supabaseClient ? 'Disponible' : 'Indisponible');
             console.groupEnd();
         };
     </script>
