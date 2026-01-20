@@ -281,30 +281,31 @@ button {
 
 /* CORRECTION DES STATISTIQUES HERO */
 .stats-left {
-        display: flex;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        justify-content: space-between; /* Répartit l'espace également */
-        align-items: stretch;
-        gap: 6px !important; /* Réduit l'espacement entre les bulles */
-        margin: 25px auto 30px auto;
-        width: 100%;
-        max-width: 340px; /* Limite la largeur totale */
-        padding: 0 5px;
+display: flex;
+    flex-direction: row; /* On garde la ligne */
+    justify-content: center;
+    align-items: stretch; /* Pour qu'ils aient tous la même hauteur */
+    gap: 8px; /* Réduire l'écart pour gagner de la place */
+    margin: 30px 0;
+    flex-wrap: nowrap; /* EMPÊCHE le child 3 de descendre */
+    width: 100%;
 }
 
 .stat-item {
-        flex: 1;
-        min-width: 0; /* Permet aux éléments de rétrécir */
-        padding: 10px 5px !important; /* Réduit le padding */
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background-color: rgba(255, 255, 255, 0.15);
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.15);
+    padding: 20px 25px;
+    border-radius: 12px;
+    min-width: 140px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s;
+    text-align: center;
+    flex: 1;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .stat-item:hover {
@@ -313,21 +314,24 @@ button {
 }
 
 .stat-number {
-        font-size: 1.4rem !important;
-        margin-bottom: 4px;
-        line-height: 1;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #FFD700;
+    display: block;
+    line-height: 1;
+    margin-bottom: 8px;
 }
 
 .stat-label {
-        font-size: 0.6rem !important;
-        letter-spacing: 0.2px;
-        line-height: 1.1;
-        text-align: center;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
-        display: block;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.95);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+    white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* MODIFICATION: Texte différent pour desktop/mobile */
