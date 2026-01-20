@@ -750,16 +750,73 @@
         // Exposer l'initialisation
         window.initProfilePage = initProfilePage;
         
-        // Débogage
+        // ===== FONCTIONS DE DÉBOGAGE (ACCESSIBLES GLOBALEMENT) =====
         window.debugProfileState = function() {
             console.group('🔍 ÉTAT PROFIL');
             console.log('Initialisé:', window.PROFILE_STATE.initialized);
             console.log('Événements attachés:', window.PROFILE_STATE.eventsAttached);
             console.log('Sauvegarde personnelle en cours:', window.PROFILE_STATE.isSavingPersonal);
             console.log('Sauvegarde niveau en cours:', window.PROFILE_STATE.isSavingLanguage);
+            console.log('Sauvegarde mot de passe en cours:', window.PROFILE_STATE.isSavingPassword);
             console.log('Utilisateur:', window.PROFILE_STATE.currentUser?.email);
             console.log('Supabase:', window.PROFILE_STATE.supabaseClient ? 'Disponible' : 'Indisponible');
+            console.log('Données utilisateur:', window.PROFILE_STATE.currentUser);
             console.groupEnd();
+        };
+        
+        // Fonction pour forcer la réinitialisation des boutons
+        window.resetAllProfileButtons = function() {
+            console.log('🔄 Réinitialisation forcée de tous les boutons...');
+            window.PROFILE_STATE.isSavingPersonal = false;
+            window.PROFILE_STATE.isSavingLanguage = false;
+            window.PROFILE_STATE.isSavingPassword = false;
+            
+            const personalBtn = document.getElementById('personalSaveBtn');
+            const languageBtn = document.getElementById('languageSaveBtn');
+            const passwordBtn = document.getElementById('passwordSaveBtn');
+            
+            if (personalBtn) {
+                personalBtn.innerHTML = '<i class="fas fa-save"></i> <span>Enregistrer les modifications</span>';
+                personalBtn.disabled = false;
+            }
+            
+            if (languageBtn) {
+                languageBtn.innerHTML = '<i class="fas fa-save"></i> <span>Enregistrer les préférences</span>';
+                languageBtn.disabled = false;
+            }
+            
+            if (passwordBtn) {
+                passwordBtn.innerHTML = '<i class="fas fa-key"></i> <span>Changer le mot de passe</span>';
+                passwordBtn.disabled = false;
+            }
+            
+            console.log('✅ Tous les boutons réinitialisés');
+        };
+        
+        // Fonction pour vérifier la connexion Supabase
+        window.checkSupabaseConnection = async function() {
+            const { supabaseClient, currentUser } = window.PROFILE_STATE;
+            
+            if (!supabaseClient) {
+                console.error('❌ Supabase non initialisé');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('id, full_name, country, french_level')
+                    .eq('id', currentUser?.id)
+                    .maybeSingle();
+                
+                if (error) {
+                    console.error('❌ Erreur connexion Supabase:', error);
+                } else {
+                    console.log('✅ Connexion Supabase OK - Données:', data);
+                }
+            } catch (error) {
+                console.error('❌ Exception vérification connexion:', error);
+            }
         };
     </script>
 </body>
