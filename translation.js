@@ -312,7 +312,6 @@ class TranslationManager {
                 'payment.interac_email': 'Email Interac',
                 'payment.security_question': 'Question de sécurité',
                 'payment.answer': 'Réponse',
-                'payment.interac_notice': 'Une fois le virement effectué, cliquez sur "J\'ai payé avec Interac" pour confirmer votre réservation.',
                 'payment.paid_interac': 'J\'ai payé avec Interac',
                 'payment.paypal_qr': 'Cliquez sur le QR code pour ouvrir PayPal',
                 'payment.paypal_link': 'Lien PayPal',
