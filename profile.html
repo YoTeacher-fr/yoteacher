@@ -188,7 +188,7 @@
                                 </small>
                             </div>
 
-                            <button type="submit" class="btn-save">
+                            <button type="submit" class="btn-save" id="personalSaveBtn">
                                 <i class="fas fa-save"></i> <span>Enregistrer les modifications</span>
                             </button>
                         </form>
@@ -220,7 +220,7 @@
                                 <small style="color: #888; font-size: 0.85rem;">Décrivez vos objectifs en détail (optionnel)</small>
                             </div>
 
-                            <button type="submit" class="btn-save">
+                            <button type="submit" class="btn-save" id="languageSaveBtn">
                                 <i class="fas fa-save"></i> <span>Enregistrer les préférences</span>
                             </button>
                         </form>
@@ -249,7 +249,7 @@
                                 <input type="password" id="confirmPassword" class="form-input" required>
                             </div>
 
-                            <button type="submit" class="btn-save">
+                            <button type="submit" class="btn-save" id="passwordSaveBtn">
                                 <i class="fas fa-key"></i> <span>Changer le mot de passe</span>
                             </button>
                         </form>
@@ -346,6 +346,7 @@
         // Variables pour suivre l'état des sauvegardes
         let isSavingPersonal = false;
         let isSavingLanguage = false;
+        let isSavingPassword = false;
         
         async function loadProfile() {
             console.log('🔍 Chargement du profil...');
@@ -399,17 +400,17 @@
                     });
                 });
                 
-                // Formulaire informations personnelles
+                // Formulaire informations personnelles - VERSION CORRIGÉE
                 document.getElementById('personalForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
                     // Empêcher les doubles clics
                     if (isSavingPersonal) {
-                        console.log('⚠️ Sauvegarde déjà en cours...');
+                        console.log('⚠️ Sauvegarde personnelle déjà en cours, ignore le clic');
                         return;
                     }
                     
-                    const submitBtn = this.querySelector('.btn-save');
+                    const submitBtn = document.getElementById('personalSaveBtn');
                     const originalText = submitBtn.innerHTML;
                     
                     // Marquer comme en cours de sauvegarde
@@ -427,17 +428,13 @@
                     // Validation
                     if (!firstName || !lastName) {
                         showError('Le prénom et le nom sont obligatoires');
-                        isSavingPersonal = false;
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
+                        resetPersonalButton(submitBtn, originalText);
                         return;
                     }
                     
                     if (!country) {
                         showError('Veuillez sélectionner un pays');
-                        isSavingPersonal = false;
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
+                        resetPersonalButton(submitBtn, originalText);
                         return;
                     }
                     
@@ -501,12 +498,9 @@
                         console.error('❌ Erreur sauvegarde profil:', error);
                         showError('Erreur: ' + (error.message || 'Impossible de sauvegarder les données'));
                     } finally {
-                        // Toujours réactiver le bouton après 1 seconde maximum
+                        // Réactiver le bouton après un court délai
                         setTimeout(() => {
-                            isSavingPersonal = false;
-                            submitBtn.innerHTML = originalText;
-                            submitBtn.disabled = false;
-                            console.log('✅ Bouton réactivé');
+                            resetPersonalButton(submitBtn, originalText);
                         }, 500);
                     }
                 });
@@ -517,11 +511,11 @@
                     
                     // Empêcher les doubles clics
                     if (isSavingLanguage) {
-                        console.log('⚠️ Sauvegarde déjà en cours...');
+                        console.log('⚠️ Sauvegarde niveau déjà en cours, ignore le clic');
                         return;
                     }
                     
-                    const submitBtn = this.querySelector('.btn-save');
+                    const submitBtn = document.getElementById('languageSaveBtn');
                     const originalText = submitBtn.innerHTML;
                     
                     // Marquer comme en cours de sauvegarde
@@ -536,18 +530,14 @@
                     
                     if (!frenchLevel) {
                         showError('Veuillez sélectionner votre niveau');
-                        isSavingLanguage = false;
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
+                        resetLanguageButton(submitBtn, originalText);
                         return;
                     }
                     
                     // Validation optionnelle pour les objectifs
                     if (learningGoals && learningGoals.length < 10) {
                         showError('Veuillez décrire vos objectifs en au moins 10 caractères (ou laissez vide)');
-                        isSavingLanguage = false;
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
+                        resetLanguageButton(submitBtn, originalText);
                         return;
                     }
                     
@@ -599,12 +589,9 @@
                         console.error('❌ Erreur sauvegarde niveau:', error);
                         showError('Erreur: ' + error.message);
                     } finally {
-                        // Toujours réactiver le bouton
+                        // Réactiver le bouton après un court délai
                         setTimeout(() => {
-                            isSavingLanguage = false;
-                            submitBtn.innerHTML = originalText;
-                            submitBtn.disabled = false;
-                            console.log('✅ Bouton réactivé');
+                            resetLanguageButton(submitBtn, originalText);
                         }, 500);
                     }
                 });
@@ -613,9 +600,17 @@
                 document.getElementById('passwordForm').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
-                    const submitBtn = this.querySelector('.btn-save');
+                    // Empêcher les doubles clics
+                    if (isSavingPassword) {
+                        console.log('⚠️ Sauvegarde mot de passe déjà en cours, ignore le clic');
+                        return;
+                    }
+                    
+                    const submitBtn = document.getElementById('passwordSaveBtn');
                     const originalText = submitBtn.innerHTML;
                     
+                    // Marquer comme en cours de sauvegarde
+                    isSavingPassword = true;
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
                     submitBtn.disabled = true;
                     
@@ -625,15 +620,13 @@
                     
                     if (newPassword.length < 8) {
                         showError('Le mot de passe doit contenir au moins 8 caractères');
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
+                        resetPasswordButton(submitBtn, originalText);
                         return;
                     }
                     
                     if (newPassword !== confirmPassword) {
                         showError('Les mots de passe ne correspondent pas');
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
+                        resetPasswordButton(submitBtn, originalText);
                         return;
                     }
                     
@@ -652,8 +645,7 @@
                         showError('Erreur: ' + error.message);
                     } finally {
                         setTimeout(() => {
-                            submitBtn.innerHTML = originalText;
-                            submitBtn.disabled = false;
+                            resetPasswordButton(submitBtn, originalText);
                         }, 500);
                     }
                 });
@@ -662,6 +654,28 @@
                 console.error('❌ Erreur chargement profil:', error);
                 showError('Erreur lors du chargement du profil');
             }
+        }
+        
+        // Fonctions pour réinitialiser les boutons
+        function resetPersonalButton(button, originalText) {
+            isSavingPersonal = false;
+            button.innerHTML = originalText;
+            button.disabled = false;
+            console.log('✅ Bouton personnel réactivé');
+        }
+        
+        function resetLanguageButton(button, originalText) {
+            isSavingLanguage = false;
+            button.innerHTML = originalText;
+            button.disabled = false;
+            console.log('✅ Bouton niveau réactivé');
+        }
+        
+        function resetPasswordButton(button, originalText) {
+            isSavingPassword = false;
+            button.innerHTML = originalText;
+            button.disabled = false;
+            console.log('✅ Bouton mot de passe réactivé');
         }
         
         async function loadUserProfile(user) {
