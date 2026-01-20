@@ -313,19 +313,19 @@ button {
 }
 
 .stat-number {
-    font-size: 2.5rem;
+    font-size: 1.5rem;
     font-weight: 800;
     color: #FFD700;
     display: block;
     line-height: 1;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .stat-label {
     font-size: 0.6rem;
     color: rgba(255, 255, 255, 0.95);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     font-weight: 500;
     white-space: nowrap;
     width: 100%;
