@@ -142,7 +142,7 @@ font-size: 1.5rem !important;
     .mobile-header-right-group {
         display: flex !important;
         align-items: center !important;
-        gap: 6px !important;
+        gap: 4px !important;
         order: 2;
         width: auto;
         justify-content: flex-end;
@@ -165,7 +165,7 @@ min-width: 55px;
     background-position: right center !important;
     background-repeat: no-repeat !important;
     padding-right: 6px !important; /* Réduire le padding à droite pour la flèche */       
- padding: 1px 3px !important;
+ padding: 1px 1px !important;
         font-size: 0.65rem !important;
         min-width: 50px !important;
         max-width: 60px !important;
@@ -198,7 +198,7 @@ white-space: nowrap; /* Empêcher le retour à la ligne */
     
     .language-switcher-mobile span {
         font-size: 0.65rem !important;
-        padding: 1px 4px !important;
+        padding: 1px 1px !important;
         color: #333 !important;
         background: white !important;
         border: 1px solid rgba(0, 0, 0, 0.15) !important;
@@ -289,10 +289,13 @@ white-space: nowrap; /* Empêcher le retour à la ligne */
     body {
         padding-top: 55px !important;
     }
-    
-    /* Cacher tout code résiduel hamburger */
-    .hamburger-menu {
-        display: none !important;
+    .currency-selector-mobile,
+    .language-switcher-mobile,
+    .mobile-login-btn-header,
+    .mobile-dashboard-btn {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
     /* Cacher devise desktop sur mobile */
