@@ -225,12 +225,10 @@ white-space: nowrap; /* Empêcher le retour à la ligne */
         background-color: #4f9ad1;
         color: white;
         padding: 6px 12px;
-	margin-left: 10px
         border-radius: 20px;
         font-size: 0.85rem;
         font-weight: 500;
         text-decoration: none;
-        z-index: 1001;
         border: none;
         cursor: pointer;
         font-family: 'Inter', sans-serif;
