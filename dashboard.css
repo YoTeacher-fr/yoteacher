@@ -168,6 +168,7 @@ body.loaded {
     gap: 8px;
     text-decoration: none;
     backdrop-filter: blur(10px);
+    Margin-top: 10px;
 }
 
 .dashboard-action-btn:hover {
