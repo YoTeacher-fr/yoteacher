@@ -559,8 +559,8 @@ body {
     padding: 15px;
 background: linear-gradient(
         135deg, 
-        rgba(255, 0, 0, 0.15),      /* Rouge YouTube très opaque */
-        rgba(204, 0, 0, 0.10)       /* Rouge légèrement plus foncé */
+        rgba(255, 0, 0, 0.08),      /* Rouge YouTube très opaque */
+        rgba(204, 0, 0, 0.05)       /* Rouge légèrement plus foncé */
     ) !important;
     border-radius: 8px !important; /* Arrondis plus doux comme YouTube */
     border: 1px solid rgba(255, 50, 50, 0.4) !important; /* Bordure rouge vif */
