@@ -132,9 +132,9 @@
     
     /* Logo centré */
     .logo-section {
-      flex: 0 0 auto !important;
-        display: flex !important;
-        align-items: center !important;
+      flex: 0 0 auto;
+        display: flex;
+        align-items: center;
         text-align: left !important;
         position: static !important;
         transform: none !important;
@@ -144,6 +144,7 @@
         padding: 0 !important;
         width: auto !important;
         order: 1 !important;
+	gap: 10px;
     }
     
     .logo {
