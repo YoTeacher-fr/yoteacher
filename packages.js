@@ -281,9 +281,9 @@ class PackagesManager {
         }
     }
 
-    // NOUVELLE VERSION SIMPLIFIÉE SANS VERROUS COMPLEXES
+    // NOUVELLE VERSION CORRIGÉE SANS ERREUR DE UUID
     async useCredit(userId, courseType, bookingData) {
-        console.log(`💰 APPEL useCredit simplifié`);
+        console.log(`💰 APPEL useCredit corrigé`);
         console.log(`   User: ${userId}, Type: ${courseType}, BookingID: ${bookingData?.id}, Durée: ${bookingData?.duration || 60}`);
         
         if (!window.supabase || !userId) {
@@ -293,8 +293,8 @@ class PackagesManager {
         const duration = bookingData?.duration || 60;
         
         try {
-            // VÉRIFICATION SIMPLE : Vérifier si cette réservation a déjà utilisé un crédit
-            if (bookingData?.id) {
+            // VÉRIFICATION AMÉLIORÉE : Ne vérifier que si c'est un véritable UUID (pas temporaire)
+            if (bookingData?.id && bookingData.id.startsWith && !bookingData.id.startsWith('temp_')) {
                 const { data: existingTransactions } = await supabase
                     .from('credit_transactions')
                     .select('id')
@@ -309,6 +309,8 @@ class PackagesManager {
                         error: 'Crédit déjà utilisé pour cette réservation' 
                     };
                 }
+            } else {
+                console.log('⚠️ ID de réservation temporaire, pas de vérification de duplication');
             }
             
             console.log(`💰 Recherche package pour utilisation crédit: userId=${userId}, courseType=${courseType}, durée=${duration}`);
@@ -374,7 +376,7 @@ class PackagesManager {
                 const transactionData = {
                     user_id: userId,
                     package_id: activePackage.id,
-                    booking_id: bookingData?.id || null,
+                    booking_id: bookingData?.id && !bookingData.id.startsWith('temp_') ? bookingData.id : null,
                     credits_before: activePackage.remaining_credits || 0,
                     credits_change: -1,
                     credits_after: newRemainingCredits,

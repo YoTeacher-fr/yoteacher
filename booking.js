@@ -400,13 +400,44 @@ class BookingManager {
                 }
             }
             
-            // 1. Utiliser un crédit
+            // CRÉER D'ABORD LA RÉSERVATION DANS SUPABASE AVANT D'UTILISER LE CRÉDIT
+            console.log('📝 Création de la réservation temporaire dans Supabase...');
+            
+            // Générer un ID de réservation temporaire mais valide
+            const tempBookingId = crypto.randomUUID ? crypto.randomUUID() : `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Insérer d'abord la réservation dans Supabase avec un statut 'pending_credit'
+            const tempBookingRecord = {
+                id: tempBookingId,
+                user_id: user.id,
+                course_type: bookingData.courseType,
+                duration_minutes: duration,
+                start_time: bookingData.startTime,
+                end_time: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, bookingData.duration),
+                status: 'pending_credit',
+                booking_number: `BK-TEMP-${Date.now().toString().slice(-6)}`,
+                created_at: new Date().toISOString()
+            };
+            
+            // 1. Créer d'abord l'enregistrement de réservation
+            const { error: insertError } = await supabase
+                .from('bookings')
+                .insert([tempBookingRecord]);
+                
+            if (insertError) {
+                console.error('❌ Erreur création réservation temporaire:', insertError);
+                throw new Error(`Impossible de créer la réservation: ${insertError.message}`);
+            }
+            
+            console.log('✅ Réservation temporaire créée avec ID:', tempBookingId);
+            
+            // 2. Utiliser un crédit avec le VRAI ID de réservation
             console.log('💰 Utilisation d\'un crédit...');
             const creditResult = await window.packagesManager.useCredit(
                 user.id,
                 bookingData.courseType,
                 { 
-                    id: `temp_${Date.now()}`,
+                    id: tempBookingId, // Utiliser l'ID réel maintenant
                     duration: duration 
                 }
             );
@@ -414,12 +445,18 @@ class BookingManager {
             console.log('📦 Résultat utilisation crédit:', creditResult);
             
             if (!creditResult.success) {
+                // Nettoyer la réservation temporaire en cas d'échec
+                await supabase
+                    .from('bookings')
+                    .delete()
+                    .eq('id', tempBookingId);
+                    
                 throw new Error(`Impossible d'utiliser un crédit: ${creditResult.error}`);
             }
             
             console.log('✅ Crédit utilisé, package_id:', creditResult.package_id);
             
-            // 2. Préparer les données pour la réservation
+            // 3. Préparer les données pour la réservation Cal.com
             const bookingForCalcom = {
                 startTime: bookingData.startTime,
                 endTime: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, bookingData.duration),
@@ -446,24 +483,50 @@ class BookingManager {
             
             console.log('📤 Données pour Cal.com:', bookingForCalcom);
             
-            // 3. Créer la réservation sur Cal.com et dans Supabase
+            // 4. Créer la réservation sur Cal.com
             const bookingResult = await this.createBookingAfterPayment(bookingForCalcom);
             
             console.log('📥 Résultat création réservation:', bookingResult);
             
             if (!bookingResult.success) {
                 console.error('❌ Échec création réservation après utilisation crédit');
+                
+                // Rembourser le crédit si la réservation Cal.com échoue
+                try {
+                    await this.refundCredit(user.id, creditResult.package_id, tempBookingId);
+                } catch (refundError) {
+                    console.error('❌ Impossible de rembourser le crédit:', refundError);
+                }
+                
                 throw new Error(`Échec création réservation: ${bookingResult.error}`);
             }
             
-            // 4. Préparer les données pour la page de succès
+            // 5. Mettre à jour la réservation dans Supabase avec les infos Cal.com
+            const updatedBookingData = {
+                calcom_booking_id: bookingResult.data?.id || bookingResult.data?.uid,
+                calcom_uid: bookingResult.data?.uid,
+                meeting_link: bookingResult.data?.location || bookingForCalcom.location,
+                status: 'confirmed',
+                booking_number: `BK-CREDIT-${Date.now().toString().slice(-8)}`,
+                payment_method: 'credit',
+                payment_reference: bookingForCalcom.transactionId,
+                package_id: creditResult.package_id,
+                updated_at: new Date().toISOString()
+            };
+            
+            await supabase
+                .from('bookings')
+                .update(updatedBookingData)
+                .eq('id', tempBookingId);
+            
+            // 6. Préparer les données pour la page de succès
             const finalBookingData = {
                 ...bookingForCalcom,
                 calcomId: bookingResult.data?.id || bookingResult.data?.uid,
                 meetingLink: bookingResult.data?.location,
-                bookingNumber: `BK-CREDIT-${Date.now().toString().slice(-8)}`,
+                bookingNumber: updatedBookingData.booking_number,
                 confirmedAt: new Date().toISOString(),
-                supabaseBookingId: bookingResult.supabaseBookingId
+                supabaseBookingId: tempBookingId
             };
             
             console.log('✅ Réservation avec crédit créée avec succès');
@@ -481,6 +544,52 @@ class BookingManager {
                 success: false, 
                 error: error.message 
             };
+        }
+    }
+
+    // AJOUTER CETTE MÉTHODE POUR REMBOURSER LES CRÉDITS
+    async refundCredit(userId, packageId, bookingId) {
+        try {
+            console.log('💰 Tentative de remboursement de crédit...');
+            
+            // Récupérer le package
+            const { data: packageData, error: packageError } = await supabase
+                .from('packages')
+                .select('remaining_credits')
+                .eq('id', packageId)
+                .single();
+
+            if (!packageError && packageData) {
+                const newRemainingCredits = (packageData.remaining_credits || 0) + 1;
+                
+                await supabase
+                    .from('packages')
+                    .update({
+                        remaining_credits: newRemainingCredits,
+                        status: newRemainingCredits > 0 ? 'active' : 'depleted'
+                    })
+                    .eq('id', packageId);
+
+                // Créer une transaction de remboursement
+                await supabase
+                    .from('credit_transactions')
+                    .insert({
+                        user_id: userId,
+                        package_id: packageId,
+                        booking_id: bookingId,
+                        credits_before: packageData.remaining_credits || 0,
+                        credits_change: 1,
+                        credits_after: newRemainingCredits,
+                        transaction_type: 'refund',
+                        reason: `Échec réservation avec ID: ${bookingId}`,
+                        created_at: new Date().toISOString()
+                    });
+
+                console.log('✅ Crédit remboursé avec succès');
+            }
+        } catch (creditError) {
+            console.error('❌ Erreur lors du remboursement du crédit:', creditError);
+            throw creditError;
         }
     }
 
@@ -564,7 +673,7 @@ class BookingManager {
             
             // COURS D'ESSAI - Toujours 5€
             if (bookingData.courseType === 'essai') {
-                console.log('🎫 Cours d\'essai détecté');
+                console.log('🎫 Cours d'essai détecté');
                 priceEUR = 5;
                 unitPriceEUR = 5;
                 finalPrice = currencyManagerReady ? 
@@ -918,6 +1027,17 @@ class BookingManager {
             const result = await response.json();
             const data = result.data || result;
             console.log('✅ Réservation créée sur Cal.com:', data);
+            
+            // Si c'est une réservation avec crédit, ne pas réinsérer dans Supabase (déjà fait)
+            if (bookingData.isCreditBooking && bookingData.supabaseBookingId) {
+                console.log('✅ Réservation avec crédit, pas de réinsertion dans Supabase nécessaire');
+                return { 
+                    success: true, 
+                    data,
+                    supabaseBookingId: bookingData.supabaseBookingId,
+                    message: 'Réservation confirmée sur Cal.com' 
+                };
+            }
             
             // Sauvegarder dans Supabase AVEC LA STRUCTURE CORRIGÉE POUR VOTRE SCHÉMA
             const bookingId = await this.saveBookingToSupabase(data, user, bookingData, 'confirmed');

@@ -850,8 +850,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // COURS D'ESSAI
         if (courseType === 'essai') {
-            console.log('🎫 Cours d\'essai détecté');
-            courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
+            console.log('🎫 Cours d'essai détecté');
+            courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d'essai';
             duration = '15 min';
             
             let unitPriceEUR = 5;
@@ -872,7 +872,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (courseType === 'curriculum') {
                 courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
             } else if (courseType === 'examen') {
-                courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
+                courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d'examen';
             }
             
             if (user && durationGroup.classList.contains('visible')) {
