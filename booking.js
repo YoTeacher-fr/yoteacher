@@ -142,7 +142,7 @@ class BookingManager {
                     
                     if (errorData.message && errorData.message.includes('not found')) {
                         await this.verifyEventTypeExists(eventTypeId);
-                        throw new Error(`Type d'événement non trouvé (ID: ${eventTypeId})`);
+                        throw new Error(`Type d\'événement non trouvé (ID: ${eventTypeId})`);
                     }
                     
                     throw new Error(`API Cal.com: ${errorData.message || 'Erreur inconnue'}`);
@@ -349,7 +349,7 @@ class BookingManager {
         
         const user = window.authManager?.getCurrentUser();
         if (!user || !window.packagesManager) {
-            console.log('❌ Pas d'utilisateur ou packagesManager');
+            console.log('❌ Pas d\'utilisateur ou packagesManager');
             return false;
         }
         
@@ -361,7 +361,7 @@ class BookingManager {
         
         // Uniquement pour les cours payants (pas essai)
         if (bookingData.courseType === 'essai') {
-            console.log('❌ Cours d'essai');
+            console.log('❌ Cours d\'essai');
             return false;
         }
         
@@ -396,7 +396,7 @@ class BookingManager {
             if (window.packagesManager) {
                 const hasCredit = await window.packagesManager.hasCreditForDuration(user.id, bookingData.courseType, duration);
                 if (!hasCredit) {
-                    throw new Error(`Vous n'avez pas de crédit disponible pour un cours de ${duration} minutes. Veuillez choisir une durée correspondant à vos forfaits.`);
+                    throw new Error(`Vous n\'avez pas de crédit disponible pour un cours de ${duration} minutes. Veuillez choisir une durée correspondant à vos forfaits.`);
                 }
             }
             
@@ -433,7 +433,7 @@ class BookingManager {
             console.log('✅ Réservation temporaire créée avec ID:', tempBookingId);
             
             // 2. Utiliser un crédit avec le VRAI ID de réservation
-            console.log('💰 Utilisation d'un crédit...');
+            console.log('💰 Utilisation d\'un crédit...');
             const creditResult = await window.packagesManager.useCredit(
                 user.id,
                 bookingData.courseType,
@@ -452,7 +452,7 @@ class BookingManager {
                     .delete()
                     .eq('id', tempBookingId);
                     
-                throw new Error(`Impossible d'utiliser un crédit: ${creditResult.error}`);
+                throw new Error(`Impossible d\'utiliser un crédit: ${creditResult.error}`);
             }
             
             console.log('✅ Crédit utilisé, package_id:', creditResult.package_id);
@@ -641,7 +641,7 @@ class BookingManager {
                     }
                     currencyManagerReady = true;
                 } catch (error) {
-                    console.error('❌ Impossible d'initialiser CurrencyManager:', error);
+                    console.error('❌ Impossible d\'initialiser CurrencyManager:', error);
                 }
             }
             
@@ -676,7 +676,7 @@ class BookingManager {
             
             // COURS D'ESSAI - Toujours 5€
             if (bookingData.courseType === 'essai') {
-                console.log('🎫 Cours d'essai détecté'); // CORRIGÉ ICI
+                console.log('🎫 Cours d\'essai détecté');
                 priceEUR = 5;
                 unitPriceEUR = 5;
                 finalPrice = currencyManagerReady ? 
@@ -1372,7 +1372,7 @@ class BookingManager {
     async cancelBooking(bookingId, userId) {
         try {
             if (!window.supabase || !bookingId || !userId) {
-                throw new Error('Paramètres manquants pour l'annulation');
+                throw new Error('Paramètres manquants pour l\'annulation');
             }
 
             // Vérifier que l'utilisateur est bien propriétaire de la réservation
@@ -1393,7 +1393,7 @@ class BookingManager {
             const hoursUntilStart = (startTime - now) / (1000 * 60 * 60);
 
             if (hoursUntilStart < 24) {
-                throw new Error('Les réservations doivent être annulées au moins 24 heures à l'avance');
+                throw new Error('Les réservations doivent être annulées au moins 24 heures à l\'avance');
             }
 
             // Mettre à jour le statut de la réservation
@@ -1406,7 +1406,7 @@ class BookingManager {
                 .eq('id', bookingId);
 
             if (updateError) {
-                throw new Error(`Erreur lors de l'annulation: ${updateError.message}`);
+                throw new Error(`Erreur lors de l\'annulation: ${updateError.message}`);
             }
 
             // Rembourser un crédit si la réservation utilisait un crédit
@@ -1456,7 +1456,7 @@ class BookingManager {
 
             // Annuler la réservation sur Cal.com si possible
             if (booking.calcom_booking_id && this.calcomApiKey) {
-                console.log('📅 Tentative d'annulation sur Cal.com...');
+                console.log('📅 Tentative d\'annulation sur Cal.com...');
                 try {
                     const response = await fetch(
                         `${this.apiBaseUrl}/bookings/${booking.calcom_booking_id}`,
@@ -1469,10 +1469,10 @@ class BookingManager {
                     if (response.ok) {
                         console.log('✅ Réservation annulée sur Cal.com');
                     } else {
-                        console.warn('⚠️ Impossible d'annuler sur Cal.com, réservation annulée localement');
+                        console.warn('⚠️ Impossible d\'annuler sur Cal.com, réservation annulée localement');
                     }
                 } catch (calcomError) {
-                    console.warn('⚠️ Erreur lors de l'annulation Cal.com:', calcomError);
+                    console.warn('⚠️ Erreur lors de l\'annulation Cal.com:', calcomError);
                 }
             }
 

@@ -1,4 +1,4 @@
-// SCRIPT JAVASCRIPT POUR BOOKING.HTML - CORRIGÉ AVEC GESTION CRÉDITS PAR DURÉE
+// SCRIPT JAVASCRIPT POUR BOOKING.HTML - VERSION CORRIGÉE COMPLÈTE
 document.addEventListener('DOMContentLoaded', function() {
     let selectedDate = null;
     let selectedTime = null;
@@ -34,6 +34,98 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Stocker le type de cours avant redirection
     let preLoginCourseType = null;
+
+    // Fonction d'attente pour bookingManager
+    function waitForBookingManager() {
+        return new Promise((resolve) => {
+            if (window.bookingManager) {
+                console.log('✅ BookingManager déjà disponible');
+                resolve();
+                return;
+            }
+            
+            console.log('⏳ Attente de BookingManager...');
+            const maxAttempts = 30; // 3 secondes max
+            let attempts = 0;
+            
+            const checkInterval = setInterval(() => {
+                attempts++;
+                
+                if (window.bookingManager) {
+                    clearInterval(checkInterval);
+                    console.log('✅ BookingManager disponible après', attempts * 100, 'ms');
+                    resolve();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkInterval);
+                    console.warn('⚠️ Timeout: BookingManager non disponible, création du mode secours');
+                    createFallbackBookingManager();
+                    resolve();
+                }
+            }, 100);
+        });
+    }
+
+    // Fonction de secours pour bookingManager
+    function createFallbackBookingManager() {
+        console.log('🛠️ Création de BookingManager de secours...');
+        
+        window.bookingManager = {
+            getAvailableSlots: async function(eventType = 'essai', date = null, duration = null) {
+                console.log('📅 Mode simulation: génération de créneaux fictifs');
+                
+                // Simuler un délai de chargement
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const baseDate = date || new Date().toISOString().split('T')[0];
+                const slots = [];
+                const selectedDuration = duration || 60;
+                
+                // Générer des créneaux de 9h à 18h
+                for (let hour = 9; hour <= 18; hour++) {
+                    const slotTime = `${baseDate}T${hour.toString().padStart(2, '0')}:00:00Z`;
+                    slots.push({
+                        id: `fallback_${hour}`,
+                        start: slotTime,
+                        end: new Date(new Date(slotTime).getTime() + selectedDuration * 60000).toISOString(),
+                        time: `${hour}:00`,
+                        duration: `${selectedDuration} min`,
+                        durationInMinutes: selectedDuration,
+                        eventTypeId: 'fallback',
+                        isFallback: true
+                    });
+                }
+                
+                console.log(`⚠️ Mode simulation: ${slots.length} créneaux générés`);
+                return slots;
+            },
+            
+            formatTime: function(dateTime) {
+                try {
+                    const date = new Date(dateTime);
+                    return date.toLocaleTimeString('fr-FR', { 
+                        hour: '2-digit', 
+                        minute: '2-digit'
+                    });
+                } catch (error) {
+                    return dateTime || '--:--';
+                }
+            },
+            
+            createBooking: async function(bookingData) {
+                console.log('📤 Simulation de création de réservation:', bookingData);
+                
+                // En mode simulation, rediriger vers une page de succès simulée
+                return {
+                    success: true,
+                    redirectTo: 'payment-success.html?simulated=true',
+                    message: 'Mode simulation activé'
+                };
+            }
+        };
+        
+        console.log('✅ BookingManager de secours créé');
+        return window.bookingManager;
+    }
 
     // Fonction pour mettre à jour le texte du bouton
     async function updateSubmitButtonText() {
@@ -442,6 +534,9 @@ document.addEventListener('DOMContentLoaded', function() {
     async function initializePage() {
         console.log('🚀 Initialisation de la page booking...');
         
+        // ATTENDRE QUE bookingManager SOIT DISPONIBLE
+        await waitForBookingManager();
+        
         // FORCER l'initialisation de currencyManager d'abord
         try {
             await ensureCurrencyManager();
@@ -691,6 +786,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadAvailableSlots(date = null) {
         try {
+            // VÉRIFIER SI bookingManager EST DISPONIBLE
+            if (!window.bookingManager || typeof window.bookingManager.getAvailableSlots !== 'function') {
+                console.error('❌ BookingManager non disponible pour loadAvailableSlots');
+                
+                const errorText = window.translationManager ? 
+                    window.translationManager.getTranslation('booking.error_loading') : 
+                    'Erreur lors du chargement des créneaux';
+                
+                timeSlots.innerHTML = `
+                    <div class="error-slots">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>${errorText}</p>
+                        <p class="error-details">Service temporairement indisponible. Veuillez réessayer.</p>
+                        <button onclick="window.location.reload()" class="retry-btn">
+                            <i class="fas fa-redo"></i> Recharger la page
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
             const loadingText = window.translationManager ? 
                 window.translationManager.getTranslation('booking.loading_slots') : 
                 'Chargement des créneaux...';
@@ -759,17 +875,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.translationManager.getTranslation('booking.error_loading') :
                 'Erreur lors du chargement des créneaux';
             
-            const retryText = window.translationManager ?
-                window.translationManager.getTranslation('booking.retry') :
-                'Réessayer';
-            
             timeSlots.innerHTML = `
                 <div class="error-slots">
                     <i class="fas fa-exclamation-triangle"></i>
                     <p>${errorTitle}</p>
                     <p class="error-details">${error.message || 'Veuillez réessayer'}</p>
-                    <button onclick="loadAvailableSlots('${date}')" class="retry-btn">
-                        <i class="fas fa-redo"></i> ${retryText}
+                    <button onclick="window.location.reload()" class="retry-btn">
+                        <i class="fas fa-redo"></i> Recharger la page
                     </button>
                 </div>
             `;

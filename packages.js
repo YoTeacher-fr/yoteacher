@@ -33,19 +33,21 @@ class PackagesManager {
             if (typeof window.supabase !== 'undefined' && window.supabase) {
                 console.log('🔍 Tentative de chargement des prix depuis Supabase...');
                 
+                // MODIFIÉ: utiliser select() au lieu de maybeSingle()
                 const { data, error } = await window.supabase
                     .from('vip_pricing')
                     .select('course_type, price, currency')
                     .is('user_id', null)
-                    .eq('duration_minutes', 60)
-                    .maybeSingle();
+                    .eq('duration_minutes', 60);
 
-                if (!error && data) {
+                if (!error && data && data.length > 0) {
                     this.basePrices = {};
-                    this.basePrices[data.course_type] = data.price;
+                    // Prendre le premier prix pour chaque type de cours
+                    data.forEach(item => {
+                        this.basePrices[item.course_type] = item.price;
+                    });
                     console.log('✅ Prix de base chargés depuis Supabase:', this.basePrices);
                     
-                    // Sauvegarder en cache local
                     localStorage.setItem('base_course_prices', JSON.stringify(this.basePrices));
                     return;
                 } else if (error) {
@@ -67,7 +69,8 @@ class PackagesManager {
             
         } catch (error) {
             console.warn('⚠️ Impossible de charger les prix:', error.message);
-            throw error;
+            // Ne pas throw, utiliser les prix par défaut
+            this.loadDefaultPrices();
         }
     }
 
