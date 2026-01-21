@@ -1,4 +1,4 @@
-// payment.js - Version sécurisée avec calcul serveur - CORRIGÉ POUR AUTH 401
+// payment.js - Version sécurisée avec gestion de session améliorée
 class PaymentManager {
     constructor() {
         this.stripe = null;
@@ -7,6 +7,7 @@ class PaymentManager {
         this.currentBooking = null;
         this.paymentIntentId = null;
         this.clientSecret = null;
+        this.processingPayment = false; // Verrou pour éviter les paiements multiples
         console.log('💳 PaymentManager initialisé (version corrigée)');
     }
 
@@ -75,6 +76,13 @@ class PaymentManager {
     }
 
     async handlePaymentMethod(method) {
+        // Vérifier si un paiement est déjà en cours
+        if (this.processingPayment) {
+            throw new Error('Un paiement est déjà en cours');
+        }
+        
+        this.processingPayment = true;
+        
         try {
             console.log(`💳 Traitement paiement ${method}...`);
             
@@ -93,7 +101,6 @@ class PaymentManager {
                 return;
             }
 
-            // Pour les autres méthodes
             const result = await this.processManualPayment(method, user);
             
             if (result.success) {
@@ -107,6 +114,8 @@ class PaymentManager {
         } catch (error) {
             console.error(`❌ Erreur paiement ${method}:`, error);
             throw error;
+        } finally {
+            this.processingPayment = false;
         }
     }
 
@@ -131,11 +140,37 @@ class PaymentManager {
             }
             
             console.log('✅ Session récupérée pour:', session.user?.email);
-            console.log('🔑 Token disponible:', session.access_token ? 'Oui' : 'Non');
+            
+            // Vérifier si le token est expiré
+            const tokenExpiry = new Date(session.expires_at * 1000);
+            const now = new Date();
+            
+            if (tokenExpiry < now) {
+                console.log('🔄 Token expiré, tentative de rafraîchissement...');
+                const { data: { session: newSession }, error: refreshError } = 
+                    await window.supabase.auth.refreshSession();
+                
+                if (refreshError || !newSession) {
+                    throw new Error('Session expirée. Veuillez vous reconnecter.');
+                }
+                
+                console.log('✅ Session rafraîchie');
+                return newSession;
+            }
             
             return session;
         } catch (error) {
             console.error('❌ Erreur dans getSupabaseSession:', error);
+            
+            // Tenter de rediriger vers la page de connexion
+            if (error.message.includes('session') || error.message.includes('expirée')) {
+                setTimeout(() => {
+                    if (window.location.pathname.includes('payment')) {
+                        window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname);
+                    }
+                }, 2000);
+            }
+            
             throw error;
         }
     }
@@ -159,7 +194,7 @@ class PaymentManager {
                 throw new Error('Veuillez vous connecter pour payer par carte');
             }
 
-            // ÉTAPE 1 : Créer le PaymentIntent côté serveur (calcul sécurisé)
+            // ÉTAPE 1 : Créer le PaymentIntent côté serveur
             console.log('📡 Création PaymentIntent sur le serveur...');
             
             const supabaseUrl = window.YOTEACHER_CONFIG?.SUPABASE_URL;
@@ -172,11 +207,9 @@ class PaymentManager {
                 throw new Error('Utilisateur non trouvé');
             }
 
-            // Utiliser l'URL complète de la fonction Edge
             const functionUrl = `${supabaseUrl}/functions/v1/create-payment`;
             console.log('🔗 Appel de la fonction Edge:', functionUrl);
 
-            // Calculer le prix localement pour le debug
             const localPrice = this.currentBooking.price || 0;
             const localCurrency = this.currentBooking.currency || 'USD';
             
@@ -192,27 +225,23 @@ class PaymentManager {
                 isVip: this.currentBooking.isVip || false,
                 vipPriceData: this.currentBooking.vipPriceData || null,
                 discountPercent: this.currentBooking.discountPercent || 0,
-                // Envoyer aussi le prix local pour vérification (mais le serveur recalcule)
                 localPrice: localPrice,
                 localCurrency: localCurrency
             };
 
             console.log('📤 Données envoyées:', requestBody);
             
-            // MODIFICATION ICI : On utilise la clé ANON pour l'autorisation HTTP
-            // et on passe le token utilisateur dans un header personnalisé
-           const response = await fetch(functionUrl, {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        // On utilise la clé ANON pour passer la Gateway Supabase
-        'Authorization': `Bearer ${window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY}`,
-        // On transmet le jeton de session dans un header personnalisé
-        'x-user-token': session.access_token,
-        'apikey': window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY
-    },
-    body: JSON.stringify(requestBody)
-});
+            // Utiliser l'approche corrigée pour l'authentification
+            const response = await fetch(functionUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY}`,
+                    'x-user-token': session.access_token,
+                    'apikey': window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify(requestBody)
+            });
 
             console.log('📥 Réponse de la fonction Edge:', {
                 status: response.status,
@@ -230,9 +259,22 @@ class PaymentManager {
                     errorData = { error: errorText };
                 }
                 
-                // Messages d'erreur spécifiques
                 if (response.status === 401) {
-                    throw new Error('Erreur d\'authentification. Veuillez vous reconnecter.');
+                    // Session expirée, tenter de rafraîchir
+                    try {
+                        const { data: { session: newSession }, error: refreshError } = 
+                            await window.supabase.auth.refreshSession();
+                        
+                        if (refreshError || !newSession) {
+                            throw new Error('Session expirée. Veuillez vous reconnecter.');
+                        }
+                        
+                        // Réessayer avec la nouvelle session
+                        console.log('🔄 Réessai avec session rafraîchie...');
+                        return await this.retryStripePayment(newSession);
+                    } catch (refreshError) {
+                        throw new Error('Erreur d\'authentification. Veuillez vous reconnecter.');
+                    }
                 } else if (response.status === 400) {
                     throw new Error(`Erreur de données: ${errorData.error || 'Veuillez vérifier vos informations'}`);
                 } else {
@@ -285,7 +327,7 @@ class PaymentManager {
                 this.currentBooking.paymentMethod = 'card';
                 this.currentBooking.status = 'confirmed';
                 this.currentBooking.confirmedAt = new Date().toISOString();
-                this.currentBooking.price = paymentData.amount; // Prix calculé par le serveur
+                this.currentBooking.price = paymentData.amount;
                 this.currentBooking.currency = paymentData.currency;
                 
                 // Sauvegarder la réservation mise à jour
@@ -320,13 +362,11 @@ class PaymentManager {
                 processBtn.innerHTML = '<i class="fas fa-lock"></i> Payer par carte';
             }
             
-            // Afficher un message d'erreur plus clair
             const errorDiv = document.getElementById('paymentError');
             const errorText = document.getElementById('errorText');
             if (errorDiv && errorText) {
                 let userMessage = error.message;
                 
-                // Messages plus conviviaux
                 if (error.message.includes('authentification') || error.message.includes('session')) {
                     userMessage = 'Votre session a expiré. Veuillez vous reconnecter et réessayer.';
                 } else if (error.message.includes('Erreur serveur')) {
@@ -342,6 +382,22 @@ class PaymentManager {
         }
     }
 
+    async retryStripePayment(session) {
+        // Méthode pour réessayer le paiement avec une nouvelle session
+        console.log('🔄 Réessai du paiement avec session rafraîchie');
+        
+        // Réinitialiser l'état
+        this.processingPayment = false;
+        
+        // Stocker la nouvelle session
+        if (window.supabase) {
+            await window.supabase.auth.setSession(session);
+        }
+        
+        // Réessayer le paiement
+        return await this.processStripePayment();
+    }
+
     async processManualPayment(method, user, stripePaymentIntentId = null) {
         try {
             console.log(`📤 Traitement paiement manuel: ${method}`);
@@ -349,8 +405,6 @@ class PaymentManager {
             const transactionId = stripePaymentIntentId || `TRX-${Date.now().toString().slice(-8)}-${method.toUpperCase()}`;
             const refNumber = Date.now().toString().slice(-6);
             
-            // IMPORTANT : Ne pas inclure le prix dans paymentData
-            // Le prix a été calculé côté serveur
             const paymentData = {
                 user_id: user?.id || this.currentBooking.userId,
                 method: method,
@@ -410,13 +464,16 @@ class PaymentManager {
 
                     // Déduire un crédit si c'est un forfait
                     if (packageId && user?.id && bookingResult.supabaseBookingId) {
+                        // Utiliser un ID de transaction unique pour éviter la double déduction
+                        const creditTransactionId = `package_deduct_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
                         await window.packagesManager.useCredit(
                             user.id,
                             updatedBooking.courseType,
                             { 
                                 id: bookingResult.supabaseBookingId,
                                 duration: updatedBooking.duration || 60
-                            }
+                            },
+                            creditTransactionId
                         );
                     }
                 }
@@ -455,7 +512,6 @@ window.testPaymentAuth = async function() {
     try {
         console.group('🧪 Test authentification paiement');
         
-        // Récupérer la session
         const { data: { session } } = await supabase.auth.getSession();
         console.log('🔑 Session disponible:', !!session);
         console.log('👤 Utilisateur:', session?.user?.email);
@@ -467,7 +523,6 @@ window.testPaymentAuth = async function() {
             return;
         }
         
-        // Tester l'appel à la fonction Edge
         const supabaseUrl = window.YOTEACHER_CONFIG?.SUPABASE_URL;
         if (!supabaseUrl) {
             console.error('❌ URL Supabase non configurée');
@@ -482,7 +537,8 @@ window.testPaymentAuth = async function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
+                'Authorization': `Bearer ${window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY}`,
+                'x-user-token': session.access_token,
                 'apikey': window.YOTEACHER_CONFIG?.SUPABASE_ANON_KEY || ''
             },
             body: JSON.stringify({
@@ -514,12 +570,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.location.pathname.includes('payment.html')) {
         console.log('💰 Initialisation du formulaire de paiement...');
         
-        // Attendre que tout soit prêt
         setTimeout(() => {
             if (window.paymentManager) {
                 window.paymentManager.setupStripeForm();
                 
-                // Tester l'authentification après 2 secondes
                 setTimeout(() => {
                     console.log('🔍 Test automatique de l\'authentification...');
                     if (window.testPaymentAuth) {
@@ -531,4 +585,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PaymentManager chargé (version corrigée)');
+console.log('✅ PaymentManager chargé (version corrigée avec gestion de session)');

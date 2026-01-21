@@ -1,11 +1,17 @@
-// packages.js - Gestion des forfaits et crédits avec 90 jours de validité - VERSION CORRIGÉE COMPLÈTE SANS updated_at
+// packages.js - Gestion des forfaits et crédits avec protection contre la double déduction
 class PackagesManager {
     constructor() {
         this.packages = null;
         this.basePrices = null;
         this.isInitialized = false;
-        this.packageValidityDays = 90; // 90 jours de validité
-        console.log('📦 PackagesManager initialisé');
+        this.packageValidityDays = 90;
+        
+        // Système de verrouillage pour éviter les opérations concurrentes
+        this.userLocks = new Map();
+        this.transactionRegistry = new Map(); // Registre des transactions déjà traitées
+        this.processingTransactions = new Set(); // Transactions en cours
+        
+        console.log('📦 PackagesManager initialisé avec système de verrouillage');
     }
 
     async initialize() {
@@ -29,20 +35,17 @@ class PackagesManager {
     async loadBasePrices() {
         try {
             if (window.supabase) {
+                // CORRECTION : Requête ajustée pour correspondre au schéma
                 const { data, error } = await supabase
                     .from('vip_pricing')
-                    .select('course_type, duration_minutes, price, currency')
+                    .select('course_type, price, currency')
                     .is('user_id', null)
                     .eq('duration_minutes', 60)
-                    .eq('currency', 'USD');
+                    .maybeSingle();
 
-                if (data && data.length > 0) {
+                if (!error && data) {
                     this.basePrices = {};
-                    data.forEach(price => {
-                        if (!this.basePrices[price.course_type]) {
-                            this.basePrices[price.course_type] = price.price;
-                        }
-                    });
+                    this.basePrices[data.course_type] = data.price;
                     console.log('✅ Prix de base chargés depuis Supabase:', this.basePrices);
                     return;
                 }
@@ -191,6 +194,44 @@ class PackagesManager {
         };
     }
 
+    // NOUVEAU : Méthode pour acquérir un verrou utilisateur
+    async acquireUserLock(userId, operationType, timeoutMs = 5000) {
+        const lockKey = `${userId}_${operationType}_${Date.now()}`;
+        
+        // Vérifier si l'utilisateur a déjà un verrou pour cette opération
+        if (this.userLocks.has(userId)) {
+            const existingLock = this.userLocks.get(userId);
+            if (Date.now() - existingLock.timestamp < timeoutMs) {
+                throw new Error(`Opération ${operationType} déjà en cours pour cet utilisateur`);
+            }
+        }
+        
+        // Créer un nouveau verrou
+        const lock = {
+            id: lockKey,
+            userId: userId,
+            operationType: operationType,
+            timestamp: Date.now()
+        };
+        
+        this.userLocks.set(userId, lock);
+        console.log(`🔒 Verrou acquis: ${lockKey}`);
+        
+        return {
+            release: () => {
+                this.userLocks.delete(userId);
+                console.log(`🔓 Verrou libéré: ${lockKey}`);
+            },
+            key: lockKey
+        };
+    }
+
+    // NOUVEAU : Vérifier si une transaction a déjà été traitée
+    isTransactionProcessed(transactionId) {
+        return this.transactionRegistry.has(transactionId) || 
+               this.processingTransactions.has(transactionId);
+    }
+
     async hasCreditForDuration(userId, courseType, duration) {
         if (!window.supabase || !userId) return false;
         
@@ -238,7 +279,6 @@ class PackagesManager {
                 return { conversation: 0, curriculum: 0, examen: 0 };
             }
 
-            // Structure améliorée avec durée
             const credits = { 
                 conversation: { 30: 0, 45: 0, 60: 0 },
                 curriculum: { 30: 0, 45: 0, 60: 0 },
@@ -251,7 +291,6 @@ class PackagesManager {
                 const remaining = pkg.remaining_credits || 0;
                 
                 if (credits[type]) {
-                    // Regrouper par durée standard
                     if (duration === 30) {
                         credits[type][30] += remaining;
                     } else if (duration === 45) {
@@ -270,29 +309,67 @@ class PackagesManager {
         }
     }
 
-    async useCredit(userId, courseType, bookingData) {
-        if (!window.supabase || !userId) return { success: false, error: 'Supabase ou utilisateur non disponible' };
+    // VERSION CORRIGÉE : Méthode sécurisée pour utiliser un crédit
+    async useCredit(userId, courseType, bookingData, transactionId = null) {
+        // Générer un ID de transaction unique si non fourni
+        const trxId = transactionId || `use_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Vérifier si cette transaction est déjà en cours ou terminée
+        if (this.isTransactionProcessed(trxId)) {
+            console.log(`⏭️ Transaction déjà traitée: ${trxId}`);
+            return { 
+                success: false, 
+                error: 'Transaction déjà traitée',
+                transactionId: trxId
+            };
+        }
+        
+        // Marquer la transaction comme en cours
+        this.processingTransactions.add(trxId);
+        
+        // Acquérir un verrou pour cet utilisateur
+        let lock;
+        try {
+            lock = await this.acquireUserLock(userId, 'use_credit');
+        } catch (lockError) {
+            this.processingTransactions.delete(trxId);
+            return { 
+                success: false, 
+                error: lockError.message,
+                transactionId: trxId
+            };
+        }
         
         try {
-            console.log(`💰 APPEL useCredit`);
+            console.log(`💰 APPEL useCredit sécurisé - Transaction: ${trxId}`);
             console.log(`   User: ${userId}, Type: ${courseType}, BookingID: ${bookingData?.id}, Durée: ${bookingData?.duration || 60}`);
             
-            // VÉRIFICATION CONTRE DOUBLE DÉDUCTION
+            if (!window.supabase || !userId) {
+                throw new Error('Supabase ou utilisateur non disponible');
+            }
+            
+            // VÉRIFICATION AVANCÉE : Vérifier dans la base de données si cette réservation a déjà utilisé un crédit
             if (bookingData?.id) {
-                const bookingKey = `used_credit_${bookingData.id}`;
-                if (localStorage.getItem(bookingKey)) {
-                    console.error(`❌ ERREUR: Cette réservation a déjà utilisé un crédit!`);
+                const { data: existingTransactions, error: checkError } = await supabase
+                    .from('credit_transactions')
+                    .select('id, transaction_type, booking_id, package_id')
+                    .eq('booking_id', bookingData.id)
+                    .eq('transaction_type', 'use')
+                    .limit(1);
+                
+                if (!checkError && existingTransactions && existingTransactions.length > 0) {
+                    console.log(`⚠️ Crédit déjà utilisé pour cette réservation: ${bookingData.id}`);
                     return { 
                         success: false, 
-                        error: 'Crédit déjà utilisé pour cette réservation' 
+                        error: 'Crédit déjà utilisé pour cette réservation',
+                        transactionId: trxId
                     };
                 }
             }
             
-            // Récupérer la durée depuis bookingData (par défaut 60)
             const duration = bookingData?.duration || 60;
             
-            console.log(`💰 Recherche package pour utilisation crédit: userId=${userId}, courseType=${courseType}, durée=${duration}`);
+            console.log(`💰 Recherche package pour utilisation crédit: userId=${userId}, courseType=${courseType}, durée=${duration}, transaction=${trxId}`);
             
             // RECHERCHE EXACTE: cours type + durée
             const { data: activePackages, error: findError } = await supabase
@@ -300,11 +377,11 @@ class PackagesManager {
                 .select('id, remaining_credits, expires_at, total_credits, purchased_at, duration_minutes, course_type')
                 .eq('user_id', userId)
                 .eq('course_type', courseType)
-                .eq('duration_minutes', duration)  // CORRIGÉ: durée exacte
+                .eq('duration_minutes', duration)
                 .eq('status', 'active')
                 .gt('remaining_credits', 0)
                 .gt('expires_at', new Date().toISOString())
-                .order('expires_at', { ascending: true }); // Utiliser d'abord ceux qui expirent bientôt
+                .order('expires_at', { ascending: true });
 
             if (findError) {
                 console.error('Erreur recherche package actif:', findError);
@@ -314,17 +391,7 @@ class PackagesManager {
             if (!activePackages || activePackages.length === 0) {
                 console.log(`❌ Aucun package actif trouvé pour ${courseType} (${duration}min)`);
                 
-                // AFFICHER TOUS LES PACKAGES DISPONIBLES POUR LE DEBUG
-                const { data: allPackages } = await supabase
-                    .from('packages')
-                    .select('id, course_type, duration_minutes, remaining_credits, expires_at, status')
-                    .eq('user_id', userId)
-                    .eq('status', 'active')
-                    .gt('remaining_credits', 0);
-                    
-                console.log(`📋 Tous les packages disponibles pour ${userId}:`, allPackages);
-                
-                throw new Error(`Aucun forfait actif avec des crédits disponibles pour un cours de ${duration} minutes. Veuillez choisir une durée correspondant à vos forfaits.`);
+                throw new Error(`Aucun forfait actif avec des crédits disponibles pour un cours de ${duration} minutes.`);
             }
 
             console.log(`📦 Package(s) actif(s) trouvé(s) pour ${courseType} ${duration}min:`, activePackages);
@@ -340,17 +407,38 @@ class PackagesManager {
             });
 
             const newRemainingCredits = (activePackage.remaining_credits || 0) - 1;
+            
+            // MISE À JOUR ATOMIQUE avec vérification de version
             const { error: updateError } = await supabase
                 .from('packages')
                 .update({ 
                     remaining_credits: newRemainingCredits,
                     status: newRemainingCredits === 0 ? 'depleted' : 'active'
-                    // NOTE: Colonne updated_at supprimée car elle n'existe pas dans le schéma
                 })
-                .eq('id', activePackage.id);
+                .eq('id', activePackage.id)
+                .eq('remaining_credits', activePackage.remaining_credits); // Optimistic locking
 
             if (updateError) {
                 console.error('Erreur mise à jour crédits:', updateError);
+                
+                // Vérifier si le crédit a déjà été déduit
+                const { data: currentPackage } = await supabase
+                    .from('packages')
+                    .select('remaining_credits')
+                    .eq('id', activePackage.id)
+                    .single();
+                
+                if (currentPackage && currentPackage.remaining_credits < activePackage.remaining_credits) {
+                    console.log('ℹ️ Crédit déjà déduit par une autre transaction');
+                    return { 
+                        success: true, 
+                        package_id: activePackage.id,
+                        course_type: activePackage.course_type,
+                        duration: activePackage.duration_minutes,
+                        transactionId: trxId
+                    };
+                }
+                
                 throw updateError;
             }
 
@@ -361,7 +449,7 @@ class PackagesManager {
                 credits_apres: newRemainingCredits
             });
 
-            // Créer une transaction de crédit
+            // Créer une transaction de crédit avec l'ID de transaction
             try {
                 const transactionData = {
                     user_id: userId,
@@ -371,7 +459,8 @@ class PackagesManager {
                     credits_change: -1,
                     credits_after: newRemainingCredits,
                     transaction_type: 'use',
-                    reason: `Réservation de cours ${courseType} (${duration}min)`,
+                    reason: `Réservation de cours ${courseType} (${duration}min) - Transaction: ${trxId}`,
+                    transaction_reference: trxId, // Stocker la référence de transaction
                     created_at: new Date().toISOString()
                 };
 
@@ -382,51 +471,168 @@ class PackagesManager {
                 if (transactionError) {
                     console.warn('Erreur création transaction crédit:', transactionError);
                 } else {
-                    console.log('✅ Transaction crédit créée');
+                    console.log('✅ Transaction crédit créée:', trxId);
                 }
             } catch (transactionErr) {
                 console.warn('Exception création transaction crédit:', transactionErr);
             }
 
-            // MARQUER COMME CRÉDIT UTILISÉ (protection double déduction)
-            if (bookingData?.id) {
-                const bookingKey = `used_credit_${bookingData.id}`;
-                localStorage.setItem(bookingKey, 'true');
-                console.log(`✅ Réservation ${bookingData.id} marquée comme ayant utilisé un crédit`);
-            }
+            // Enregistrer la transaction comme traitée
+            this.transactionRegistry.set(trxId, {
+                userId: userId,
+                packageId: activePackage.id,
+                timestamp: Date.now(),
+                type: 'use'
+            });
             
             return { 
                 success: true, 
                 package_id: activePackage.id,
                 course_type: activePackage.course_type,
-                duration: activePackage.duration_minutes
+                duration: activePackage.duration_minutes,
+                transactionId: trxId
             };
             
         } catch (error) {
             console.error('❌ Erreur utilisation crédit:', error);
-            return { success: false, error: error.message };
+            return { 
+                success: false, 
+                error: error.message,
+                transactionId: trxId
+            };
+        } finally {
+            // Libérer les ressources
+            this.processingTransactions.delete(trxId);
+            if (lock && lock.release) {
+                lock.release();
+            }
         }
     }
 
-    // Ajouter des crédits avec 90 jours de validité - VERSION CORRIGÉE
+    // NOUVEAU : Méthode pour rembourser un crédit
+    async refundCredit(packageId, userId, transactionId) {
+        const refundTrxId = transactionId || `refund_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        if (this.isTransactionProcessed(refundTrxId)) {
+            return { success: false, error: 'Transaction de remboursement déjà traitée' };
+        }
+        
+        this.processingTransactions.add(refundTrxId);
+        
+        try {
+            console.log(`💸 Remboursement crédit - Package: ${packageId}, Transaction: ${refundTrxId}`);
+            
+            // Récupérer le package
+            const { data: packageData, error: fetchError } = await supabase
+                .from('packages')
+                .select('remaining_credits, total_credits, status')
+                .eq('id', packageId)
+                .eq('user_id', userId)
+                .single();
+            
+            if (fetchError) {
+                throw new Error('Package non trouvé');
+            }
+            
+            const newRemainingCredits = (packageData.remaining_credits || 0) + 1;
+            const newStatus = newRemainingCredits > 0 ? 'active' : packageData.status;
+            
+            // Mettre à jour le package
+            const { error: updateError } = await supabase
+                .from('packages')
+                .update({ 
+                    remaining_credits: newRemainingCredits,
+                    status: newStatus
+                })
+                .eq('id', packageId);
+            
+            if (updateError) {
+                throw updateError;
+            }
+            
+            // Créer une transaction de remboursement
+            const transactionData = {
+                user_id: userId,
+                package_id: packageId,
+                booking_id: null,
+                credits_before: packageData.remaining_credits || 0,
+                credits_change: 1,
+                credits_after: newRemainingCredits,
+                transaction_type: 'refund',
+                reason: `Remboursement crédit - Transaction: ${refundTrxId}`,
+                transaction_reference: refundTrxId,
+                created_at: new Date().toISOString()
+            };
+            
+            await supabase
+                .from('credit_transactions')
+                .insert(transactionData);
+            
+            console.log('✅ Crédit remboursé avec succès');
+            
+            this.transactionRegistry.set(refundTrxId, {
+                userId: userId,
+                packageId: packageId,
+                timestamp: Date.now(),
+                type: 'refund'
+            });
+            
+            return { 
+                success: true, 
+                transactionId: refundTrxId,
+                remaining_credits: newRemainingCredits
+            };
+            
+        } catch (error) {
+            console.error('❌ Erreur remboursement crédit:', error);
+            return { success: false, error: error.message };
+        } finally {
+            this.processingTransactions.delete(refundTrxId);
+        }
+    }
+
+    // VERSION CORRIGÉE : Ajouter des crédits avec 90 jours de validité
     async addCredits(userId, courseType, quantity, price, currency, paymentMethod, transactionId, bookingData = null) {
-        if (!window.supabase || !userId) {
-            console.error('❌ Conditions non remplies pour addCredits');
-            return { success: false, error: 'Supabase ou utilisateur non disponible' };
+        const addTrxId = transactionId || `add_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Vérifier si cette transaction d'ajout est déjà traitée
+        if (this.isTransactionProcessed(addTrxId)) {
+            console.log(`⏭️ Transaction d'ajout déjà traitée: ${addTrxId}`);
+            return { 
+                success: true, 
+                message: 'Crédits déjà ajoutés',
+                transactionId: addTrxId
+            };
+        }
+        
+        this.processingTransactions.add(addTrxId);
+        
+        let lock;
+        try {
+            lock = await this.acquireUserLock(userId, 'add_credits');
+        } catch (lockError) {
+            this.processingTransactions.delete(addTrxId);
+            return { 
+                success: false, 
+                error: lockError.message,
+                transactionId: addTrxId
+            };
         }
         
         try {
-            console.log(`📦 Début addCredits - User: ${userId}, Type: ${courseType}, Quantité: ${quantity}, Prix: ${price} ${currency}`);
+            console.log(`📦 Début addCredits sécurisé - Transaction: ${addTrxId}`);
+            console.log(`   User: ${userId}, Type: ${courseType}, Quantité: ${quantity}, Prix: ${price} ${currency}`);
             
-            // MODIFICATION : 90 jours au lieu d'1 an
+            if (!window.supabase || !userId) {
+                throw new Error('Supabase ou utilisateur non disponible');
+            }
+            
             const purchasedDate = new Date();
             const expiresAt = new Date(purchasedDate);
-            expiresAt.setDate(expiresAt.getDate() + this.packageValidityDays); // 90 jours
+            expiresAt.setDate(expiresAt.getDate() + this.packageValidityDays);
 
-            // CORRECTION : PARSER CORRECTEMENT LA DURÉE
-            let duration = 60; // valeur par défaut
+            let duration = 60;
             
-            // Extraire la durée de différentes sources possibles
             if (bookingData) {
                 let rawDuration = bookingData.duration || bookingData.duration_minutes;
                 
@@ -441,7 +647,6 @@ class PackagesManager {
                 duration = 15;
             }
             
-            // VÉRIFICATION DE SÉCURITÉ : s'assurer que la durée est valide
             const validDurations = [15, 30, 45, 60];
             if (!validDurations.includes(duration)) {
                 const closestDuration = validDurations.reduce((prev, curr) => {
@@ -451,7 +656,6 @@ class PackagesManager {
                 console.log(`✅ Durée ajustée à: ${duration} minutes`);
             }
             
-            // Récupérer le pourcentage de réduction
             let discountPercent = bookingData?.discountPercent || 0;
             if (discountPercent === 0) {
                 if (quantity === 5) discountPercent = 2;
@@ -459,23 +663,23 @@ class PackagesManager {
             }
             
             console.log(`💰 Données finales pour création package:`, {
-                userId, courseType, quantity, price, currency, duration, discountPercent
+                userId, courseType, quantity, price, currency, duration, discountPercent, transactionId: addTrxId
             });
             
-            // STRUCTURE CORRECTE POUR LA TABLE packages - SANS created_at
             const packageData = {
                 user_id: userId,
                 course_type: courseType,
                 duration_minutes: duration,
                 total_credits: quantity,
-                remaining_credits: quantity, // CORRECTION: Initialiser avec TOUS les crédits
+                remaining_credits: quantity,
                 price_paid: price,
                 discount_percent: discountPercent,
                 currency: currency,
                 status: 'active',
                 purchased_at: purchasedDate.toISOString(),
                 expires_at: expiresAt.toISOString(),
-                expiration_alert_sent: false
+                expiration_alert_sent: false,
+                transaction_reference: addTrxId // Stocker la référence de transaction
             };
 
             console.log('📤 Tentative d\'insertion dans packages avec données:', packageData);
@@ -488,41 +692,26 @@ class PackagesManager {
 
             if (packageError) {
                 console.error('❌ ERREUR lors de l\'insertion du package:', packageError);
-                console.error('❌ Détails de l\'erreur:', packageError);
                 
-                // Tentative alternative avec moins de champs
-                console.log('🔍 Tentative alternative avec structure minimale...');
-                const minimalPackageData = {
-                    user_id: userId,
-                    course_type: courseType,
-                    duration_minutes: duration,
-                    total_credits: quantity,
-                    remaining_credits: quantity,
-                    price_paid: price,
-                    currency: currency,
-                    status: 'active',
-                    purchased_at: purchasedDate.toISOString(),
-                    expires_at: expiresAt.toISOString()
-                };
-                
-                const { data: minimalPackage, error: minimalError } = await supabase
+                // Vérifier si un package avec cette référence existe déjà
+                const { data: existingPackage } = await supabase
                     .from('packages')
-                    .insert(minimalPackageData)
-                    .select()
+                    .select('*')
+                    .eq('transaction_reference', addTrxId)
                     .single();
-                    
-                if (minimalError) {
-                    console.error('❌ Échec même avec structure minimale:', minimalError);
-                    throw new Error(`Impossible de créer le package: ${minimalError.message}`);
+                
+                if (existingPackage) {
+                    console.log('✅ Package déjà créé avec cette transaction');
+                    return { 
+                        success: true, 
+                        package: existingPackage,
+                        course_type: courseType,
+                        duration: duration,
+                        transactionId: addTrxId
+                    };
                 }
                 
-                console.log('✅ Package créé avec structure minimale:', minimalPackage);
-                return { 
-                    success: true, 
-                    package: minimalPackage,
-                    course_type: courseType,
-                    duration: duration
-                };
+                throw new Error(`Impossible de créer le package: ${packageError.message}`);
             }
 
             console.log('✅ NOUVEAU PACKAGE CRÉÉ AVEC SUCCÈS:', {
@@ -549,7 +738,8 @@ class PackagesManager {
                     credits_change: quantity,
                     credits_after: quantity,
                     transaction_type: 'purchase',
-                    reason: `Achat forfait ${quantity} ${courseType} (${duration}min) (${discountPercent}% de réduction)`,
+                    reason: `Achat forfait ${quantity} ${courseType} (${duration}min) (${discountPercent}% de réduction) - Transaction: ${addTrxId}`,
+                    transaction_reference: addTrxId,
                     created_at: new Date().toISOString()
                 };
 
@@ -560,45 +750,30 @@ class PackagesManager {
                 if (transactionError) {
                     console.warn('⚠️ Erreur création transaction crédit:', transactionError);
                 } else {
-                    console.log('✅ Transaction d\'achat créée');
+                    console.log('✅ Transaction d\'achat créée:', addTrxId);
                 }
             } catch (transactionErr) {
                 console.warn('⚠️ Exception création transaction crédit:', transactionErr);
             }
 
-            // CORRECTION IMPORTANTE : Déduire immédiatement un crédit pour la réservation actuelle
-            // MAIS SEULEMENT SI bookingData.id EXISTE (la réservation a déjà été créée)
-            if (bookingData?.id && bookingData.id !== 'temp') {
-                console.log(`🔽 Déduction immédiate du premier crédit pour ${courseType} ${duration}min...`);
-                try {
-                    // Déduire un crédit du package que nous venons de créer
-                    const useCreditResult = await this.deductCreditFromPackage(
-                        newPackage.id,
-                        userId,
-                        courseType,
-                        duration,
-                        bookingData.id
-                    );
-                    
-                    if (useCreditResult.success) {
-                        console.log(`✅ Premier crédit déduit pour ${courseType} ${duration}min`);
-                        // Mettre à jour l'objet newPackage pour refléter la déduction
-                        newPackage.remaining_credits = quantity - 1;
-                    } else {
-                        console.warn(`⚠️ Impossible de déduire le premier crédit: ${useCreditResult.error}`);
-                    }
-                } catch (creditError) {
-                    console.error(`❌ Erreur lors de la déduction du premier crédit: ${creditError.message}`);
-                }
-            } else {
-                console.log('⚠️ Pas de déduction immédiate car bookingData.id manquant ou temporaire');
-            }
-
+            // CORRECTION : Ne PAS déduire immédiatement un crédit ici
+            // La déduction se fera dans le flux de réservation principal
+            console.log('⚠️ ATTENTION : La déduction du premier crédit se fera dans le flux de réservation principal');
+            
+            // Enregistrer la transaction
+            this.transactionRegistry.set(addTrxId, {
+                userId: userId,
+                packageId: newPackage.id,
+                timestamp: Date.now(),
+                type: 'add'
+            });
+            
             return { 
                 success: true, 
                 package: newPackage,
                 course_type: courseType,
                 duration: duration,
+                transactionId: addTrxId,
                 message: `Forfait de ${quantity} crédits ${courseType} (${duration}min) créé avec succès`
             };
         } catch (error) {
@@ -606,24 +781,41 @@ class PackagesManager {
             return { 
                 success: false, 
                 error: error.message,
+                transactionId: addTrxId,
                 details: 'Veuillez contacter le support technique'
             };
+        } finally {
+            this.processingTransactions.delete(addTrxId);
+            if (lock && lock.release) {
+                lock.release();
+            }
         }
     }
 
-    // Nouvelle méthode pour déduire un crédit d'un package spécifique
-    async deductCreditFromPackage(packageId, userId, courseType, duration, bookingId) {
-        if (!window.supabase || !packageId || !userId) {
-            return { success: false, error: 'Paramètres manquants' };
+    async deductCreditFromPackage(packageId, userId, courseType, duration, bookingId, transactionId = null) {
+        const deductTrxId = transactionId || `deduct_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        if (this.isTransactionProcessed(deductTrxId)) {
+            return { 
+                success: false, 
+                error: 'Transaction de déduction déjà traitée',
+                transactionId: deductTrxId
+            };
         }
         
+        this.processingTransactions.add(deductTrxId);
+        
         try {
-            console.log(`🔽 Déduction de crédit du package ${packageId}...`);
+            console.log(`🔽 Déduction de crédit du package ${packageId} - Transaction: ${deductTrxId}`);
+            
+            if (!window.supabase || !packageId || !userId) {
+                throw new Error('Paramètres manquants');
+            }
             
             // 1. Récupérer le package spécifique
             const { data: packageData, error: fetchError } = await supabase
                 .from('packages')
-                .select('remaining_credits')
+                .select('remaining_credits, course_type, duration_minutes')
                 .eq('id', packageId)
                 .eq('user_id', userId)
                 .single();
@@ -639,20 +831,46 @@ class PackagesManager {
                 return { success: false, error: 'Pas de crédits disponibles dans ce package' };
             }
             
+            // Vérifier que le package correspond au type de cours et durée
+            if (packageData.course_type !== courseType || packageData.duration_minutes !== duration) {
+                return { 
+                    success: false, 
+                    error: `Le package ne correspond pas au cours ${courseType} de ${duration}min` 
+                };
+            }
+            
             const newRemainingCredits = currentCredits - 1;
             
-            // 2. Mettre à jour le package
+            // 2. Mettre à jour le package avec vérification optimiste
             const { error: updateError } = await supabase
                 .from('packages')
                 .update({ 
                     remaining_credits: newRemainingCredits,
                     status: newRemainingCredits === 0 ? 'depleted' : 'active'
-                    // NOTE: Colonne updated_at supprimée car elle n'existe pas dans le schéma
                 })
-                .eq('id', packageId);
+                .eq('id', packageId)
+                .eq('remaining_credits', currentCredits);
             
             if (updateError) {
                 console.error('❌ Erreur mise à jour package:', updateError);
+                
+                // Vérifier si la déduction a déjà eu lieu
+                const { data: currentPackage } = await supabase
+                    .from('packages')
+                    .select('remaining_credits')
+                    .eq('id', packageId)
+                    .single();
+                    
+                if (currentPackage && currentPackage.remaining_credits < currentCredits) {
+                    console.log('ℹ️ Déduction déjà effectuée par une autre transaction');
+                    return { 
+                        success: true, 
+                        package_id: packageId,
+                        remaining_credits: currentPackage.remaining_credits,
+                        transactionId: deductTrxId
+                    };
+                }
+                
                 return { success: false, error: 'Erreur lors de la déduction' };
             }
             
@@ -668,7 +886,8 @@ class PackagesManager {
                     credits_change: -1,
                     credits_after: newRemainingCredits,
                     transaction_type: 'use',
-                    reason: `Déduction automatique après achat de forfait ${courseType} (${duration}min)`,
+                    reason: `Déduction automatique après achat de forfait ${courseType} (${duration}min) - Transaction: ${deductTrxId}`,
+                    transaction_reference: deductTrxId,
                     created_at: new Date().toISOString()
                 };
 
@@ -679,21 +898,36 @@ class PackagesManager {
                 if (transactionError) {
                     console.warn('⚠️ Erreur création transaction crédit:', transactionError);
                 } else {
-                    console.log('✅ Transaction de déduction créée');
+                    console.log('✅ Transaction de déduction créée:', deductTrxId);
                 }
             } catch (transactionErr) {
                 console.warn('⚠️ Exception création transaction crédit:', transactionErr);
             }
             
+            // Enregistrer la transaction
+            this.transactionRegistry.set(deductTrxId, {
+                userId: userId,
+                packageId: packageId,
+                timestamp: Date.now(),
+                type: 'deduct'
+            });
+            
             return { 
                 success: true, 
                 package_id: packageId,
-                remaining_credits: newRemainingCredits
+                remaining_credits: newRemainingCredits,
+                transactionId: deductTrxId
             };
             
         } catch (error) {
             console.error('❌ Erreur dans deductCreditFromPackage:', error);
-            return { success: false, error: error.message };
+            return { 
+                success: false, 
+                error: error.message,
+                transactionId: deductTrxId
+            };
+        } finally {
+            this.processingTransactions.delete(deductTrxId);
         }
     }
 
@@ -946,16 +1180,43 @@ class PackagesManager {
             console.error('Erreur debug packages:', error);
         }
     }
+    
+    // NOUVEAU : Méthode pour nettoyer les verrous expirés
+    cleanupExpiredLocks() {
+        const now = Date.now();
+        const timeout = 30000; // 30 secondes
+        
+        for (const [userId, lock] of this.userLocks.entries()) {
+            if (now - lock.timestamp > timeout) {
+                this.userLocks.delete(userId);
+                console.log(`🧹 Verrou expiré nettoyé: ${userId}`);
+            }
+        }
+        
+        // Nettoyer aussi le registre des transactions (garder 24h)
+        const dayInMs = 24 * 60 * 60 * 1000;
+        for (const [trxId, data] of this.transactionRegistry.entries()) {
+            if (now - data.timestamp > dayInMs) {
+                this.transactionRegistry.delete(trxId);
+            }
+        }
+    }
 }
 
-// Initialisation
+// Initialisation avec nettoyage périodique
 window.packagesManager = new PackagesManager();
 
-// Initialiser au chargement de la page
+// Nettoyer les verrous toutes les minutes
+setInterval(() => {
+    if (window.packagesManager && window.packagesManager.cleanupExpiredLocks) {
+        window.packagesManager.cleanupExpiredLocks();
+    }
+}, 60000);
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (window.packagesManager && !window.packagesManager.isInitialized) {
         await window.packagesManager.initialize();
     }
 });
 
-console.log('✅ PackagesManager chargé - Version CORRIGÉE SANS updated_at');
+console.log('✅ PackagesManager chargé - Version sécurisée contre la double déduction');
