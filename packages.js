@@ -1,4 +1,4 @@
-// packages.js - Gestion des forfaits et crédits avec 90 jours de validité - VERSION CORRIGÉE POUR TOUS LES TYPES
+// packages.js - Gestion des forfaits et crédits avec 90 jours de validité - VERSION CORRIGÉE
 class PackagesManager {
     constructor() {
         this.packages = null;
@@ -450,7 +450,7 @@ class PackagesManager {
         }
     }
 
-    // Ajouter des crédits avec 90 jours de validité - VERSION CORRIGÉE POUR TOUS LES TYPES
+    // Ajouter des crédits avec 90 jours de validité - VERSION CORRIGÉE
     async addCredits(userId, courseType, quantity, price, currency, paymentMethod, transactionId, bookingData = null) {
         if (!window.supabase || !userId) return { success: false, error: 'Supabase ou utilisateur non disponible' };
         
@@ -496,55 +496,23 @@ class PackagesManager {
                 console.log(`✅ Durée ajustée à: ${duration} minutes`);
             }
             
-            // CORRECTION : CALCULER LE BON PRIX POUR LES DIFFÉRENTS TYPES
-            // Le prix doit être calculé en fonction du type de cours ET de la durée
-            let calculatedPrice = price;
-            
-            if (courseType === 'conversation') {
-                if (duration === 30) calculatedPrice = 10 * quantity;
-                else if (duration === 45) calculatedPrice = 15 * quantity;
-                else calculatedPrice = 20 * quantity;
-            } else if (courseType === 'curriculum') {
-                if (duration === 30) calculatedPrice = 17.5 * quantity;
-                else if (duration === 45) calculatedPrice = 26.25 * quantity;
-                else calculatedPrice = 35 * quantity;
-            } else if (courseType === 'examen') {
-                if (duration === 30) calculatedPrice = 15 * quantity;
-                else if (duration === 45) calculatedPrice = 22.5 * quantity;
-                else calculatedPrice = 30 * quantity;
-            } else if (courseType === 'essai') {
-                calculatedPrice = 5;
-            }
-            
-            // Appliquer les réductions de forfait
-            let discountPercent = 0;
-            if (quantity === 5) discountPercent = 2;
-            else if (quantity === 10) discountPercent = 5;
-            
-            if (discountPercent > 0) {
-                calculatedPrice = calculatedPrice * (1 - discountPercent / 100);
-                console.log(`🎁 Réduction ${discountPercent}% appliquée: ${calculatedPrice} ${currency}`);
-            }
-            
-            console.log(`💰 Prix final calculé pour ${quantity} crédits ${courseType} ${duration}min: ${calculatedPrice} ${currency}`);
-            
             // Obtenir les informations du package AVEC LA DURÉE CORRECTE
             const packageInfo = await this.getPackageInfo(courseType, quantity, duration);
             if (!packageInfo) {
                 throw new Error(`Type de forfait non valide: ${courseType}`);
             }
 
-            const pricePerCourse = calculatedPrice / quantity;
+            const pricePerCourse = price / quantity;
             
             console.log('📦 Création package avec détails:', {
                 user_id: userId,
                 course_type: courseType,
                 duration: duration,
                 quantity: quantity,
-                total_price: calculatedPrice,
+                total_price: price,
                 currency: currency,
                 price_per_course: pricePerCourse,
-                discount_percent: discountPercent,
+                discount_percent: packageInfo.discount_percent || 0,
                 purchased_date: purchasedDate.toISOString(),
                 expires_at: expiresAt.toISOString(),
                 expires_in_days: this.packageValidityDays,
@@ -557,10 +525,10 @@ class PackagesManager {
                 user_id: userId,
                 course_type: courseType,
                 duration_minutes: duration, // CORRECTION: Utiliser la durée déterminée
-                total_credits: quantity, // CORRECTION: Utiliser la quantité exacte
-                remaining_credits: quantity, // CORRECTION: Initialiser avec la quantité
-                price_paid: calculatedPrice,
-                discount_percent: discountPercent,
+                total_credits: packageInfo.total_credits,
+                remaining_credits: packageInfo.total_credits,
+                price_paid: price,
+                discount_percent: packageInfo.discount_percent || 0,
                 currency: currency,
                 status: 'active',
                 purchased_at: purchasedDate.toISOString(),
@@ -605,10 +573,10 @@ class PackagesManager {
                     package_id: newPackage.id,
                     booking_id: bookingData?.id || null,
                     credits_before: 0,
-                    credits_change: quantity,
-                    credits_after: quantity,
+                    credits_change: packageInfo.total_credits,
+                    credits_after: packageInfo.total_credits,
                     transaction_type: 'purchase',
-                    reason: `Achat forfait ${quantity} ${courseType} (${duration}min) (${discountPercent}% de réduction)`,
+                    reason: `Achat forfait ${quantity} ${courseType} (${duration}min) (${packageInfo.discount_percent || 0}% de réduction)`,
                     created_at: new Date().toISOString()
                 };
 
@@ -623,31 +591,6 @@ class PackagesManager {
                 }
             } catch (transactionErr) {
                 console.warn('⚠️ Exception création transaction crédit:', transactionErr);
-            }
-
-            // CORRECTION IMPORTANTE : DÉDUIRE LE PREMIER CRÉDIT IMMÉDIATEMENT POUR TOUS LES TYPES
-            if (bookingData?.id && courseType !== 'essai') {
-                console.log(`🔧 Déduction immédiate du premier crédit pour ${courseType}...`);
-                try {
-                    const useCreditResult = await this.useCredit(
-                        userId,
-                        courseType,
-                        {
-                            id: bookingData.id,
-                            duration: duration
-                        }
-                    );
-                    
-                    if (useCreditResult.success) {
-                        console.log(`✅ Premier crédit déduit pour ${courseType} ${duration}min`);
-                        // Mettre à jour le package avec un crédit de moins
-                        newPackage.remaining_credits = quantity - 1;
-                    } else {
-                        console.warn(`⚠️ Impossible de déduire le premier crédit: ${useCreditResult.error}`);
-                    }
-                } catch (creditError) {
-                    console.error(`❌ Erreur lors de la déduction du premier crédit: ${creditError.message}`);
-                }
             }
 
             return { 
@@ -934,31 +877,6 @@ class PackagesManager {
             return { success: false, error: error.message };
         }
     }
-    
-    // Méthode pour déduire automatiquement le premier crédit lors de l'achat d'un forfait
-    async deductFirstCreditAfterPurchase(userId, courseType, duration, bookingId) {
-        if (!window.supabase || !userId) {
-            return { success: false, error: 'Paramètres manquants' };
-        }
-        
-        try {
-            console.log(`🔧 Tentative de déduction du premier crédit pour ${courseType} ${duration}min...`);
-            
-            const result = await this.useCredit(
-                userId,
-                courseType,
-                {
-                    id: bookingId,
-                    duration: duration
-                }
-            );
-            
-            return result;
-        } catch (error) {
-            console.error(`❌ Erreur lors de la déduction du premier crédit: ${error.message}`);
-            return { success: false, error: error.message };
-        }
-    }
 }
 
 // Initialisation
@@ -971,4 +889,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PackagesManager chargé - Version CORRIGÉE avec déduction automatique du premier crédit pour tous les types');
+console.log('✅ PackagesManager chargé - Version CORRIGÉE avec gestion correcte type + durée');
