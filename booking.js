@@ -7,7 +7,7 @@ class BookingManager {
         this.apiBaseUrl = 'https://api.cal.com/v2';
         this.eventTypeMap = {
             'essai': config.CALCOM_EVENT_TYPE_ESSAI || '4139074',
-            'conversation': config.CALCOM_EVENT_TYPE_CONVERSATION || '',
+            'conversation': config.CALCOM_EVENT_TYPE_CONVERSATION || '4368892',
             'curriculum': config.CALCOM_EVENT_TYPE_CURRICULUM || '',
             'examen': config.CALCOM_EVENT_TYPE_EXAMEN || '4139076'
         };
@@ -349,7 +349,7 @@ class BookingManager {
         
         const user = window.authManager?.getCurrentUser();
         if (!user || !window.packagesManager) {
-            console.log('❌ Pas d\'utilisateur ou packagesManager');
+            console.log('❌ Pas d'utilisateur ou packagesManager');
             return false;
         }
         
@@ -361,7 +361,7 @@ class BookingManager {
         
         // Uniquement pour les cours payants (pas essai)
         if (bookingData.courseType === 'essai') {
-            console.log('❌ Cours d\'essai');
+            console.log('❌ Cours d'essai');
             return false;
         }
         
@@ -406,7 +406,7 @@ class BookingManager {
             // Générer un ID de réservation temporaire mais valide
             const tempBookingId = crypto.randomUUID ? crypto.randomUUID() : `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             
-            // Insérer d'abord la réservation dans Supabase avec un statut 'pending_credit'
+            // CORRECTION : Utiliser un statut autorisé ('pending') au lieu de 'pending_credit'
             const tempBookingRecord = {
                 id: tempBookingId,
                 user_id: user.id,
@@ -414,9 +414,10 @@ class BookingManager {
                 duration_minutes: duration,
                 start_time: bookingData.startTime,
                 end_time: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, bookingData.duration),
-                status: 'pending_credit',
+                status: 'pending', // CORRIGÉ : Statut autorisé
                 booking_number: `BK-TEMP-${Date.now().toString().slice(-6)}`,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                payment_method: 'credit' // Ajouter payment_method pour suivre
             };
             
             // 1. Créer d'abord l'enregistrement de réservation
@@ -432,7 +433,7 @@ class BookingManager {
             console.log('✅ Réservation temporaire créée avec ID:', tempBookingId);
             
             // 2. Utiliser un crédit avec le VRAI ID de réservation
-            console.log('💰 Utilisation d\'un crédit...');
+            console.log('💰 Utilisation d'un crédit...');
             const creditResult = await window.packagesManager.useCredit(
                 user.id,
                 bookingData.courseType,
@@ -457,6 +458,7 @@ class BookingManager {
             console.log('✅ Crédit utilisé, package_id:', creditResult.package_id);
             
             // 3. Préparer les données pour la réservation Cal.com
+            // CORRECTION : Utiliser une devise autorisée (USD) au lieu de null
             const bookingForCalcom = {
                 startTime: bookingData.startTime,
                 endTime: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, bookingData.duration),
@@ -473,7 +475,7 @@ class BookingManager {
                 
                 // Informations spécifiques crédit
                 price: 0,
-                currency: null,
+                currency: 'USD', // CORRIGÉ : Devise autorisée au lieu de null
                 paymentMethod: 'credit',
                 transactionId: `CREDIT-${Date.now()}`,
                 packageId: creditResult.package_id,
@@ -511,6 +513,7 @@ class BookingManager {
                 payment_method: 'credit',
                 payment_reference: bookingForCalcom.transactionId,
                 package_id: creditResult.package_id,
+                currency: 'USD', // CORRIGÉ : Devise autorisée
                 updated_at: new Date().toISOString()
             };
             
@@ -638,7 +641,7 @@ class BookingManager {
                     }
                     currencyManagerReady = true;
                 } catch (error) {
-                    console.error('❌ Impossible d\'initialiser CurrencyManager:', error);
+                    console.error('❌ Impossible d'initialiser CurrencyManager:', error);
                 }
             }
             
@@ -673,7 +676,7 @@ class BookingManager {
             
             // COURS D'ESSAI - Toujours 5€
             if (bookingData.courseType === 'essai') {
-                console.log('🎫 Cours d\'essai détecté'); // CORRIGÉ ICI
+                console.log('🎫 Cours d'essai détecté'); // CORRIGÉ ICI
                 priceEUR = 5;
                 unitPriceEUR = 5;
                 finalPrice = currencyManagerReady ? 
@@ -1104,6 +1107,17 @@ class BookingManager {
                 platformValue = 'zoom';
             }
 
+            // CORRECTION : Utiliser une devise autorisée (USD, EUR, CAD, GBP)
+            // Pour les réservations avec crédit, utiliser 'USD' par défaut
+            let currencyValue = bookingData.packageId ? 'USD' : bookingData.currency;
+            
+            // Vérifier si la devise est autorisée
+            const allowedCurrencies = ['USD', 'EUR', 'CAD', 'GBP'];
+            if (currencyValue && !allowedCurrencies.includes(currencyValue.toUpperCase())) {
+                console.warn(`⚠️ Devise "${currencyValue}" non autorisée, utilisation de "USD"`);
+                currencyValue = 'USD';
+            }
+
             // STRUCTURE EXACTE selon votre table 'bookings' - CORRIGÉE
             const bookingRecord = {
                 user_id: user?.id || bookingData.userId,
@@ -1113,7 +1127,7 @@ class BookingManager {
                 end_time: bookingData.endTime,
                 status: status,
                 price_paid: bookingData.packageId ? 0 : bookingData.price,
-                currency: bookingData.packageId ? null : bookingData.currency,
+                currency: currencyValue, // CORRIGÉ : Utiliser devise vérifiée
                 platform: platformValue,
                 booking_number: bookingNumber,
                 payment_method: bookingData.paymentMethod || 'credit',
@@ -1358,7 +1372,7 @@ class BookingManager {
     async cancelBooking(bookingId, userId) {
         try {
             if (!window.supabase || !bookingId || !userId) {
-                throw new Error('Paramètres manquants pour l\'annulation');
+                throw new Error('Paramètres manquants pour l'annulation');
             }
 
             // Vérifier que l'utilisateur est bien propriétaire de la réservation
@@ -1379,7 +1393,7 @@ class BookingManager {
             const hoursUntilStart = (startTime - now) / (1000 * 60 * 60);
 
             if (hoursUntilStart < 24) {
-                throw new Error('Les réservations doivent être annulées au moins 24 heures à l\'avance');
+                throw new Error('Les réservations doivent être annulées au moins 24 heures à l'avance');
             }
 
             // Mettre à jour le statut de la réservation
@@ -1442,7 +1456,7 @@ class BookingManager {
 
             // Annuler la réservation sur Cal.com si possible
             if (booking.calcom_booking_id && this.calcomApiKey) {
-                console.log('📅 Tentative d\'annulation sur Cal.com...');
+                console.log('📅 Tentative d'annulation sur Cal.com...');
                 try {
                     const response = await fetch(
                         `${this.apiBaseUrl}/bookings/${booking.calcom_booking_id}`,
@@ -1455,10 +1469,10 @@ class BookingManager {
                     if (response.ok) {
                         console.log('✅ Réservation annulée sur Cal.com');
                     } else {
-                        console.warn('⚠️ Impossible d\'annuler sur Cal.com, réservation annulée localement');
+                        console.warn('⚠️ Impossible d'annuler sur Cal.com, réservation annulée localement');
                     }
                 } catch (calcomError) {
-                    console.warn('⚠️ Erreur lors de l\'annulation Cal.com:', calcomError);
+                    console.warn('⚠️ Erreur lors de l'annulation Cal.com:', calcomError);
                 }
             }
 
