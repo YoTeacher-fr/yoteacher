@@ -1,4 +1,4 @@
-// packages.js - Gestion des forfaits et crédits avec 90 jours de validité - VERSION CORRIGÉE (sans created_at)
+// packages.js - Gestion des forfaits et crédits avec 90 jours de validité - VERSION CORRIGÉE COMPLÈTE
 class PackagesManager {
     constructor() {
         this.packages = null;
@@ -408,7 +408,7 @@ class PackagesManager {
         }
     }
 
-    // Ajouter des crédits avec 90 jours de validité - VERSION CORRIGÉE (sans created_at)
+    // Ajouter des crédits avec 90 jours de validité - VERSION CORRIGÉE
     async addCredits(userId, courseType, quantity, price, currency, paymentMethod, transactionId, bookingData = null) {
         if (!window.supabase || !userId) {
             console.error('❌ Conditions non remplies pour addCredits');
@@ -468,7 +468,7 @@ class PackagesManager {
                 course_type: courseType,
                 duration_minutes: duration,
                 total_credits: quantity,
-                remaining_credits: quantity,
+                remaining_credits: quantity, // CORRECTION: Initialiser avec TOUS les crédits
                 price_paid: price,
                 discount_percent: discountPercent,
                 currency: currency,
@@ -476,7 +476,6 @@ class PackagesManager {
                 purchased_at: purchasedDate.toISOString(),
                 expires_at: expiresAt.toISOString(),
                 expiration_alert_sent: false
-                // NOTE: Ne pas inclure created_at ou updated_at si la table ne les a pas
             };
 
             console.log('📤 Tentative d\'insertion dans packages avec données:', packageData);
@@ -567,6 +566,34 @@ class PackagesManager {
                 console.warn('⚠️ Exception création transaction crédit:', transactionErr);
             }
 
+            // CORRECTION IMPORTANTE : Déduire immédiatement un crédit pour la réservation actuelle
+            // MAIS SEULEMENT SI bookingData.id EXISTE (la réservation a déjà été créée)
+            if (bookingData?.id && bookingData.id !== 'temp') {
+                console.log(`🔧 Déduction immédiate du premier crédit pour ${courseType} ${duration}min...`);
+                try {
+                    // Déduire un crédit du package que nous venons de créer
+                    const useCreditResult = await this.deductCreditFromPackage(
+                        newPackage.id,
+                        userId,
+                        courseType,
+                        duration,
+                        bookingData.id
+                    );
+                    
+                    if (useCreditResult.success) {
+                        console.log(`✅ Premier crédit déduit pour ${courseType} ${duration}min`);
+                        // Mettre à jour l'objet newPackage pour refléter la déduction
+                        newPackage.remaining_credits = quantity - 1;
+                    } else {
+                        console.warn(`⚠️ Impossible de déduire le premier crédit: ${useCreditResult.error}`);
+                    }
+                } catch (creditError) {
+                    console.error(`❌ Erreur lors de la déduction du premier crédit: ${creditError.message}`);
+                }
+            } else {
+                console.log('⚠️ Pas de déduction immédiate car bookingData.id manquant ou temporaire');
+            }
+
             return { 
                 success: true, 
                 package: newPackage,
@@ -581,6 +608,92 @@ class PackagesManager {
                 error: error.message,
                 details: 'Veuillez contacter le support technique'
             };
+        }
+    }
+
+    // Nouvelle méthode pour déduire un crédit d'un package spécifique
+    async deductCreditFromPackage(packageId, userId, courseType, duration, bookingId) {
+        if (!window.supabase || !packageId || !userId) {
+            return { success: false, error: 'Paramètres manquants' };
+        }
+        
+        try {
+            console.log(`🔧 Déduction de crédit du package ${packageId}...`);
+            
+            // 1. Récupérer le package spécifique
+            const { data: packageData, error: fetchError } = await supabase
+                .from('packages')
+                .select('remaining_credits')
+                .eq('id', packageId)
+                .eq('user_id', userId)
+                .single();
+            
+            if (fetchError) {
+                console.error('❌ Erreur récupération package:', fetchError);
+                return { success: false, error: 'Package non trouvé' };
+            }
+            
+            const currentCredits = packageData.remaining_credits || 0;
+            
+            if (currentCredits <= 0) {
+                return { success: false, error: 'Pas de crédits disponibles dans ce package' };
+            }
+            
+            const newRemainingCredits = currentCredits - 1;
+            
+            // 2. Mettre à jour le package
+            const { error: updateError } = await supabase
+                .from('packages')
+                .update({ 
+                    remaining_credits: newRemainingCredits,
+                    status: newRemainingCredits === 0 ? 'depleted' : 'active',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', packageId);
+            
+            if (updateError) {
+                console.error('❌ Erreur mise à jour package:', updateError);
+                return { success: false, error: 'Erreur lors de la déduction' };
+            }
+            
+            console.log(`✅ Crédit déduit: ${currentCredits} → ${newRemainingCredits}`);
+            
+            // 3. Créer une transaction de crédit
+            try {
+                const transactionData = {
+                    user_id: userId,
+                    package_id: packageId,
+                    booking_id: bookingId || null,
+                    credits_before: currentCredits,
+                    credits_change: -1,
+                    credits_after: newRemainingCredits,
+                    transaction_type: 'use',
+                    reason: `Déduction automatique après achat de forfait ${courseType} (${duration}min)`,
+                    created_at: new Date().toISOString()
+                };
+
+                const { error: transactionError } = await supabase
+                    .from('credit_transactions')
+                    .insert(transactionData);
+
+                if (transactionError) {
+                    console.warn('⚠️ Erreur création transaction crédit:', transactionError);
+                } else {
+                    console.log('✅ Transaction de déduction créée');
+                }
+            } catch (transactionErr) {
+                console.warn('⚠️ Exception création transaction crédit:', transactionErr);
+            }
+            
+            return { 
+                success: true, 
+                package_id: packageId,
+                remaining_credits: newRemainingCredits
+            };
+            
+        } catch (error) {
+            console.error('❌ Erreur dans deductCreditFromPackage:', error);
+            return { success: false, error: error.message };
         }
     }
 
@@ -845,4 +958,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PackagesManager chargé - Version CORRIGÉE (sans created_at)');
+console.log('✅ PackagesManager chargé - Version CORRIGÉE avec déduction automatique du premier crédit');
