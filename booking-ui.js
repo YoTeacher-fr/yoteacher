@@ -514,7 +514,25 @@ document.addEventListener('DOMContentLoaded', function() {
         // Mettre à jour le bouton
         setTimeout(updateSubmitButtonText, 1000);
     }
-    
+
+    // Fonction pour initialiser le menu mobile
+    function initMobileMenu() {
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const closeMenu = document.getElementById('closeMenu');
+        
+        if (hamburger && mobileMenu) {
+            hamburger.addEventListener('click', () => {
+                mobileMenu.classList.toggle('active');
+            });
+        }
+        
+        if (closeMenu && mobileMenu) {
+            closeMenu.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+            });
+        }
+    }
 
     function preselectDefaults() {
         // Pré-sélectionner 60 min
@@ -850,7 +868,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // COURS D'ESSAI
         if (courseType === 'essai') {
-console.log(`🎫 Cours d'essai détecté`);
+            console.log(`🎫 Cours d'essai détecté`);
             courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : `Cours d'essai`;
             duration = '15 min';
             
@@ -872,7 +890,7 @@ console.log(`🎫 Cours d'essai détecté`);
             } else if (courseType === 'curriculum') {
                 courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
             } else if (courseType === 'examen') {
-                courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d'examen';
+                courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
             }
             
             if (user && durationGroup.classList.contains('visible')) {
