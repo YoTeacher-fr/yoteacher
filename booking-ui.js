@@ -508,30 +508,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Gestion du menu mobile
-        initMobileMenu();
-        
         // Mettre à jour le bouton
         setTimeout(updateSubmitButtonText, 1000);
-    }
-
-    // Fonction pour initialiser le menu mobile
-    function initMobileMenu() {
-        const hamburger = document.getElementById('hamburger');
-        const mobileMenu = document.getElementById('mobileMenu');
-        const closeMenu = document.getElementById('closeMenu');
-        
-        if (hamburger && mobileMenu) {
-            hamburger.addEventListener('click', () => {
-                mobileMenu.classList.toggle('active');
-            });
-        }
-        
-        if (closeMenu && mobileMenu) {
-            closeMenu.addEventListener('click', () => {
-                mobileMenu.classList.remove('active');
-            });
-        }
     }
 
     function preselectDefaults() {
