@@ -1,4 +1,4 @@
-// packages.js - Gestion des forfaits et crédits avec 90 jours de validité - VERSION CORRIGÉE COMPLÈTE
+// packages.js - Gestion des forfaits et crédits avec 90 jours de validité - VERSION CORRIGÉE COMPLÈTE SANS updated_at
 class PackagesManager {
     constructor() {
         this.packages = null;
@@ -344,8 +344,8 @@ class PackagesManager {
                 .from('packages')
                 .update({ 
                     remaining_credits: newRemainingCredits,
-                    status: newRemainingCredits === 0 ? 'depleted' : 'active',
-                    updated_at: new Date().toISOString()
+                    status: newRemainingCredits === 0 ? 'depleted' : 'active'
+                    // NOTE: Colonne updated_at supprimée car elle n'existe pas dans le schéma
                 })
                 .eq('id', activePackage.id);
 
@@ -491,7 +491,7 @@ class PackagesManager {
                 console.error('❌ Détails de l\'erreur:', packageError);
                 
                 // Tentative alternative avec moins de champs
-                console.log('🔄 Tentative alternative avec structure minimale...');
+                console.log('🔍 Tentative alternative avec structure minimale...');
                 const minimalPackageData = {
                     user_id: userId,
                     course_type: courseType,
@@ -569,7 +569,7 @@ class PackagesManager {
             // CORRECTION IMPORTANTE : Déduire immédiatement un crédit pour la réservation actuelle
             // MAIS SEULEMENT SI bookingData.id EXISTE (la réservation a déjà été créée)
             if (bookingData?.id && bookingData.id !== 'temp') {
-                console.log(`🔧 Déduction immédiate du premier crédit pour ${courseType} ${duration}min...`);
+                console.log(`🔽 Déduction immédiate du premier crédit pour ${courseType} ${duration}min...`);
                 try {
                     // Déduire un crédit du package que nous venons de créer
                     const useCreditResult = await this.deductCreditFromPackage(
@@ -618,7 +618,7 @@ class PackagesManager {
         }
         
         try {
-            console.log(`🔧 Déduction de crédit du package ${packageId}...`);
+            console.log(`🔽 Déduction de crédit du package ${packageId}...`);
             
             // 1. Récupérer le package spécifique
             const { data: packageData, error: fetchError } = await supabase
@@ -646,8 +646,8 @@ class PackagesManager {
                 .from('packages')
                 .update({ 
                     remaining_credits: newRemainingCredits,
-                    status: newRemainingCredits === 0 ? 'depleted' : 'active',
-                    updated_at: new Date().toISOString()
+                    status: newRemainingCredits === 0 ? 'depleted' : 'active'
+                    // NOTE: Colonne updated_at supprimée car elle n'existe pas dans le schéma
                 })
                 .eq('id', packageId);
             
@@ -937,7 +937,7 @@ class PackagesManager {
                     console.log('');
                 });
             } else {
-                console.log('ℹ️ Aucun package trouvé pour cet utilisateur');
+                console.log('🔄 Aucun package trouvé pour cet utilisateur');
             }
             
             console.groupEnd();
@@ -958,4 +958,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PackagesManager chargé - Version CORRIGÉE avec déduction automatique du premier crédit');
+console.log('✅ PackagesManager chargé - Version CORRIGÉE SANS updated_at');
