@@ -850,7 +850,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // COURS D'ESSAI
         if (courseType === 'essai') {
-            console.log('🎫 Cours d'essai détecté');
+console.log(`🎫 Cours d'essai détecté`);
             courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d'essai';
             duration = '15 min';
             

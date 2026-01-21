@@ -673,7 +673,7 @@ class BookingManager {
             
             // COURS D'ESSAI - Toujours 5€
             if (bookingData.courseType === 'essai') {
-                console.log('🎫 Cours d'essai détecté');
+                console.log('🎫 Cours d\'essai détecté'); // CORRIGÉ ICI
                 priceEUR = 5;
                 unitPriceEUR = 5;
                 finalPrice = currencyManagerReady ? 
