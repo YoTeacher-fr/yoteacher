@@ -1,4 +1,4 @@
-// packages.js - Gestion des forfaits et crédits avec protection contre la double déduction
+// packages.js - Gestion des forfaits et crédits - VERSION FINALE CORRIGÉE
 class PackagesManager {
     constructor() {
         this.packages = null;
@@ -6,12 +6,7 @@ class PackagesManager {
         this.isInitialized = false;
         this.packageValidityDays = 90;
         
-        // Système de verrouillage pour éviter les opérations concurrentes
-        this.userLocks = new Map();
-        this.transactionRegistry = new Map(); // Registre des transactions déjà traitées
-        this.processingTransactions = new Set(); // Transactions en cours
-        
-        console.log('📦 PackagesManager initialisé avec système de verrouillage');
+        console.log('📦 PackagesManager initialisé');
     }
 
     async initialize() {
@@ -34,9 +29,11 @@ class PackagesManager {
 
     async loadBasePrices() {
         try {
-            if (window.supabase) {
-                // CORRECTION : Requête ajustée pour correspondre au schéma
-                const { data, error } = await supabase
+            // ATTENTION: Vérifier que window.supabase existe et est initialisé
+            if (typeof window.supabase !== 'undefined' && window.supabase) {
+                console.log('🔍 Tentative de chargement des prix depuis Supabase...');
+                
+                const { data, error } = await window.supabase
                     .from('vip_pricing')
                     .select('course_type, price, currency')
                     .is('user_id', null)
@@ -47,19 +44,29 @@ class PackagesManager {
                     this.basePrices = {};
                     this.basePrices[data.course_type] = data.price;
                     console.log('✅ Prix de base chargés depuis Supabase:', this.basePrices);
+                    
+                    // Sauvegarder en cache local
+                    localStorage.setItem('base_course_prices', JSON.stringify(this.basePrices));
                     return;
+                } else if (error) {
+                    console.warn('⚠️ Erreur Supabase:', error.message);
                 }
+            } else {
+                console.warn('⚠️ Supabase non disponible, utilisation du cache local');
             }
             
+            // Fallback: Charger depuis localStorage
             const savedPrices = localStorage.getItem('base_course_prices');
             if (savedPrices) {
                 this.basePrices = JSON.parse(savedPrices);
                 console.log('✅ Prix de base chargés depuis localStorage:', this.basePrices);
-            } else {
-                throw new Error('Aucun prix de base trouvé');
+                return;
             }
+            
+            throw new Error('Aucun prix de base trouvé');
+            
         } catch (error) {
-            console.warn('⚠️ Impossible de charger les prix:', error);
+            console.warn('⚠️ Impossible de charger les prix:', error.message);
             throw error;
         }
     }
@@ -72,6 +79,9 @@ class PackagesManager {
             'essai': 5
         };
         console.log('📋 Prix par défaut chargés:', this.basePrices);
+        
+        // Sauvegarder en localStorage pour les prochaines fois
+        localStorage.setItem('base_course_prices', JSON.stringify(this.basePrices));
     }
 
     calculatePackagePrices() {
@@ -194,44 +204,6 @@ class PackagesManager {
         };
     }
 
-    // NOUVEAU : Méthode pour acquérir un verrou utilisateur
-    async acquireUserLock(userId, operationType, timeoutMs = 5000) {
-        const lockKey = `${userId}_${operationType}_${Date.now()}`;
-        
-        // Vérifier si l'utilisateur a déjà un verrou pour cette opération
-        if (this.userLocks.has(userId)) {
-            const existingLock = this.userLocks.get(userId);
-            if (Date.now() - existingLock.timestamp < timeoutMs) {
-                throw new Error(`Opération ${operationType} déjà en cours pour cet utilisateur`);
-            }
-        }
-        
-        // Créer un nouveau verrou
-        const lock = {
-            id: lockKey,
-            userId: userId,
-            operationType: operationType,
-            timestamp: Date.now()
-        };
-        
-        this.userLocks.set(userId, lock);
-        console.log(`🔒 Verrou acquis: ${lockKey}`);
-        
-        return {
-            release: () => {
-                this.userLocks.delete(userId);
-                console.log(`🔓 Verrou libéré: ${lockKey}`);
-            },
-            key: lockKey
-        };
-    }
-
-    // NOUVEAU : Vérifier si une transaction a déjà été traitée
-    isTransactionProcessed(transactionId) {
-        return this.transactionRegistry.has(transactionId) || 
-               this.processingTransactions.has(transactionId);
-    }
-
     async hasCreditForDuration(userId, courseType, duration) {
         if (!window.supabase || !userId) return false;
         
@@ -309,67 +281,37 @@ class PackagesManager {
         }
     }
 
-    // VERSION CORRIGÉE : Méthode sécurisée pour utiliser un crédit
-    async useCredit(userId, courseType, bookingData, transactionId = null) {
-        // Générer un ID de transaction unique si non fourni
-        const trxId = transactionId || `use_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // NOUVELLE VERSION SIMPLIFIÉE SANS VERROUS COMPLEXES
+    async useCredit(userId, courseType, bookingData) {
+        console.log(`💰 APPEL useCredit simplifié`);
+        console.log(`   User: ${userId}, Type: ${courseType}, BookingID: ${bookingData?.id}, Durée: ${bookingData?.duration || 60}`);
         
-        // Vérifier si cette transaction est déjà en cours ou terminée
-        if (this.isTransactionProcessed(trxId)) {
-            console.log(`⏭️ Transaction déjà traitée: ${trxId}`);
-            return { 
-                success: false, 
-                error: 'Transaction déjà traitée',
-                transactionId: trxId
-            };
+        if (!window.supabase || !userId) {
+            return { success: false, error: 'Supabase ou utilisateur non disponible' };
         }
         
-        // Marquer la transaction comme en cours
-        this.processingTransactions.add(trxId);
-        
-        // Acquérir un verrou pour cet utilisateur
-        let lock;
-        try {
-            lock = await this.acquireUserLock(userId, 'use_credit');
-        } catch (lockError) {
-            this.processingTransactions.delete(trxId);
-            return { 
-                success: false, 
-                error: lockError.message,
-                transactionId: trxId
-            };
-        }
+        const duration = bookingData?.duration || 60;
         
         try {
-            console.log(`💰 APPEL useCredit sécurisé - Transaction: ${trxId}`);
-            console.log(`   User: ${userId}, Type: ${courseType}, BookingID: ${bookingData?.id}, Durée: ${bookingData?.duration || 60}`);
-            
-            if (!window.supabase || !userId) {
-                throw new Error('Supabase ou utilisateur non disponible');
-            }
-            
-            // VÉRIFICATION AVANCÉE : Vérifier dans la base de données si cette réservation a déjà utilisé un crédit
+            // VÉRIFICATION SIMPLE : Vérifier si cette réservation a déjà utilisé un crédit
             if (bookingData?.id) {
-                const { data: existingTransactions, error: checkError } = await supabase
+                const { data: existingTransactions } = await supabase
                     .from('credit_transactions')
-                    .select('id, transaction_type, booking_id, package_id')
+                    .select('id')
                     .eq('booking_id', bookingData.id)
                     .eq('transaction_type', 'use')
                     .limit(1);
                 
-                if (!checkError && existingTransactions && existingTransactions.length > 0) {
-                    console.log(`⚠️ Crédit déjà utilisé pour cette réservation: ${bookingData.id}`);
+                if (existingTransactions && existingTransactions.length > 0) {
+                    console.error(`❌ ERREUR: Cette réservation a déjà utilisé un crédit!`);
                     return { 
                         success: false, 
-                        error: 'Crédit déjà utilisé pour cette réservation',
-                        transactionId: trxId
+                        error: 'Crédit déjà utilisé pour cette réservation' 
                     };
                 }
             }
             
-            const duration = bookingData?.duration || 60;
-            
-            console.log(`💰 Recherche package pour utilisation crédit: userId=${userId}, courseType=${courseType}, durée=${duration}, transaction=${trxId}`);
+            console.log(`💰 Recherche package pour utilisation crédit: userId=${userId}, courseType=${courseType}, durée=${duration}`);
             
             // RECHERCHE EXACTE: cours type + durée
             const { data: activePackages, error: findError } = await supabase
@@ -407,38 +349,16 @@ class PackagesManager {
             });
 
             const newRemainingCredits = (activePackage.remaining_credits || 0) - 1;
-            
-            // MISE À JOUR ATOMIQUE avec vérification de version
             const { error: updateError } = await supabase
                 .from('packages')
                 .update({ 
                     remaining_credits: newRemainingCredits,
                     status: newRemainingCredits === 0 ? 'depleted' : 'active'
                 })
-                .eq('id', activePackage.id)
-                .eq('remaining_credits', activePackage.remaining_credits); // Optimistic locking
+                .eq('id', activePackage.id);
 
             if (updateError) {
                 console.error('Erreur mise à jour crédits:', updateError);
-                
-                // Vérifier si le crédit a déjà été déduit
-                const { data: currentPackage } = await supabase
-                    .from('packages')
-                    .select('remaining_credits')
-                    .eq('id', activePackage.id)
-                    .single();
-                
-                if (currentPackage && currentPackage.remaining_credits < activePackage.remaining_credits) {
-                    console.log('ℹ️ Crédit déjà déduit par une autre transaction');
-                    return { 
-                        success: true, 
-                        package_id: activePackage.id,
-                        course_type: activePackage.course_type,
-                        duration: activePackage.duration_minutes,
-                        transactionId: trxId
-                    };
-                }
-                
                 throw updateError;
             }
 
@@ -449,7 +369,7 @@ class PackagesManager {
                 credits_apres: newRemainingCredits
             });
 
-            // Créer une transaction de crédit avec l'ID de transaction
+            // Créer une transaction de crédit
             try {
                 const transactionData = {
                     user_id: userId,
@@ -459,8 +379,7 @@ class PackagesManager {
                     credits_change: -1,
                     credits_after: newRemainingCredits,
                     transaction_type: 'use',
-                    reason: `Réservation de cours ${courseType} (${duration}min) - Transaction: ${trxId}`,
-                    transaction_reference: trxId, // Stocker la référence de transaction
+                    reason: `Réservation de cours ${courseType} (${duration}min)`,
                     created_at: new Date().toISOString()
                 };
 
@@ -471,162 +390,35 @@ class PackagesManager {
                 if (transactionError) {
                     console.warn('Erreur création transaction crédit:', transactionError);
                 } else {
-                    console.log('✅ Transaction crédit créée:', trxId);
+                    console.log('✅ Transaction crédit créée');
                 }
             } catch (transactionErr) {
                 console.warn('Exception création transaction crédit:', transactionErr);
             }
-
-            // Enregistrer la transaction comme traitée
-            this.transactionRegistry.set(trxId, {
-                userId: userId,
-                packageId: activePackage.id,
-                timestamp: Date.now(),
-                type: 'use'
-            });
             
             return { 
                 success: true, 
                 package_id: activePackage.id,
                 course_type: activePackage.course_type,
-                duration: activePackage.duration_minutes,
-                transactionId: trxId
+                duration: activePackage.duration_minutes
             };
             
         } catch (error) {
             console.error('❌ Erreur utilisation crédit:', error);
-            return { 
-                success: false, 
-                error: error.message,
-                transactionId: trxId
-            };
-        } finally {
-            // Libérer les ressources
-            this.processingTransactions.delete(trxId);
-            if (lock && lock.release) {
-                lock.release();
-            }
-        }
-    }
-
-    // NOUVEAU : Méthode pour rembourser un crédit
-    async refundCredit(packageId, userId, transactionId) {
-        const refundTrxId = transactionId || `refund_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        if (this.isTransactionProcessed(refundTrxId)) {
-            return { success: false, error: 'Transaction de remboursement déjà traitée' };
-        }
-        
-        this.processingTransactions.add(refundTrxId);
-        
-        try {
-            console.log(`💸 Remboursement crédit - Package: ${packageId}, Transaction: ${refundTrxId}`);
-            
-            // Récupérer le package
-            const { data: packageData, error: fetchError } = await supabase
-                .from('packages')
-                .select('remaining_credits, total_credits, status')
-                .eq('id', packageId)
-                .eq('user_id', userId)
-                .single();
-            
-            if (fetchError) {
-                throw new Error('Package non trouvé');
-            }
-            
-            const newRemainingCredits = (packageData.remaining_credits || 0) + 1;
-            const newStatus = newRemainingCredits > 0 ? 'active' : packageData.status;
-            
-            // Mettre à jour le package
-            const { error: updateError } = await supabase
-                .from('packages')
-                .update({ 
-                    remaining_credits: newRemainingCredits,
-                    status: newStatus
-                })
-                .eq('id', packageId);
-            
-            if (updateError) {
-                throw updateError;
-            }
-            
-            // Créer une transaction de remboursement
-            const transactionData = {
-                user_id: userId,
-                package_id: packageId,
-                booking_id: null,
-                credits_before: packageData.remaining_credits || 0,
-                credits_change: 1,
-                credits_after: newRemainingCredits,
-                transaction_type: 'refund',
-                reason: `Remboursement crédit - Transaction: ${refundTrxId}`,
-                transaction_reference: refundTrxId,
-                created_at: new Date().toISOString()
-            };
-            
-            await supabase
-                .from('credit_transactions')
-                .insert(transactionData);
-            
-            console.log('✅ Crédit remboursé avec succès');
-            
-            this.transactionRegistry.set(refundTrxId, {
-                userId: userId,
-                packageId: packageId,
-                timestamp: Date.now(),
-                type: 'refund'
-            });
-            
-            return { 
-                success: true, 
-                transactionId: refundTrxId,
-                remaining_credits: newRemainingCredits
-            };
-            
-        } catch (error) {
-            console.error('❌ Erreur remboursement crédit:', error);
             return { success: false, error: error.message };
-        } finally {
-            this.processingTransactions.delete(refundTrxId);
         }
     }
 
-    // VERSION CORRIGÉE : Ajouter des crédits avec 90 jours de validité
+    // VERSION SIMPLIFIÉE POUR addCredits (sans transaction_reference)
     async addCredits(userId, courseType, quantity, price, currency, paymentMethod, transactionId, bookingData = null) {
-        const addTrxId = transactionId || `add_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        console.log(`📦 Début addCredits - User: ${userId}, Type: ${courseType}, Quantité: ${quantity}, Prix: ${price} ${currency}`);
         
-        // Vérifier si cette transaction d'ajout est déjà traitée
-        if (this.isTransactionProcessed(addTrxId)) {
-            console.log(`⏭️ Transaction d'ajout déjà traitée: ${addTrxId}`);
-            return { 
-                success: true, 
-                message: 'Crédits déjà ajoutés',
-                transactionId: addTrxId
-            };
-        }
-        
-        this.processingTransactions.add(addTrxId);
-        
-        let lock;
-        try {
-            lock = await this.acquireUserLock(userId, 'add_credits');
-        } catch (lockError) {
-            this.processingTransactions.delete(addTrxId);
-            return { 
-                success: false, 
-                error: lockError.message,
-                transactionId: addTrxId
-            };
+        if (!window.supabase || !userId) {
+            console.error('❌ Conditions non remplies pour addCredits');
+            return { success: false, error: 'Supabase ou utilisateur non disponible' };
         }
         
         try {
-            console.log(`📦 Début addCredits sécurisé - Transaction: ${addTrxId}`);
-            console.log(`   User: ${userId}, Type: ${courseType}, Quantité: ${quantity}, Prix: ${price} ${currency}`);
-            
-            if (!window.supabase || !userId) {
-                throw new Error('Supabase ou utilisateur non disponible');
-            }
-            
             const purchasedDate = new Date();
             const expiresAt = new Date(purchasedDate);
             expiresAt.setDate(expiresAt.getDate() + this.packageValidityDays);
@@ -663,9 +455,10 @@ class PackagesManager {
             }
             
             console.log(`💰 Données finales pour création package:`, {
-                userId, courseType, quantity, price, currency, duration, discountPercent, transactionId: addTrxId
+                userId, courseType, quantity, price, currency, duration, discountPercent
             });
             
+            // STRUCTURE CORRECTE SANS transaction_reference
             const packageData = {
                 user_id: userId,
                 course_type: courseType,
@@ -678,8 +471,7 @@ class PackagesManager {
                 status: 'active',
                 purchased_at: purchasedDate.toISOString(),
                 expires_at: expiresAt.toISOString(),
-                expiration_alert_sent: false,
-                transaction_reference: addTrxId // Stocker la référence de transaction
+                expiration_alert_sent: false
             };
 
             console.log('📤 Tentative d\'insertion dans packages avec données:', packageData);
@@ -692,25 +484,6 @@ class PackagesManager {
 
             if (packageError) {
                 console.error('❌ ERREUR lors de l\'insertion du package:', packageError);
-                
-                // Vérifier si un package avec cette référence existe déjà
-                const { data: existingPackage } = await supabase
-                    .from('packages')
-                    .select('*')
-                    .eq('transaction_reference', addTrxId)
-                    .single();
-                
-                if (existingPackage) {
-                    console.log('✅ Package déjà créé avec cette transaction');
-                    return { 
-                        success: true, 
-                        package: existingPackage,
-                        course_type: courseType,
-                        duration: duration,
-                        transactionId: addTrxId
-                    };
-                }
-                
                 throw new Error(`Impossible de créer le package: ${packageError.message}`);
             }
 
@@ -738,8 +511,7 @@ class PackagesManager {
                     credits_change: quantity,
                     credits_after: quantity,
                     transaction_type: 'purchase',
-                    reason: `Achat forfait ${quantity} ${courseType} (${duration}min) (${discountPercent}% de réduction) - Transaction: ${addTrxId}`,
-                    transaction_reference: addTrxId,
+                    reason: `Achat forfait ${quantity} ${courseType} (${duration}min) (${discountPercent}% de réduction)`,
                     created_at: new Date().toISOString()
                 };
 
@@ -750,30 +522,41 @@ class PackagesManager {
                 if (transactionError) {
                     console.warn('⚠️ Erreur création transaction crédit:', transactionError);
                 } else {
-                    console.log('✅ Transaction d\'achat créée:', addTrxId);
+                    console.log('✅ Transaction d\'achat créée');
                 }
             } catch (transactionErr) {
                 console.warn('⚠️ Exception création transaction crédit:', transactionErr);
             }
 
-            // CORRECTION : Ne PAS déduire immédiatement un crédit ici
-            // La déduction se fera dans le flux de réservation principal
-            console.log('⚠️ ATTENTION : La déduction du premier crédit se fera dans le flux de réservation principal');
-            
-            // Enregistrer la transaction
-            this.transactionRegistry.set(addTrxId, {
-                userId: userId,
-                packageId: newPackage.id,
-                timestamp: Date.now(),
-                type: 'add'
-            });
-            
+            // IMPORTANT: Déduire un crédit immédiatement si c'est un forfait ET que bookingData.id existe
+            // Cela correspond au flux où l'utilisateur achète un forfait et réserve immédiatement un cours
+            if (bookingData?.id && bookingData.id !== 'temp' && bookingData.id !== 'temp_' + Date.now()) {
+                console.log(`🔽 Déduction immédiate du premier crédit pour ${courseType} ${duration}min...`);
+                try {
+                    const useResult = await this.useCredit(userId, courseType, {
+                        id: bookingData.id,
+                        duration: duration
+                    });
+                    
+                    if (useResult.success) {
+                        console.log(`✅ Premier crédit déduit pour ${courseType} ${duration}min`);
+                        // Mettre à jour newPackage pour refléter la déduction
+                        newPackage.remaining_credits = quantity - 1;
+                    } else {
+                        console.warn(`⚠️ Impossible de déduire le premier crédit: ${useResult.error}`);
+                    }
+                } catch (creditError) {
+                    console.error(`❌ Erreur lors de la déduction du premier crédit: ${creditError.message}`);
+                }
+            } else {
+                console.log('ℹ️ Pas de déduction immédiate (bookingData.id manquant ou temporaire)');
+            }
+
             return { 
                 success: true, 
                 package: newPackage,
                 course_type: courseType,
                 duration: duration,
-                transactionId: addTrxId,
                 message: `Forfait de ${quantity} crédits ${courseType} (${duration}min) créé avec succès`
             };
         } catch (error) {
@@ -781,153 +564,8 @@ class PackagesManager {
             return { 
                 success: false, 
                 error: error.message,
-                transactionId: addTrxId,
                 details: 'Veuillez contacter le support technique'
             };
-        } finally {
-            this.processingTransactions.delete(addTrxId);
-            if (lock && lock.release) {
-                lock.release();
-            }
-        }
-    }
-
-    async deductCreditFromPackage(packageId, userId, courseType, duration, bookingId, transactionId = null) {
-        const deductTrxId = transactionId || `deduct_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        if (this.isTransactionProcessed(deductTrxId)) {
-            return { 
-                success: false, 
-                error: 'Transaction de déduction déjà traitée',
-                transactionId: deductTrxId
-            };
-        }
-        
-        this.processingTransactions.add(deductTrxId);
-        
-        try {
-            console.log(`🔽 Déduction de crédit du package ${packageId} - Transaction: ${deductTrxId}`);
-            
-            if (!window.supabase || !packageId || !userId) {
-                throw new Error('Paramètres manquants');
-            }
-            
-            // 1. Récupérer le package spécifique
-            const { data: packageData, error: fetchError } = await supabase
-                .from('packages')
-                .select('remaining_credits, course_type, duration_minutes')
-                .eq('id', packageId)
-                .eq('user_id', userId)
-                .single();
-            
-            if (fetchError) {
-                console.error('❌ Erreur récupération package:', fetchError);
-                return { success: false, error: 'Package non trouvé' };
-            }
-            
-            const currentCredits = packageData.remaining_credits || 0;
-            
-            if (currentCredits <= 0) {
-                return { success: false, error: 'Pas de crédits disponibles dans ce package' };
-            }
-            
-            // Vérifier que le package correspond au type de cours et durée
-            if (packageData.course_type !== courseType || packageData.duration_minutes !== duration) {
-                return { 
-                    success: false, 
-                    error: `Le package ne correspond pas au cours ${courseType} de ${duration}min` 
-                };
-            }
-            
-            const newRemainingCredits = currentCredits - 1;
-            
-            // 2. Mettre à jour le package avec vérification optimiste
-            const { error: updateError } = await supabase
-                .from('packages')
-                .update({ 
-                    remaining_credits: newRemainingCredits,
-                    status: newRemainingCredits === 0 ? 'depleted' : 'active'
-                })
-                .eq('id', packageId)
-                .eq('remaining_credits', currentCredits);
-            
-            if (updateError) {
-                console.error('❌ Erreur mise à jour package:', updateError);
-                
-                // Vérifier si la déduction a déjà eu lieu
-                const { data: currentPackage } = await supabase
-                    .from('packages')
-                    .select('remaining_credits')
-                    .eq('id', packageId)
-                    .single();
-                    
-                if (currentPackage && currentPackage.remaining_credits < currentCredits) {
-                    console.log('ℹ️ Déduction déjà effectuée par une autre transaction');
-                    return { 
-                        success: true, 
-                        package_id: packageId,
-                        remaining_credits: currentPackage.remaining_credits,
-                        transactionId: deductTrxId
-                    };
-                }
-                
-                return { success: false, error: 'Erreur lors de la déduction' };
-            }
-            
-            console.log(`✅ Crédit déduit: ${currentCredits} → ${newRemainingCredits}`);
-            
-            // 3. Créer une transaction de crédit
-            try {
-                const transactionData = {
-                    user_id: userId,
-                    package_id: packageId,
-                    booking_id: bookingId || null,
-                    credits_before: currentCredits,
-                    credits_change: -1,
-                    credits_after: newRemainingCredits,
-                    transaction_type: 'use',
-                    reason: `Déduction automatique après achat de forfait ${courseType} (${duration}min) - Transaction: ${deductTrxId}`,
-                    transaction_reference: deductTrxId,
-                    created_at: new Date().toISOString()
-                };
-
-                const { error: transactionError } = await supabase
-                    .from('credit_transactions')
-                    .insert(transactionData);
-
-                if (transactionError) {
-                    console.warn('⚠️ Erreur création transaction crédit:', transactionError);
-                } else {
-                    console.log('✅ Transaction de déduction créée:', deductTrxId);
-                }
-            } catch (transactionErr) {
-                console.warn('⚠️ Exception création transaction crédit:', transactionErr);
-            }
-            
-            // Enregistrer la transaction
-            this.transactionRegistry.set(deductTrxId, {
-                userId: userId,
-                packageId: packageId,
-                timestamp: Date.now(),
-                type: 'deduct'
-            });
-            
-            return { 
-                success: true, 
-                package_id: packageId,
-                remaining_credits: newRemainingCredits,
-                transactionId: deductTrxId
-            };
-            
-        } catch (error) {
-            console.error('❌ Erreur dans deductCreditFromPackage:', error);
-            return { 
-                success: false, 
-                error: error.message,
-                transactionId: deductTrxId
-            };
-        } finally {
-            this.processingTransactions.delete(deductTrxId);
         }
     }
 
@@ -1180,43 +818,45 @@ class PackagesManager {
             console.error('Erreur debug packages:', error);
         }
     }
-    
-    // NOUVEAU : Méthode pour nettoyer les verrous expirés
-    cleanupExpiredLocks() {
-        const now = Date.now();
-        const timeout = 30000; // 30 secondes
-        
-        for (const [userId, lock] of this.userLocks.entries()) {
-            if (now - lock.timestamp > timeout) {
-                this.userLocks.delete(userId);
-                console.log(`🧹 Verrou expiré nettoyé: ${userId}`);
-            }
-        }
-        
-        // Nettoyer aussi le registre des transactions (garder 24h)
-        const dayInMs = 24 * 60 * 60 * 1000;
-        for (const [trxId, data] of this.transactionRegistry.entries()) {
-            if (now - data.timestamp > dayInMs) {
-                this.transactionRegistry.delete(trxId);
-            }
-        }
-    }
 }
 
-// Initialisation avec nettoyage périodique
+// Initialisation
 window.packagesManager = new PackagesManager();
 
-// Nettoyer les verrous toutes les minutes
-setInterval(() => {
-    if (window.packagesManager && window.packagesManager.cleanupExpiredLocks) {
-        window.packagesManager.cleanupExpiredLocks();
-    }
-}, 60000);
-
+// Initialiser au chargement de la page, mais attendre que Supabase soit prêt
 document.addEventListener('DOMContentLoaded', async () => {
-    if (window.packagesManager && !window.packagesManager.isInitialized) {
-        await window.packagesManager.initialize();
+    console.log('📦 Tentative d\'initialisation de PackagesManager...');
+    
+    // Attendre que Supabase soit disponible
+    const waitForSupabase = () => {
+        return new Promise((resolve) => {
+            const checkSupabase = () => {
+                if (window.supabase && typeof window.supabase.from === 'function') {
+                    resolve(true);
+                } else {
+                    setTimeout(checkSupabase, 100);
+                }
+            };
+            checkSupabase();
+        });
+    };
+    
+    try {
+        await waitForSupabase();
+        console.log('✅ Supabase disponible pour PackagesManager');
+        
+        if (window.packagesManager && !window.packagesManager.isInitialized) {
+            await window.packagesManager.initialize();
+        }
+    } catch (error) {
+        console.error('❌ Erreur d\'attente de Supabase:', error);
+        // Initialiser avec les valeurs par défaut
+        if (window.packagesManager && !window.packagesManager.isInitialized) {
+            window.packagesManager.loadDefaultPrices();
+            window.packagesManager.calculatePackagePrices();
+            window.packagesManager.isInitialized = true;
+        }
     }
 });
 
-console.log('✅ PackagesManager chargé - Version sécurisée contre la double déduction');
+console.log('✅ PackagesManager chargé - Version simplifiée et corrigée');
