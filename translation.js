@@ -246,7 +246,6 @@ class TranslationManager {
                 'dashboard.reschedule_function': 'Fonction de report à implémenter',
                 'dashboard.logout': 'Déconnexion',
                 'dashboard.my_dashboard': 'Mon tableau de bord',
-                'dashboard.my_profile': 'Mon profil',
                 
                 // Profile page
                 'profile.title': 'Mon profil - YoTeacher',
@@ -341,7 +340,7 @@ class TranslationManager {
                 'payment.processing': 'Traitement en cours...',
                 'payment.qr_code': 'QR Code',
                 
-                // Payment success page
+                // Payment success page - AJOUTS MANQUANTS
                 'payment.success_title': 'Paiement Réussi - YoTeacher',
                 'payment.success_title_main': 'Paiement Réussi !',
                 'payment.success_message': 'Votre paiement a été accepté et votre réservation est en cours de confirmation.',
@@ -352,13 +351,24 @@ class TranslationManager {
                 'payment.return_home': 'Retour à l\'accueil',
                 'payment.book_another': 'Réserver un autre cours',
                 'payment.reservation_confirmed': 'Réservation confirmée',
+                'payment.credit_reservation_confirmed': 'Réservation avec crédit confirmée',
+                'payment.credit_booking_title': 'Réservation confirmée !',
+                'payment.credit_booking_message': 'Votre réservation avec crédit a été confirmée.',
                 'payment.reservation_error': 'Erreur lors de la réservation. Veuillez me contacter',
                 'payment.confirmation_processing': 'Confirmation de réservation en cours...',
                 'payment.course': 'Cours:',
                 'payment.amount_paid': 'Montant payé:',
                 'payment.booking_summary': 'Récapitulatif de votre réservation',
                 'payment.details_error1': 'Impossible de récupérer les détails de la réservation.',
-                'payment.details_error2': 'Veuillez contacter le support si vous avez des questions.'
+                'payment.details_error2': 'Veuillez contacter le support si vous avez des questions.',
+                'payment.credit_used': 'Crédit utilisé',
+                'payment.reservation_with_credit': 'Réservation avec crédit',
+                
+                // Types de cours pour le dashboard
+                'courses.trial': 'Cours d\'essai',
+                'courses.conversation': 'Conversation',
+                'courses.curriculum': 'Curriculum complet',
+                'courses.exam': 'Préparation d\'examen'
             },
             en: {
                 // Navigation et Header
@@ -602,7 +612,6 @@ class TranslationManager {
                 'dashboard.reschedule_function': 'Reschedule function to implement',
                 'dashboard.logout': 'Logout',
                 'dashboard.my_dashboard': 'My dashboard',
-                'dashboard.my_profile': 'My profile',
                 
                 // Profile page
                 'profile.title': 'My Profile - YoTeacher',
@@ -699,7 +708,7 @@ class TranslationManager {
                 'payment.processing': 'Processing...',
                 'payment.qr_code': 'QR Code',
                 
-                // Payment success page
+                // Payment success page - AJOUTS MANQUANTS
                 'payment.success_title': 'Payment Successful - YoTeacher',
                 'payment.success_title_main': 'Payment Successful!',
                 'payment.success_message': 'Your payment has been accepted and your reservation is being confirmed.',
@@ -710,13 +719,24 @@ class TranslationManager {
                 'payment.return_home': 'Return to home',
                 'payment.book_another': 'Book another course',
                 'payment.reservation_confirmed': 'Reservation confirmed',
+                'payment.credit_reservation_confirmed': 'Credit reservation confirmed',
+                'payment.credit_booking_title': 'Booking confirmed!',
+                'payment.credit_booking_message': 'Your credit booking has been confirmed.',
                 'payment.reservation_error': 'Reservation error. Please contact me',
                 'payment.confirmation_processing': 'Reservation confirmation in progress...',
                 'payment.course': 'Course:',
                 'payment.amount_paid': 'Amount paid:',
                 'payment.booking_summary': 'Your booking summary',
                 'payment.details_error1': 'Unable to retrieve booking details.',
-                'payment.details_error2': 'Please contact support if you have any questions.'
+                'payment.details_error2': 'Please contact support if you have any questions.',
+                'payment.credit_used': 'Credit used',
+                'payment.reservation_with_credit': 'Reservation with credit',
+                
+                // Types de cours pour le dashboard
+                'courses.trial': 'Trial lesson',
+                'courses.conversation': 'Conversation',
+                'courses.curriculum': 'Complete curriculum',
+                'courses.exam': 'Exam preparation'
             }
         };
         

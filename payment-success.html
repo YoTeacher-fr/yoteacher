@@ -17,7 +17,7 @@
             
             <h1 class="success-title" id="successTitle" data-i18n="payment.success_title_main">Paiement Réussi !</h1>
             
-            <div class="success-message" id="successMessageText">
+            <div class="success-message" id="successMessageText" data-i18n="payment.success_message">
                 Votre paiement a été accepté et votre réservation est en cours de confirmation.
             </div>
             
@@ -49,6 +49,32 @@
 
     <script src="translation.js"></script>
     <script>
+        // Fonction pour formater la devise avec l'API Intl
+        function formatCurrency(amount, currencyCode) {
+            try {
+                // Utilise l'API Intl pour un formatage correct selon la locale
+                return new Intl.NumberFormat('fr-FR', {
+                    style: 'currency',
+                    currency: currencyCode,
+                    minimumFractionDigits: currencyCode === 'JPY' ? 0 : 2,
+                    maximumFractionDigits: currencyCode === 'JPY' ? 0 : 2
+                }).format(amount);
+            } catch (error) {
+                // Fallback si la devise n'est pas supportée
+                const currencySymbols = {
+                    'EUR': '€',
+                    'USD': '$',
+                    'GBP': '£',
+                    'CAD': 'CA$',
+                    'AUD': 'A$',
+                    'JPY': '¥',
+                    'CHF': 'CHF',
+                };
+                const symbol = currencySymbols[currencyCode] || currencyCode;
+                return `${symbol}${amount.toFixed(2)}`;
+            }
+        }
+
         // Vérifier l'authentification sur payment-success
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🔍 Vérification auth sur payment-success...');
@@ -100,8 +126,10 @@
                     
                     // Mettre à jour le titre et message pour les réservations avec crédit
                     if (bookingData.isCreditBooking) {
-                        document.getElementById('successTitle').textContent = 'Réservation confirmée !';
-                        document.getElementById('successMessageText').textContent = 'Votre réservation avec crédit a été confirmée.';
+                        const creditTitle = window.translationManager?.getTranslation('payment.credit_booking_title') || 'Réservation confirmée !';
+                        const creditMessage = window.translationManager?.getTranslation('payment.credit_booking_message') || 'Votre réservation avec crédit a été confirmée.';
+                        document.getElementById('successTitle').textContent = creditTitle;
+                        document.getElementById('successMessageText').textContent = creditMessage;
                     }
                 } catch (error) {
                     console.error('Erreur parsing booking:', error);
@@ -137,6 +165,8 @@
             const durationLabel = window.translationManager?.getTranslation('payment.duration') || 'Durée:';
             const amountLabel = window.translationManager?.getTranslation('payment.amount_paid') || 'Montant payé:';
             const summaryLabel = window.translationManager?.getTranslation('payment.booking_summary') || 'Récapitulatif de votre réservation';
+            const creditUsedLabel = window.translationManager?.getTranslation('payment.credit_used') || 'Crédit utilisé';
+            const reservationWithCreditLabel = window.translationManager?.getTranslation('payment.reservation_with_credit') || 'Réservation avec crédit';
             
             let courseType;
             switch(booking.courseType) {
@@ -156,15 +186,22 @@
                     courseType = booking.courseType;
             }
             
-            // Formatage du prix
+            // CORRECTION: Formatage du prix SIMPLIFIÉ
+            // Pour TOUS les cas, afficher simplement le prix total
             let priceDisplay = '';
+            
             if (booking.isCreditBooking) {
+                // Pour les réservations avec crédit
                 priceDisplay = '0 € (avec crédit)';
-            } else if (booking.isPackage && booking.packageQuantity > 1) {
-                const pricePerCourse = booking.price / booking.packageQuantity;
-                priceDisplay = `${booking.price} ${booking.currency} (${pricePerCourse.toFixed(2)} ${booking.currency}/cours)`;
             } else {
-                priceDisplay = `${booking.price} ${booking.currency}`;
+                // Pour TOUS les autres cas (cours simple, forfait, etc.)
+                // Afficher simplement le prix total payé
+                priceDisplay = formatCurrency(booking.price, booking.currency);
+                
+                // Si c'est un forfait, on peut ajouter une mention dans le prix
+                if (booking.isPackage) {
+                    priceDisplay += ` (forfait de ${booking.packageQuantity} cours)`;
+                }
             }
             
             let html = `
@@ -198,8 +235,8 @@
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <i class="fas fa-ticket-alt" style="color: #28a745; font-size: 1.2rem;"></i>
                             <div>
-                                <div style="font-weight: bold; color: #28a745;">Réservation avec crédit</div>
-                                <div style="font-size: 0.9rem; opacity: 0.8;">1 crédit utilisé pour cette réservation</div>
+                                <div style="font-weight: bold; color: #28a745;">${reservationWithCreditLabel}</div>
+                                <div style="font-size: 0.9rem; opacity: 0.8;">1 ${creditUsedLabel.toLowerCase()} pour cette réservation</div>
                             </div>
                         </div>
                     </div>
