@@ -1,4 +1,4 @@
-// packages.js - Gestion des forfaits et crédits avec 90 jours de validité - VERSION CORRIGÉE COMPLÈTE
+// packages.js - Gestion des forfaits et crédits avec 90 jours de validité - VERSION CORRIGÉE (sans created_at)
 class PackagesManager {
     constructor() {
         this.packages = null;
@@ -408,49 +408,7 @@ class PackagesManager {
         }
     }
 
-    // Remboursement de crédit - utilise BookingCancellation.createRefundPackage
-    async refundCredit(packageId, userId, bookingId) {
-        if (!window.supabase || !packageId || !userId) {
-            console.error('❌ Conditions non remplies pour rembourser un crédit');
-            return { success: false, error: 'Paramètres manquants' };
-        }
-        
-        try {
-            console.log(`💰 Remboursement de crédit - Appel de createRefundPackage via BookingCancellation`);
-            
-            // Récupérer les infos du package pour connaître le type de cours ET la durée
-            const { data: pkg, error: packageError } = await supabase
-                .from('packages')
-                .select('course_type, duration_minutes, purchased_at')
-                .eq('id', packageId)
-                .eq('user_id', userId)
-                .single();
-                
-            if (packageError) {
-                console.error('Erreur récupération package:', packageError);
-                throw packageError;
-            }
-            
-            // Utiliser le BookingCancellation pour créer un package de remboursement
-            if (window.bookingCancellation && window.bookingCancellation.createRefundPackage) {
-                return await window.bookingCancellation.createRefundPackage(
-                    userId,
-                    pkg.course_type,
-                    pkg.duration_minutes || 60, // IMPORTANT: conserver la durée d'origine
-                    bookingId,
-                    pkg.purchased_at // Date d'achat du package original
-                );
-            } else {
-                throw new Error('BookingCancellation non disponible');
-            }
-            
-        } catch (error) {
-            console.error('❌ Erreur lors du remboursement du crédit:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    // Ajouter des crédits avec 90 jours de validité - VERSION CORRIGÉE POUR TOUS LES TYPES
+    // Ajouter des crédits avec 90 jours de validité - VERSION CORRIGÉE (sans created_at)
     async addCredits(userId, courseType, quantity, price, currency, paymentMethod, transactionId, bookingData = null) {
         if (!window.supabase || !userId) {
             console.error('❌ Conditions non remplies pour addCredits');
@@ -459,7 +417,6 @@ class PackagesManager {
         
         try {
             console.log(`📦 Début addCredits - User: ${userId}, Type: ${courseType}, Quantité: ${quantity}, Prix: ${price} ${currency}`);
-            console.log('📋 BookingData reçu:', bookingData);
             
             // MODIFICATION : 90 jours au lieu d'1 an
             const purchasedDate = new Date();
@@ -471,20 +428,14 @@ class PackagesManager {
             
             // Extraire la durée de différentes sources possibles
             if (bookingData) {
-                // Essayer dans l'ordre : bookingData.duration, bookingData.duration_minutes
                 let rawDuration = bookingData.duration || bookingData.duration_minutes;
                 
                 if (rawDuration) {
-                    // S'assurer que c'est un nombre
                     const parsedDuration = parseInt(rawDuration);
                     if (!isNaN(parsedDuration) && parsedDuration > 0) {
                         duration = parsedDuration;
                         console.log(`✅ Durée extraite de bookingData: ${duration} minutes`);
-                    } else {
-                        console.warn(`⚠️ Durée invalide dans bookingData: ${rawDuration}, utilisation de ${duration} par défaut`);
                     }
-                } else {
-                    console.log('ℹ️ Aucune durée trouvée dans bookingData, utilisation de la durée par défaut');
                 }
             } else if (courseType === 'essai') {
                 duration = 15;
@@ -493,8 +444,6 @@ class PackagesManager {
             // VÉRIFICATION DE SÉCURITÉ : s'assurer que la durée est valide
             const validDurations = [15, 30, 45, 60];
             if (!validDurations.includes(duration)) {
-                console.warn(`⚠️ Durée invalide ${duration}, ajustement à la durée valide la plus proche`);
-                // Trouver la durée valide la plus proche
                 const closestDuration = validDurations.reduce((prev, curr) => {
                     return Math.abs(curr - duration) < Math.abs(prev - duration) ? curr : prev;
                 });
@@ -502,10 +451,9 @@ class PackagesManager {
                 console.log(`✅ Durée ajustée à: ${duration} minutes`);
             }
             
-            // Récupérer le pourcentage de réduction depuis bookingData, sinon calculer
+            // Récupérer le pourcentage de réduction
             let discountPercent = bookingData?.discountPercent || 0;
             if (discountPercent === 0) {
-                // Calculer le pourcentage de réduction basé sur la quantité
                 if (quantity === 5) discountPercent = 2;
                 else if (quantity === 10) discountPercent = 5;
             }
@@ -514,22 +462,21 @@ class PackagesManager {
                 userId, courseType, quantity, price, currency, duration, discountPercent
             });
             
-            // STRUCTURE CORRECTE POUR LA TABLE packages
+            // STRUCTURE CORRECTE POUR LA TABLE packages - SANS created_at
             const packageData = {
                 user_id: userId,
                 course_type: courseType,
                 duration_minutes: duration,
                 total_credits: quantity,
-                remaining_credits: quantity, // CORRECTION: Initialiser avec tous les crédits
+                remaining_credits: quantity,
                 price_paid: price,
                 discount_percent: discountPercent,
                 currency: currency,
                 status: 'active',
                 purchased_at: purchasedDate.toISOString(),
                 expires_at: expiresAt.toISOString(),
-                expiration_alert_sent: false,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                expiration_alert_sent: false
+                // NOTE: Ne pas inclure created_at ou updated_at si la table ne les a pas
             };
 
             console.log('📤 Tentative d\'insertion dans packages avec données:', packageData);
@@ -541,13 +488,8 @@ class PackagesManager {
                 .single();
 
             if (packageError) {
-                console.error('❌ ERREUR FATALE lors de l\'insertion du package:', packageError);
-                console.error('❌ Détails de l\'erreur:', {
-                    message: packageError.message,
-                    code: packageError.code,
-                    details: packageError.details,
-                    hint: packageError.hint
-                });
+                console.error('❌ ERREUR lors de l\'insertion du package:', packageError);
+                console.error('❌ Détails de l\'erreur:', packageError);
                 
                 // Tentative alternative avec moins de champs
                 console.log('🔄 Tentative alternative avec structure minimale...');
@@ -561,8 +503,7 @@ class PackagesManager {
                     currency: currency,
                     status: 'active',
                     purchased_at: purchasedDate.toISOString(),
-                    expires_at: expiresAt.toISOString(),
-                    created_at: new Date().toISOString()
+                    expires_at: expiresAt.toISOString()
                 };
                 
                 const { data: minimalPackage, error: minimalError } = await supabase
@@ -595,7 +536,6 @@ class PackagesManager {
                 discount_percent: newPackage.discount_percent,
                 purchased_at: newPackage.purchased_at,
                 expires_at: newPackage.expires_at,
-                days_valid: this.packageValidityDays,
                 prix_total: newPackage.price_paid,
                 devise: newPackage.currency
             });
@@ -627,20 +567,6 @@ class PackagesManager {
                 console.warn('⚠️ Exception création transaction crédit:', transactionErr);
             }
 
-            // DEBUG : Vérifier que le package a bien été créé
-            setTimeout(async () => {
-                const { data: verifyPackage } = await supabase
-                    .from('packages')
-                    .select('*')
-                    .eq('id', newPackage.id)
-                    .single();
-                    
-                console.log('🔍 VÉRIFICATION POST-CRÉATION PACKAGE:', verifyPackage ? '✅ EXISTE' : '❌ N\'EXISTE PAS');
-                if (verifyPackage) {
-                    console.log('📊 Détails package vérifié:', verifyPackage);
-                }
-            }, 1000);
-
             return { 
                 success: true, 
                 package: newPackage,
@@ -649,7 +575,7 @@ class PackagesManager {
                 message: `Forfait de ${quantity} crédits ${courseType} (${duration}min) créé avec succès`
             };
         } catch (error) {
-            console.error('❌ ERREUR CRITIQUE dans addCredits:', error);
+            console.error('❌ ERREUR dans addCredits:', error);
             return { 
                 success: false, 
                 error: error.message,
@@ -712,7 +638,6 @@ class PackagesManager {
                 const remainingCredits = pkg.remaining_credits || 0;
                 
                 if (packagesByType[type]) {
-                    // Ajouter les crédits pour la durée appropriée
                     if (duration === 30) {
                         packagesByType[type][30] += remainingCredits;
                     } else if (duration === 45) {
@@ -721,7 +646,6 @@ class PackagesManager {
                         packagesByType[type][60] += remainingCredits;
                     }
                     
-                    // Mettre à jour la date d'expiration la plus proche
                     const expiryDate = new Date(pkg.expires_at);
                     if (!packagesByType[type].expiry || expiryDate < new Date(packagesByType[type].expiry)) {
                         packagesByType[type].expiry = pkg.expires_at;
@@ -787,7 +711,7 @@ class PackagesManager {
         if (packageInfo.package5) {
             const basePrice = this.calculatePrice(courseType, 1, duration);
             info.package5 = {
-                price: packageInfo.package5.price * (duration / 60), // Ajuster pour la durée
+                price: packageInfo.package5.price * (duration / 60),
                 discount_percent: packageInfo.package5.discount_percent,
                 total_credits: packageInfo.package5.total_credits,
                 pricePerCourse: (packageInfo.package5.price * (duration / 60)) / packageInfo.package5.total_credits,
@@ -799,7 +723,7 @@ class PackagesManager {
         if (packageInfo.package10) {
             const basePrice = this.calculatePrice(courseType, 1, duration);
             info.package10 = {
-                price: packageInfo.package10.price * (duration / 60), // Ajuster pour la durée
+                price: packageInfo.package10.price * (duration / 60),
                 discount_percent: packageInfo.package10.discount_percent,
                 total_credits: packageInfo.package10.total_credits,
                 pricePerCourse: (packageInfo.package10.price * (duration / 60)) / packageInfo.package10.total_credits,
@@ -843,27 +767,23 @@ class PackagesManager {
         }
     }
     
-    // Méthode utilitaire pour calculer les jours restants
     calculateDaysRemaining(expiresAt) {
         if (!expiresAt) return null;
         
         const expiryDate = new Date(expiresAt);
         const now = new Date();
         
-        // Vérifier si déjà expiré
         if (expiryDate < now) return 0;
         
         const timeDiff = expiryDate.getTime() - now.getTime();
         return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
     }
     
-    // Vérifier si un package est sur le point d'expirer (moins de 7 jours)
     isPackageExpiringSoon(expiresAt, thresholdDays = 7) {
         const daysRemaining = this.calculateDaysRemaining(expiresAt);
         return daysRemaining > 0 && daysRemaining <= thresholdDays;
     }
     
-    // Méthode pour debugger les packages
     async debugUserPackages(userId) {
         if (!window.supabase || !userId) {
             console.error('❌ Supabase non disponible pour debugUserPackages');
@@ -877,7 +797,7 @@ class PackagesManager {
                 .from('packages')
                 .select('*')
                 .eq('user_id', userId)
-                .order('created_at', { ascending: false });
+                .order('purchased_at', { ascending: false });
                 
             if (error) {
                 console.error('Erreur récupération packages:', error);
@@ -913,125 +833,6 @@ class PackagesManager {
             console.error('Erreur debug packages:', error);
         }
     }
-    
-    // Nouvelle méthode pour forcer la durée dans un package
-    async forcePackageDuration(packageId, newDuration) {
-        if (!window.supabase || !packageId) {
-            return { success: false, error: 'Paramètres manquants' };
-        }
-        
-        try {
-            const { data, error } = await supabase
-                .from('packages')
-                .update({ 
-                    duration_minutes: newDuration,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', packageId)
-                .select();
-                
-            if (error) {
-                console.error('❌ Erreur mise à jour durée package:', error);
-                return { success: false, error: error.message };
-            }
-            
-            console.log(`✅ Durée du package ${packageId} mise à jour: ${newDuration}min`);
-            return { success: true, package: data[0] };
-        } catch (error) {
-            console.error('❌ Exception mise à jour durée:', error);
-            return { success: false, error: error.message };
-        }
-    }
-    
-    // Méthode pour déduire automatiquement le premier crédit lors de l'achat d'un forfait
-    async deductFirstCreditAfterPurchase(userId, courseType, duration, bookingId) {
-        if (!window.supabase || !userId) {
-            return { success: false, error: 'Paramètres manquants' };
-        }
-        
-        try {
-            console.log(`🔧 Tentative de déduction du premier crédit pour ${courseType} ${duration}min...`);
-            
-            const result = await this.useCredit(
-                userId,
-                courseType,
-                {
-                    id: bookingId,
-                    duration: duration
-                }
-            );
-            
-            return result;
-        } catch (error) {
-            console.error(`❌ Erreur lors de la déduction du premier crédit: ${error.message}`);
-            return { success: false, error: error.message };
-        }
-    }
-    
-    // Méthode pour vérifier l'existence d'un package par son ID
-    async verifyPackageExists(packageId) {
-        if (!window.supabase || !packageId) {
-            return { success: false, error: 'Paramètres manquants' };
-        }
-        
-        try {
-            const { data, error } = await supabase
-                .from('packages')
-                .select('*')
-                .eq('id', packageId)
-                .single();
-                
-            if (error) {
-                return { success: false, error: error.message };
-            }
-            
-            return { success: true, package: data };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-    
-    // Méthode pour créer un package de test
-    async createTestPackage(userId) {
-        if (!window.supabase || !userId) {
-            return { success: false, error: 'Paramètres manquants' };
-        }
-        
-        try {
-            const testPackageData = {
-                user_id: userId,
-                course_type: 'conversation',
-                duration_minutes: 60,
-                total_credits: 5,
-                remaining_credits: 5,
-                price_paid: 98,
-                discount_percent: 2,
-                currency: 'EUR',
-                status: 'active',
-                purchased_at: new Date().toISOString(),
-                expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
-            
-            const { data, error } = await supabase
-                .from('packages')
-                .insert(testPackageData)
-                .select()
-                .single();
-                
-            if (error) {
-                console.error('❌ Erreur création package test:', error);
-                return { success: false, error: error.message };
-            }
-            
-            console.log('✅ Package test créé:', data);
-            return { success: true, package: data };
-        } catch (error) {
-            console.error('❌ Exception création package test:', error);
-            return { success: false, error: error.message };
-        }
-    }
 }
 
 // Initialisation
@@ -1044,55 +845,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Fonction de diagnostic globale
-window.diagnosePackages = async function(userId) {
-    console.group('🔧 DIAGNOSTIC PACKAGES COMPLET');
-    
-    // 1. Vérifier Supabase
-    console.log('1. Supabase disponible:', !!window.supabase);
-    console.log('2. Supabase ready:', window.supabaseReady);
-    
-    // 2. Vérifier l'utilisateur
-    const user = window.authManager?.getCurrentUser();
-    console.log('3. Utilisateur connecté:', !!user);
-    console.log('4. ID utilisateur:', user?.id || 'N/A');
-    
-    // 3. Vérifier packagesManager
-    console.log('5. PackagesManager:', !!window.packagesManager);
-    console.log('6. PackagesManager initialisé:', window.packagesManager?.isInitialized);
-    
-    // 4. Récupérer les packages de l'utilisateur
-    if (user && window.packagesManager) {
-        try {
-            const packages = await window.packagesManager.getUserActivePackages(user.id);
-            console.log('7. Packages actifs trouvés:', packages.length);
-            
-            packages.forEach((pkg, index) => {
-                console.log(`   Package ${index + 1}: ${pkg.course_type} ${pkg.duration_minutes}min - ${pkg.remaining_credits}/${pkg.total_credits} crédits`);
-            });
-        } catch (error) {
-            console.error('8. Erreur récupération packages:', error.message);
-        }
-    }
-    
-    // 5. Tester l'accès à la table packages
-    if (window.supabase) {
-        try {
-            const { count, error } = await supabase
-                .from('packages')
-                .select('*', { count: 'exact', head: true });
-                
-            console.log('9. Total packages en base:', count || 0);
-            
-            if (error) {
-                console.error('10. Erreur accès table packages:', error.message);
-            }
-        } catch (error) {
-            console.error('11. Exception accès table packages:', error.message);
-        }
-    }
-    
-    console.groupEnd();
-};
-
-console.log('✅ PackagesManager chargé - Version COMPLÈTE corrigée avec diagnostics étendus');
+console.log('✅ PackagesManager chargé - Version CORRIGÉE (sans created_at)');
