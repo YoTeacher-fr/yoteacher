@@ -1,13 +1,16 @@
-// SCRIPT JAVASCRIPT POUR BOOKING.HTML - VERSION CORRIGÉE COMPLÈTE
+// booking-ui.js - VERSION DB-DRIVEN
+// ✅ Calcul prix : SUPPRIMÉ → affiché depuis create_booking_intent()
+// ✅ Réductions : SUPPRIMÉES → gérées par RPC
+// ✅ Prix VIP : SUPPRIMÉS → gérés par RPC
+
 document.addEventListener('DOMContentLoaded', function() {
     let selectedDate = null;
     let selectedTime = null;
     let selectedSlot = null;
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
-    let vipPriceInfo = null;
+    let cachedIntentData = null; // Cache du dernier appel RPC
     
-    // Variable pour suivre si c'est VIP
     let isVipUser = false;
 
     // Éléments DOM
@@ -22,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitButton = document.getElementById('submitBooking');
     const durationGroup = document.getElementById('durationGroup');
     const durationInput = document.getElementById('duration');
-    const basePriceInput = document.getElementById('basePriceEUR');
     const loginRequired = document.getElementById('loginRequired');
     const courseTypeName = document.getElementById('courseTypeName');
     const loginLink = document.getElementById('loginLink');
@@ -32,102 +34,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const coursesCountInput = document.getElementById('coursesCount');
     const discountPercentInput = document.getElementById('discountPercent');
 
-    // Stocker le type de cours avant redirection
     let preLoginCourseType = null;
 
-    // Fonction d'attente pour bookingManager
-    function waitForBookingManager() {
-        return new Promise((resolve) => {
-            if (window.bookingManager) {
-                console.log('✅ BookingManager déjà disponible');
-                resolve();
-                return;
-            }
-            
-            console.log('⏳ Attente de BookingManager...');
-            const maxAttempts = 30; // 3 secondes max
-            let attempts = 0;
-            
-            const checkInterval = setInterval(() => {
-                attempts++;
-                
-                if (window.bookingManager) {
-                    clearInterval(checkInterval);
-                    console.log('✅ BookingManager disponible après', attempts * 100, 'ms');
-                    resolve();
-                } else if (attempts >= maxAttempts) {
-                    clearInterval(checkInterval);
-                    console.warn('⚠️ Timeout: BookingManager non disponible, création du mode secours');
-                    createFallbackBookingManager();
-                    resolve();
-                }
-            }, 100);
-        });
-    }
-
-    // Fonction de secours pour bookingManager
-    function createFallbackBookingManager() {
-        console.log('🛠️ Création de BookingManager de secours...');
-        
-        window.bookingManager = {
-            getAvailableSlots: async function(eventType = 'essai', date = null, duration = null) {
-                console.log('📅 Mode simulation: génération de créneaux fictifs');
-                
-                // Simuler un délai de chargement
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                const baseDate = date || new Date().toISOString().split('T')[0];
-                const slots = [];
-                const selectedDuration = duration || 60;
-                
-                // Générer des créneaux de 9h à 18h
-                for (let hour = 9; hour <= 18; hour++) {
-                    const slotTime = `${baseDate}T${hour.toString().padStart(2, '0')}:00:00Z`;
-                    slots.push({
-                        id: `fallback_${hour}`,
-                        start: slotTime,
-                        end: new Date(new Date(slotTime).getTime() + selectedDuration * 60000).toISOString(),
-                        time: `${hour}:00`,
-                        duration: `${selectedDuration} min`,
-                        durationInMinutes: selectedDuration,
-                        eventTypeId: 'fallback',
-                        isFallback: true
-                    });
-                }
-                
-                console.log(`⚠️ Mode simulation: ${slots.length} créneaux générés`);
-                return slots;
-            },
-            
-            formatTime: function(dateTime) {
-                try {
-                    const date = new Date(dateTime);
-                    return date.toLocaleTimeString('fr-FR', { 
-                        hour: '2-digit', 
-                        minute: '2-digit'
-                    });
-                } catch (error) {
-                    return dateTime || '--:--';
-                }
-            },
-            
-            createBooking: async function(bookingData) {
-                console.log('📤 Simulation de création de réservation:', bookingData);
-                
-                // En mode simulation, rediriger vers une page de succès simulée
-                return {
-                    success: true,
-                    redirectTo: 'payment-success.html?simulated=true',
-                    message: 'Mode simulation activé'
-                };
-            }
-        };
-        
-        console.log('✅ BookingManager de secours créé');
-        return window.bookingManager;
-    }
-
-    // Fonction pour mettre à jour le texte du bouton
+    // ============================================================================
+    // MISE À JOUR TEXTE BOUTON (conservée - appelle RPC pour vérifier)
+    // ============================================================================
     async function updateSubmitButtonText() {
         const user = window.authManager?.getCurrentUser();
         const courseType = document.getElementById('courseType').value;
@@ -136,7 +47,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const duration = parseInt(durationInput.value) || 60;
         
         if (!submitBtn || !user || courseType === 'essai' || coursesCount > 1) {
-            // Réinitialiser à l'état normal
             submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
             submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
             return;
@@ -162,66 +72,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // FORCER L'INITIALISATION DE CURRENCYMANAGER SI NÉCESSAIRE
-    function ensureCurrencyManager() {
-        return new Promise(async (resolve, reject) => {
-            console.log('💰 Vérification de CurrencyManager...');
-            
-            if (!window.currencyManager) {
-                console.log('💱 CurrencyManager non trouvé, création...');
-                try {
-                    if (typeof CurrencyManager === 'undefined') {
-                        console.error('❌ Classe CurrencyManager non définie');
-                        reject(new Error('CurrencyManager non disponible'));
-                        return;
-                    }
-                    
-                    window.currencyManager = new CurrencyManager();
-                    await window.currencyManager.init();
-                    console.log('✅ CurrencyManager créé avec succès');
-                    resolve(window.currencyManager);
-                } catch (error) {
-                    console.error('❌ Erreur création CurrencyManager:', error);
-                    reject(error);
-                }
-            } else if (!window.currencyManager.currentCurrency || 
-                      !window.currencyManager.exchangeRates || 
-                      Object.keys(window.currencyManager.exchangeRates).length === 0) {
-                console.log('💱 CurrencyManager incomplet, réinitialisation...');
-                try {
-                    await window.currencyManager.init();
-                    resolve(window.currencyManager);
-                } catch (error) {
-                    console.error('❌ Erreur réinitialisation CurrencyManager:', error);
-                    reject(error);
-                }
-            } else {
-                console.log('✅ CurrencyManager déjà disponible');
-                resolve(window.currencyManager);
-            }
-        });
-    }
-
-    // DEBUG GLOBAL
-    window.debugCurrencyManager = function() {
-        console.group('🔧 Debug CurrencyManager - Booking');
-        console.log('Disponible:', !!window.currencyManager);
-        console.log('Devise actuelle:', window.currencyManager?.currentCurrency);
-        console.log('Taux chargés:', window.currencyManager?.exchangeRates);
-        console.log('Taille des taux:', Object.keys(window.currencyManager?.exchangeRates || {}).length);
-        
-        if (window.currencyManager) {
-            console.log('Test conversion 10 EUR → USD:', window.currencyManager.convert(10, 'EUR', 'USD'));
-            console.log('Test conversion 10 EUR → devise courante:', window.currencyManager.formatPrice(10));
-        }
-        
-        console.groupEnd();
-    };
-
-    // Initialiser la page
+    // ============================================================================
+    // INITIALISATION PAGE
+    // ============================================================================
     initializePage();
 
-    // Navigation du calendrier
+    // Navigation calendrier
     document.getElementById('prevMonth').addEventListener('click', () => {
         currentMonth--;
         if (currentMonth < 0) {
@@ -240,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initCalendar();
     });
 
-    // Changement de type de cours
+    // Changement type de cours
     document.getElementById('courseType').addEventListener('change', function() {
         const courseType = this.value;
         preLoginCourseType = courseType;
@@ -248,81 +104,70 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedDate) {
             loadAvailableSlots(selectedDate);
         }
+        cachedIntentData = null; // Reset cache
         updateSummary();
         updateSubmitButtonText();
     });
 
-    // Gestion des boutons de durée
+    // Gestion durée
     document.querySelectorAll('.duration-option').forEach(button => {
         if (button.hasAttribute('data-duration')) {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                // Retirer la sélection précédente
                 document.querySelectorAll('.duration-option[data-duration]').forEach(btn => {
                     btn.classList.remove('selected');
                 });
                 
-                // Ajouter la nouvelle sélection
                 this.classList.add('selected');
                 
-                // Mettre à jour la valeur
                 const duration = this.getAttribute('data-duration');
                 durationInput.value = duration;
                 
-                // Mettre à jour le prix de base
-                const basePrice = this.getAttribute('data-price-eur') || '20';
-                basePriceInput.value = basePrice;
-                
-                // Recharger les créneaux si une date est sélectionnée
                 if (selectedDate) {
                     loadAvailableSlots(selectedDate);
                 }
                 
+                cachedIntentData = null; // Reset cache
                 updateSummary();
-                updateSubmitButtonText(); // ← AJOUT IMPORTANT
+                updateSubmitButtonText();
             });
         }
     });
 
-    // Gestion des boutons de nombre de cours
+    // Gestion nombre de cours
     document.querySelectorAll('.courses-count-option').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Retirer la sélection précédente
             document.querySelectorAll('.courses-count-option').forEach(btn => {
                 btn.classList.remove('selected');
             });
             
-            // Ajouter la nouvelle sélection
             this.classList.add('selected');
             
-            // Mettre à jour les valeurs
             const count = this.getAttribute('data-count');
             const discount = this.getAttribute('data-discount');
             coursesCountInput.value = count;
             discountPercentInput.value = discount;
             
+            cachedIntentData = null; // Reset cache
             updateSummary();
             updateSubmitButtonText();
         });
     });
 
-    // Gestion des boutons de moyen de communication
+    // Gestion localisation
     document.querySelectorAll('.location-btn').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Retirer la sélection précédente
             document.querySelectorAll('.location-btn').forEach(btn => {
                 btn.classList.remove('selected');
             });
             
-            // Ajouter la nouvelle sélection
             this.classList.add('selected');
             
-            // Mettre à jour la valeur
             const location = this.getAttribute('data-location');
             selectedLocationInput.value = location;
             
@@ -330,28 +175,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Soumission du formulaire
+    // ============================================================================
+    // SOUMISSION FORMULAIRE
+    // ============================================================================
     bookingForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        console.log('💰 Début de la préparation du paiement/credit');
-        console.log('📊 Détails:', {
-            selectedDate,
-            selectedTime,
-            courseType: document.getElementById('courseType').value,
-            coursesCount: coursesCountInput.value,
-            duration: durationInput.value
-        });
-        
-        // FORCER l'initialisation de currencyManager
-        try {
-            await ensureCurrencyManager();
-            console.log('✅ CurrencyManager prêt');
-        } catch (error) {
-            console.error('❌ Impossible d\'initialiser CurrencyManager:', error);
-            showError('Système de devise temporairement indisponible. Veuillez réessayer dans quelques instants.');
-            return;
-        }
+        console.log('💰 Début préparation réservation');
         
         if (!selectedDate || !selectedTime) {
             showError('Veuillez sélectionner une date et une heure');
@@ -367,13 +197,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const discountPercent = parseFloat(discountPercentInput.value);
         const duration = parseInt(durationInput.value) || 60;
 
-        // Validation
         if (!courseType || !name || !email) {
             showError('Veuillez remplir tous les champs obligatoires');
             return;
         }
 
-        // Vérifier si l'utilisateur doit être connecté
         if ((courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') && !window.authManager?.getCurrentUser()) {
             showError('Veuillez vous connecter pour réserver ce type de cours');
             return;
@@ -382,46 +210,31 @@ document.addEventListener('DOMContentLoaded', function() {
         hideMessages();
         submitButton.disabled = true;
         
-        // Changer le texte du bouton selon le type
         const user = window.authManager?.getCurrentUser();
-        console.log('👤 Utilisateur:', user?.email);
         
-        // Vérifier explicitement les crédits
         if (user && coursesCount === 1 && courseType !== 'essai') {
             try {
                 if (window.packagesManager) {
                     const hasCredits = await window.packagesManager.hasCreditForDuration(user.id, courseType, duration);
                     
                     if (hasCredits) {
-                        console.log(`✅ Crédits disponibles pour ${courseType} ${duration}min`);
                         submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation avec crédit...';
                     } else {
-                        console.log(`❌ Pas de crédits disponibles pour ${courseType} ${duration}min`);
                         submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
                     }
                 }
             } catch (error) {
-                console.warn('Erreur vérification crédits:', error);
                 submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
             }
         } else {
-            console.log('❌ Conditions crédit non remplies:', {
-                user: !!user,
-                coursesCount,
-                courseType,
-                isEssai: courseType === 'essai',
-                duration: duration
-            });
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
         }
 
         try {
-            // Utiliser les données du créneau sélectionné
             if (!selectedSlot) {
                 throw new Error('Aucun créneau sélectionné');
             }
 
-            // Préparer les données de réservation
             const bookingData = {
                 startTime: selectedSlot.start,
                 endTime: selectedSlot.end,
@@ -435,17 +248,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 discountPercent: discountPercent
             };
 
-            console.log('📤 Appel à bookingManager.createBooking avec:', bookingData);
+            console.log('📤 Appel bookingManager.createBooking avec:', bookingData);
             
-            // Appeler la méthode qui prépare les données
             const result = await window.bookingManager.createBooking(bookingData);
             
-            console.log('📥 Résultat de createBooking:', result);
+            console.log('📥 Résultat:', result);
             
             if (result.success) {
                 showSuccess('Redirection...');
                 
-                // Redirection vers la page appropriée
                 setTimeout(() => {
                     window.location.href = result.redirectTo;
                 }, 1000);
@@ -454,107 +265,60 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
         } catch (error) {
-            console.error('❌ Erreur lors de la préparation :', error);
-            showError('Erreur lors de la préparation : ' + error.message);
+            console.error('❌ Erreur préparation:', error);
+            showError('Erreur : ' + error.message);
             submitButton.disabled = false;
             updateSubmitButtonText();
         }
     });
 
-    // Écouter les événements d'authentification
+    // Événements
     window.addEventListener('auth:login', function() {
-        console.log('Utilisateur connecté, mise à jour de l\'interface');
+        console.log('Utilisateur connecté, mise à jour interface');
         updateUserInterface();
         setTimeout(updateSubmitButtonText, 500);
     });
 
     window.addEventListener('auth:logout', function() {
-        console.log('Utilisateur déconnecté, mise à jour de l\'interface');
+        console.log('Utilisateur déconnecté, mise à jour interface');
         updateUserInterface();
         updateSubmitButtonText();
     });
     
-    // Écouter les changements de devise
     window.addEventListener('currency:ready', function() {
-        console.log('💱 CurrencyManager prêt, mise à jour du résumé');
+        console.log('💱 CurrencyManager prêt, mise à jour');
         updateSummary();
     });
     
     window.addEventListener('currency:changed', function() {
-        console.log('💱 Devise changée, mise à jour du résumé');
+        console.log('💱 Devise changée, mise à jour');
         updateSummary();
     });
     
-    // Écouter les changements de langue
     window.addEventListener('language:changed', function() {
         initCalendar();
         updateSummary();
         updateSubmitButtonText();
     });
     
-    // Écouter les événements VIP
     window.addEventListener('vip:loaded', function() {
-        console.log('🎁 Prix VIP chargés dans booking.html');
+        console.log('🎁 Prix VIP chargés');
         isVipUser = window.authManager?.isUserVip();
         updateUserInterface();
+        cachedIntentData = null;
         updateSummary();
     });
 
-    // Fonction pour initialiser le sélecteur de devise mobile
-    function initMobileCurrencySelector() {
-        const mobileSelector = document.getElementById('currencySelectorMobile');
-        if (!mobileSelector || !window.currencyManager) return;
-        
-        mobileSelector.innerHTML = '';
-        
-        window.currencyManager.supportedCurrencies.forEach(currency => {
-            const option = document.createElement('option');
-            option.value = currency;
-            option.textContent = `${window.currencyManager.currencySymbols[currency] || currency} ${currency}`;
-            
-            if (currency === window.currencyManager.currentCurrency) {
-                option.selected = true;
-            }
-            
-            mobileSelector.appendChild(option);
-        });
-        
-        mobileSelector.addEventListener('change', (e) => {
-            const newCurrency = e.target.value;
-            if (window.currencyManager.setCurrency(newCurrency)) {
-                const mobileMenu = document.getElementById('mobileMenu');
-                if (mobileMenu) {
-                    mobileMenu.classList.remove('active');
-                }
-            }
-        });
-    }
-
-    // Fonctions
+    // ============================================================================
+    // FONCTIONS
+    // ============================================================================
+    
     async function initializePage() {
-        console.log('🚀 Initialisation de la page booking...');
+        console.log('🚀 Initialisation page booking (DB-driven)');
         
-        // ATTENDRE QUE bookingManager SOIT DISPONIBLE
-        await waitForBookingManager();
-        
-        // FORCER l'initialisation de currencyManager d'abord
-        try {
-            await ensureCurrencyManager();
-            console.log('✅ CurrencyManager initialisé avec succès');
-            
-            // Initialiser les sélecteurs de devise
-            if (window.currencyManager.initCurrencySelectors) {
-                window.currencyManager.initCurrencySelectors();
-            }
-        } catch (error) {
-            console.warn('⚠️ CurrencyManager non disponible, continuation en mode EUR');
-        }
-        
-        // Récupérer le type de cours depuis l'URL
         const urlParams = new URLSearchParams(window.location.search);
         let courseTypeParam = urlParams.get('type');
         
-        // Si pas de paramètre "type", vérifier dans localStorage
         if (!courseTypeParam || !['essai', 'conversation', 'curriculum', 'examen'].includes(courseTypeParam)) {
             const storedCourseType = localStorage.getItem('preLoginCourseType');
             
@@ -566,49 +330,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Forcer la sélection dans le dropdown
         document.getElementById('courseType').value = courseTypeParam;
         preLoginCourseType = courseTypeParam;
         
-        // Stocker aussi dans l'URL si ce n'est pas déjà fait
         if (!urlParams.has('type')) {
             const newUrl = new URL(window.location);
             newUrl.searchParams.set('type', courseTypeParam);
             window.history.replaceState({}, '', newUrl);
         }
         
-        // Pré-sélectionner 60min, 1 cours, Google Meet
         preselectDefaults();
-        
-        // Initialiser le calendrier
         initCalendar();
         
-        // Charger les créneaux pour aujourd'hui par défaut
         const today = new Date().toISOString().split('T')[0];
         selectToday(today);
         
-        // Mettre à jour l'interface
         updateUIForCourseType(document.getElementById('courseType').value, false);
-        
-        // Mettre à jour l'interface utilisateur
         updateUserInterface();
         
-        // Initialiser le sélecteur de devise mobile
-        if (window.currencyManager) {
-            initMobileCurrencySelector();
-        } else {
-            // Attendre que currencyManager soit prêt
-            window.addEventListener('currency:ready', function() {
-                initMobileCurrencySelector();
-            });
-        }
-        
-        // Mettre à jour le bouton
         setTimeout(updateSubmitButtonText, 1000);
     }
+    
 
     function preselectDefaults() {
-        // Pré-sélectionner 60 min
         const duration60Btn = document.querySelector('.duration-option[data-duration="60"]');
         if (duration60Btn) {
             document.querySelectorAll('.duration-option[data-duration]').forEach(btn => {
@@ -616,10 +360,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             duration60Btn.classList.add('selected');
             durationInput.value = '60';
-            basePriceInput.value = duration60Btn.getAttribute('data-price-eur') || '20';
         }
         
-        // Pré-sélectionner 1 cours
         const courses1Btn = document.querySelector('.courses-count-option[data-count="1"]');
         if (courses1Btn) {
             document.querySelectorAll('.courses-count-option').forEach(btn => {
@@ -630,7 +372,6 @@ document.addEventListener('DOMContentLoaded', function() {
             discountPercentInput.value = courses1Btn.getAttribute('data-discount') || '0';
         }
         
-        // Pré-sélectionner Google Meet
         const meetBtn = document.querySelector('.location-btn[data-location*="google"]');
         if (meetBtn) {
             document.querySelectorAll('.location-btn').forEach(btn => {
@@ -644,17 +385,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function initCalendar() {
         const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
         
-        const monthNamesFr = [
-            'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-            'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-        ];
+        const monthNames = isFrench ? 
+            ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'] :
+            ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         
-        const monthNamesEn = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-        
-        const monthNames = isFrench ? monthNamesFr : monthNamesEn;
         currentMonthElement.textContent = `${monthNames[currentMonth]} ${currentYear}`;
 
         const firstDay = new Date(currentYear, currentMonth, 1);
@@ -662,9 +396,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const daysInMonth = lastDay.getDate();
         const startingDay = firstDay.getDay();
 
-        const dayHeadersFr = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-        const dayHeadersEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sam'];
-        const dayHeaders = isFrench ? dayHeadersFr : dayHeadersEn;
+        const dayHeaders = isFrench ? 
+            ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'] :
+            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         
         calendarDays.innerHTML = '';
 
@@ -724,14 +458,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateUIForCourseType(courseType, forceUpdate = false) {
-        console.log('updateUIForCourseType appelé avec:', courseType, 'forceUpdate:', forceUpdate);
+        console.log('updateUIForCourseType:', courseType);
         
         preLoginCourseType = courseType;
         
         const user = window.authManager?.getCurrentUser();
         const isLoggedIn = !!user;
-        
-        console.log('Utilisateur connecté:', isLoggedIn, 'User:', user);
         
         if (courseType && courseType !== 'essai') {
             const redirectUrl = `booking.html?type=${courseType}`;
@@ -749,22 +481,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 durationGroup.classList.add('visible');
                 coursesCountGroup.style.display = 'block';
                 loginRequired.style.display = 'none';
-                console.log('Sélecteur de durée affiché pour', courseType);
             } else {
                 durationGroup.classList.remove('visible');
                 coursesCountGroup.style.display = 'none';
                 loginRequired.style.display = 'block';
-                // Mettre à jour le nom du type de cours dans le message
+                
                 if (window.translationManager) {
                     if (courseType === 'conversation') courseTypeName.textContent = window.translationManager.getTranslation('courses.conversation');
                     else if (courseType === 'curriculum') courseTypeName.textContent = window.translationManager.getTranslation('courses.curriculum');
                     else if (courseType === 'examen') courseTypeName.textContent = window.translationManager.getTranslation('courses.exam');
-                } else {
-                    if (courseType === 'conversation') courseTypeName.textContent = 'Conversation';
-                    else if (courseType === 'curriculum') courseTypeName.textContent = 'Curriculum complet';
-                    else if (courseType === 'examen') courseTypeName.textContent = 'Préparation d\'examen';
                 }
-                console.log('Message connexion affiché pour', courseType);
             }
         } else {
             durationGroup.classList.remove('visible');
@@ -786,27 +512,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadAvailableSlots(date = null) {
         try {
-            // VÉRIFIER SI bookingManager EST DISPONIBLE
-            if (!window.bookingManager || typeof window.bookingManager.getAvailableSlots !== 'function') {
-                console.error('❌ BookingManager non disponible pour loadAvailableSlots');
-                
-                const errorText = window.translationManager ? 
-                    window.translationManager.getTranslation('booking.error_loading') : 
-                    'Erreur lors du chargement des créneaux';
-                
-                timeSlots.innerHTML = `
-                    <div class="error-slots">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>${errorText}</p>
-                        <p class="error-details">Service temporairement indisponible. Veuillez réessayer.</p>
-                        <button onclick="window.location.reload()" class="retry-btn">
-                            <i class="fas fa-redo"></i> Recharger la page
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-            
             const loadingText = window.translationManager ? 
                 window.translationManager.getTranslation('booking.loading_slots') : 
                 'Chargement des créneaux...';
@@ -880,9 +585,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     <i class="fas fa-exclamation-triangle"></i>
                     <p>${errorTitle}</p>
                     <p class="error-details">${error.message || 'Veuillez réessayer'}</p>
-                    <button onclick="window.location.reload()" class="retry-btn">
-                        <i class="fas fa-redo"></i> Recharger la page
-                    </button>
                 </div>
             `;
         }
@@ -921,22 +623,11 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSummary();
     }
 
+    // ============================================================================
+    // MISE À JOUR RÉCAPITULATIF - APPELLE create_booking_intent()
+    // ============================================================================
     async function updateSummary() {
-        console.log('📋 Mise à jour du récapitulatif...');
-        
-        // VÉRIFIER QUE CURRENCYMANAGER EST DISPONIBLE
-        if (!window.currencyManager || !window.currencyManager.currentCurrency) {
-            console.warn('⚠️ CurrencyManager non disponible, tentative d\'initialisation...');
-            try {
-                await ensureCurrencyManager();
-                console.log('✅ CurrencyManager initialisé pour updateSummary');
-            } catch (error) {
-                console.error('❌ Impossible d\'initialiser CurrencyManager:', error);
-                // Fallback: afficher les prix en EUR
-                showDefaultPricesInEUR();
-                return;
-            }
-        }
+        console.log('📋 Mise à jour récapitulatif (DB-driven)');
         
         const courseType = document.getElementById('courseType').value;
         const user = window.authManager?.getCurrentUser();
@@ -948,32 +639,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const discountPercent = parseFloat(discountPercentInput.value);
         
         isVipUser = window.authManager?.isUserVip();
-        console.log(`💰 [updateSummary] Statut VIP: ${isVipUser}, Type: ${courseType}`);
         
-        // Déterminer la plateforme
+        // Plateforme
         const locationValue = selectedLocationInput.value;
-        if (locationValue.includes('zoom')) platform = window.translationManager ? window.translationManager.getTranslation('booking.zoom') : 'Zoom';
-        else if (locationValue.includes('google')) platform = window.translationManager ? window.translationManager.getTranslation('booking.meet') : 'Google Meet';
-        else if (locationValue.includes('teams')) platform = window.translationManager ? window.translationManager.getTranslation('booking.teams') : 'Microsoft Teams';
+        if (locationValue.includes('zoom')) platform = 'Zoom';
+        else if (locationValue.includes('google')) platform = 'Google Meet';
+        else if (locationValue.includes('teams')) platform = 'Microsoft Teams';
 
-        // COURS D'ESSAI
+        // COURS D'ESSAI - Prix fixe
         if (courseType === 'essai') {
-            console.log(`🎫 Cours d'essai détecté`);
-            courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : `Cours d'essai`;
+            console.log('🎫 Cours d\'essai');
+            courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
             duration = '15 min';
             
-            let unitPriceEUR = 5;
-            let totalPriceEUR = unitPriceEUR;
-            
-            if (window.currencyManager && window.currencyManager.currentCurrency) {
-                price = window.currencyManager.formatPrice(totalPriceEUR);
+            // Prix fixe 5 EUR
+            if (window.currencyManager) {
+                price = window.currencyManager.formatPrice(5);
             } else {
-                price = totalPriceEUR + '€';
+                price = '5€';
             }
             
             console.log(`✅ Prix essai: ${price}`);
         } 
-        // COURS PAYANTS
+        // COURS PAYANTS - APPELER create_booking_intent()
         else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
             if (courseType === 'conversation') {
                 courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
@@ -987,82 +675,67 @@ document.addEventListener('DOMContentLoaded', function() {
                 const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
                 duration = selectedDuration + ' min';
                 
-                let unitPriceEUR = 0;
+                console.log(`📞 Appel create_booking_intent() pour calculer prix`);
                 
-                console.log(`📊 Calcul prix pour ${courseType} ${selectedDuration}min`);
-                
-                // PRIX VIP
-                if (isVipUser) {
-                    console.log(`💎 Utilisateur VIP, recherche prix personnalisé...`);
-                    
+                // ✅ APPELER create_booking_intent() POUR CALCULER LE PRIX
+                if (window.supabase && selectedDate && selectedSlot) {
                     try {
-                        vipPriceInfo = await window.authManager.getVipPrice(courseType, selectedDuration);
-                        
-                        if (vipPriceInfo && typeof vipPriceInfo.price === 'number' && !isNaN(vipPriceInfo.price)) {
-                            console.log(`✅ Prix VIP trouvé:`, vipPriceInfo);
-                            
-                            const vipCurrency = vipPriceInfo.currency || 'EUR';
-                            let currentCurrency = window.currencyManager.currentCurrency || 'EUR';
-                            
-                            // SI MÊME DEVISE: PAS DE CONVERSION, retour direct
-                            if (vipCurrency === currentCurrency) {
-                                console.log('✅ Même devise, pas de conversion');
-                                // Calculer le total VIP
-                                let totalVipPrice = vipPriceInfo.price * coursesCount;
-                                
-                                // Appliquer la réduction
-                                if (discountPercent > 0) {
-                                    totalVipPrice = totalVipPrice * (1 - discountPercent / 100);
-                                    console.log(`🎁 Réduction ${discountPercent}% appliquée: ${totalVipPrice} ${vipCurrency}`);
-                                }
-                                
-                                price = window.currencyManager.formatPriceInCurrency(totalVipPrice, vipCurrency);
-                                console.log(`✅ Prix VIP (devise native ${vipCurrency}): ${price}`);
-                            } else {
-                                // Devises différentes: convertir
-                                console.log(`💱 Devises différentes: ${vipCurrency} → ${currentCurrency}`);
-                                
-                                if (window.currencyManager.convertVIPPrice) {
-                                    const totalVipPrice = vipPriceInfo.price * coursesCount * (1 - discountPercent / 100);
-                                    const converted = window.currencyManager.convertVIPPrice(
-                                        { price: totalVipPrice, currency: vipCurrency },
-                                        currentCurrency
-                                    );
-                                    
-                                    if (converted) {
-                                        price = converted.display;
-                                        console.log(`💱 Prix VIP converti: ${price}`);
-                                    } else {
-                                        price = window.currencyManager.formatPrice(totalVipPrice);
-                                    }
-                                } else {
-                                    price = window.currencyManager.formatPrice(totalVipPrice);
-                                }
-                            }
+                        // Vérifier le cache
+                        if (cachedIntentData && 
+                            cachedIntentData.course_type === courseType &&
+                            cachedIntentData.duration === selectedDuration &&
+                            cachedIntentData.quantity === coursesCount) {
+                            console.log('📦 Utilisation du cache pour le prix');
+                            price = cachedIntentData.displayPrice;
                         } else {
-                            console.log(`⚠️ Aucun prix VIP valide, utilisation prix normal`);
-                            unitPriceEUR = getNormalPrice(courseType, selectedDuration);
-                            price = calculateNormalPrice(unitPriceEUR, coursesCount, discountPercent);
+                            const { data: intentData, error } = await supabase.rpc('create_booking_intent', {
+                                p_user_id: user.id,
+                                p_course_type: courseType,
+                                p_duration: selectedDuration,
+                                p_start_time: selectedSlot.start,
+                                p_end_time: selectedSlot.end,
+                                p_quantity: coursesCount,
+                                p_location: selectedLocationInput.value || 'integrations:google:meet'
+                            });
+                            
+                            if (!error && intentData && intentData.success) {
+                                console.log('✅ Prix calculé par RPC:', intentData.price, intentData.currency);
+                                
+                                // Formater le prix
+                                if (window.currencyManager) {
+                                    price = window.currencyManager.formatPriceInCurrency(intentData.price, intentData.currency);
+                                } else {
+                                    price = `${intentData.price} ${intentData.currency}`;
+                                }
+                                
+                                // Mettre en cache
+                                cachedIntentData = {
+                                    course_type: courseType,
+                                    duration: selectedDuration,
+                                    quantity: coursesCount,
+                                    displayPrice: price,
+                                    rawPrice: intentData.price,
+                                    currency: intentData.currency,
+                                    is_vip: intentData.is_vip
+                                };
+                            } else {
+                                console.warn('⚠️ Erreur RPC, affichage générique');
+                                price = 'Prix à calculer';
+                            }
                         }
                     } catch (error) {
-                        console.error('❌ Erreur récupération prix VIP:', error);
-                        unitPriceEUR = getNormalPrice(courseType, selectedDuration);
-                        price = calculateNormalPrice(unitPriceEUR, coursesCount, discountPercent);
+                        console.error('❌ Erreur appel RPC:', error);
+                        price = 'Erreur calcul';
                     }
-                }
-                // PRIX NORMAL
-                else {
-                    console.log(`👤 Utilisateur standard, prix normal`);
-                    unitPriceEUR = getNormalPrice(courseType, selectedDuration);
-                    price = calculateNormalPrice(unitPriceEUR, coursesCount, discountPercent);
+                } else {
+                    price = 'Sélectionnez date et heure';
                 }
                 
                 console.log(`✅ Prix final affiché: ${price}`);
                 
             } else {
                 duration = '60 min';
-                let unitPriceEUR = getNormalPrice(courseType, 60);
-                price = calculateNormalPrice(unitPriceEUR, coursesCount, discountPercent);
+                price = 'Connectez-vous';
             }
         }
 
@@ -1098,7 +771,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const summaryPriceElement = document.getElementById('summaryPrice');
         summaryPriceElement.innerHTML = price;
         
-        if (isVipUser && courseType !== 'essai') {
+        if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
             summaryPriceElement.classList.add('vip-price-display');
             summaryPriceElement.title = "Prix VIP personnel";
         } else {
@@ -1110,52 +783,6 @@ document.addEventListener('DOMContentLoaded', function() {
             (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
         
         submitButton.disabled = !canSubmit;
-    }
-
-    // Fonction fallback pour afficher les prix en EUR
-    function showDefaultPricesInEUR() {
-        document.getElementById('summaryPrice').textContent = '20€';
-        console.warn('⚠️ Affichage des prix en EUR par défaut');
-    }
-
-    // Fonction : Calculer le prix normal
-    function calculateNormalPrice(unitPriceEUR, coursesCount, discountPercent) {
-        let totalPriceEUR = unitPriceEUR * coursesCount;
-        
-        if (discountPercent > 0) {
-            totalPriceEUR = totalPriceEUR * (1 - discountPercent / 100);
-        }
-        
-        if (window.currencyManager && window.currencyManager.currentCurrency) {
-            return window.currencyManager.formatPrice(totalPriceEUR);
-        } else {
-            return totalPriceEUR.toFixed(2) + ' EUR';
-        }
-    }
-
-    // Fonction : Obtenir les prix normaux
-    function getNormalPrice(courseType, duration) {
-        console.log(`📋 Calcul prix normal pour ${courseType} ${duration}min`);
-        
-        switch(courseType) {
-            case 'conversation':
-                if (duration === 30) return 10;
-                else if (duration === 45) return 15;
-                else return 20;
-            case 'curriculum':
-                if (duration === 30) return 17.5;
-                else if (duration === 45) return 26.25;
-                else return 35;
-            case 'examen':
-                if (duration === 30) return 15;
-                else if (duration === 45) return 22.5;
-                else return 30;
-            case 'essai':
-                return 5;
-            default:
-                console.warn(`⚠️ Type de cours inconnu: ${courseType}`);
-                return 20;
-        }
     }
 
     function showError(message) {
@@ -1184,7 +811,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('name').value = user.user_metadata?.full_name || user.email?.split('@')[0] || '';
             document.getElementById('email').value = user.email || '';
             
-            // Ajouter un badge VIP si l'utilisateur est VIP
             if (isVipUser) {
                 const bookingTitle = document.querySelector('.booking-title');
                 if (bookingTitle && !bookingTitle.querySelector('.vip-badge-booking')) {
@@ -1208,47 +834,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Mettre à jour l'interface en fonction du type de cours
         const currentCourseType = document.getElementById('courseType').value;
         updateUIForCourseType(currentCourseType, true);
     }
-    
-    // Fonction de débogage pour tester les crédits
-    window.testCredits = async function() {
-        const authMgr = window.authManager;
-        const packagesMgr = window.packagesManager;
-        
-        if (!authMgr || !packagesMgr) {
-            console.error('❌ Managers non disponibles');
-            return;
-        }
-        
-        const user = authMgr.getCurrentUser();
-        if (!user) {
-            console.error('❌ Utilisateur non connecté');
-            return;
-        }
-        
-        console.group('🧪 Test des crédits par durée');
-        console.log('User ID:', user.id);
-        
-        try {
-            // Tester plusieurs durées
-            const durations = [30, 45, 60];
-            const courseTypes = ['conversation', 'curriculum', 'examen'];
-            
-            for (const courseType of courseTypes) {
-                console.log(`\n📚 ${courseType}:`);
-                for (const duration of durations) {
-                    const hasCredits = await packagesMgr.hasCreditForDuration(user.id, courseType, duration);
-                    console.log(`  ${duration}min: ${hasCredits ? '✅ Crédits disponibles' : '❌ Pas de crédits'}`);
-                }
-            }
-            
-        } catch (error) {
-            console.error('❌ Erreur test crédits:', error);
-        }
-        
-        console.groupEnd();
-    };
 });
+
+console.log('✅ booking-ui.js chargé - Version DB-driven (prix calculés par RPC)');
