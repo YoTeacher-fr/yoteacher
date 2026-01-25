@@ -676,14 +676,12 @@ console.log('✅ Intention prête:', {
                 .from('bookings')
                 .update({
                     status: status,
-                    confirmed_at: new Date().toISOString(),
                     calcom_booking_id: calcomBooking.id || calcomBooking.uid,
                     calcom_uid: calcomBooking.uid,
                     meeting_link: calcomBooking.location || calcomBooking.meetingUrl,
                     payment_method: bookingData.paymentMethod || 'card',
                     payment_reference: bookingData.transactionId || bookingData.paymentReference,
                     package_id: bookingData.packageId || null,
-                    updated_at: new Date().toISOString()
                 })
                 .eq('id', bookingData.intentId)
                 .select();
@@ -733,7 +731,6 @@ console.log('✅ Intention prête:', {
             payment_method: bookingData.paymentMethod || 'card',
             payment_reference: bookingData.transactionId,
             package_id: bookingData.packageId || null,
-            created_at: new Date().toISOString()
         };
 
         const { data, error } = await supabase
