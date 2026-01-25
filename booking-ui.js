@@ -623,185 +623,190 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSummary();
     }
 
-    // ============================================================================
-    // MISE À JOUR RÉCAPITULATIF - APPELLE create_booking_intent()
-    // ============================================================================
-    async function updateSummary() {
-        console.log('📋 Mise à jour récapitulatif (DB-driven)');
-        
-        const courseType = document.getElementById('courseType').value;
-        const user = window.authManager?.getCurrentUser();
-        let courseName = '-';
-        let price = '-';
-        let duration = '-';
-        let platform = 'Google Meet';
-        const coursesCount = parseInt(coursesCountInput.value);
-        const discountPercent = parseFloat(discountPercentInput.value);
-        
-        isVipUser = window.authManager?.isUserVip();
-        
-        // Plateforme
-        const locationValue = selectedLocationInput.value;
-        if (locationValue.includes('zoom')) platform = 'Zoom';
-        else if (locationValue.includes('google')) platform = 'Google Meet';
-        else if (locationValue.includes('teams')) platform = 'Microsoft Teams';
+// ============================================================================
+// MISE À JOUR RÉCAPITULATIF - APPELLE create_booking_intent()
+// ============================================================================
+async function updateSummary() {
+    console.log('📋 Mise à jour récapitulatif (DB-driven)');
+    
+    const courseType = document.getElementById('courseType').value;
+    const user = window.authManager?.getCurrentUser();
+    let courseName = '-';
+    let price = '-';
+    let duration = '-';
+    let platform = 'Google Meet';
+    const coursesCount = parseInt(coursesCountInput.value);
+    const discountPercent = parseFloat(discountPercentInput.value);
+    
+    isVipUser = window.authManager?.isUserVip();
+    
+    // Plateforme
+    const locationValue = selectedLocationInput.value;
+    if (locationValue.includes('zoom')) platform = 'Zoom';
+    else if (locationValue.includes('google')) platform = 'Google Meet';
+    else if (locationValue.includes('teams')) platform = 'Microsoft Teams';
 
-        // COURS D'ESSAI - Prix fixe
-        if (courseType === 'essai') {
-            console.log('🎫 Cours d\'essai');
-            courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
-            duration = '15 min';
+    // COURS D'ESSAI - Prix fixe
+    if (courseType === 'essai') {
+        console.log('🎫 Cours d\'essai');
+        courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
+        duration = '15 min';
+        
+        // Prix fixe 5 EUR
+        if (window.currencyManager) {
+            price = window.currencyManager.formatPrice(5);
+        } else {
+            price = '5€';
+        }
+        
+        console.log(`✅ Prix essai: ${price}`);
+    } 
+    // COURS PAYANTS - APPELER create_booking_intent()
+    else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
+        if (courseType === 'conversation') {
+            courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
+        } else if (courseType === 'curriculum') {
+            courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
+        } else if (courseType === 'examen') {
+            courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
+        }
+        
+        if (user && durationGroup.classList.contains('visible')) {
+            const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
+            duration = selectedDuration + ' min';
             
-            // Prix fixe 5 EUR
-            if (window.currencyManager) {
-                price = window.currencyManager.formatPrice(5);
-            } else {
-                price = '5€';
-            }
+            console.log(`📞 Appel create_booking_intent() pour calculer prix`);
             
-            console.log(`✅ Prix essai: ${price}`);
-        } 
-        // COURS PAYANTS - APPELER create_booking_intent()
-        else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
-            if (courseType === 'conversation') {
-                courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
-            } else if (courseType === 'curriculum') {
-                courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
-            } else if (courseType === 'examen') {
-                courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
-            }
-            
-            if (user && durationGroup.classList.contains('visible')) {
-                const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
-                duration = selectedDuration + ' min';
-                
-                console.log(`📞 Appel create_booking_intent() pour calculer prix`);
-                
-                // ✅ APPELER create_booking_intent() POUR CALCULER LE PRIX
-                if (window.supabase && selectedDate && selectedSlot) {
-                    try {
-                        // Vérifier le cache
-                        if (cachedIntentData && 
-                            cachedIntentData.course_type === courseType &&
-                            cachedIntentData.duration === selectedDuration &&
-                            cachedIntentData.quantity === coursesCount) {
-                            console.log('📦 Utilisation du cache pour le prix');
-                            price = cachedIntentData.displayPrice;
+            // ✅ APPELER create_booking_intent() POUR CALCULER LE PRIX
+            if (window.supabase && selectedDate && selectedSlot) {
+                try {
+                    // Vérifier le cache
+                    if (cachedIntentData && 
+                        cachedIntentData.course_type === courseType &&
+                        cachedIntentData.duration === selectedDuration &&
+                        cachedIntentData.quantity === coursesCount) {
+                        console.log('📦 Utilisation du cache pour le prix');
+                        price = cachedIntentData.displayPrice;
+                    } else {
+                        // 📞 APPEL RPC AVEC LOGS DÉTAILLÉS
+                        console.log('📤 Paramètres RPC:', {
+                            p_user_id: user.id,
+                            p_course_type: courseType,
+                            p_duration: selectedDuration,
+                            p_start_time: selectedSlot.start,
+                            p_end_time: selectedSlot.end,
+                            p_quantity: coursesCount,
+                            p_location: selectedLocationInput.value || 'integrations:google:meet'
+                        });
+
+                        const { data: intentData, error: intentError } = await supabase.rpc('create_booking_intent', {
+                            p_user_id: user.id,
+                            p_course_type: courseType,
+                            p_duration: selectedDuration,
+                            p_start_time: selectedSlot.start,
+                            p_end_time: selectedSlot.end,
+                            p_quantity: coursesCount,
+                            p_location: selectedLocationInput.value || 'integrations:google:meet'
+                        });
+                        
+                        console.log('📥 Réponse RPC:', { intentData, intentError });
+                        
+                        if (intentError) {
+                            console.error('❌ Erreur RPC create_booking_intent:', intentError);
+                            console.error('   Code:', intentError.code);
+                            console.error('   Message:', intentError.message);
+                            console.error('   Détails:', intentError.details);
+                            price = 'Erreur calcul';
+                        } else if (!intentData || !intentData.success) {
+                            console.warn('⚠️ RPC échoué, affichage générique');
+                            console.warn('   Données reçues:', intentData);
+                            price = 'Prix à calculer';
                         } else {
-console.log('📞 Appel create_booking_intent avec paramètres:', {
-    p_user_id: user.id,
-    p_course_type: courseType,
-    p_duration: selectedDuration,
-    p_start_time: selectedSlot.start,
-    p_end_time: selectedSlot.end,
-    p_quantity: coursesCount,
-    p_location: selectedLocationInput.value || 'integrations:google:meet'
-});
-
-const { data: intentData, error: intentError } = await supabase.rpc('create_booking_intent', {
-    p_user_id: user.id,
-    p_course_type: courseType,
-    p_duration: selectedDuration,
-    p_start_time: selectedSlot.start,
-    p_end_time: selectedSlot.end,
-    p_quantity: coursesCount,
-    p_location: selectedLocationInput.value || 'integrations:google:meet'
-});
-                            console.log('📥 Réponse RPC:', { intentData, intentError });
-
-if (intentError) {
-    console.error('❌ Erreur create_booking_intent:', intentError);
-    console.error('   Code:', intentError.code);
-    console.error('   Message:', intentError.message);
-    console.error('   Details:', intentError.details);
-    throw new Error('Impossible de calculer le prix: ' + intentError.message);
-}
-                            if (!error && intentData && intentData.success) {
-                                console.log('✅ Prix calculé par RPC:', intentData.price, intentData.currency);
-                                
-                                // Formater le prix
-                                if (window.currencyManager) {
-                                    price = window.currencyManager.formatPriceInCurrency(intentData.price, intentData.currency);
-                                } else {
-                                    price = `${intentData.price} ${intentData.currency}`;
-                                }
-                                
-                                // Mettre en cache
-                                cachedIntentData = {
-                                    course_type: courseType,
-                                    duration: selectedDuration,
-                                    quantity: coursesCount,
-                                    displayPrice: price,
-                                    rawPrice: intentData.price,
-                                    currency: intentData.currency,
-                                    is_vip: intentData.is_vip
-                                };
+                            console.log('✅ Prix calculé par RPC:', intentData.price, intentData.currency);
+                            
+                            // Formater le prix
+                            if (window.currencyManager) {
+                                price = window.currencyManager.formatPriceInCurrency(intentData.price, intentData.currency);
                             } else {
-                                console.warn('⚠️ Erreur RPC, affichage générique');
-                                price = 'Prix à calculer';
+                                price = `${intentData.price} ${intentData.currency}`;
                             }
+                            
+                            // Mettre en cache
+                            cachedIntentData = {
+                                course_type: courseType,
+                                duration: selectedDuration,
+                                quantity: coursesCount,
+                                displayPrice: price,
+                                rawPrice: intentData.price,
+                                currency: intentData.currency,
+                                is_vip: intentData.is_vip
+                            };
                         }
-                    } catch (error) {
-                        console.error('❌ Erreur appel RPC:', error);
-                        price = 'Erreur calcul';
                     }
-                } else {
-                    price = 'Sélectionnez date et heure';
+                } catch (catchError) {
+                    console.error('❌ Exception appel RPC:', catchError);
+                    console.error('   Type:', catchError.name);
+                    console.error('   Message:', catchError.message);
+                    console.error('   Stack:', catchError.stack);
+                    price = 'Erreur calcul';
                 }
-                
-                console.log(`✅ Prix final affiché: ${price}`);
-                
             } else {
-                duration = '60 min';
-                price = 'Connectez-vous';
+                price = 'Sélectionnez date et heure';
             }
-        }
-
-        // MISE À JOUR INTERFACE
-        document.getElementById('summaryType').textContent = courseName;
-        
-        if (courseType === 'essai') {
-            document.getElementById('summaryCoursesCount').textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-            document.getElementById('summaryDiscount').textContent = '0%';
+            
+            console.log(`✅ Prix final affiché: ${price}`);
+            
         } else {
-            document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-            document.getElementById('summaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
+            duration = '60 min';
+            price = 'Connectez-vous';
         }
-        
-        if (selectedDate) {
-            const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
-            const dateObj = new Date(selectedDate);
-            const formattedDate = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-            document.getElementById('summaryDate').textContent = formattedDate;
-        } else {
-            document.getElementById('summaryDate').textContent = '-';
-        }
-        
-        document.getElementById('summaryTime').textContent = selectedTime || '-';
-        document.getElementById('summaryDuration').textContent = duration;
-        document.getElementById('summaryPlatform').textContent = platform;
-        
-        const summaryPriceElement = document.getElementById('summaryPrice');
-        summaryPriceElement.innerHTML = price;
-        
-        if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
-            summaryPriceElement.classList.add('vip-price-display');
-            summaryPriceElement.title = "Prix VIP personnel";
-        } else {
-            summaryPriceElement.classList.remove('vip-price-display');
-            summaryPriceElement.title = "";
-        }
-
-        const canSubmit = selectedDate && selectedTime && courseType && 
-            (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
-        
-        submitButton.disabled = !canSubmit;
     }
+
+    // MISE À JOUR INTERFACE
+    document.getElementById('summaryType').textContent = courseName;
+    
+    if (courseType === 'essai') {
+        document.getElementById('summaryCoursesCount').textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+        document.getElementById('summaryDiscount').textContent = '0%';
+    } else {
+        document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+        document.getElementById('summaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
+    }
+    
+    if (selectedDate) {
+        const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+        const dateObj = new Date(selectedDate);
+        const formattedDate = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+        document.getElementById('summaryDate').textContent = formattedDate;
+    } else {
+        document.getElementById('summaryDate').textContent = '-';
+    }
+    
+    document.getElementById('summaryTime').textContent = selectedTime || '-';
+    document.getElementById('summaryDuration').textContent = duration;
+    document.getElementById('summaryPlatform').textContent = platform;
+    
+    const summaryPriceElement = document.getElementById('summaryPrice');
+    summaryPriceElement.innerHTML = price;
+    
+    if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
+        summaryPriceElement.classList.add('vip-price-display');
+        summaryPriceElement.title = "Prix VIP personnel";
+    } else {
+        summaryPriceElement.classList.remove('vip-price-display');
+        summaryPriceElement.title = "";
+    }
+
+    const canSubmit = selectedDate && selectedTime && courseType && 
+        (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
+    
+    submitButton.disabled = !canSubmit;
+}
 
     function showError(message) {
         errorText.textContent = message;
