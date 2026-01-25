@@ -320,41 +320,46 @@ class PaymentManager {
             console.log('📊 Statut PaymentIntent:', paymentIntent.status);
 
             if (paymentIntent.status === 'succeeded') {
-                console.log('✅ Paiement réussi !');
-                
-                // Mettre à jour la réservation avec les données de Stripe
-                this.currentBooking.transactionId = paymentIntent.id;
-                this.currentBooking.paymentMethod = 'card';
-                this.currentBooking.status = 'confirmed';
-                this.currentBooking.confirmedAt = new Date().toISOString();
-                this.currentBooking.price = paymentData.amount;
-                this.currentBooking.currency = paymentData.currency;
-                
-                // Sauvegarder la réservation mise à jour
-                localStorage.setItem('confirmedBooking', JSON.stringify(this.currentBooking));
-                localStorage.removeItem('pendingBooking');
-                
-                // Traiter la réservation
-                const result = await this.processManualPayment('card', user, paymentIntent.id);
-                
-                if (result.success) {
-                    console.log('✅ Réservation traitée avec succès');
-                    setTimeout(() => {
-                        window.location.href = `payment-success.html?booking=${encodeURIComponent(JSON.stringify(result.bookingData))}`;
-                    }, 1000);
-                } else {
-                    throw new Error('Erreur lors du traitement de la réservation');
-                }
-            } else if (paymentIntent.status === 'requires_action') {
-                console.log('ℹ️ Action supplémentaire requise (3D Secure)');
-                // Stripe gérera automatiquement la redirection
+            console.log('✅ Paiement Stripe réussi !');
+            
+            // ✅ NOUVEAU : Mettre à jour avec les données Stripe
+            this.currentBooking.transactionId = paymentIntent.id;
+            this.currentBooking.paymentMethod = 'card';
+            this.currentBooking.status = 'confirmed';
+            this.currentBooking.confirmedAt = new Date().toISOString();
+            
+            // Le prix a été calculé par l'Edge Function via create_booking_intent()
+            // On conserve les valeurs retournées par l'Edge Function
+            this.currentBooking.price = paymentData.amount;
+            this.currentBooking.currency = paymentData.currency;
+            
+            // Sauvegarder localement
+            localStorage.setItem('confirmedBooking', JSON.stringify(this.currentBooking));
+            localStorage.removeItem('pendingBooking');
+            
+            console.log('📤 Appel processManualPayment pour finaliser...');
+            
+            // ✅ NOUVEAU : Appeler processManualPayment qui gère tout (forfait + confirmation)
+            const result = await this.processManualPayment('card', user, paymentIntent.id);
+            
+            if (result.success) {
+                console.log('✅ Réservation finalisée avec succès');
+                setTimeout(() => {
+                    window.location.href = `payment-success.html?booking=${encodeURIComponent(JSON.stringify(result.bookingData))}`;
+                }, 1000);
             } else {
-                console.warn('⚠️ Statut inattendu:', paymentIntent.status);
-                throw new Error(`Statut de paiement inattendu: ${paymentIntent.status}`);
+                throw new Error('Erreur lors de la finalisation de la réservation');
             }
+        } else if (paymentIntent.status === 'requires_action') {
+            console.log('ℹ️ Action supplémentaire requise (3D Secure)');
+            // Stripe gérera automatiquement la redirection
+        } else {
+            console.warn('⚠️ Statut inattendu:', paymentIntent.status);
+            throw new Error(`Statut de paiement inattendu: ${paymentIntent.status}`);
+        }
 
-        } catch (error) {
-            console.error('❌ Erreur paiement Stripe:', error);
+    } catch (error) {
+        console.error('❌ Erreur paiement Stripe:', error);
             
             const processBtn = document.getElementById('processCardPayment');
             if (processBtn) {
@@ -399,99 +404,235 @@ class PaymentManager {
     }
 
     async processManualPayment(method, user, stripePaymentIntentId = null) {
-        try {
-            console.log(`📤 Traitement paiement manuel: ${method}`);
-            
-            const transactionId = stripePaymentIntentId || `TRX-${Date.now().toString().slice(-8)}-${method.toUpperCase()}`;
-            const refNumber = Date.now().toString().slice(-6);
-            
-            const paymentData = {
-                user_id: user?.id || this.currentBooking.userId,
-                method: method,
-                transaction_id: transactionId,
-                reference: `COURS-${refNumber}`,
-                status: 'completed',
-                created_at: new Date().toISOString()
-            };
+    try {
+        console.log(`💳 Traitement paiement manuel: ${method} (DB-driven)`);
+        
+        if (!this.currentBooking) {
+            this.currentBooking = JSON.parse(localStorage.getItem('pendingBooking')) || null;
+        }
+        
+        if (!this.currentBooking) {
+            throw new Error('Aucune réservation trouvée');
+        }
 
-            const paymentResult = await this.savePaymentRecord(paymentData);
+        if (!user?.id) {
+            throw new Error('Utilisateur non connecté');
+        }
+
+        const transactionId = stripePaymentIntentId || `TRX-${Date.now().toString().slice(-8)}-${method.toUpperCase()}`;
+        
+        console.log('📋 Données réservation:', {
+            intentId: this.currentBooking.intentId,
+            courseType: this.currentBooking.courseType,
+            isPackage: this.currentBooking.isPackage,
+            packageQuantity: this.currentBooking.packageQuantity,
+            price: this.currentBooking.price,
+            currency: this.currentBooking.currency
+        });
+
+        // ============================================================================
+        // ÉTAPE 1 : CRÉER LE FORFAIT (si forfait multi-cours)
+        // ============================================================================
+        let packageId = null;
+        
+        if (this.currentBooking.isPackage && this.currentBooking.packageQuantity > 1) {
+            console.log(`📦 Création forfait ${this.currentBooking.packageQuantity} cours via RPC...`);
             
-            if (!paymentResult.success) {
-                throw new Error(paymentResult.error || 'Erreur sauvegarde paiement');
+            // ✅ APPEL RPC : create_package_from_payment()
+            const { data: packageResult, error: packageError } = await window.supabase
+                .rpc('create_package_from_payment', {
+                    p_user_id: user.id,
+                    p_course_type: this.currentBooking.courseType,
+                    p_duration: this.currentBooking.duration || 60,
+                    p_quantity: this.currentBooking.packageQuantity,
+                    p_price_paid: this.currentBooking.price,
+                    p_currency: this.currentBooking.currency,
+                    p_stripe_payment_id: transactionId,
+                    p_booking_id: null // Sera lié après création du booking
+                });
+            
+            if (packageError) {
+                console.error('❌ Erreur création forfait:', packageError);
+                throw new Error(`Impossible de créer le forfait: ${packageError.message}`);
             }
+            
+            if (!packageResult || !packageResult.success) {
+                throw new Error(packageResult?.error || 'Échec création forfait');
+            }
+            
+            packageId = packageResult.package_id;
+            
+            console.log('✅ Forfait créé:', {
+                package_id: packageId,
+                total_credits: packageResult.total_credits,
+                remaining_credits: packageResult.remaining_credits,
+                expires_at: packageResult.expires_at
+            });
+            
+            // Mettre à jour la réservation locale avec le package_id
+            this.currentBooking.packageId = packageId;
+            this.currentBooking.price = 0; // Le prix est déjà payé via le forfait
+        }
 
-            const updatedBooking = {
-                ...this.currentBooking,
-                status: 'confirmed',
+        // ============================================================================
+        // ÉTAPE 2 : CONFIRMER LA RÉSERVATION
+        // ============================================================================
+        
+        // Cas 2A : Forfait avec crédit - Confirmer avec crédit
+        if (packageId && this.currentBooking.intentId) {
+            console.log('💰 Confirmation réservation avec crédit du forfait...');
+            
+            // ✅ APPEL RPC : create_booking_with_credit()
+            const { data: creditBooking, error: creditError } = await window.supabase
+                .rpc('create_booking_with_credit', {
+                    p_booking_id: this.currentBooking.intentId
+                });
+            
+            if (creditError) {
+                console.error('❌ Erreur confirmation crédit:', creditError);
+                throw new Error(`Impossible de confirmer avec crédit: ${creditError.message}`);
+            }
+            
+            if (!creditBooking || !creditBooking.success) {
+                throw new Error(creditBooking?.error || 'Échec confirmation crédit');
+            }
+            
+            console.log('✅ Réservation confirmée avec crédit:', {
+                booking_id: creditBooking.booking_id,
+                booking_number: creditBooking.booking_number,
+                package_id: creditBooking.package_id
+            });
+            
+            // Mettre à jour les données locales
+            this.currentBooking.bookingNumber = creditBooking.booking_number;
+            this.currentBooking.status = 'confirmed';
+            this.currentBooking.confirmedAt = new Date().toISOString();
+        }
+        // Cas 2B : Paiement simple - Mettre à jour le booking intent
+        else if (this.currentBooking.intentId) {
+            console.log('💳 Confirmation réservation après paiement...');
+            
+            // ✅ UPDATE direct du booking créé par create_booking_intent()
+            const { data: updatedBooking, error: updateError } = await window.supabase
+                .from('bookings')
+                .update({
+                    status: 'confirmed',
+                    payment_method: method,
+                    payment_reference: transactionId,
+                    package_id: packageId, // null si pas de forfait
+                    confirmed_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', this.currentBooking.intentId)
+                .select('id, booking_number, status, price_paid, currency');
+            
+            if (updateError) {
+                console.error('❌ Erreur confirmation paiement:', updateError);
+                throw new Error(`Impossible de confirmer: ${updateError.message}`);
+            }
+            
+            if (!updatedBooking || updatedBooking.length === 0) {
+                throw new Error('Réservation introuvable');
+            }
+            
+            console.log('✅ Réservation confirmée:', {
+                booking_id: updatedBooking[0].id,
+                booking_number: updatedBooking[0].booking_number,
+                status: updatedBooking[0].status
+            });
+            
+            // Mettre à jour les données locales
+            this.currentBooking.bookingNumber = updatedBooking[0].booking_number;
+            this.currentBooking.status = 'confirmed';
+            this.currentBooking.confirmedAt = new Date().toISOString();
+        }
+        // Cas 2C : Pas d'intent (mode legacy - ne devrait pas arriver)
+        else {
+            console.warn('⚠️ Pas d\'intent, création booking via bookingManager (legacy)');
+            
+            if (!window.bookingManager) {
+                throw new Error('BookingManager non disponible');
+            }
+            
+            const bookingForCalcom = {
+                startTime: this.currentBooking.startTime,
+                endTime: this.currentBooking.endTime,
+                eventType: this.currentBooking.courseType,
+                courseType: this.currentBooking.courseType,
+                duration: this.currentBooking.duration || 60,
+                location: this.currentBooking.location || 'integrations:google:meet',
+                name: this.currentBooking.name,
+                email: this.currentBooking.email,
+                notes: this.currentBooking.notes || '',
+                userId: user.id,
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                language: 'fr',
+                
+                price: this.currentBooking.price,
+                currency: this.currentBooking.currency,
                 paymentMethod: method,
                 transactionId: transactionId,
-                paymentReference: `COURS-${refNumber}`,
-                confirmedAt: new Date().toISOString()
+                packageId: packageId,
+                status: 'confirmed'
             };
-
-            // Gérer les forfaits
-            let packageId = null;
-            if (updatedBooking.isPackage && updatedBooking.packageQuantity > 1 && user?.id && window.packagesManager) {
-                console.log(`📦 Ajout de ${updatedBooking.packageQuantity} crédits`);
-                
-                const creditResult = await window.packagesManager.addCredits(
-                    user.id,
-                    updatedBooking.courseType,
-                    updatedBooking.packageQuantity,
-                    updatedBooking.price,
-                    updatedBooking.currency,
-                    method,
-                    transactionId,
-                    updatedBooking
-                );
-                
-                if (creditResult.success) {
-                    packageId = creditResult.package.id;
-                    updatedBooking.packageId = packageId;
-                    updatedBooking.price = 0;
-                }
+            
+            const bookingResult = await window.bookingManager.createBookingAfterPayment(bookingForCalcom);
+            
+            if (!bookingResult.success) {
+                throw new Error(`Échec création réservation: ${bookingResult.error}`);
             }
-
-            // Créer la réservation Cal.com et Supabase
-            if (window.bookingManager?.createBookingAfterPayment) {
-                const bookingResult = await window.bookingManager.createBookingAfterPayment(updatedBooking);
-                
-                if (bookingResult.success) {
-                    updatedBooking.calcomId = bookingResult.data?.id || bookingResult.data?.uid;
-                    if (bookingResult.data?.location) {
-                        updatedBooking.meetingLink = bookingResult.data.location;
-                    }
-
-                    // Déduire un crédit si c'est un forfait
-                    if (packageId && user?.id && bookingResult.supabaseBookingId) {
-                        // Utiliser un ID de transaction unique pour éviter la double déduction
-                        const creditTransactionId = `package_deduct_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                        await window.packagesManager.useCredit(
-                            user.id,
-                            updatedBooking.courseType,
-                            { 
-                                id: bookingResult.supabaseBookingId,
-                                duration: updatedBooking.duration || 60
-                            },
-                            creditTransactionId
-                        );
-                    }
-                }
-            }
-
-            localStorage.setItem('confirmedBooking', JSON.stringify(updatedBooking));
-            localStorage.removeItem('pendingBooking');
-
-            return {
-                success: true,
-                bookingData: updatedBooking,
-                message: `Paiement ${method} confirmé`,
-            };
-        } catch (error) {
-            console.error(`❌ Erreur traitement paiement ${method}:`, error);
-            return { success: false, error: error.message };
+            
+            this.currentBooking.calcomId = bookingResult.data?.id || bookingResult.data?.uid;
+            this.currentBooking.meetingLink = bookingResult.data?.location;
+            this.currentBooking.bookingNumber = `BK-${method.toUpperCase()}-${Date.now().toString().slice(-8)}`;
+            this.currentBooking.status = 'confirmed';
+            this.currentBooking.confirmedAt = new Date().toISOString();
         }
+
+        // ============================================================================
+        // ÉTAPE 3 : SAUVEGARDER LOCALEMENT ET REDIRIGER
+        // ============================================================================
+        
+        const finalBookingData = {
+            ...this.currentBooking,
+            paymentMethod: method,
+            transactionId: transactionId,
+            paymentReference: `COURS-${Date.now().toString().slice(-6)}`
+        };
+        
+        // Sauvegarder pour affichage sur page de succès
+        localStorage.setItem('confirmedBooking', JSON.stringify(finalBookingData));
+        localStorage.removeItem('pendingBooking');
+        
+        console.log('✅ Paiement manuel traité avec succès');
+        console.log('   Méthode:', method);
+        console.log('   Transaction:', transactionId);
+        console.log('   Booking Number:', finalBookingData.bookingNumber);
+        console.log('   Package ID:', packageId || 'N/A');
+
+        return {
+            success: true,
+            bookingData: finalBookingData,
+            message: `Paiement ${method} confirmé`,
+        };
+        
+    } catch (error) {
+        console.error(`❌ Erreur traitement paiement ${method}:`, error);
+        
+        // Log détaillé pour debugging
+        console.group('🔍 Détails erreur paiement');
+        console.log('Méthode:', method);
+        console.log('User ID:', user?.id);
+        console.log('Intent ID:', this.currentBooking?.intentId);
+        console.log('Message:', error.message);
+        console.groupEnd();
+        
+        return { 
+            success: false, 
+            error: error.message 
+        };
     }
+}
 
     async savePaymentRecord(paymentData) {
         try {
