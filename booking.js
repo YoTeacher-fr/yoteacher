@@ -624,59 +624,121 @@ class BookingManager {
     }
 
     async saveBookingToSupabase(calcomBooking, user, bookingData, status = 'confirmed') {
-        try {
-            if (!window.supabase) {
-                return null;
-            }
+    try {
+        if (!window.supabase) {
+            console.warn('⚠️ Supabase non disponible, skip sauvegarde');
+            return null;
+        }
 
-            const bookingNumber = `BK-${Date.now().toString().slice(-8)}`;
-            let platformValue = this.getPlatformName(bookingData.location);
+        if (bookingData.intentId) {
+            console.log('📝 Mise à jour booking existant (intent_id:', bookingData.intentId + ')');
             
-            const allowedPlatforms = ['meet', 'zoom', 'teams', 'other'];
-            if (!allowedPlatforms.includes(platformValue)) {
-                platformValue = 'zoom';
-            }
-
-            const bookingRecord = {
-                user_id: user?.id || bookingData.userId,
-                course_type: bookingData.courseType,
-                duration_minutes: bookingData.duration || 60,
-                start_time: bookingData.startTime,
-                end_time: bookingData.endTime,
-                status: status,
-                price_paid: bookingData.packageId ? 0 : bookingData.price,
-                currency: bookingData.packageId ? null : bookingData.currency,
-                platform: platformValue,
-                booking_number: bookingNumber,
-                payment_method: bookingData.paymentMethod || 'credit',
-                payment_reference: bookingData.transactionId,
-                calcom_booking_id: calcomBooking.id || calcomBooking.uid,
-                calcom_uid: calcomBooking.uid,
-                meeting_link: calcomBooking.location || calcomBooking.meetingUrl,
-                created_at: new Date().toISOString()
-            };
-
-            if (bookingData.packageId) {
-                bookingRecord.package_id = bookingData.packageId;
-            }
-
             const { data, error } = await supabase
                 .from('bookings')
-                .insert([bookingRecord])
+                .update({
+                    status: status,
+                    confirmed_at: new Date().toISOString(),
+                    calcom_booking_id: calcomBooking.id || calcomBooking.uid,
+                    calcom_uid: calcomBooking.uid,
+                    meeting_link: calcomBooking.location || calcomBooking.meetingUrl,
+                    payment_method: bookingData.paymentMethod || 'card',
+                    payment_reference: bookingData.transactionId || bookingData.paymentReference,
+                    package_id: bookingData.packageId || null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', bookingData.intentId)
                 .select();
 
             if (error) {
-                console.error('❌ Erreur insertion bookings:', error);
-                return null;
+                console.error('❌ Erreur UPDATE bookings:', error);
+                throw new Error(`Impossible de confirmer la réservation: ${error.message}`);
             }
 
-            console.log('✅ Réservation Supabase créée:', data[0].id);
-            return data[0].id;
+            if (!data || data.length === 0) {
+                console.error('❌ Aucun booking trouvé avec intent_id:', bookingData.intentId);
+                throw new Error('Réservation introuvable');
+            }
+
+            console.log('✅ Booking confirmé (UPDATE):', data[0].id);
+            console.log('   Booking Number:', data[0].booking_number);
+            console.log('   Status:', data[0].status);
+            console.log('   Meeting Link:', data[0].meeting_link);
             
-        } catch (error) {
-            console.error('Exception Supabase:', error);
-            return null;
+            return data[0].id;
         }
+        
+        console.log('📝 Création nouveau booking (mode legacy - pas d\'intent)');
+        
+        const bookingNumber = `BK-${Date.now().toString().slice(-8)}`;
+        let platformValue = this.getPlatformName(bookingData.location);
+        
+        const allowedPlatforms = ['meet', 'zoom', 'teams', 'other'];
+        if (!allowedPlatforms.includes(platformValue)) {
+            platformValue = 'zoom';
+        }
+
+        const bookingRecord = {
+            user_id: user?.id || bookingData.userId,
+            course_type: bookingData.courseType,
+            duration_minutes: bookingData.duration || 60,
+            start_time: bookingData.startTime,
+            end_time: bookingData.endTime,
+            status: status,
+            confirmed_at: status === 'confirmed' ? new Date().toISOString() : null,
+            price_paid: bookingData.packageId ? 0 : (bookingData.price || null),
+            currency: bookingData.packageId ? null : (bookingData.currency || null),
+            platform: platformValue,
+            calcom_booking_id: calcomBooking.id || calcomBooking.uid,
+            calcom_uid: calcomBooking.uid,
+            meeting_link: calcomBooking.location || calcomBooking.meetingUrl,
+            payment_method: bookingData.paymentMethod || 'card',
+            payment_reference: bookingData.transactionId,
+            package_id: bookingData.packageId || null,
+            created_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabase
+            .from('bookings')
+            .insert([bookingRecord])
+            .select();
+
+        if (error) {
+            console.error('❌ Erreur INSERT bookings:', error);
+            
+            if (error.message?.includes('duplicate key')) {
+                throw new Error('Cette réservation existe déjà');
+            } else if (error.message?.includes('foreign key')) {
+                throw new Error('Erreur de référence (utilisateur ou package invalide)');
+            } else {
+                throw new Error(`Erreur lors de la création: ${error.message}`);
+            }
+        }
+
+        if (!data || data.length === 0) {
+            throw new Error('Aucune donnée retournée après insertion');
+        }
+
+        console.log('✅ Booking créé (INSERT legacy):', data[0].id);
+        console.log('   Booking Number:', data[0].booking_number);
+        console.log('   Price Paid:', data[0].price_paid, data[0].currency);
+        
+        return data[0].id;
+        
+    } catch (error) {
+        console.error('❌ Exception saveBookingToSupabase:', error);
+        
+        console.group('🔍 Détails erreur');
+        console.log('Error message:', error.message);
+        console.log('Booking data:', {
+            intentId: bookingData.intentId,
+            courseType: bookingData.courseType,
+            userId: user?.id
+        });
+        console.groupEnd();
+        
+        return null;
+    }
+}   }
     }
 
     getPlatformName(location) {
