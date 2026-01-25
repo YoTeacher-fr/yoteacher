@@ -738,8 +738,8 @@ class BookingManager {
         
         return null;
     }
-}   }
-    }
+}   
+    
 
     getPlatformName(location) {
         if (!location) return 'zoom';

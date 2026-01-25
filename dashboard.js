@@ -545,121 +545,130 @@ async function loadUserData(user) {
     }
     
     function displayCurrentLesson() {
-        if (upcomingLessons.length === 0) return;
-        
-        const lesson = upcomingLessons[currentLessonIndex];
-        const nextLessonContent = document.getElementById('nextLessonContent');
-        const lessonCounter = document.getElementById('lessonCounter');
-        const externalActions = document.getElementById('lessonExternalActions');
-        
-        // Mettre à jour le compteur
-        lessonCounter.textContent = `${currentLessonIndex + 1}/${upcomingLessons.length}`;
-        
-        const lessonDate = new Date(lesson.start_time);
-        const hoursUntilStart = calculateHoursUntilStart(lesson.start_time);
-        
-        // Vérifier si l'annulation est possible (plus de 24h)
-        const canCancel = hoursUntilStart > 24 && lesson.status !== 'cancelled';
-        
-        // Mapping des plateformes pour l'affichage
-        const platformNames = {
-            'zoom': 'Zoom',
-            'meet': 'Google Meet',
-            'teams': 'Microsoft Teams',
-            'other': 'Autre'
-        };
-        
-        const platformName = platformNames[lesson.platform] || lesson.platform || 'Zoom';
-        
-        nextLessonContent.innerHTML = `
-            <div class="upcoming-lesson-card">
-                <div class="lesson-date">
-                    <i class="fas fa-calendar-alt"></i>
-                    ${lessonDate.toLocaleDateString('fr-FR', { 
-                        weekday: 'long', 
-                        day: 'numeric', 
-                        month: 'long',
-                        year: 'numeric'
-                    })}
-                </div>
-                <div class="lesson-info">
-                    <div class="lesson-info-item">
-                        <span class="lesson-info-label">Heure</span>
-                        <span class="lesson-info-value">${lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                    <div class="lesson-info-item">
-                        <span class="lesson-info-label">Durée</span>
-                        <span class="lesson-info-value">${lesson.duration_minutes || 60} min</span>
-                    </div>
-                    <div class="lesson-info-item">
-                        <span class="lesson-info-label">Type</span>
-                        <span class="lesson-info-value">${lesson.course_type || 'Cours'}</span>
-                    </div>
-                    <div class="lesson-info-item">
-                        <span class="lesson-info-label">Plateforme</span>
-                        <span class="lesson-info-value">${platformName}</span>
-                    </div>
-                    <div class="lesson-info-item">
-                        <span class="lesson-info-label">Référence</span>
-                        <span class="lesson-info-value">${lesson.booking_number || '#' + (lesson.id ? lesson.id.substring(0, 8) : '')}</span>
-                    </div>
-                    <!-- Affichage conditionnel pour annulation impossible -->
-                    ${hoursUntilStart <= 24 ? `
-                    <div class="lesson-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>Annulation impossible (moins de 24h avant le cours)</span>
-                    </div>
-                    ` : ''}
-                </div>
+    if (upcomingLessons.length === 0) return;
+    
+    const lesson = upcomingLessons[currentLessonIndex];
+    const nextLessonContent = document.getElementById('nextLessonContent');
+    const lessonCounter = document.getElementById('lessonCounter');
+    const externalActions = document.getElementById('lessonExternalActions');
+    
+    // Mettre à jour le compteur
+    lessonCounter.textContent = `${currentLessonIndex + 1}/${upcomingLessons.length}`;
+    
+    const lessonDate = new Date(lesson.start_time);
+    const hoursUntilStart = calculateHoursUntilStart(lesson.start_time);
+    
+    // Vérifier si l'annulation est possible (plus de 24h)
+    const canCancel = hoursUntilStart > 24 && lesson.status !== 'cancelled';
+    
+    // Mapping des plateformes pour l'affichage
+    const platformNames = {
+        'zoom': 'Zoom',
+        'meet': 'Google Meet',
+        'teams': 'Microsoft Teams',
+        'other': 'Autre'
+    };
+    
+    const platformName = platformNames[lesson.platform] || lesson.platform || 'Zoom';
+    
+    nextLessonContent.innerHTML = `
+        <div class="upcoming-lesson-card">
+            <div class="lesson-date">
+                <i class="fas fa-calendar-alt"></i>
+                ${lessonDate.toLocaleDateString('fr-FR', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long',
+                    year: 'numeric'
+                })}
             </div>
-        `;
+            <div class="lesson-info">
+                <div class="lesson-info-item">
+                    <span class="lesson-info-label">Heure</span>
+                    <span class="lesson-info-value">${lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <div class="lesson-info-item">
+                    <span class="lesson-info-label">Durée</span>
+                    <span class="lesson-info-value">${lesson.duration_minutes || 60} min</span>
+                </div>
+                <div class="lesson-info-item">
+                    <span class="lesson-info-label">Type</span>
+                    <span class="lesson-info-value">${lesson.course_type || 'Cours'}</span>
+                </div>
+                <div class="lesson-info-item">
+                    <span class="lesson-info-label">Plateforme</span>
+                    <span class="lesson-info-value">${platformName}</span>
+                </div>
+                <div class="lesson-info-item">
+                    <span class="lesson-info-label">Référence</span>
+                    <span class="lesson-info-value">${lesson.booking_number || '#' + (lesson.id ? lesson.id.substring(0, 8) : '')}</span>
+                </div>
+                ${hoursUntilStart <= 24 ? `
+                <div class="lesson-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Annulation impossible (moins de 24h avant le cours)</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    // ============================================================================
+    // AFFICHER LES BOUTONS EN DEHORS DE LA CARTE
+    // ============================================================================
+    externalActions.style.display = 'flex';
+    externalActions.innerHTML = '';
+    
+    // Bouton d'annulation (seulement si possible)
+    if (canCancel) {
+        // ✅ NOUVEAU : Créer bouton avec addEventListener au lieu de onclick
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'btn-external btn-cancel-external';
+        cancelButton.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
         
-        // Afficher les boutons en dehors de la carte
-        externalActions.style.display = 'flex';
-        externalActions.innerHTML = '';
+        // ✅ NOUVEAU : Utiliser addEventListener (plus propre que onclick)
+        cancelButton.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            await handleCancelLesson(lesson.id);
+        });
         
-        // Bouton d'annulation (seulement si possible)
-        if (canCancel) {
-            // Créer un bouton avec un écouteur d'événement plutôt qu'avec onclick
-            const cancelButton = document.createElement('button');
-            cancelButton.className = 'btn-external btn-cancel-external';
-            cancelButton.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
-            cancelButton.addEventListener('click', function() {
-                handleCancelLesson(lesson.id);
-            });
-            externalActions.appendChild(cancelButton);
-        }
-        
-        // Bouton de connexion (toujours visible si lien disponible)
-        if (lesson.meeting_link) {
-            const joinLink = document.createElement('a');
-            joinLink.href = lesson.meeting_link;
-            joinLink.target = '_blank';
-            joinLink.className = 'btn-external btn-join-external';
-            joinLink.innerHTML = '<i class="fas fa-video"></i> Rejoindre';
-            externalActions.appendChild(joinLink);
-        }
-        
-        // Si aucun bouton n'est affiché, masquer la div
-        if (!canCancel && !lesson.meeting_link) {
-            externalActions.style.display = 'none';
-        }
+        externalActions.appendChild(cancelButton);
     }
     
+    // Bouton de connexion (toujours visible si lien disponible)
+    if (lesson.meeting_link) {
+        const joinLink = document.createElement('a');
+        joinLink.href = lesson.meeting_link;
+        joinLink.target = '_blank';
+        joinLink.className = 'btn-external btn-join-external';
+        joinLink.innerHTML = '<i class="fas fa-video"></i> Rejoindre';
+        externalActions.appendChild(joinLink);
+    }
+    
+    // Si aucun bouton n'est affiché, masquer la div
+    if (!canCancel && !lesson.meeting_link) {
+        externalActions.style.display = 'none';
+    }
+}
+    
     async function handleCancelLesson(bookingId) {
-        const user = window.authManager?.getCurrentUser();
-        if (!user) {
-            alert('Vous devez être connecté pour annuler un cours');
-            return;
-        }
+    const user = window.authManager?.getCurrentUser();
+    if (!user) {
+        alert('Vous devez être connecté pour annuler un cours');
+        return;
+    }
+    
+    // Vérifier que Supabase est disponible
+    if (!window.supabase) {
+        alert('Service non disponible. Veuillez rafraîchir la page.');
+        return;
+    }
+    
+    try {
+        console.log('🔍 Récupération informations du cours...');
         
-        // Vérifier si le système d'annulation est disponible
-        if (!window.bookingCancellation) {
-            alert('Le système d\'annulation n\'est pas disponible. Veuillez rafraîchir la page.');
-            return;
-        }
-        
-        // Trouver la leçon pour afficher des infos dans la confirmation
+        // Récupérer les infos du cours pour affichage dans la confirmation
         const lesson = upcomingLessons.find(l => l.id === bookingId);
         if (!lesson) {
             alert('Cours non trouvé');
@@ -675,8 +684,19 @@ async function loadUserData(user) {
             minute: '2-digit'
         });
         
-        // Confirmation détaillée
-        if (!confirm(`Êtes-vous sûr de vouloir annuler ce cours ?\n\n📅 ${formattedDate}\n📚 ${lesson.course_type}\n⏱️ ${lesson.duration_minutes || 60}min\n\nUn crédit sera ajouté à votre compte`)) {
+        // Calculer les heures restantes
+        const hoursUntilStart = (lessonDate - new Date()) / (1000 * 60 * 60);
+        
+        // Message de confirmation adapté
+        let confirmMessage = `Êtes-vous sûr de vouloir annuler ce cours ?\n\n📅 ${formattedDate}\n📚 ${lesson.course_type}\n⏱️ ${lesson.duration_minutes || 60}min`;
+        
+        if (hoursUntilStart > 24) {
+            confirmMessage += '\n\n💰 Un crédit sera ajouté à votre compte';
+        } else {
+            confirmMessage += '\n\n⚠️ ATTENTION : Le cours commence dans moins de 24h\n❌ Aucun crédit ne sera remboursé (cours perdu)';
+        }
+        
+        if (!confirm(confirmMessage)) {
             return;
         }
         
@@ -687,47 +707,71 @@ async function loadUserData(user) {
             cancelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Annulation en cours...';
         }
         
-        try {
-            const result = await window.bookingCancellation.cancelBooking(bookingId, user.id);
+        console.log('📞 Appel RPC cancel_booking_safe...');
+        console.log('   Booking ID:', bookingId);
+        console.log('   User ID:', user.id);
+        console.log('   Heures restantes:', hoursUntilStart.toFixed(2));
+        
+        // ============================================================================
+        // ✅ APPEL RPC : cancel_booking_safe()
+        // ============================================================================
+        const { data: result, error } = await window.supabase
+            .rpc('cancel_booking_safe', {
+                p_booking_id: bookingId
+            });
+        
+        if (error) {
+            console.error('❌ Erreur RPC:', error);
+            throw new Error(error.message || 'Erreur lors de l\'annulation');
+        }
+        
+        console.log('📥 Résultat RPC:', result);
+        
+        // ============================================================================
+        // TRAITEMENT DU RÉSULTAT
+        // ============================================================================
+        
+        if (result.success) {
+            // ✅ ANNULATION RÉUSSIE (> 24h)
+            console.log('✅ Annulation réussie');
+            console.log('   Booking ID:', result.booking_id);
+            console.log('   Booking Number:', result.booking_number);
+            console.log('   Crédit remboursé:', result.credit_refunded);
+            console.log('   Heures avant:', result.hours_before);
             
-            if (result.success) {
-                // Afficher un message de succès
-                const successMessage = `✅ Cours annulé avec succès !`;
-                const creditMessage = result.creditRefunded ? '\n💰 1 crédit a été ajouté à votre compte.' : '';
-                
-                if (window.utils && window.utils.showNotification) {
-                    window.utils.showNotification(successMessage + creditMessage, 'success');
-                } else {
-                    alert(successMessage + creditMessage);
-                }
-                
-                // Rafraîchir les données du dashboard
-                await loadUpcomingLessons(user.id);
-                
-                // Rafraîchir les forfaits si un crédit a été remboursé
-                if (result.creditRefunded && window.packagesManager) {
-                    await loadUserPackages(user.id);
-                }
+            let successMessage = '✅ Cours annulé avec succès !';
+            
+            if (result.credit_refunded) {
+                successMessage += '\n💰 1 crédit a été ajouté à votre compte.';
+            }
+            
+            if (window.utils && window.utils.showNotification) {
+                window.utils.showNotification(successMessage, 'success');
             } else {
-                throw new Error(result.error || 'Échec de l\'annulation');
-            }
-        } catch (error) {
-            console.error('Erreur annulation:', error);
-            
-            // Réactiver le bouton
-            if (cancelBtn) {
-                cancelBtn.disabled = false;
-                cancelBtn.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
+                alert(successMessage);
             }
             
-            // Afficher message d'erreur
-            let errorMessage = error.message || 'Erreur lors de l\'annulation';
+            // Rafraîchir les données du dashboard
+            console.log('🔄 Rafraîchissement du dashboard...');
+            await loadUpcomingLessons(user.id);
             
-            // Messages d'erreur plus clairs
-            if (errorMessage.includes('24h')) {
-                errorMessage = 'Annulation impossible : le cours commence dans moins de 24h';
-            } else if (errorMessage.includes('déjà annulée')) {
-                errorMessage = 'Cette réservation est déjà annulée';
+            // Rafraîchir les forfaits si un crédit a été remboursé
+            if (result.credit_refunded && window.packagesManager) {
+                console.log('🔄 Rafraîchissement des forfaits...');
+                await loadUserPackages(user.id);
+            }
+            
+        } else {
+            // ⚠️ ANNULATION REFUSÉE (< 24h)
+            console.warn('⚠️ Annulation hors délai');
+            console.log('   Statut:', result.status);
+            console.log('   Heures avant:', result.hours_before);
+            
+            let errorMessage = result.error || 'Annulation impossible : le cours commence dans moins de 24h';
+            
+            // Message plus clair selon le statut
+            if (result.status === 'lost') {
+                errorMessage = '❌ Annulation impossible\n\nLe cours commence dans moins de 24h.\nLe cours a été marqué comme perdu.\n\n⏰ Heures restantes : ' + (result.hours_before ? result.hours_before.toFixed(1) + 'h' : 'N/A');
             }
             
             if (window.utils && window.utils.showNotification) {
@@ -735,8 +779,53 @@ async function loadUserData(user) {
             } else {
                 alert(errorMessage);
             }
+            
+            // Rafraîchir quand même pour voir le statut 'lost'
+            await loadUpcomingLessons(user.id);
+            
+            // Réactiver le bouton
+            if (cancelBtn) {
+                cancelBtn.disabled = false;
+                cancelBtn.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Erreur annulation:', error);
+        
+        // Log détaillé pour debugging
+        console.group('🔍 Détails erreur');
+        console.log('Booking ID:', bookingId);
+        console.log('User ID:', user?.id);
+        console.log('Message:', error.message);
+        console.groupEnd();
+        
+        // Réactiver le bouton
+        const cancelBtn = document.querySelector(`.btn-cancel-external[onclick*="${bookingId}"]`);
+        if (cancelBtn) {
+            cancelBtn.disabled = false;
+            cancelBtn.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
+        }
+        
+        // Afficher message d'erreur
+        let errorMessage = error.message || 'Erreur lors de l\'annulation';
+        
+        // Messages d'erreur plus clairs
+        if (errorMessage.includes('moins de 24h')) {
+            errorMessage = 'Annulation impossible : le cours commence dans moins de 24h';
+        } else if (errorMessage.includes('déjà annulée') || errorMessage.includes('cancelled')) {
+            errorMessage = 'Cette réservation est déjà annulée';
+        } else if (errorMessage.includes('non trouvée') || errorMessage.includes('not found')) {
+            errorMessage = 'Réservation introuvable';
+        }
+        
+        if (window.utils && window.utils.showNotification) {
+            window.utils.showNotification(errorMessage, 'error');
+        } else {
+            alert('Erreur : ' + errorMessage);
         }
     }
+}
     
     function updateLessonNavigation() {
         const prevBtn = document.getElementById('prevLessonBtn');
@@ -825,42 +914,6 @@ async function loadUserData(user) {
     // Exposer la fonction de chargement globalement
     window.loadDashboard = loadDashboard;
     
-    // Exposer la fonction handleCancelLesson globalement pour qu'elle soit accessible
-    window.handleCancelLesson = handleCancelLesson;
-    
-    // Fonction de débogage pour tester l'annulation
-    window.testCancellation = async function(bookingId) {
-        const user = window.authManager?.getCurrentUser();
-        if (!user) {
-            console.error('❌ Utilisateur non connecté');
-            return;
-        }
-        
-        console.group('🧪 Test d\'annulation');
-        console.log('Booking ID:', bookingId);
-        console.log('User ID:', user.id);
-        
-        try {
-            // Vérifier l'état avant
-            const { data: booking } = await supabase
-                .from('bookings')
-                .select('*')
-                .eq('id', bookingId)
-                .single();
-                
-            console.log('État avant:', booking);
-            
-            // Vérifier si annulation possible
-            const hoursUntilStart = calculateHoursUntilStart(booking.start_time);
-            console.log('Heures restantes:', hoursUntilStart);
-            console.log('Peut être annulé:', hoursUntilStart > 24);
-            
-        } catch (error) {
-            console.error('Erreur test:', error);
-        }
-        
-        console.groupEnd();
-    };
 });
 
 // Vérification directe au chargement
