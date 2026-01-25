@@ -520,7 +520,6 @@ class PaymentManager {
                     payment_method: method,
                     payment_reference: transactionId,
                     package_id: packageId, // null si pas de forfait
-                    updated_at: new Date().toISOString()
                 })
                 .eq('id', this.currentBooking.intentId)
                 .select('id, booking_number, status, price_paid, currency');
