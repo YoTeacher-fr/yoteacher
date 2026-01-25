@@ -688,16 +688,34 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log('📦 Utilisation du cache pour le prix');
                             price = cachedIntentData.displayPrice;
                         } else {
-                            const { data: intentData, error } = await supabase.rpc('create_booking_intent', {
-                                p_user_id: user.id,
-                                p_course_type: courseType,
-                                p_duration: selectedDuration,
-                                p_start_time: selectedSlot.start,
-                                p_end_time: selectedSlot.end,
-                                p_quantity: coursesCount,
-                                p_location: selectedLocationInput.value || 'integrations:google:meet'
-                            });
-                            
+console.log('📞 Appel create_booking_intent avec paramètres:', {
+    p_user_id: user.id,
+    p_course_type: courseType,
+    p_duration: selectedDuration,
+    p_start_time: selectedSlot.start,
+    p_end_time: selectedSlot.end,
+    p_quantity: coursesCount,
+    p_location: selectedLocationInput.value || 'integrations:google:meet'
+});
+
+const { data: intentData, error: intentError } = await supabase.rpc('create_booking_intent', {
+    p_user_id: user.id,
+    p_course_type: courseType,
+    p_duration: selectedDuration,
+    p_start_time: selectedSlot.start,
+    p_end_time: selectedSlot.end,
+    p_quantity: coursesCount,
+    p_location: selectedLocationInput.value || 'integrations:google:meet'
+});
+                            console.log('📥 Réponse RPC:', { intentData, intentError });
+
+if (intentError) {
+    console.error('❌ Erreur create_booking_intent:', intentError);
+    console.error('   Code:', intentError.code);
+    console.error('   Message:', intentError.message);
+    console.error('   Details:', intentError.details);
+    throw new Error('Impossible de calculer le prix: ' + intentError.message);
+}
                             if (!error && intentData && intentData.success) {
                                 console.log('✅ Prix calculé par RPC:', intentData.price, intentData.currency);
                                 
