@@ -412,54 +412,93 @@ class BookingManager {
                 }
             }
             
-            // ============================================================================
-            // FLUX PAIEMENT - APPELER create_booking_intent() POUR CALCULER LE PRIX
-            // ============================================================================
-            console.log('💰 Flux paiement (calcul prix par RPC)');
-            
-            if (!window.supabase) {
-                throw new Error('Supabase non disponible');
-            }
-            
-            const requiredFields = ['startTime', 'courseType'];
-            for (const field of requiredFields) {
-                if (!bookingData[field]) {
-                    throw new Error(`Champ requis manquant: ${field}`);
-                }
-            }
-            
-            const duration = bookingData.duration || 60;
-            const quantity = bookingData.packageQuantity || 1;
-            
-            console.log('📞 Appel create_booking_intent() pour calcul prix...');
-            
-            // ✅ APPEL RPC : create_booking_intent()
-            const { data: intentData, error: intentError } = await supabase.rpc('create_booking_intent', {
-                p_user_id: user?.id || null,
-                p_course_type: bookingData.courseType,
-                p_duration: duration,
-                p_start_time: bookingData.startTime,
-                p_end_time: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, duration),
-                p_quantity: quantity,
-                p_location: bookingData.location || 'integrations:google:meet'
-            });
-            
-            if (intentError) {
-                console.error('❌ Erreur create_booking_intent:', intentError);
-                throw new Error('Impossible de calculer le prix: ' + intentError.message);
-            }
-            
-            if (!intentData || !intentData.success) {
-                throw new Error('Échec création intention: ' + (intentData?.error || 'Erreur inconnue'));
-            }
-            
-            console.log('✅ Prix calculé par la DB:', {
-                intent_id: intentData.intent_id,
-                price: intentData.price,
-                currency: intentData.currency,
-                is_vip: intentData.is_vip,
-                discount_percent: intentData.discount_percent
-            });
+// ============================================================================
+// FLUX PAIEMENT - RÉUTILISER L'INTENTION DÉJÀ CRÉÉE
+// ============================================================================
+console.log('💰 Flux paiement (réutilisation intention existante)');
+
+if (!window.supabase) {
+    throw new Error('Supabase non disponible');
+}
+
+const requiredFields = ['startTime', 'courseType'];
+for (const field of requiredFields) {
+    if (!bookingData[field]) {
+        throw new Error(`Champ requis manquant: ${field}`);
+    }
+}
+
+const duration = bookingData.duration || 60;
+const quantity = bookingData.packageQuantity || 1;
+
+// ✅ VÉRIFIER SI UNE INTENTION EXISTE DÉJÀ (créée par updateSummary)
+let intentData = null;
+
+// Chercher une intention récente (< 5 min)
+console.log('🔍 Recherche intention existante...');
+
+const { data: existingIntents, error: searchError } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('course_type', bookingData.courseType)
+    .eq('duration_minutes', duration)
+    .eq('start_time', bookingData.startTime)
+    .eq('status', 'pending')
+    .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()) // < 5 min
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+if (searchError) {
+    console.error('❌ Erreur recherche intention:', searchError);
+}
+
+if (existingIntents && existingIntents.length > 0) {
+    // ✅ RÉUTILISER L'INTENTION EXISTANTE
+    const existingIntent = existingIntents[0];
+    console.log('✅ Intention existante trouvée:', existingIntent.id);
+    
+    intentData = {
+        success: true,
+        intent_id: existingIntent.id,
+        price: existingIntent.price_paid,
+        currency: existingIntent.currency,
+        can_use_credit: false, // Déjà vérifié
+        is_vip: existingIntent.is_vip || false,
+        discount_percent: 0
+    };
+} else {
+    // ❌ CRÉER UNE NOUVELLE INTENTION (si aucune trouvée)
+    console.log('📞 Création nouvelle intention...');
+    
+    const { data: newIntent, error: intentError } = await supabase.rpc('create_booking_intent', {
+        p_user_id: user?.id || null,
+        p_course_type: bookingData.courseType,
+        p_duration: duration,
+        p_start_time: bookingData.startTime,
+        p_end_time: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, duration),
+        p_quantity: quantity,
+        p_location: bookingData.location || 'integrations:google:meet'
+    });
+    
+    if (intentError) {
+        console.error('❌ Erreur create_booking_intent:', intentError);
+        throw new Error('Impossible de calculer le prix: ' + intentError.message);
+    }
+    
+    if (!newIntent || !newIntent.success) {
+        throw new Error('Échec création intention: ' + (newIntent?.error || 'Erreur inconnue'));
+    }
+    
+    intentData = newIntent;
+}
+
+console.log('✅ Intention prête:', {
+    intent_id: intentData.intent_id,
+    price: intentData.price,
+    currency: intentData.currency,
+    is_vip: intentData.is_vip
+});
             
             // Construire les données complètes avec le prix DB
             const completeBookingData = {

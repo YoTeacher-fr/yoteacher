@@ -606,22 +606,25 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSummary();
     }
 
-    function selectTimeSlot(slot, element) {
-        document.querySelectorAll('.time-slot').forEach(slotEl => {
-            slotEl.classList.remove('selected');
-        });
+function selectTimeSlot(slot, element) {
+    document.querySelectorAll('.time-slot').forEach(slotEl => {
+        slotEl.classList.remove('selected');
+    });
 
-        element.classList.add('selected');
-        
-        selectedSlot = slot;
-        
-        const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
-        const timeOptions = { hour: '2-digit', minute: '2-digit' };
-        
-        selectedTime = new Date(slot.start).toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions);
-        
-        updateSummary();
-    }
+    element.classList.add('selected');
+    
+    selectedSlot = slot;
+    
+    const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+    const timeOptions = { hour: '2-digit', minute: '2-digit' };
+    
+    selectedTime = new Date(slot.start).toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions);
+    
+    // ✅ INVALIDER LE CACHE quand on change de créneau
+    cachedIntentData = null;
+    
+    updateSummary();
+}
 
 // ============================================================================
 // MISE À JOUR RÉCAPITULATIF - APPELLE create_booking_intent()
