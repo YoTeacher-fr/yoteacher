@@ -664,7 +664,7 @@ async function updateSummary() {
         
         console.log(`✅ Prix essai: ${price}`);
     } 
-   // COURS PAYANTS - CALCUL LOCAL (pas d'appel RPC)
+// COURS PAYANTS - APPELER calculate_price_estimate() (DB-ONLY)
 else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
     if (courseType === 'conversation') {
         courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
@@ -678,92 +678,71 @@ else if (courseType === 'conversation' || courseType === 'curriculum' || courseT
         const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
         duration = selectedDuration + ' min';
         
-        // ✅ CALCUL LOCAL DU PRIX (sans créer d'intention DB)
-        if (selectedDate && selectedSlot) {
-            console.log('💰 Calcul local du prix estimé');
-            
-            // Vérifier le cache
-            if (cachedIntentData && 
-                cachedIntentData.course_type === courseType &&
-                cachedIntentData.duration === selectedDuration &&
-                cachedIntentData.quantity === coursesCount) {
-                console.log('📦 Utilisation du cache pour le prix');
-                price = cachedIntentData.displayPrice;
-            } else {
-                try {
-                    let unitPrice = 0;
-                    let currency = 'EUR';
+        console.log(`📞 Appel calculate_price_estimate() pour afficher prix`);
+        
+        // ✅ APPELER RPC calculate_price_estimate() (DB-ONLY)
+        if (window.supabase && selectedDate && selectedSlot) {
+            try {
+                // Vérifier le cache
+                if (cachedIntentData && 
+                    cachedIntentData.course_type === courseType &&
+                    cachedIntentData.duration === selectedDuration &&
+                    cachedIntentData.quantity === coursesCount) {
+                    console.log('📦 Utilisation du cache pour le prix');
+                    price = cachedIntentData.displayPrice;
+                } else {
+                    console.log('📤 Paramètres RPC estimate:', {
+                        p_user_id: user.id,
+                        p_course_type: courseType,
+                        p_duration: selectedDuration,
+                        p_quantity: coursesCount
+                    });
+
+                    // ✅ APPEL RPC (DB-ONLY)
+                    const { data: priceEstimate, error: estimateError } = await supabase.rpc('calculate_price_estimate', {
+                        p_user_id: user.id,
+                        p_course_type: courseType,
+                        p_duration: selectedDuration,
+                        p_quantity: coursesCount
+                    });
                     
-                    // 1️⃣ PRIX VIP (si utilisateur VIP)
-                    if (isVipUser && window.authManager?.vipPricing) {
-                        const vipPrice = window.authManager.vipPricing.find(p => 
-                            p.course_type === courseType && 
-                            p.duration_minutes === selectedDuration
-                        );
-                        
-                        if (vipPrice) {
-                            unitPrice = vipPrice.price;
-                            currency = vipPrice.currency;
-                            console.log('👑 Prix VIP trouvé:', unitPrice, currency);
-                        }
-                    }
+                    console.log('📥 Réponse RPC estimate:', { priceEstimate, estimateError });
                     
-                    // 2️⃣ PRIX STANDARD (si pas VIP ou pas de prix VIP)
-                    if (unitPrice === 0) {
-                        // Prix de base pour 60 min
-                        let basePrice60 = 0;
-                        
-                        if (courseType === 'conversation') {
-                            basePrice60 = 20;
-                        } else if (courseType === 'curriculum') {
-                            basePrice60 = 40;
-                        } else if (courseType === 'examen') {
-                            basePrice60 = 30;
-                        }
-                        
-                        // Ajuster selon la durée
-                        unitPrice = basePrice60 * (selectedDuration / 60);
-                        currency = 'EUR';
-                        
-                        console.log('📊 Prix standard calculé:', unitPrice, currency);
-                    }
-                    
-                    // 3️⃣ APPLIQUER RÉDUCTION FORFAIT
-                    let discountPercent = 0;
-                    if (coursesCount === 5) {
-                        discountPercent = 2;
-                    } else if (coursesCount === 10) {
-                        discountPercent = 5;
-                    }
-                    
-                    // 4️⃣ CALCUL FINAL
-                    let finalPrice = unitPrice * coursesCount * (1 - discountPercent / 100);
-                    finalPrice = Math.round(finalPrice * 100) / 100; // Arrondir à 2 décimales
-                    
-                    console.log('💵 Prix final:', finalPrice, currency, '(réduction:', discountPercent + '%)');
-                    
-                    // 5️⃣ FORMATER LE PRIX
-                    if (window.currencyManager) {
-                        price = window.currencyManager.formatPriceInCurrency(finalPrice, currency);
+                    if (estimateError) {
+                        console.error('❌ Erreur RPC calculate_price_estimate:', estimateError);
+                        console.error('   Code:', estimateError.code);
+                        console.error('   Message:', estimateError.message);
+                        price = 'Erreur calcul';
+                    } else if (!priceEstimate || !priceEstimate.success) {
+                        console.warn('⚠️ RPC estimate échoué:', priceEstimate);
+                        price = 'Prix à calculer';
                     } else {
-                        price = `${finalPrice} ${currency}`;
+                        console.log('✅ Prix estimé par RPC (DB):', priceEstimate.price, priceEstimate.currency);
+                        
+                        // Formater le prix
+                        if (window.currencyManager) {
+                            price = window.currencyManager.formatPriceInCurrency(priceEstimate.price, priceEstimate.currency);
+                        } else {
+                            price = `${priceEstimate.price} ${priceEstimate.currency}`;
+                        }
+                        
+                        // Mettre en cache
+                        cachedIntentData = {
+                            course_type: courseType,
+                            duration: selectedDuration,
+                            quantity: coursesCount,
+                            displayPrice: price,
+                            rawPrice: priceEstimate.price,
+                            currency: priceEstimate.currency,
+                            is_vip: priceEstimate.is_vip
+                        };
                     }
-                    
-                    // 6️⃣ METTRE EN CACHE
-                    cachedIntentData = {
-                        course_type: courseType,
-                        duration: selectedDuration,
-                        quantity: coursesCount,
-                        displayPrice: price,
-                        rawPrice: finalPrice,
-                        currency: currency,
-                        is_vip: isVipUser
-                    };
-                    
-                } catch (error) {
-                    console.error('❌ Erreur calcul prix local:', error);
-                    price = 'Erreur calcul';
                 }
+            } catch (catchError) {
+                console.error('❌ Exception appel RPC estimate:', catchError);
+                console.error('   Type:', catchError.name);
+                console.error('   Message:', catchError.message);
+                price = 'Erreur calcul';
             }
         } else {
             price = 'Sélectionnez date et heure';
