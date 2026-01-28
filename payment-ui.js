@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Pour les non-VIP, le prix d'origine est en EUR
                 originalAmount = booking.originalPrice || booking.priceEUR || booking.price;
-                originalCurrency = booking.originalCurrency || 'EUR';
+originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
             }
             
             // Convertir dans la devise courante
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Pour les non-VIP, le prix d'origine est en EUR
                 originalAmount = booking.originalPrice || booking.priceEUR || booking.price;
-                originalCurrency = booking.originalCurrency || 'EUR';
+originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
             }
             
             // Convertir dans la devise courante
