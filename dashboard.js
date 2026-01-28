@@ -276,52 +276,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-async function loadUserData(user) {
-    const welcomeDiv = document.getElementById('welcomeMessage');
-    const userName = user.profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0];
-    const now = new Date();
-    const hour = now.getHours();
+    async function loadUserData(user) {
+        const welcomeDiv = document.getElementById('welcomeMessage');
+        const userName = user.profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0];
+        const now = new Date();
+        const hour = now.getHours();
+        
+        let greeting;
+        if (window.translationManager?.getCurrentLanguage() === 'en') {
+            greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+        } else {
+            greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
+        }
+        
+        // Construire le HTML du message d'accueil
+        let welcomeHTML = `
+            <div class="welcome-message">
+                <h1>${greeting} ${userName} !`;
     
-    let greeting;
-    if (window.translationManager?.getCurrentLanguage() === 'en') {
-        greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-    } else {
-        greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
-    }
-    
-    // Construire le HTML du message d'accueil
-    let welcomeHTML = `
-        <div class="welcome-message">
-            <h1>${greeting} ${userName} !`;
-    
-    // Ajouter le badge VIP si l'utilisateur est VIP, sinon ajouter l'émoji
-    if (user.profile?.is_vip) {
-        welcomeHTML += ` <span class="vip-badge">
-                <i class="fas fa-crown"></i>
-                <span>Membre VIP</span>
-            </span>`;
-    } else {
-        welcomeHTML += ' 👋';
-    }
-                    
-    welcomeDiv.innerHTML = welcomeHTML;
-    
-    // Mettre à jour les informations du profil
-    updateProfileInfo(user);
-    
-    if (window.supabase) {
-        try {
-            // Charger les forfaits
-            await loadUserPackages(user.id);
-            
-            // Charger les réservations à venir
-            await loadUpcomingLessons(user.id);
-            
-        } catch (error) {
-            console.error('Erreur chargement données:', error);
+        // Ajouter le badge VIP si l'utilisateur est VIP, sinon ajouter l'émoji
+        if (user.profile?.is_vip) {
+            welcomeHTML += ` <span class="vip-badge">
+                    <i class="fas fa-crown"></i>
+                    <span>Membre VIP</span>
+                </span>`;
+        } else {
+            welcomeHTML += ' 👋';
+        }
+                        
+        welcomeDiv.innerHTML = welcomeHTML;
+        
+        // Mettre à jour les informations du profil
+        updateProfileInfo(user);
+        
+        if (window.supabase) {
+            try {
+                // Charger les forfaits
+                await loadUserPackages(user.id);
+                
+                // Charger les réservations à venir
+                await loadUpcomingLessons(user.id);
+                
+            } catch (error) {
+                console.error('Erreur chargement données:', error);
+            }
         }
     }
-}
     
     function updateProfileInfo(user) {
         const profileInfo = document.getElementById('profileInfo');
@@ -364,6 +364,15 @@ async function loadUserData(user) {
         }
         
         try {
+            // Attendre que Supabase soit initialisé
+            if (!window.supabase && window.supabaseInitialized) {
+                await window.supabaseInitialized;
+            }
+            
+            if (!window.supabase) {
+                throw new Error('Supabase non initialisé');
+            }
+            
             // Charger les forfaits actifs
             const packages = await window.packagesManager.getUserActivePackages(userId);
             
@@ -493,9 +502,16 @@ async function loadUserData(user) {
     }
     
     async function loadUpcomingLessons(userId) {
-        if (!window.supabase) return;
-        
         try {
+            // Attendre que Supabase soit initialisé
+            if (!window.supabase && window.supabaseInitialized) {
+                await window.supabaseInitialized;
+            }
+            
+            if (!window.supabase) {
+                throw new Error('Supabase non initialisé');
+            }
+            
             const { data: bookings, error } = await supabase
                 .from('upcoming_bookings')
                 .select('*')
@@ -539,293 +555,345 @@ async function loadUserData(user) {
                 <div class="no-upcoming">
                     <i class="fas fa-exclamation-triangle"></i>
                     <p>Erreur de chargement des cours</p>
+                    ${error.message.includes('Failed to fetch') || error.message.includes('CORS') ? 
+                        '<small>Veuillez vérifier votre connexion ou réessayer plus tard</small>' : ''}
                 </div>
             `;
         }
     }
     
     function displayCurrentLesson() {
-    if (upcomingLessons.length === 0) return;
-    
-    const lesson = upcomingLessons[currentLessonIndex];
-    const nextLessonContent = document.getElementById('nextLessonContent');
-    const lessonCounter = document.getElementById('lessonCounter');
-    const externalActions = document.getElementById('lessonExternalActions');
-    
-    // Mettre à jour le compteur
-    lessonCounter.textContent = `${currentLessonIndex + 1}/${upcomingLessons.length}`;
-    
-    const lessonDate = new Date(lesson.start_time);
-    const hoursUntilStart = calculateHoursUntilStart(lesson.start_time);
-    
-    // Vérifier si l'annulation est possible (plus de 24h)
-    const canCancel = hoursUntilStart > 24 && lesson.status !== 'cancelled';
-    
-    // Mapping des plateformes pour l'affichage
-    const platformNames = {
-        'zoom': 'Zoom',
-        'meet': 'Google Meet',
-        'teams': 'Microsoft Teams',
-        'other': 'Autre'
-    };
-    
-    const platformName = platformNames[lesson.platform] || lesson.platform || 'Zoom';
-    
-    nextLessonContent.innerHTML = `
-        <div class="upcoming-lesson-card">
-            <div class="lesson-date">
-                <i class="fas fa-calendar-alt"></i>
-                ${lessonDate.toLocaleDateString('fr-FR', { 
-                    weekday: 'long', 
-                    day: 'numeric', 
-                    month: 'long',
-                    year: 'numeric'
-                })}
-            </div>
-            <div class="lesson-info">
-                <div class="lesson-info-item">
-                    <span class="lesson-info-label">Heure</span>
-                    <span class="lesson-info-value">${lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-                <div class="lesson-info-item">
-                    <span class="lesson-info-label">Durée</span>
-                    <span class="lesson-info-value">${lesson.duration_minutes || 60} min</span>
-                </div>
-                <div class="lesson-info-item">
-                    <span class="lesson-info-label">Type</span>
-                    <span class="lesson-info-value">${lesson.course_type || 'Cours'}</span>
-                </div>
-                <div class="lesson-info-item">
-                    <span class="lesson-info-label">Plateforme</span>
-                    <span class="lesson-info-value">${platformName}</span>
-                </div>
-                <div class="lesson-info-item">
-                    <span class="lesson-info-label">Référence</span>
-                    <span class="lesson-info-value">${lesson.booking_number || '#' + (lesson.id ? lesson.id.substring(0, 8) : '')}</span>
-                </div>
-                ${hoursUntilStart <= 24 ? `
-                <div class="lesson-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Annulation impossible (moins de 24h avant le cours)</span>
-                </div>
-                ` : ''}
-            </div>
-        </div>
-    `;
-    
-    // ============================================================================
-    // AFFICHER LES BOUTONS EN DEHORS DE LA CARTE
-    // ============================================================================
-    externalActions.style.display = 'flex';
-    externalActions.innerHTML = '';
-    
-    // Bouton d'annulation (seulement si possible)
-    if (canCancel) {
-        // ✅ NOUVEAU : Créer bouton avec addEventListener au lieu de onclick
-        const cancelButton = document.createElement('button');
-        cancelButton.className = 'btn-external btn-cancel-external';
-        cancelButton.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
+        if (upcomingLessons.length === 0) return;
         
-        // ✅ NOUVEAU : Utiliser addEventListener (plus propre que onclick)
-        cancelButton.addEventListener('click', async function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            await handleCancelLesson(lesson.id);
-        });
+        const lesson = upcomingLessons[currentLessonIndex];
+        const nextLessonContent = document.getElementById('nextLessonContent');
+        const lessonCounter = document.getElementById('lessonCounter');
+        const externalActions = document.getElementById('lessonExternalActions');
         
-        externalActions.appendChild(cancelButton);
-    }
-    
-    // Bouton de connexion (toujours visible si lien disponible)
-    if (lesson.meeting_link) {
-        const joinLink = document.createElement('a');
-        joinLink.href = lesson.meeting_link;
-        joinLink.target = '_blank';
-        joinLink.className = 'btn-external btn-join-external';
-        joinLink.innerHTML = '<i class="fas fa-video"></i> Rejoindre';
-        externalActions.appendChild(joinLink);
-    }
-    
-    // Si aucun bouton n'est affiché, masquer la div
-    if (!canCancel && !lesson.meeting_link) {
-        externalActions.style.display = 'none';
-    }
-}
-    
-    async function handleCancelLesson(bookingId) {
-    const user = window.authManager?.getCurrentUser();
-    if (!user) {
-        alert('Vous devez être connecté pour annuler un cours');
-        return;
-    }
-    
-    // Vérifier que Supabase est disponible
-    if (!window.supabase) {
-        alert('Service non disponible. Veuillez rafraîchir la page.');
-        return;
-    }
-    
-    try {
-        console.log('🔍 Récupération informations du cours...');
-        
-        // Récupérer les infos du cours pour affichage dans la confirmation
-        const lesson = upcomingLessons.find(l => l.id === bookingId);
-        if (!lesson) {
-            alert('Cours non trouvé');
-            return;
-        }
+        // Mettre à jour le compteur
+        lessonCounter.textContent = `${currentLessonIndex + 1}/${upcomingLessons.length}`;
         
         const lessonDate = new Date(lesson.start_time);
-        const formattedDate = lessonDate.toLocaleDateString('fr-FR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        const hoursUntilStart = calculateHoursUntilStart(lesson.start_time);
         
-        // Calculer les heures restantes
-        const hoursUntilStart = (lessonDate - new Date()) / (1000 * 60 * 60);
+        // Vérifier si l'annulation est possible (plus de 24h)
+        const canCancel = hoursUntilStart > 24 && lesson.status !== 'cancelled';
         
-        // Message de confirmation adapté
-        let confirmMessage = `Êtes-vous sûr de vouloir annuler ce cours ?\n\n📅 ${formattedDate}\n📚 ${lesson.course_type}\n⏱️ ${lesson.duration_minutes || 60}min`;
+        // Mapping des plateformes pour l'affichage
+        const platformNames = {
+            'zoom': 'Zoom',
+            'meet': 'Google Meet',
+            'teams': 'Microsoft Teams',
+            'other': 'Autre'
+        };
         
-        if (hoursUntilStart > 24) {
-            confirmMessage += '\n\n💰 Un crédit sera ajouté à votre compte';
-        } else {
-            confirmMessage += '\n\n⚠️ ATTENTION : Le cours commence dans moins de 24h\n❌ Aucun crédit ne sera remboursé (cours perdu)';
+        const platformName = platformNames[lesson.platform] || lesson.platform || 'Zoom';
+        
+        nextLessonContent.innerHTML = `
+            <div class="upcoming-lesson-card">
+                <div class="lesson-date">
+                    <i class="fas fa-calendar-alt"></i>
+                    ${lessonDate.toLocaleDateString('fr-FR', { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long',
+                        year: 'numeric'
+                    })}
+                </div>
+                <div class="lesson-info">
+                    <div class="lesson-info-item">
+                        <span class="lesson-info-label">Heure</span>
+                        <span class="lesson-info-value">${lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div class="lesson-info-item">
+                        <span class="lesson-info-label">Durée</span>
+                        <span class="lesson-info-value">${lesson.duration_minutes || 60} min</span>
+                    </div>
+                    <div class="lesson-info-item">
+                        <span class="lesson-info-label">Type</span>
+                        <span class="lesson-info-value">${lesson.course_type || 'Cours'}</span>
+                    </div>
+                    <div class="lesson-info-item">
+                        <span class="lesson-info-label">Plateforme</span>
+                        <span class="lesson-info-value">${platformName}</span>
+                    </div>
+                    <div class="lesson-info-item">
+                        <span class="lesson-info-label">Référence</span>
+                        <span class="lesson-info-value">${lesson.booking_number || '#' + (lesson.id ? lesson.id.substring(0, 8) : '')}</span>
+                    </div>
+                    ${hoursUntilStart <= 24 ? `
+                    <div class="lesson-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Annulation impossible (moins de 24h avant le cours)</span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        
+        // ============================================================================
+        // AFFICHER LES BOUTONS EN DEHORS DE LA CARTE
+        // ============================================================================
+        externalActions.style.display = 'flex';
+        externalActions.innerHTML = '';
+        
+        // Bouton d'annulation (seulement si possible)
+        if (canCancel) {
+            const cancelButton = document.createElement('button');
+            cancelButton.className = 'btn-external btn-cancel-external';
+            cancelButton.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
+            
+            // Utiliser addEventListener (plus propre que onclick)
+            cancelButton.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                await handleCancelLesson(lesson.id);
+            });
+            
+            externalActions.appendChild(cancelButton);
         }
         
-        if (!confirm(confirmMessage)) {
+        // Bouton de connexion (toujours visible si lien disponible)
+        if (lesson.meeting_link) {
+            const joinLink = document.createElement('a');
+            joinLink.href = lesson.meeting_link;
+            joinLink.target = '_blank';
+            joinLink.className = 'btn-external btn-join-external';
+            joinLink.innerHTML = '<i class="fas fa-video"></i> Rejoindre';
+            externalActions.appendChild(joinLink);
+        }
+        
+        // Si aucun bouton n'est affiché, masquer la div
+        if (!canCancel && !lesson.meeting_link) {
+            externalActions.style.display = 'none';
+        }
+    }
+    
+    async function handleCancelLesson(bookingId) {
+        const user = window.authManager?.getCurrentUser();
+        if (!user) {
+            alert('Vous devez être connecté pour annuler un cours');
             return;
         }
         
-        // Désactiver le bouton pendant le traitement
-        const cancelBtn = document.querySelector(`.btn-cancel-external[onclick*="${bookingId}"]`);
-        if (cancelBtn) {
-            cancelBtn.disabled = true;
-            cancelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Annulation en cours...';
+        // Vérifier que bookingCancellation est disponible
+        if (!window.bookingCancellation) {
+            console.error('❌ Service d\'annulation non disponible');
+            
+            // Fallback: essayer avec l'appel RPC direct
+            await handleCancelLessonFallback(bookingId, user);
+            return;
         }
         
-        console.log('📞 Appel RPC cancel_booking_safe...');
-        console.log('   Booking ID:', bookingId);
-        console.log('   User ID:', user.id);
-        console.log('   Heures restantes:', hoursUntilStart.toFixed(2));
-        
-        // ============================================================================
-        // ✅ APPEL RPC : cancel_booking_safe()
-        // ============================================================================
-        const { data: result, error } = await window.supabase
-            .rpc('cancel_booking_safe', {
-                p_booking_id: bookingId
+        try {
+            console.log('🔍 Récupération informations du cours...');
+            
+            // Récupérer les infos du cours pour affichage dans la confirmation
+            const lesson = upcomingLessons.find(l => l.id === bookingId);
+            if (!lesson) {
+                alert('Cours non trouvé');
+                return;
+            }
+            
+            const lessonDate = new Date(lesson.start_time);
+            const formattedDate = lessonDate.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                hour: '2-digit',
+                minute: '2-digit'
             });
-        
-        if (error) {
-            console.error('❌ Erreur RPC:', error);
-            throw new Error(error.message || 'Erreur lors de l\'annulation');
-        }
-        
-        console.log('📥 Résultat RPC:', result);
-        
-        // ============================================================================
-        // TRAITEMENT DU RÉSULTAT
-        // ============================================================================
-        
-        if (result.success) {
-            // ✅ ANNULATION RÉUSSIE (> 24h)
-            console.log('✅ Annulation réussie');
-            console.log('   Booking ID:', result.booking_id);
-            console.log('   Booking Number:', result.booking_number);
-            console.log('   Crédit remboursé:', result.credit_refunded);
-            console.log('   Heures avant:', result.hours_before);
             
-            let successMessage = '✅ Cours annulé avec succès !';
+            // Calculer les heures restantes
+            const hoursUntilStart = (lessonDate - new Date()) / (1000 * 60 * 60);
             
-            if (result.credit_refunded) {
-                successMessage += '\n💰 1 crédit a été ajouté à votre compte.';
-            }
+            // Message de confirmation adapté
+            let confirmMessage = `Êtes-vous sûr de vouloir annuler ce cours ?\n\n📅 ${formattedDate}\n📚 ${lesson.course_type}\n⏱️ ${lesson.duration_minutes || 60}min`;
             
-            if (window.utils && window.utils.showNotification) {
-                window.utils.showNotification(successMessage, 'success');
+            if (hoursUntilStart > 24) {
+                confirmMessage += '\n\n💰 Un crédit sera ajouté à votre compte';
             } else {
-                alert(successMessage);
+                confirmMessage += '\n\n⚠️ ATTENTION : Le cours commence dans moins de 24h\n❌ Aucun crédit ne sera remboursé (cours perdu)';
             }
             
-            // Rafraîchir les données du dashboard
-            console.log('🔄 Rafraîchissement du dashboard...');
-            await loadUpcomingLessons(user.id);
-            
-            // Rafraîchir les forfaits si un crédit a été remboursé
-            if (result.credit_refunded && window.packagesManager) {
-                console.log('🔄 Rafraîchissement des forfaits...');
-                await loadUserPackages(user.id);
+            if (!confirm(confirmMessage)) {
+                return;
             }
             
-        } else {
-            // ⚠️ ANNULATION REFUSÉE (< 24h)
-            console.warn('⚠️ Annulation hors délai');
-            console.log('   Statut:', result.status);
-            console.log('   Heures avant:', result.hours_before);
+            // Désactiver le bouton pendant le traitement
+            const cancelBtn = document.querySelector('.btn-cancel-external');
+            if (cancelBtn) {
+                cancelBtn.disabled = true;
+                cancelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Annulation en cours...';
+            }
             
-            let errorMessage = result.error || 'Annulation impossible : le cours commence dans moins de 24h';
+            console.log('🎫 Utilisation de bookingCancellation.cancelBooking...');
+            console.log('   Booking ID:', bookingId);
+            console.log('   User ID:', user.id);
+            console.log('   Heures restantes:', hoursUntilStart.toFixed(2));
             
-            // Message plus clair selon le statut
-            if (result.status === 'lost') {
-                errorMessage = '❌ Annulation impossible\n\nLe cours commence dans moins de 24h.\nLe cours a été marqué comme perdu.\n\n⏰ Heures restantes : ' + (result.hours_before ? result.hours_before.toFixed(1) + 'h' : 'N/A');
+            // ============================================================================
+            // ✅ APPEL VIA bookingCancellation.cancelBooking()
+            // Cette méthode gère à la fois la DB et Cal.com
+            // ============================================================================
+            const result = await window.bookingCancellation.cancelBooking(bookingId, user.id);
+            
+            console.log('📥 Résultat annulation:', result);
+            
+            // ============================================================================
+            // TRAITEMENT DU RÉSULTAT
+            // ============================================================================
+            
+            if (result.success) {
+                console.log('✅ Annulation complète réussie');
+                console.log('   Booking ID:', result.bookingId);
+                console.log('   Booking Number:', result.bookingNumber);
+                console.log('   Crédit remboursé:', result.creditRefunded);
+                console.log('   Cal.com annulé:', result.calcomCancelled);
+                console.log('   Heures avant:', result.hoursBeforeStart);
+                
+                let successMessage = '✅ Cours annulé avec succès !';
+                
+                if (result.creditRefunded) {
+                    successMessage += '\n💰 1 crédit a été ajouté à votre compte.';
+                }
+                
+                if (result.calcomCancelled === false) {
+                    successMessage += '\nℹ️ Note: Aucune réservation Cal.com n\'a été trouvée (peut-être déjà annulée).';
+                }
+                
+                if (window.utils && window.utils.showNotification) {
+                    window.utils.showNotification(successMessage, 'success');
+                } else {
+                    alert(successMessage);
+                }
+                
+                // Rafraîchir les données du dashboard
+                console.log('🔄 Rafraîchissement du dashboard...');
+                await loadUpcomingLessons(user.id);
+                
+                // Rafraîchir les forfaits si un crédit a été remboursé
+                if (result.creditRefunded && window.packagesManager) {
+                    console.log('🔄 Rafraîchissement des forfaits...');
+                    await loadUserPackages(user.id);
+                }
+                
+            } else {
+                console.warn('⚠️ Annulation échouée ou partielle');
+                
+                let errorMessage = result.error || 'Annulation impossible';
+                
+                if (window.utils && window.utils.showNotification) {
+                    window.utils.showNotification(errorMessage, 'error');
+                } else {
+                    alert(errorMessage);
+                }
+                
+                // Rafraîchir quand même
+                await loadUpcomingLessons(user.id);
+            }
+            
+        } catch (error) {
+            console.error('❌ Erreur annulation:', error);
+            
+            // Log détaillé pour debugging
+            console.group('🔍 Détails erreur');
+            console.log('Booking ID:', bookingId);
+            console.log('User ID:', user?.id);
+            console.log('Message:', error.message);
+            console.log('Stack:', error.stack);
+            console.groupEnd();
+            
+            // Réactiver le bouton
+            const cancelBtn = document.querySelector('.btn-cancel-external');
+            if (cancelBtn) {
+                cancelBtn.disabled = false;
+                cancelBtn.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
+            }
+            
+            // Afficher message d'erreur
+            let errorMessage = error.message || 'Erreur lors de l\'annulation';
+            
+            // Messages d'erreur plus clairs
+            if (errorMessage.includes('moins de 24h')) {
+                errorMessage = 'Annulation impossible : le cours commence dans moins de 24h';
+            } else if (errorMessage.includes('déjà annulée') || errorMessage.includes('cancelled')) {
+                errorMessage = 'Cette réservation est déjà annulée';
+            } else if (errorMessage.includes('non trouvée') || errorMessage.includes('not found')) {
+                errorMessage = 'Réservation introuvable';
+            } else if (errorMessage.includes('Failed to fetch')) {
+                errorMessage = 'Erreur de connexion au serveur. Veuillez vérifier votre connexion.';
             }
             
             if (window.utils && window.utils.showNotification) {
                 window.utils.showNotification(errorMessage, 'error');
             } else {
-                alert(errorMessage);
+                alert('Erreur : ' + errorMessage);
+            }
+        }
+    }
+    
+    async function handleCancelLessonFallback(bookingId, user) {
+        // Fallback: utiliser l'appel RPC direct (ancienne méthode)
+        try {
+            console.log('⚠️ Utilisation du fallback RPC pour l\'annulation');
+            
+            // Désactiver le bouton pendant le traitement
+            const cancelBtn = document.querySelector('.btn-cancel-external');
+            if (cancelBtn) {
+                cancelBtn.disabled = true;
+                cancelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Annulation en cours...';
             }
             
-            // Rafraîchir quand même pour voir le statut 'lost'
-            await loadUpcomingLessons(user.id);
+            console.log('📞 Appel RPC cancel_booking_safe...');
+            
+            const { data: result, error } = await supabase
+                .rpc('cancel_booking_safe', {
+                    p_booking_id: bookingId
+                });
+            
+            if (error) {
+                console.error('❌ Erreur RPC:', error);
+                throw new Error(error.message || 'Erreur lors de l\'annulation');
+            }
+            
+            console.log('📥 Résultat RPC:', result);
+            
+            if (result.success) {
+                console.log('✅ Annulation DB réussie');
+                
+                let successMessage = '✅ Cours annulé avec succès !';
+                
+                if (result.credit_refunded) {
+                    successMessage += '\n💰 1 crédit a été ajouté à votre compte.';
+                }
+                
+                alert(successMessage);
+                
+                // Rafraîchir les données du dashboard
+                await loadUpcomingLessons(user.id);
+                
+                // Rafraîchir les forfaits si un crédit a été remboursé
+                if (result.credit_refunded && window.packagesManager) {
+                    await loadUserPackages(user.id);
+                }
+            } else {
+                alert('Erreur : ' + (result.error || 'Annulation impossible'));
+            }
+            
+        } catch (error) {
+            console.error('❌ Erreur fallback annulation:', error);
             
             // Réactiver le bouton
+            const cancelBtn = document.querySelector('.btn-cancel-external');
             if (cancelBtn) {
                 cancelBtn.disabled = false;
                 cancelBtn.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
             }
-        }
-        
-    } catch (error) {
-        console.error('❌ Erreur annulation:', error);
-        
-        // Log détaillé pour debugging
-        console.group('🔍 Détails erreur');
-        console.log('Booking ID:', bookingId);
-        console.log('User ID:', user?.id);
-        console.log('Message:', error.message);
-        console.groupEnd();
-        
-        // Réactiver le bouton
-        const cancelBtn = document.querySelector(`.btn-cancel-external[onclick*="${bookingId}"]`);
-        if (cancelBtn) {
-            cancelBtn.disabled = false;
-            cancelBtn.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
-        }
-        
-        // Afficher message d'erreur
-        let errorMessage = error.message || 'Erreur lors de l\'annulation';
-        
-        // Messages d'erreur plus clairs
-        if (errorMessage.includes('moins de 24h')) {
-            errorMessage = 'Annulation impossible : le cours commence dans moins de 24h';
-        } else if (errorMessage.includes('déjà annulée') || errorMessage.includes('cancelled')) {
-            errorMessage = 'Cette réservation est déjà annulée';
-        } else if (errorMessage.includes('non trouvée') || errorMessage.includes('not found')) {
-            errorMessage = 'Réservation introuvable';
-        }
-        
-        if (window.utils && window.utils.showNotification) {
-            window.utils.showNotification(errorMessage, 'error');
-        } else {
-            alert('Erreur : ' + errorMessage);
+            
+            alert('Erreur : ' + error.message);
         }
     }
-}
     
     function updateLessonNavigation() {
         const prevBtn = document.getElementById('prevLessonBtn');
