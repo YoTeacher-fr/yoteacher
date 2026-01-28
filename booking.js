@@ -455,6 +455,18 @@ async createBookingWithCredit(bookingData) {
         throw error;
     }
 }
+// ========================================
+// HELPER: Extraire platform depuis location
+// ========================================
+getPlatformFromLocation(location) {
+    if (!location) return 'other';
+    
+    const loc = location.toLowerCase();
+    if (loc.includes('google') || loc.includes('meet')) return 'meet';
+    if (loc.includes('zoom')) return 'zoom';
+    if (loc.includes('teams')) return 'teams';
+    return 'other';
+}
 
     // ============================================================================
     // CRÉATION RÉSERVATION - APPELLE create_booking_intent() POUR LE PRIX
