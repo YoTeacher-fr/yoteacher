@@ -282,104 +282,172 @@ class BookingManager {
     // ============================================================================
     // FLUX CRÉDIT - APPELLE create_booking_with_credit()
     // ============================================================================
-    async createBookingWithCredit(bookingData) {
-        try {
-            console.log('🎫 Début création réservation AVEC CRÉDIT');
-            
-            const user = window.authManager?.getCurrentUser();
-            if (!user) {
-                throw new Error('Utilisateur non connecté');
-            }
-            
-            const duration = bookingData.duration || 60;
-            
-            // Vérifier crédit disponible
-            if (window.packagesManager) {
-                const hasCredit = await window.packagesManager.hasCreditForDuration(
-                    user.id, 
-                    bookingData.courseType, 
-                    duration
-                );
-                if (!hasCredit) {
-                    throw new Error(`Aucun crédit disponible pour un cours de ${duration} minutes`);
-                }
-            }
-            
-            console.log('💰 Utilisation crédit via RPC...');
-            
-            // ✅ APPEL RPC : useCredit() qui appelle create_booking_with_credit()
-            const creditResult = await window.packagesManager.useCredit(
-                user.id,
-                bookingData.courseType,
-                { 
-                    id: `temp_${Date.now()}`,
-                    duration: duration 
-                }
-            );
-            
-            if (!creditResult.success) {
-                throw new Error(`Impossible d'utiliser un crédit: ${creditResult.error}`);
-            }
-            
-            console.log('✅ Crédit utilisé, package_id:', creditResult.package_id);
-            
-            // Préparer données pour Cal.com
-            const bookingForCalcom = {
-                startTime: bookingData.startTime,
-                endTime: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, duration),
-                eventType: bookingData.courseType,
-                courseType: bookingData.courseType,
-                duration: duration,
-                location: bookingData.location || 'integrations:google:meet',
-                name: bookingData.name,
-                email: bookingData.email,
-                notes: bookingData.notes || '',
-                userId: user.id,
-                timeZone: this.timeZone,
-                language: 'fr',
-                
-                price: 0,
-                currency: null,
-                paymentMethod: 'credit',
-                transactionId: `CREDIT-${Date.now()}`,
-                packageId: creditResult.package_id,
-                status: 'confirmed',
-                isCreditBooking: true
-            };
-            
-            // Créer réservation Cal.com + Supabase
-            const bookingResult = await this.createBookingAfterPayment(bookingForCalcom);
-            
-            if (!bookingResult.success) {
-                throw new Error(`Échec création réservation: ${bookingResult.error}`);
-            }
-            
-            const finalBookingData = {
-                ...bookingForCalcom,
-                calcomId: bookingResult.data?.id || bookingResult.data?.uid,
-                meetingLink: bookingResult.data?.location,
-                bookingNumber: `BK-CREDIT-${Date.now().toString().slice(-8)}`,
-                confirmedAt: new Date().toISOString(),
-                supabaseBookingId: bookingResult.supabaseBookingId
-            };
-            
-            console.log('✅ Réservation avec crédit créée');
-            
-            return {
-                success: true,
-                bookingData: finalBookingData,
-                redirectTo: `payment-success.html?booking=${encodeURIComponent(JSON.stringify(finalBookingData))}`,
-                message: 'Réservation avec crédit confirmée'
-            };
-            
-        } catch (error) {
-            console.error('❌ Erreur réservation avec crédit:', error);
-            return { 
-                success: false, 
-                error: error.message 
-            };
+   // ========================================
+// CORRECTION: createBookingWithCredit()
+// ========================================
+
+async createBookingWithCredit(bookingData) {
+    try {
+        console.log('🎫 Début création réservation AVEC CRÉDIT');
+        
+        const user = window.authManager?.getCurrentUser();
+        if (!user) {
+            throw new Error('Utilisateur non connecté');
         }
+        
+        const duration = bookingData.duration || 60;
+        
+        // Vérifier crédit disponible
+        if (window.packagesManager) {
+            const hasCredit = await window.packagesManager.hasCreditForDuration(
+                user.id, 
+                bookingData.courseType, 
+                duration
+            );
+            if (!hasCredit) {
+                throw new Error(`Aucun crédit disponible pour un cours de ${duration} minutes`);
+            }
+        }
+        
+        // ========================================
+        // ✅ ÉTAPE 1: CRÉER LE BOOKING EN STATUS 'PENDING' DANS LA DB
+        // ========================================
+        console.log('📝 Création du booking en status pending...');
+        
+        const { data: pendingBooking, error: createError } = await window.supabase
+            .from('bookings')
+            .insert({
+                user_id: user.id,
+                course_type: bookingData.courseType,
+                duration_minutes: duration,
+                start_time: bookingData.startTime,
+                end_time: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, duration),
+                location: bookingData.location || 'integrations:google:meet',
+                student_name: bookingData.name || user.full_name || user.email,
+                student_email: user.email,
+                student_notes: bookingData.notes || '',
+                timezone: bookingData.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+                language: bookingData.language || window.translationManager?.currentLanguage || 'fr',
+                status: 'pending',  // ⚠️ IMPORTANT: Status pending (pas confirmed)
+                payment_method: null,  // Sera rempli par la fonction RPC
+                price_paid: 0
+            })
+            .select()
+            .single();
+        
+        if (createError) {
+            console.error('❌ Erreur création booking pending:', createError);
+            throw new Error(`Échec création booking: ${createError.message}`);
+        }
+        
+        console.log('✅ Booking pending créé avec ID:', pendingBooking.id);
+        
+        // ========================================
+        // ✅ ÉTAPE 2: CONFIRMER LE BOOKING AVEC CRÉDIT VIA RPC
+        // ========================================
+        console.log('💰 Utilisation crédit via RPC avec booking ID:', pendingBooking.id);
+        
+        const { data: rpcResult, error: rpcError } = await window.supabase.rpc('create_booking_with_credit', {
+            p_booking_id: pendingBooking.id  // ✅ VRAI UUID maintenant !
+        });
+        
+        if (rpcError) {
+            console.error('❌ Erreur RPC create_booking_with_credit:', rpcError);
+            
+            // Nettoyer le booking pending en cas d'erreur
+            await window.supabase
+                .from('bookings')
+                .delete()
+                .eq('id', pendingBooking.id);
+            
+            throw new Error(`Erreur lors de l'utilisation du crédit: ${rpcError.message}`);
+        }
+        
+        if (!rpcResult || !rpcResult.success) {
+            throw new Error(rpcResult?.error || 'Échec utilisation crédit');
+        }
+        
+        console.log('✅ Crédit utilisé avec succès via RPC');
+        console.log('   Package ID:', rpcResult.package_id);
+        console.log('   Booking Number:', rpcResult.booking_number);
+        
+        // ========================================
+        // ✅ ÉTAPE 3: RÉCUPÉRER LE BOOKING CONFIRMÉ
+        // ========================================
+        const { data: confirmedBooking, error: fetchError } = await window.supabase
+            .from('bookings')
+            .select('*')
+            .eq('id', pendingBooking.id)
+            .single();
+        
+        if (fetchError) {
+            console.error('❌ Erreur récupération booking confirmé:', fetchError);
+            // Continuer quand même car le booking est confirmé
+        }
+        
+        // ========================================
+        // ✅ ÉTAPE 4: CRÉER L'ÉVÉNEMENT CAL.COM
+        // ========================================
+        const finalBooking = confirmedBooking || pendingBooking;
+        
+        const bookingForCalcom = {
+            startTime: finalBooking.start_time,
+            endTime: finalBooking.end_time,
+            eventType: finalBooking.course_type,
+            location: finalBooking.location,
+            name: finalBooking.student_name,
+            email: finalBooking.student_email,
+            notes: finalBooking.student_notes,
+            timeZone: finalBooking.timezone,
+            language: finalBooking.language
+        };
+        
+        console.log('📅 Création événement Cal.com...');
+        const calcomResponse = await this.createCalcomBooking(bookingForCalcom);
+        
+        if (calcomResponse?.success) {
+            console.log('✅ Événement Cal.com créé avec succès');
+            
+            // Mettre à jour avec l'ID Cal.com
+            await window.supabase
+                .from('bookings')
+                .update({ 
+                    calcom_booking_id: calcomResponse.data?.id,
+                    calcom_uid: calcomResponse.data?.uid 
+                })
+                .eq('id', finalBooking.id);
+        } else {
+            console.warn('⚠️ Échec création Cal.com (non bloquant)');
+        }
+        
+        // ========================================
+        // ✅ ÉTAPE 5: ENVOYER L'EMAIL DE CONFIRMATION
+        // ========================================
+        console.log('📧 Envoi email de confirmation...');
+        await this.sendBookingConfirmationEmail({
+            ...finalBooking,
+            booking_number: rpcResult.booking_number
+        });
+        
+        // Actualiser les crédits
+        if (window.packagesManager) {
+            await window.packagesManager.loadUserPackages(user.id);
+        }
+        
+        return {
+            success: true,
+            bookingData: {
+                ...finalBooking,
+                booking_number: rpcResult.booking_number,
+                package_id: rpcResult.package_id
+            }
+        };
+        
+    } catch (error) {
+        console.error('❌ Erreur réservation avec crédit:', error);
+        throw error;
     }
+}
 
     // ============================================================================
     // CRÉATION RÉSERVATION - APPELLE create_booking_intent() POUR LE PRIX
