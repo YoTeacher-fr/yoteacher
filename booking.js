@@ -282,10 +282,6 @@ class BookingManager {
     // ============================================================================
     // FLUX CRÉDIT - APPELLE create_booking_with_credit()
     // ============================================================================
-   // ========================================
-// CORRECTION: createBookingWithCredit()
-// ========================================
-
 async createBookingWithCredit(bookingData) {
     try {
         console.log('🎫 Début création réservation AVEC CRÉDIT');
@@ -311,6 +307,7 @@ async createBookingWithCredit(bookingData) {
         
         // ========================================
         // ✅ ÉTAPE 1: CRÉER LE BOOKING EN STATUS 'PENDING' DANS LA DB
+        // Utiliser UNIQUEMENT les colonnes qui existent vraiment dans la table
         // ========================================
         console.log('📝 Création du booking en status pending...');
         
@@ -322,15 +319,12 @@ async createBookingWithCredit(bookingData) {
                 duration_minutes: duration,
                 start_time: bookingData.startTime,
                 end_time: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, duration),
-                location: bookingData.location || 'integrations:google:meet',
-                student_name: bookingData.name || user.full_name || user.email,
-                student_email: user.email,
-                student_notes: bookingData.notes || '',
-                timezone: bookingData.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-                language: bookingData.language || window.translationManager?.currentLanguage || 'fr',
-                status: 'pending',  // ⚠️ IMPORTANT: Status pending (pas confirmed)
-                payment_method: null,  // Sera rempli par la fonction RPC
-                price_paid: 0
+                status: 'pending',
+                price_paid: 0,
+                currency: bookingData.currency || 'EUR',
+                platform: this.getPlatformFromLocation(bookingData.location),
+                // ❌ NE PAS inclure: language, student_name, student_email, student_notes, timezone
+                // Ces champs n'existent pas dans la table bookings
             })
             .select()
             .single();
@@ -348,7 +342,7 @@ async createBookingWithCredit(bookingData) {
         console.log('💰 Utilisation crédit via RPC avec booking ID:', pendingBooking.id);
         
         const { data: rpcResult, error: rpcError } = await window.supabase.rpc('create_booking_with_credit', {
-            p_booking_id: pendingBooking.id  // ✅ VRAI UUID maintenant !
+            p_booking_id: pendingBooking.id
         });
         
         if (rpcError) {
@@ -364,6 +358,12 @@ async createBookingWithCredit(bookingData) {
         }
         
         if (!rpcResult || !rpcResult.success) {
+            // Nettoyer aussi en cas d'échec de la RPC
+            await window.supabase
+                .from('bookings')
+                .delete()
+                .eq('id', pendingBooking.id);
+                
             throw new Error(rpcResult?.error || 'Échec utilisation crédit');
         }
         
@@ -387,6 +387,7 @@ async createBookingWithCredit(bookingData) {
         
         // ========================================
         // ✅ ÉTAPE 4: CRÉER L'ÉVÉNEMENT CAL.COM
+        // Les infos student (name, email, notes, timezone, language) vont à Cal.com
         // ========================================
         const finalBooking = confirmedBooking || pendingBooking;
         
@@ -394,12 +395,12 @@ async createBookingWithCredit(bookingData) {
             startTime: finalBooking.start_time,
             endTime: finalBooking.end_time,
             eventType: finalBooking.course_type,
-            location: finalBooking.location,
-            name: finalBooking.student_name,
-            email: finalBooking.student_email,
-            notes: finalBooking.student_notes,
-            timeZone: finalBooking.timezone,
-            language: finalBooking.language
+            location: bookingData.location || 'integrations:google:meet',
+            name: bookingData.name || user.full_name || user.email,
+            email: bookingData.email || user.email,
+            notes: bookingData.notes || '',
+            timeZone: bookingData.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+            language: bookingData.language || window.translationManager?.currentLanguage || 'fr'
         };
         
         console.log('📅 Création événement Cal.com...');
@@ -426,7 +427,10 @@ async createBookingWithCredit(bookingData) {
         console.log('📧 Envoi email de confirmation...');
         await this.sendBookingConfirmationEmail({
             ...finalBooking,
-            booking_number: rpcResult.booking_number
+            booking_number: rpcResult.booking_number,
+            student_name: bookingData.name || user.full_name,
+            student_email: bookingData.email || user.email,
+            student_notes: bookingData.notes || ''
         });
         
         // Actualiser les crédits
@@ -439,7 +443,10 @@ async createBookingWithCredit(bookingData) {
             bookingData: {
                 ...finalBooking,
                 booking_number: rpcResult.booking_number,
-                package_id: rpcResult.package_id
+                package_id: rpcResult.package_id,
+                // Ajouter les infos qui ne sont pas dans la DB mais nécessaires pour le front
+                student_name: bookingData.name || user.full_name,
+                student_email: bookingData.email || user.email
             }
         };
         
