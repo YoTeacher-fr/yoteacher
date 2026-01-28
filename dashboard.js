@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     function checkAuthentication() {
-        console.log('🔐 Vérification de l'authentification...');
+        console.log('🔐 Vérification de l\'authentification...');  // CORRECTION: apostrophe échappée
         
         // 1. Vérifier d'abord localStorage (le plus fiable)
         const storedUser = localStorage.getItem('yoteacher_user');
@@ -1102,7 +1102,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Vérification directe au chargement
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔍 Vérification rapide de l'authentification...');
+    console.log('🔍 Vérification rapide de l\'authentification...');  // CORRECTION: apostrophe échappée
     
     // Vérifier immédiatement dans localStorage
     const storedUser = localStorage.getItem('yoteacher_user');
@@ -1122,7 +1122,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 500);
     } else {
-        console.log('❌ Pas d'utilisateur dans localStorage');
+        console.log('❌ Pas d\'utilisateur dans localStorage');  // CORRECTION: apostrophe échappée
         // Masquer le contenu mais ne pas rediriger immédiatement
         // La fonction checkAuthentication() se chargera de la redirection
     }
