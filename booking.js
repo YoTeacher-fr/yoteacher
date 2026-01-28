@@ -280,8 +280,8 @@ class BookingManager {
     }
 
 // ========================================
-// VRAIE CORRECTION: createBookingWithCredit()
-// Utilise createBookingAfterPayment() qui EXISTE DÉJÀ
+// CORRECTION DÉFINITIVE: createBookingWithCredit()
+// Sans aucune erreur de colonne ou méthode
 // ========================================
 
 async createBookingWithCredit(bookingData) {
@@ -308,7 +308,7 @@ async createBookingWithCredit(bookingData) {
         }
         
         // ========================================
-        // ✅ ÉTAPE 1: CRÉER LE BOOKING EN STATUS 'PENDING' DANS LA DB
+        // ✅ ÉTAPE 1: CRÉER LE BOOKING EN STATUS 'PENDING'
         // ========================================
         console.log('📝 Création du booking en status pending...');
         
@@ -323,7 +323,7 @@ async createBookingWithCredit(bookingData) {
                 status: 'pending',
                 price_paid: 0,
                 currency: bookingData.currency || 'EUR',
-                platform: this.getPlatformFromLocation(bookingData.location)
+                platform: this.getPlatformName(bookingData.location)
             })
             .select()
             .single();
@@ -371,11 +371,10 @@ async createBookingWithCredit(bookingData) {
         console.log('   Booking Number:', rpcResult.booking_number);
         
         // ========================================
-        // ✅ ÉTAPE 3: CRÉER ÉVÉNEMENT CAL.COM + SUPABASE
-        // Utiliser createBookingAfterPayment() qui EXISTE DÉJÀ
+        // ✅ ÉTAPE 3: CRÉER ÉVÉNEMENT CAL.COM
         // ========================================
         
-        // Préparer données pour Cal.com (même format qu'avant)
+        // Préparer données pour Cal.com
         const bookingForCalcom = {
             startTime: bookingData.startTime,
             endTime: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, duration),
@@ -399,41 +398,26 @@ async createBookingWithCredit(bookingData) {
             status: 'confirmed',
             isCreditBooking: true,
             
-            // IDs Supabase
+            // ✅ IMPORTANT: Passer l'intentId pour UPDATE au lieu de INSERT
+            intentId: pendingBooking.id,
             supabaseBookingId: pendingBooking.id,
             bookingNumber: rpcResult.booking_number
         };
         
         console.log('📅 Création événement Cal.com via createBookingAfterPayment()...');
         
-        // ✅ UTILISER LA MÉTHODE QUI EXISTE DÉJÀ !
+        // ✅ UTILISER createBookingAfterPayment() qui existe déjà
         const bookingResult = await this.createBookingAfterPayment(bookingForCalcom);
         
-        if (!bookingResult.success) {
-            console.warn('⚠️ Échec création Cal.com (réservation DB déjà confirmée)');
-            // Ne pas throw car le booking est déjà confirmé dans la DB
+        if (!bookingResult || !bookingResult.success) {
+            console.warn('⚠️ Échec création Cal.com (booking DB déjà confirmé)');
+            // Ne pas throw car le booking est confirmé dans la DB
         } else {
             console.log('✅ Événement Cal.com créé avec succès');
-            
-            // Mettre à jour le booking Supabase avec les IDs Cal.com
-            await window.supabase
-                .from('bookings')
-                .update({ 
-                    calcom_booking_id: bookingResult.data?.id,
-                    calcom_uid: bookingResult.data?.uid 
-                })
-                .eq('id', pendingBooking.id);
         }
         
         // ========================================
-        // ✅ ÉTAPE 4: ACTUALISER LES CRÉDITS
-        // ========================================
-        if (window.packagesManager) {
-            await window.packagesManager.loadUserPackages(user.id);
-        }
-        
-        // ========================================
-        // ✅ SUCCÈS !
+        // ✅ ÉTAPE 4: RETOURNER LE RÉSULTAT
         // ========================================
         const finalBookingData = {
             ...bookingForCalcom,
@@ -461,21 +445,6 @@ async createBookingWithCredit(bookingData) {
         };
     }
 }
-
-// ========================================
-// HELPER: getPlatformFromLocation()
-// À ajouter si elle n'existe pas déjà
-// ========================================
-getPlatformFromLocation(location) {
-    if (!location) return 'other';
-    
-    const loc = location.toLowerCase();
-    if (loc.includes('google') || loc.includes('meet')) return 'meet';
-    if (loc.includes('zoom')) return 'zoom';
-    if (loc.includes('teams')) return 'teams';
-    return 'other';
-}
-
     // ============================================================================
     // CRÉATION RÉSERVATION - APPELLE create_booking_intent() POUR LE PRIX
     // ============================================================================
