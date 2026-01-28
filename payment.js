@@ -408,8 +408,7 @@ class PaymentManager {
                     .from('bookings')
                     .update({ 
                         status: 'confirmed',
-                        package_id: packageId,
-                        updated_at: new Date().toISOString()
+                        package_id: packageId
                     })
                     .eq('id', supabaseBookingId);
                 
