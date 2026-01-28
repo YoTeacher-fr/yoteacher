@@ -279,9 +279,11 @@ class BookingManager {
         }
     }
 
-    // ============================================================================
-    // FLUX CRÉDIT - APPELLE create_booking_with_credit()
-    // ============================================================================
+// ========================================
+// VRAIE CORRECTION: createBookingWithCredit()
+// Utilise createBookingAfterPayment() qui EXISTE DÉJÀ
+// ========================================
+
 async createBookingWithCredit(bookingData) {
     try {
         console.log('🎫 Début création réservation AVEC CRÉDIT');
@@ -307,7 +309,6 @@ async createBookingWithCredit(bookingData) {
         
         // ========================================
         // ✅ ÉTAPE 1: CRÉER LE BOOKING EN STATUS 'PENDING' DANS LA DB
-        // Utiliser UNIQUEMENT les colonnes qui existent vraiment dans la table
         // ========================================
         console.log('📝 Création du booking en status pending...');
         
@@ -322,9 +323,7 @@ async createBookingWithCredit(bookingData) {
                 status: 'pending',
                 price_paid: 0,
                 currency: bookingData.currency || 'EUR',
-                platform: this.getPlatformFromLocation(bookingData.location),
-                // ❌ NE PAS inclure: language, student_name, student_email, student_notes, timezone
-                // Ces champs n'existent pas dans la table bookings
+                platform: this.getPlatformFromLocation(bookingData.location)
             })
             .select()
             .single();
@@ -372,91 +371,100 @@ async createBookingWithCredit(bookingData) {
         console.log('   Booking Number:', rpcResult.booking_number);
         
         // ========================================
-        // ✅ ÉTAPE 3: RÉCUPÉRER LE BOOKING CONFIRMÉ
+        // ✅ ÉTAPE 3: CRÉER ÉVÉNEMENT CAL.COM + SUPABASE
+        // Utiliser createBookingAfterPayment() qui EXISTE DÉJÀ
         // ========================================
-        const { data: confirmedBooking, error: fetchError } = await window.supabase
-            .from('bookings')
-            .select('*')
-            .eq('id', pendingBooking.id)
-            .single();
         
-        if (fetchError) {
-            console.error('❌ Erreur récupération booking confirmé:', fetchError);
-            // Continuer quand même car le booking est confirmé
-        }
-        
-        // ========================================
-        // ✅ ÉTAPE 4: CRÉER L'ÉVÉNEMENT CAL.COM
-        // Les infos student (name, email, notes, timezone, language) vont à Cal.com
-        // ========================================
-        const finalBooking = confirmedBooking || pendingBooking;
-        
+        // Préparer données pour Cal.com (même format qu'avant)
         const bookingForCalcom = {
-            startTime: finalBooking.start_time,
-            endTime: finalBooking.end_time,
-            eventType: finalBooking.course_type,
+            startTime: bookingData.startTime,
+            endTime: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, duration),
+            eventType: bookingData.courseType,
+            courseType: bookingData.courseType,
+            duration: duration,
             location: bookingData.location || 'integrations:google:meet',
-            name: bookingData.name || user.full_name || user.email,
-            email: bookingData.email || user.email,
+            name: bookingData.name,
+            email: bookingData.email,
             notes: bookingData.notes || '',
-            timeZone: bookingData.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-            language: bookingData.language || window.translationManager?.currentLanguage || 'fr'
+            userId: user.id,
+            timeZone: bookingData.timeZone || this.timeZone,
+            language: bookingData.language || 'fr',
+            
+            // Infos paiement/crédit
+            price: 0,
+            currency: null,
+            paymentMethod: 'credit',
+            transactionId: `CREDIT-${pendingBooking.id}`,
+            packageId: rpcResult.package_id,
+            status: 'confirmed',
+            isCreditBooking: true,
+            
+            // IDs Supabase
+            supabaseBookingId: pendingBooking.id,
+            bookingNumber: rpcResult.booking_number
         };
         
-        console.log('📅 Création événement Cal.com...');
-        const calcomResponse = await this.createCalcomBooking(bookingForCalcom);
+        console.log('📅 Création événement Cal.com via createBookingAfterPayment()...');
         
-        if (calcomResponse?.success) {
+        // ✅ UTILISER LA MÉTHODE QUI EXISTE DÉJÀ !
+        const bookingResult = await this.createBookingAfterPayment(bookingForCalcom);
+        
+        if (!bookingResult.success) {
+            console.warn('⚠️ Échec création Cal.com (réservation DB déjà confirmée)');
+            // Ne pas throw car le booking est déjà confirmé dans la DB
+        } else {
             console.log('✅ Événement Cal.com créé avec succès');
             
-            // Mettre à jour avec l'ID Cal.com
+            // Mettre à jour le booking Supabase avec les IDs Cal.com
             await window.supabase
                 .from('bookings')
                 .update({ 
-                    calcom_booking_id: calcomResponse.data?.id,
-                    calcom_uid: calcomResponse.data?.uid 
+                    calcom_booking_id: bookingResult.data?.id,
+                    calcom_uid: bookingResult.data?.uid 
                 })
-                .eq('id', finalBooking.id);
-        } else {
-            console.warn('⚠️ Échec création Cal.com (non bloquant)');
+                .eq('id', pendingBooking.id);
         }
         
         // ========================================
-        // ✅ ÉTAPE 5: ENVOYER L'EMAIL DE CONFIRMATION
+        // ✅ ÉTAPE 4: ACTUALISER LES CRÉDITS
         // ========================================
-        console.log('📧 Envoi email de confirmation...');
-        await this.sendBookingConfirmationEmail({
-            ...finalBooking,
-            booking_number: rpcResult.booking_number,
-            student_name: bookingData.name || user.full_name,
-            student_email: bookingData.email || user.email,
-            student_notes: bookingData.notes || ''
-        });
-        
-        // Actualiser les crédits
         if (window.packagesManager) {
             await window.packagesManager.loadUserPackages(user.id);
         }
         
+        // ========================================
+        // ✅ SUCCÈS !
+        // ========================================
+        const finalBookingData = {
+            ...bookingForCalcom,
+            calcomId: bookingResult?.data?.id || bookingResult?.data?.uid,
+            meetingLink: bookingResult?.data?.location,
+            bookingNumber: rpcResult.booking_number,
+            confirmedAt: new Date().toISOString(),
+            supabaseBookingId: pendingBooking.id
+        };
+        
+        console.log('✅ Réservation avec crédit créée');
+        
         return {
             success: true,
-            bookingData: {
-                ...finalBooking,
-                booking_number: rpcResult.booking_number,
-                package_id: rpcResult.package_id,
-                // Ajouter les infos qui ne sont pas dans la DB mais nécessaires pour le front
-                student_name: bookingData.name || user.full_name,
-                student_email: bookingData.email || user.email
-            }
+            bookingData: finalBookingData,
+            redirectTo: `payment-success.html?booking=${encodeURIComponent(JSON.stringify(finalBookingData))}`,
+            message: 'Réservation avec crédit confirmée'
         };
         
     } catch (error) {
         console.error('❌ Erreur réservation avec crédit:', error);
-        throw error;
+        return { 
+            success: false, 
+            error: error.message 
+        };
     }
 }
+
 // ========================================
-// HELPER: Extraire platform depuis location
+// HELPER: getPlatformFromLocation()
+// À ajouter si elle n'existe pas déjà
 // ========================================
 getPlatformFromLocation(location) {
     if (!location) return 'other';
