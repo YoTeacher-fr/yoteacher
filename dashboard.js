@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     function checkAuthentication() {
-        console.log('🔐 Vérification de l\'authentification...');
+        console.log('🔐 Vérification de l'authentification...');
         
         // 1. Vérifier d'abord localStorage (le plus fiable)
         const storedUser = localStorage.getItem('yoteacher_user');
@@ -621,6 +621,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="lesson-info-label">Référence</span>
                         <span class="lesson-info-value">${lesson.booking_number || '#' + (lesson.id ? lesson.id.substring(0, 8) : '')}</span>
                     </div>
+                    <div class="lesson-info-item">
+                        <span class="lesson-info-label">Mode de paiement</span>
+                        <span class="lesson-info-value">
+                            ${lesson.payment_method === 'credit' ? '✅ Crédit de forfait' : '💳 Carte bancaire'}
+                        </span>
+                    </div>
                     ${hoursUntilStart <= 24 ? `
                     <div class="lesson-warning">
                         <i class="fas fa-exclamation-triangle"></i>
@@ -707,11 +713,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Calculer les heures restantes
             const hoursUntilStart = (lessonDate - new Date()) / (1000 * 60 * 60);
             
+            // Vérifier le mode de paiement pour le message de confirmation
+            const isCreditPayment = lesson.payment_method === 'credit';
+            
             // Message de confirmation adapté
             let confirmMessage = `Êtes-vous sûr de vouloir annuler ce cours ?\n\n📅 ${formattedDate}\n📚 ${lesson.course_type}\n⏱️ ${lesson.duration_minutes || 60}min`;
             
-            if (hoursUntilStart > 24) {
+            if (hoursUntilStart > 24 && isCreditPayment) {
                 confirmMessage += '\n\n💰 Un crédit sera ajouté à votre compte';
+            } else if (hoursUntilStart > 24 && !isCreditPayment) {
+                confirmMessage += '\n\nℹ️ Ce cours a été payé par carte, aucun crédit ne sera remboursé';
             } else {
                 confirmMessage += '\n\n⚠️ ATTENTION : Le cours commence dans moins de 24h\n❌ Aucun crédit ne sera remboursé (cours perdu)';
             }
@@ -731,6 +742,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('   Booking ID:', bookingId);
             console.log('   User ID:', user.id);
             console.log('   Heures restantes:', hoursUntilStart.toFixed(2));
+            console.log('   Mode de paiement:', lesson.payment_method);
+            console.log('   Paie par crédit?:', isCreditPayment);
             
             // ============================================================================
             // ✅ APPEL VIA bookingCancellation.cancelBooking()
@@ -754,18 +767,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 let successMessage = '✅ Cours annulé avec succès !';
                 
+                // Message détaillé sur le crédit
                 if (result.creditRefunded) {
-                    successMessage += '\n💰 1 crédit a été ajouté à votre compte.';
+                    successMessage += '\n\n💰 1 crédit a été ajouté à votre compte.';
+                } else if (isCreditPayment && hoursUntilStart > 24) {
+                    successMessage += '\n\nℹ️ Pourquoi aucun crédit n\'a été remboursé ?';
+                    successMessage += '\n   • Peut-être que ce cours était un cours d\'essai';
+                    successMessage += '\n   • Ou il n\'était pas associé à un forfait';
+                    successMessage += '\n   • Ou il a été payé par carte (Stripe)';
+                } else if (!isCreditPayment) {
+                    successMessage += '\n\nℹ️ Ce cours a été payé par carte, aucun crédit n\'est remboursable.';
+                } else {
+                    successMessage += '\n\nℹ️ Aucun crédit remboursé (annulation hors délai).';
                 }
                 
-                if (result.calcomCancelled === false) {
-                    successMessage += '\nℹ️ Note: Aucune réservation Cal.com n\'a été trouvée (peut-être déjà annulée).';
+                // Message sur Cal.com
+                if (result.calcomCancelled === true) {
+                    successMessage += '\n\n✅ L\'événement Cal.com a été annulé avec succès.';
+                } else if (result.calcomCancelled === false) {
+                    successMessage += '\n\nℹ️ Note: Aucune réservation Cal.com n\'a été trouvée (peut-être déjà annulée).';
                 }
                 
+                // Afficher le message
                 if (window.utils && window.utils.showNotification) {
                     window.utils.showNotification(successMessage, 'success');
                 } else {
-                    alert(successMessage);
+                    // Créer une modal pour afficher le message détaillé
+                    showDetailedAnnulationMessage(successMessage);
                 }
                 
                 // Rafraîchir les données du dashboard
@@ -786,7 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.utils && window.utils.showNotification) {
                     window.utils.showNotification(errorMessage, 'error');
                 } else {
-                    alert(errorMessage);
+                    alert('Erreur : ' + errorMessage);
                 }
                 
                 // Rafraîchir quand même
@@ -828,9 +856,81 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.utils && window.utils.showNotification) {
                 window.utils.showNotification(errorMessage, 'error');
             } else {
-                alert('Erreur : ' + errorMessage);
+                showDetailedAnnulationMessage('❌ Erreur : ' + errorMessage, 'error');
             }
         }
+    }
+    
+    function showDetailedAnnulationMessage(message, type = 'success') {
+        // Créer une modal pour afficher le message détaillé
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        `;
+        
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        `;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.style.cssText = `
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: ${type === 'error' ? '#d32f2f' : '#333'};
+        `;
+        
+        // Convertir les retours à la ligne en <br>
+        const formattedMessage = message.replace(/\n/g, '<br>');
+        messageDiv.innerHTML = formattedMessage;
+        
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Fermer';
+        closeButton.style.cssText = `
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #3c84f6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        `;
+        
+        closeButton.onclick = function() {
+            document.body.removeChild(modal);
+        };
+        
+        content.appendChild(messageDiv);
+        content.appendChild(closeButton);
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        
+        // Fermer en cliquant en dehors
+        modal.onclick = function(e) {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        };
     }
     
     async function handleCancelLessonFallback(bookingId, user) {
@@ -866,9 +966,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (result.credit_refunded) {
                     successMessage += '\n💰 1 crédit a été ajouté à votre compte.';
+                } else {
+                    successMessage += '\n\nℹ️ Pourquoi aucun crédit n\'a été remboursé ?';
+                    successMessage += '\n   • Peut-être que ce cours était un cours d\'essai';
+                    successMessage += '\n   • Ou il n\'était pas associé à un forfait';
+                    successMessage += '\n   • Ou il a été payé par carte (Stripe)';
                 }
                 
-                alert(successMessage);
+                // Vérifier si Cal.com a un calcom_uid
+                const { data: booking } = await supabase
+                    .from('bookings')
+                    .select('calcom_uid')
+                    .eq('id', bookingId)
+                    .single();
+                
+                if (booking?.calcom_uid) {
+                    successMessage += '\n\n⚠️ Note: L\'annulation Cal.com n\'a pas été effectuée (service bookingCancellation non disponible).';
+                }
+                
+                showDetailedAnnulationMessage(successMessage);
                 
                 // Rafraîchir les données du dashboard
                 await loadUpcomingLessons(user.id);
@@ -878,7 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     await loadUserPackages(user.id);
                 }
             } else {
-                alert('Erreur : ' + (result.error || 'Annulation impossible'));
+                showDetailedAnnulationMessage('Erreur : ' + (result.error || 'Annulation impossible'), 'error');
             }
             
         } catch (error) {
@@ -891,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cancelBtn.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
             }
             
-            alert('Erreur : ' + error.message);
+            showDetailedAnnulationMessage('❌ Erreur : ' + error.message, 'error');
         }
     }
     
@@ -986,7 +1102,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Vérification directe au chargement
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔍 Vérification rapide de l\'authentification...');
+    console.log('🔍 Vérification rapide de l'authentification...');
     
     // Vérifier immédiatement dans localStorage
     const storedUser = localStorage.getItem('yoteacher_user');
@@ -1006,7 +1122,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 500);
     } else {
-        console.log('❌ Pas d\'utilisateur dans localStorage');
+        console.log('❌ Pas d'utilisateur dans localStorage');
         // Masquer le contenu mais ne pas rediriger immédiatement
         // La fonction checkAuthentication() se chargera de la redirection
     }
