@@ -93,13 +93,12 @@ class PaymentManager {
                 throw new Error('Aucune réservation trouvée');
             }
 
-            // ✅ MODIFICATION : Récupérer l'utilisateur (peut être null pour cours d'essai)
             const user = window.authManager?.getCurrentUser();
             
-            // ✅ MODIFICATION : Vérifier si cours d'essai
+            // ✅ AJOUT : Détecter cours d'essai
             const isTrialCourse = this.currentBooking.courseType === 'essai';
             
-            // ✅ MODIFICATION : Validation conditionnelle
+            // ✅ AJOUT : Validation conditionnelle
             if (!isTrialCourse && (!user || !user.id)) {
                 throw new Error('Vous devez être connecté pour réserver ce type de cours');
             }
@@ -109,7 +108,6 @@ class PaymentManager {
                 return;
             }
 
-            // ✅ MODIFICATION : Passer isTrialCourse au processManualPayment
             const result = await this.processManualPayment(method, user, null, isTrialCourse);
             
             if (result.success) {
@@ -288,9 +286,8 @@ class PaymentManager {
 
     async processManualPayment(method, user, transactionId = null, isTrialCourse = false) {
         try {
-            // ✅ MODIFICATION : Validation conditionnelle de l'utilisateur
             if (!isTrialCourse && (!user || !user.id)) {
-                throw new Error('Utilisateur non authentifié requis pour les cours payants');
+                throw new Error('Utilisateur non authentifié');
             }
 
             if (!transactionId) {
@@ -375,19 +372,15 @@ class PaymentManager {
             // ÉTAPE 2 : TRAITER SELON LE TYPE DE COURS
             // ============================================================================
             
-            // ✅ NOUVEAU : Gestion spécifique pour cours d'essai
+            // ✅ AJOUT : Gestion spécifique pour cours d'essai
             if (isTrialCourse) {
                 console.log('🎫 Cours d\'essai - Confirmation directe sans forfait');
                 
-                // Confirmer la réservation directement
+                // Confirmer la réservation (SEULEMENT status, comme code original)
                 const { error: confirmError } = await window.supabase
                     .from('bookings')
                     .update({
-                        status: 'confirmed',
-                        payment_status: 'completed',
-                        payment_method: method,
-                        transaction_id: transactionId,
-                        confirmed_at: new Date().toISOString()
+                        status: 'confirmed'
                     })
                     .eq('id', supabaseBookingId);
                 
@@ -398,16 +391,19 @@ class PaymentManager {
                 
                 console.log('✅ Cours d\'essai confirmé');
                 
-                // Récupérer le booking_number
+                // Récupérer le booking_number (EXACTEMENT comme code original)
                 const { data: bookingData, error: fetchError } = await window.supabase
                     .from('bookings')
                     .select('booking_number, status')
                     .eq('id', supabaseBookingId)
                     .single();
                 
-                if (bookingData?.booking_number) {
+                if (!fetchError && bookingData) {
                     this.currentBooking.bookingNumber = bookingData.booking_number;
-                    console.log('📋 Booking number récupéré:', bookingData.booking_number);
+                    console.log('✅ Booking Number:', bookingData.booking_number);
+                } else {
+                    console.warn('⚠️ Impossible de récupérer booking_number:', fetchError);
+                    this.currentBooking.bookingNumber = `BK-${method.toUpperCase()}-${Date.now().toString().slice(-8)}`;
                 }
                 
                 return {
@@ -415,7 +411,6 @@ class PaymentManager {
                     bookingData: {
                         ...this.currentBooking,
                         status: 'confirmed',
-                        paymentStatus: 'completed',
                         bookingId: supabaseBookingId,
                         transactionId: transactionId
                     }
