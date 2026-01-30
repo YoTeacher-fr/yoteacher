@@ -265,15 +265,21 @@ class BookingManager {
         console.log('🔍 Vérification crédit possible:', bookingData);
         
         const user = window.authManager?.getCurrentUser();
+        
+        // ✅ CORRECTION: Vérifier si l'utilisateur est connecté
         if (!user || !window.packagesManager) {
+            console.log('❌ Pas d\'utilisateur ou packagesManager non disponible');
+            return false;
+        }
+        
+        // ✅ CORRECTION: Les cours d'essai n'utilisent pas de crédits
+        if (bookingData.courseType === 'essai') {
+            console.log('❌ Cours d\'essai - pas de crédits');
             return false;
         }
         
         if (bookingData.packageQuantity && bookingData.packageQuantity > 1) {
-            return false;
-        }
-        
-        if (bookingData.courseType === 'essai') {
+            console.log('❌ Package avec plusieurs cours - pas de crédits');
             return false;
         }
         
@@ -471,7 +477,7 @@ class BookingManager {
             
             console.group('🎯 DÉBUT createBooking (DB-driven)');
             console.log('Données reçues:', bookingData);
-            console.log('Utilisateur:', user?.email);
+            console.log('Utilisateur:', user?.email || 'Non connecté');
             console.groupEnd();
             
             // ✅ CORRECTION: Ajuster la durée pour l'essai
@@ -480,8 +486,11 @@ class BookingManager {
                 duration = 15; // Durée fixe pour l'essai
             }
             
-            // Vérifier si crédit disponible
-            const canUseCredit = await this.canUseCredit(bookingData);
+            // ✅ CORRECTION: Pour l'essai, on ne vérifie pas les crédits
+            let canUseCredit = false;
+            if (user && bookingData.courseType !== 'essai') {
+                canUseCredit = await this.canUseCredit(bookingData);
+            }
             console.log('✅ Peut utiliser crédit?', canUseCredit);
             
             if (canUseCredit) {
@@ -513,55 +522,68 @@ class BookingManager {
             
             const quantity = bookingData.packageQuantity || 1;
             
-            // ✅ VÉRIFIER SI UNE INTENTION EXISTE DÉJÀ (créée par updateSummary)
+            // ✅ CORRECTION: Recherche d'intention seulement si utilisateur connecté
             let intentData = null;
             
-            // Chercher une intention récente (< 5 min)
-            console.log('🔍 Recherche intention existante...');
-            
-            const { data: existingIntents, error: searchError } = await supabase
-                .from('bookings')
-                .select('*')
-                .eq('user_id', user.id)
-                .eq('course_type', bookingData.courseType)
-                .eq('duration_minutes', duration)
-                .eq('start_time', bookingData.startTime)
-                .eq('status', 'pending')
-                .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()) // < 5 min
-                .order('created_at', { ascending: false })
-                .limit(1);
-            
-            if (searchError) {
-                console.error('❌ Erreur recherche intention:', searchError);
+            if (user) {
+                console.log('🔍 Recherche intention existante pour utilisateur connecté...');
+                
+                const { data: existingIntents, error: searchError } = await supabase
+                    .from('bookings')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .eq('course_type', bookingData.courseType)
+                    .eq('duration_minutes', duration)
+                    .eq('start_time', bookingData.startTime)
+                    .eq('status', 'pending')
+                    .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()) // < 5 min
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                
+                if (searchError) {
+                    console.error('❌ Erreur recherche intention:', searchError);
+                }
+                
+                if (existingIntents && existingIntents.length > 0) {
+                    // ✅ RÉUTILISER L'INTENTION EXISTANTE
+                    const existingIntent = existingIntents[0];
+                    console.log('✅ Intention existante trouvée:', existingIntent.id);
+                    
+                    intentData = {
+                        success: true,
+                        intent_id: existingIntent.id,
+                        price: existingIntent.price_paid,
+                        currency: existingIntent.currency,
+                        can_use_credit: false, // Déjà vérifié
+                        is_vip: existingIntent.is_vip || false,
+                        discount_percent: 0
+                    };
+                }
             }
             
-            if (existingIntents && existingIntents.length > 0) {
-                // ✅ RÉUTILISER L'INTENTION EXISTANTE
-                const existingIntent = existingIntents[0];
-                console.log('✅ Intention existante trouvée:', existingIntent.id);
-                
-                intentData = {
-                    success: true,
-                    intent_id: existingIntent.id,
-                    price: existingIntent.price_paid,
-                    currency: existingIntent.currency,
-                    can_use_credit: false, // Déjà vérifié
-                    is_vip: existingIntent.is_vip || false,
-                    discount_percent: 0
-                };
-            } else {
-                // ❌ CRÉER UNE NOUVELLE INTENTION (si aucune trouvée)
+            // Si aucune intention trouvée (ou utilisateur non connecté), créer une nouvelle
+            if (!intentData) {
                 console.log('📞 Création nouvelle intention...');
                 
-                const { data: newIntent, error: intentError } = await supabase.rpc('create_booking_intent', {
-                    p_user_id: user?.id || null,
+                // ✅ CORRECTION: Préparer les paramètres RPC selon connexion
+                const rpcParams = {
                     p_course_type: bookingData.courseType,
-                    p_duration: duration, // ✅ Utilise la durée corrigée
+                    p_duration: duration,
                     p_start_time: bookingData.startTime,
                     p_end_time: bookingData.endTime || this.calculateEndTime(bookingData.startTime, bookingData.courseType, duration),
                     p_quantity: quantity,
                     p_location: bookingData.location || 'integrations:google:meet'
-                });
+                };
+                
+                // ✅ CORRECTION: Ajouter user_id seulement si connecté
+                if (user) {
+                    rpcParams.p_user_id = user.id;
+                } else if (bookingData.courseType !== 'essai') {
+                    // ✅ CORRECTION: Pour les cours payants sans compte, lever une erreur
+                    throw new Error('Vous devez être connecté pour réserver ce type de cours');
+                }
+                
+                const { data: newIntent, error: intentError } = await supabase.rpc('create_booking_intent', rpcParams);
                 
                 if (intentError) {
                     console.error('❌ Erreur create_booking_intent:', intentError);
