@@ -93,14 +93,24 @@ class PaymentManager {
                 throw new Error('Aucune réservation trouvée');
             }
 
+            // ✅ MODIFICATION : Récupérer l'utilisateur (peut être null pour cours d'essai)
             const user = window.authManager?.getCurrentUser();
+            
+            // ✅ MODIFICATION : Vérifier si cours d'essai
+            const isTrialCourse = this.currentBooking.courseType === 'essai';
+            
+            // ✅ MODIFICATION : Validation conditionnelle
+            if (!isTrialCourse && (!user || !user.id)) {
+                throw new Error('Vous devez être connecté pour réserver ce type de cours');
+            }
             
             if (method === 'card') {
                 await this.processStripePayment();
                 return;
             }
 
-            const result = await this.processManualPayment(method, user);
+            // ✅ MODIFICATION : Passer isTrialCourse au processManualPayment
+            const result = await this.processManualPayment(method, user, null, isTrialCourse);
             
             if (result.success) {
                 console.log(`✅ Paiement ${method} traité avec succès`);
@@ -276,10 +286,11 @@ class PaymentManager {
         }
     }
 
-    async processManualPayment(method, user, transactionId = null) {
+    async processManualPayment(method, user, transactionId = null, isTrialCourse = false) {
         try {
-            if (!user || !user.id) {
-                throw new Error('Utilisateur non authentifié');
+            // ✅ MODIFICATION : Validation conditionnelle de l'utilisateur
+            if (!isTrialCourse && (!user || !user.id)) {
+                throw new Error('Utilisateur non authentifié requis pour les cours payants');
             }
 
             if (!transactionId) {
@@ -288,8 +299,9 @@ class PaymentManager {
 
             console.log('💰 Traitement paiement manuel:', {
                 method: method,
-                userId: user.id,
+                userId: user?.id || 'anonymous',
                 transactionId: transactionId,
+                isTrialCourse: isTrialCourse,
                 isPackage: this.currentBooking.isPackage,
                 packageQuantity: this.currentBooking.packageQuantity
             });
@@ -313,7 +325,7 @@ class PaymentManager {
                 name: this.currentBooking.name,
                 email: this.currentBooking.email,
                 notes: this.currentBooking.notes || '',
-                userId: user.id,
+                userId: user?.id,
                 timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 language: 'fr',
                 
@@ -332,7 +344,8 @@ class PaymentManager {
                 courseType: bookingForCalcom.courseType,
                 startTime: bookingForCalcom.startTime,
                 duration: bookingForCalcom.duration,
-                intentId: bookingForCalcom.intentId
+                intentId: bookingForCalcom.intentId,
+                userId: bookingForCalcom.userId || 'anonymous'
             });
             
             // Créer la réservation (Cal.com + Supabase)
@@ -359,7 +372,58 @@ class PaymentManager {
             this.currentBooking.supabaseBookingId = supabaseBookingId;
 
             // ============================================================================
-            // ÉTAPE 2 : CRÉER LE FORFAIT AVEC LE BOOKING_ID (si multi-cours)
+            // ÉTAPE 2 : TRAITER SELON LE TYPE DE COURS
+            // ============================================================================
+            
+            // ✅ NOUVEAU : Gestion spécifique pour cours d'essai
+            if (isTrialCourse) {
+                console.log('🎫 Cours d\'essai - Confirmation directe sans forfait');
+                
+                // Confirmer la réservation directement
+                const { error: confirmError } = await window.supabase
+                    .from('bookings')
+                    .update({
+                        status: 'confirmed',
+                        payment_status: 'completed',
+                        payment_method: method,
+                        transaction_id: transactionId,
+                        confirmed_at: new Date().toISOString()
+                    })
+                    .eq('id', supabaseBookingId);
+                
+                if (confirmError) {
+                    console.error('❌ Erreur confirmation cours d\'essai:', confirmError);
+                    throw new Error('Erreur confirmation: ' + confirmError.message);
+                }
+                
+                console.log('✅ Cours d\'essai confirmé');
+                
+                // Récupérer le booking_number
+                const { data: bookingData, error: fetchError } = await window.supabase
+                    .from('bookings')
+                    .select('booking_number, status')
+                    .eq('id', supabaseBookingId)
+                    .single();
+                
+                if (bookingData?.booking_number) {
+                    this.currentBooking.bookingNumber = bookingData.booking_number;
+                    console.log('📋 Booking number récupéré:', bookingData.booking_number);
+                }
+                
+                return {
+                    success: true,
+                    bookingData: {
+                        ...this.currentBooking,
+                        status: 'confirmed',
+                        paymentStatus: 'completed',
+                        bookingId: supabaseBookingId,
+                        transactionId: transactionId
+                    }
+                };
+            }
+
+            // ============================================================================
+            // ÉTAPE 2 (COURS PAYANTS) : CRÉER LE FORFAIT AVEC LE BOOKING_ID (si multi-cours)
             // ============================================================================
             let packageId = null;
             
@@ -478,8 +542,9 @@ class PaymentManager {
             
             console.group('🔍 Détails erreur paiement');
             console.log('Méthode:', method);
-            console.log('User ID:', user?.id);
+            console.log('User ID:', user?.id || 'anonymous');
             console.log('Intent ID:', this.currentBooking?.intentId);
+            console.log('Is Trial:', isTrialCourse);
             console.log('Message:', error.message);
             console.log('Stack:', error.stack);
             console.groupEnd();
