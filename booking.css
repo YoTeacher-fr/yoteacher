@@ -873,7 +873,7 @@ body .mobile-login-btn:hover {
         font-size: 0.85rem !important;
         font-weight: 600 !important;
         order: 2;
-        margin-left: 0 !important;
+        margin-left: auto !important;
     }
     
     .mobile-dashboard-btn .avatar-img {
@@ -895,7 +895,7 @@ body .mobile-login-btn:hover {
         gap: 8px !important;
         order: 2;
         width: auto;
-        justify-content: flex-end;
+        justify-content: flex-end !important;
         flex: 1;
     }
     

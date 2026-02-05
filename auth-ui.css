@@ -121,6 +121,7 @@
         height: 26px !important;
         min-width: 90px;
 order: 2 !important; 
+        margin-left: auto !important; /* Force à droite */
     }
     
     .mobile-dashboard-btn .avatar-img {
