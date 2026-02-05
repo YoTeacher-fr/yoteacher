@@ -872,7 +872,7 @@ body .mobile-login-btn:hover {
         text-decoration: none !important;
         font-size: 0.85rem !important;
         font-weight: 600 !important;
-        order: 2;
+        order: 2 !important;
         margin-left: auto !important;
     }
     
