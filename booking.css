@@ -897,14 +897,6 @@ body .mobile-login-btn:hover {
         flex: 1;
     }
     
-    /* Cacher le bouton connexion quand dashboard est affiché */
-    .mobile-header-right-group .mobile-login-btn-header {
-        display: flex !important;
-    }
-    
-    .mobile-header-right-group .mobile-dashboard-btn {
-        display: flex !important;
-    }
     body .logo-section {
         position: absolute;
         left: 50%;
