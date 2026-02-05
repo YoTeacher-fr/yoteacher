@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="booking.css">
-    <link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
     <!-- Header réduit -->
@@ -21,21 +20,13 @@
                     <div class="flag">🇫🇷</div>
                 </div>
                 
-<div class="mobile-header-right-group">
-                  
-                <!-- Groupe droit pour langue, devise et avatar -->
+                <!-- Groupe mobile (visible sur mobile uniquement) -->
+                <div class="mobile-header-right-group">
+                    <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
+                </div>
+                
+                <!-- Groupe desktop (visible sur desktop uniquement) -->
                 <div class="header-right-group">
-                    <!-- Avatar utilisateur -->
-                    <div class="user-avatar" id="userAvatar" style="display: none;">
-                        <div class="avatar-img" id="avatarInitials">Y</div>
-                        <div class="user-menu">
-                            <a href="dashboard.html" data-i18n="dashboard.my_dashboard">Mon tableau de bord</a>
-                            <a href="profile.html" data-i18n="dashboard.my_profile">Mon profil</a>
-                            <a href="bookings.html" data-i18n="payment.my_bookings">Mes réservations</a>
-                            <a href="#" class="logout-btn" id="logoutBtn" data-i18n="dashboard.logout">Déconnexion</a>
-                        </div>
-                    </div>
-                    
                     <!-- Sélecteur de devise -->
                     <div class="currency-selector">
                         <i class="fas fa-money-bill-wave"></i>
@@ -49,11 +40,9 @@
                         <span class="flag">🌐</span>
                         <span data-i18n="header.language">EN</span>
                     </div>
-                     <!-- Bouton Connexion/Dashboard Mobile -->
-    <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
-</div> 
-                    <!-- Bouton de connexion (visible si non connecté) -->
-                    <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
+                    
+                    <!-- Bouton de connexion (remplacé par avatar si connecté) -->
+                    <a href="login.html" class="login-btn" data-i18n="header.login">Connexion</a>
                 </div>
             </div>
         </div>
