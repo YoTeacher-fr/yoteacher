@@ -10,47 +10,42 @@
 }
 
 /* Avatar utilisateur - Desktop */
-.user-avatar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
+/* Si vous voulez que le dashboard soit IDENTIQUE au bouton Connexion de payment.html */
 .user-avatar .dashboard-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 20px !important; /* Style payment */
-    background: #4f9ad1 !important; /* Style payment - bleu uni */
-    color: white;
+    gap: 10px;
+    padding: 8px 20px !important; /* Identique à payment.css */
+    background: #4f9ad1 !important; /* Même couleur */
+    color: white !important;
     border-radius: 50px;
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease; /* Style payment */
+    font-size: 0.9rem !important; /* Même taille */
+    transition: all 0.3s ease; /* Même transition */
     position: relative;
-    white-space: nowrap; /* Style payment */
-    border: none; /* Style payment */
+    border: none;
+    white-space: nowrap;
 }
 
 .user-avatar .dashboard-btn:hover {
-    background: #3c84f6 !important; /* Style payment */
-    transform: translateY(-1px); /* Style payment */
-    box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3); /* Style payment */
+    background: #3c84f6 !important; /* Même hover que payment.css */
+    transform: translateY(-1px); /* Même effet */
+    box-shadow: 0 4px 12px rgba(60, 132, 246, 0.3); /* Même shadow */
 }
 
+/* Avatar plus grand pour correspondre */
 .user-avatar .avatar-img {
-    width: 36px !important; /* Style payment */
-    height: 36px !important; /* Style payment */
+    width: 28px !important; /* Entre 24px et 36px */
+    height: 28px !important;
     border-radius: 50%;
-    background: linear-gradient(135deg, #4f9ad1, #3c84f6); /* Style payment */
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600; /* Style payment */
-    font-size: 0.9rem; /* Style payment */
-}
+    font-weight: bold;
+    font-size: 0.8rem !important;
 }
 
 .user-avatar .logout-btn-icon {
