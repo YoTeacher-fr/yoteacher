@@ -11,7 +11,6 @@
 <link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
-    <!-- booking.html - Structure corrigée pour correspondre à payment.html -->
 <header class="main-header scrolled">
     <div class="container">
         <div class="header-content">
@@ -20,36 +19,39 @@
                 <div class="flag">🇫🇷</div>
             </div>
             
-            <!-- Groupe mobile (caché sur desktop) -->
+            <!-- Groupe mobile -->
             <div class="mobile-header-right-group">
-                <!-- Sélecteurs mobiles -->
+                <!-- Sélecteurs mobile -->
                 <div class="currency-selector">
                     <i class="fas fa-money-bill-wave"></i>
                     <select id="currencySelector"></select>
                 </div>
+                
                 <div class="language-switcher">
                     <span class="flag">🌐</span>
                     <span data-i18n="header.language">EN</span>
                 </div>
+                
                 <!-- Bouton mobile -->
                 <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
             </div>
             
-            <!-- Groupe desktop (visible sur desktop) -->
+            <!-- Groupe desktop -->
             <div class="header-right-group">
                 <!-- Sélecteurs desktop -->
                 <div class="currency-selector">
                     <i class="fas fa-money-bill-wave"></i>
                     <select id="currencySelector"></select>
                 </div>
+                
                 <div class="language-switcher">
                     <span class="flag">🌐</span>
                     <span data-i18n="header.language">EN</span>
                 </div>
+                
+                <!-- Bouton desktop - À L'INTÉRIEUR du header-right-group -->
+                <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
             </div>
-            
-            <!-- Bouton desktop (visible sur desktop, en dehors du groupe) -->
-            <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
         </div>
     </div>
 </header>
