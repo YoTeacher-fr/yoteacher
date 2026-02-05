@@ -11,51 +11,42 @@
 <link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
-<header class="main-header scrolled">
-    <div class="container">
-        <div class="header-content">
-            <div class="logo-section">
-                <a href="index.html" class="logo">Yoann</a>
-                <div class="flag">🇫🇷</div>
-            </div>
-            
-            <!-- Groupe mobile -->
-            <div class="mobile-header-right-group">
-                <!-- Sélecteurs mobile -->
-                <div class="currency-selector">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <select id="currencySelector"></select>
+    <!-- Header réduit comme booking.html -->
+    <header class="main-header scrolled">
+        <div class="container">
+            <div class="header-content">
+                
+                <div class="logo-section">
+                    <a href="index.html" class="logo">Yoann</a>
+                    <div class="flag">🇫🇷</div>
                 </div>
                 
-                <div class="language-switcher">
-                    <span class="flag">🌐</span>
-                    <span data-i18n="header.language">EN</span>
+                <div class="mobile-header-right-group">
+
+
+                <!-- Groupe droit pour langue, devise et avatar -->
+                <div class="header-right-group">
+                    <!-- Sélecteur de devise -->
+                    <div class="currency-selector">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <select id="currencySelector"></select>
+                    </div>
+                    
+                    <!-- Sélecteur de langue -->
+                    <div class="language-switcher" id="languageSwitcherDesktop">
+                        <span class="flag">🌐</span>
+                        <span data-i18n="header.language">EN</span>
+                    </div>
+                                        <!-- Bouton Connexion/Dashboard Mobile -->
+                    <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
                 </div>
-                
-                <!-- Bouton mobile -->
-                <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
-            </div>
-            
-            <!-- Groupe desktop -->
-            <div class="header-right-group">
-                <!-- Sélecteurs desktop -->
-                <div class="currency-selector">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <select id="currencySelector"></select>
+                    <!-- Bouton de connexion (visible si non connecté) -->
+                    <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
                 </div>
-                
-                <div class="language-switcher">
-                    <span class="flag">🌐</span>
-                    <span data-i18n="header.language">EN</span>
-                </div>
-                
-                <!-- Bouton desktop - À L'INTÉRIEUR du header-right-group -->
-                <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
             </div>
         </div>
-    </div>
-</header>
-
+        
+    </header>
     <section class="booking-section">
         <div class="booking-container">
             <div class="booking-header">
