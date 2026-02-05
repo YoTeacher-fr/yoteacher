@@ -892,7 +892,11 @@ class TranslationManager {
     }
 
     updateLanguageSwitchers() {
-        const languageSwitchers = document.querySelectorAll('.language-switcher span:last-child, .mobile-language span:last-child');
+const languageSwitchers = document.querySelectorAll(
+    '.language-switcher span:last-child, ' +
+    '.mobile-language span:last-child, ' +
+    '.language-switcher-mobile span'
+);
         
         languageSwitchers.forEach(switcher => {
             switcher.textContent = this.currentLanguage === 'fr' ? 'EN' : 'FR';
