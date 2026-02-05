@@ -1121,60 +1121,60 @@ class TranslationManager {
         console.log('✅ Page traduite avec succès');
     }
 
-    applyTranslations() {
-        console.log(`🌍 Applying translations in ${this.currentLanguage}`);
-        
-        // Compter les éléments
-        const elements = document.querySelectorAll('[data-i18n]');
-        console.log(`🌍 Found ${elements.length} elements with data-i18n`);
-        
-        elements.forEach((element, index) => {
-            const key = element.getAttribute('data-i18n');
-            const translation = this.getTranslation(key);
-            if (translation && translation !== key) {
-                // Préserver les balises HTML si présentes
-                if (translation.includes('<')) {
-                    element.innerHTML = translation;
-                } else {
-                    element.textContent = translation;
-                }
-                if (index < 5) { // Afficher les 5 premiers pour debug
-                    console.log(`🌍 Translated: ${key} -> ${translation.substring(0, 50)}...`);
-                }
-            } else if (!translation) {
-                console.warn(`🌍 No translation for key: ${key}`);
+applyTranslations() {
+    console.log(`🌍 Applying translations in ${this.currentLanguage}`);
+    
+    // Compter les éléments
+    const elements = document.querySelectorAll('[data-i18n]');
+    console.log(`🌍 Found ${elements.length} elements with data-i18n`);
+    
+    elements.forEach((element, index) => {
+        const key = element.getAttribute('data-i18n');
+        const translation = this.getTranslation(key);
+        if (translation && translation !== key) {
+            // Préserver les balises HTML si présentes
+            if (translation.includes('<')) {
+                element.innerHTML = translation;
+            } else {
+                element.textContent = translation;
             }
-        });
-
-        // Même chose pour les placeholders et titles
-        document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
-            const key = element.getAttribute('data-i18n-placeholder');
-            const translation = this.getTranslation(key);
-            if (translation && translation !== key) {
-                element.placeholder = translation;
+            if (index < 5) { // Afficher les 5 premiers pour debug
+                console.log(`🌍 Translated: ${key} -> ${translation.substring(0, 50)}...`);
             }
-        });
-
-        document.querySelectorAll('[data-i18n-title]').forEach(element => {
-            const key = element.getAttribute('data-i18n-title');
-            const translation = this.getTranslation(key);
-            if (translation && translation !== key) {
-                element.title = translation;
-            }
-        });
-        
-        // Mettre à jour les titres de page
-        const title = document.querySelector('title');
-        if (title) {
-            const pageKey = 'legal.title';
-            const translation = this.getTranslation(pageKey);
-            if (translation && translation !== pageKey) {
-                title.textContent = translation;
-            }
+        } else if (!translation) {
+            console.warn(`🌍 No translation for key: ${key}`);
         }
-        
-        console.log('✅ Translations applied');
+    });
+
+    // Même chose pour les placeholders et titles
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+        const key = element.getAttribute('data-i18n-placeholder');
+        const translation = this.getTranslation(key);
+        if (translation && translation !== key) {
+            element.placeholder = translation;
+        }
+    });
+
+    document.querySelectorAll('[data-i18n-title]').forEach(element => {
+        const key = element.getAttribute('data-i18n-title');
+        const translation = this.getTranslation(key);
+        if (translation && translation !== key) {
+            element.title = translation;
+        }
+    });
+    
+    // Mettre à jour les titres de page UNIQUEMENT s'ils ont un attribut data-i18n
+    const title = document.querySelector('title[data-i18n]');
+    if (title) {
+        const key = title.getAttribute('data-i18n');
+        const translation = this.getTranslation(key);
+        if (translation && translation !== key) {
+            title.textContent = translation;
+        }
     }
+    
+    console.log('✅ Translations applied');
+}
 
     updateLanguageSwitchers() {
         const languageSwitchers = document.querySelectorAll(
