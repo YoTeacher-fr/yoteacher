@@ -236,7 +236,9 @@ body {
 .mobile-login-btn-header {
     display: none !important;
 }
-
+body .mobile-dashboard-btn {
+    display: none !important;
+}
 /* Styles pour le menu mobile */
 .currency-selector-mobile {
     padding: 15px 0;
