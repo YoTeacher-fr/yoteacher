@@ -22,7 +22,9 @@
                 </div>
                 
                 <div class="mobile-header-right-group">
-
+                    <!-- Bouton Connexion/Dashboard Mobile -->
+                    <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
+                </div>
 
                 <!-- Groupe droit pour langue, devise et avatar -->
                 <div class="header-right-group">
@@ -37,16 +39,16 @@
                         <span class="flag">🌐</span>
                         <span data-i18n="header.language">EN</span>
                     </div>
-                                        <!-- Bouton Connexion/Dashboard Mobile -->
-                    <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
-                </div>
-                    <!-- Bouton de connexion (visible si non connecté) -->
+                    
+                    <!-- Bouton de connexion Desktop (visible si non connecté) -->
                     <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
                 </div>
             </div>
         </div>
         
     </header>
+
+
     <section class="payment-section">
         <div class="payment-container">
             <div class="payment-header">
@@ -119,59 +121,10 @@
                             </div>
                         </div>
 
-                        <!-- Wise -->
-                        <button class="payment-method-btn" data-method="wise">
-                            <div class="payment-method-icon" style="color: #9C5BDE;">
-                                <i class="fas fa-globe"></i>
-                            </div>
-                            <div class="payment-method-name">Wise</div>
-                            <div class="payment-method-arrow">
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                        </button>
-                        
-                        <div class="payment-method-details" id="wiseDetails">
-                            <div class="payment-details-grid">
-                                <div class="qr-code-container">
-                                    <span class="qr-code-label" data-i18n="payment.wise_qr">Cliquez sur le QR code pour ouvrir Wise</span>
-                                    <img src="assets/images/wise.webp" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img" title="Cliquez pour ouvrir Wise">
-                                </div>
-                                
-                                <div class="payment-info">
-                                    <div class="info-item clickable" id="wiseLinkItem">
-                                        <div class="info-label" data-i18n="payment.wise_link">Lien Wise</div>
-                                        <div class="info-value" id="wiseLinkDisplay">wise.com/pay/yoann</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label" data-i18n="payment.beneficiary_name">Nom du bénéficiaire</div>
-                                        <div class="info-value" id="wiseName">Yoann Bourbia</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label" data-i18n="payment.amount">Montant</div>
-                                        <div class="info-value" id="wiseAmount">-</div>
-                                    </div>
-                                </div>
-                                
-                                <div class="payment-notice">
-                                    <p>
-                                        <i class="fas fa-info-circle"></i>
-                                        <strong data-i18n="payment.important">Important</strong> <span data-i18n="payment.notice">: Après paiement, cliquez sur "J'ai payé avec Revolut"</span>
-<div data-i18n="payment.notice2">:pour confirmer votre réservation.</div>
-                                    </p>
-                                </div>
-                                
-                                <div class="payment-action">
-                                    <button class="btn-confirm-payment" data-method="wise">
-                                        <i class="fas fa-check"></i> <span data-i18n="payment.paid_wise">J'ai payé avec Wise</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Interac -->
-                        <button class="payment-method-btn" data-method="interac">
+                        <!-- Interac (pour les Canadiens) -->
+                        <button class="payment-method-btn" data-method="interac" id="interacBtn" style="display: none;">
                             <div class="payment-method-icon" style="color: #E41E26;">
-                                <i class="fas fa-exchange-alt"></i>
+                                <i class="fas fa-university"></i>
                             </div>
                             <div class="payment-method-name">Interac</div>
                             <div class="payment-method-arrow">
@@ -180,8 +133,8 @@
                         </button>
                         
                         <div class="payment-method-details" id="interacDetails">
-                            <div class="interac-details">
-                                <h3 style="margin-bottom: 20px; color: #333; display: flex; align-items: center; gap: 10px;">
+                            <div class="payment-details-content">
+                                <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
                                     <i class="fas fa-university" style="color: #E41E26;"></i> <span data-i18n="payment.interac_title">Paiement Interac</span>
                                 </h3>
                                 <p style="margin-bottom: 20px; color: #555;" data-i18n="payment.interac_instructions">
@@ -244,7 +197,7 @@
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.paypal_email">Email PayPal</div>
-                                        <div class="info-value" id="paypalEmail">yoann.bourbia@gmail.com</div>
+                                        <div class="info-value" id="paypalEmail">yoannbourbia@gmail.com</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.amount">Montant</div>
@@ -311,13 +264,10 @@
     <script src="config.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
-    <script src="translation.js"></script>
     <script src="currency.js"></script>
+    <script src="translation.js"></script>
     <script src="packages.js"></script>
     <script src="auth.js"></script>
-    <script src="booking.js"></script>
-    <script src="payment.js"></script>
-    <script src="common.js"></script>
-    <script src="payment-ui.js" defer></script>
+    <script src="payment-ui.js"></script>
 </body>
 </html>
