@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="payment.css">
-<link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
     <!-- Header réduit comme booking.html -->
@@ -25,17 +24,6 @@
                 
                 <!-- Groupe droit pour langue, devise et avatar -->
                 <div class="header-right-group">
-                    <!-- Avatar utilisateur -->
-                    <div class="user-avatar" id="userAvatar" style="display: none;">
-                        <div class="avatar-img" id="avatarInitials">Y</div>
-                        <div class="user-menu">
-                            <a href="dashboard.html" data-i18n="payment.my_dashboard">Mon tableau de bord</a>
-                            <a href="profile.html" data-i18n="payment.my_profile">Mon profil</a>
-                            <a href="bookings.html" data-i18n="payment.my_bookings">Mes réservations</a>
-                            <a href="#" class="logout-btn" id="logoutBtn" data-i18n="dashboard.logout">Déconnexion</a>
-                        </div>
-                    </div>
-                    
                     <!-- Sélecteur de devise -->
                     <div class="currency-selector">
                         <i class="fas fa-money-bill-wave"></i>
@@ -51,7 +39,7 @@
     <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
 </div>                   
                     <!-- Bouton de connexion (visible si non connecté) -->
-                    <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
+                    <a href="login.html" class="login-btn" data-i18n="header.login">Connexion</a>
                 </div>
             </div>
         </div>
@@ -206,7 +194,7 @@
                                     </div>
                                     <div class="detail-item">
                                         <span class="label" data-i18n="payment.interac_email">Email Interac:</span>
-                                        <span class="value" id="interacEmail">yoannbourbia@gmail.com</span>
+                                        <span class="value" id="interacEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f38a9c929d9d919c8681919a92b3949e929a9fdd909c9e">[email&#160;protected]</a></span>
                                     </div>
                                     <div class="detail-item">
                                         <span class="label" data-i18n="payment.amount">Montant:</span>
@@ -255,7 +243,7 @@
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.paypal_email">Email PayPal</div>
-                                        <div class="info-value" id="paypalEmail">yoann.bourbia@gmail.com</div>
+                                        <div class="info-value" id="paypalEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="077e686669692965687275656e6647606a666e6b2964686a">[email&#160;protected]</a></div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.amount">Montant</div>
@@ -316,19 +304,9 @@
     </section>
 
     <!-- Script Stripe -->
-    <script src="https://js.stripe.com/v3/"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://js.stripe.com/v3/"></script>
     
     <!-- Scripts -->
     <script src="config.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="supabase.js"></script>
-    <script src="translation.js"></script>
-    <script src="currency.js"></script>
-    <script src="packages.js"></script>
-    <script src="auth.js"></script>
-    <script src="booking.js"></script>
-    <script src="payment.js"></script>
-    <script src="common.js"></script>
-    <script src="payment-ui.js" defer></script>
-</body>
-</html>
+    <script src="su
