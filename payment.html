@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="payment.css">
+<link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
     <!-- Header réduit comme booking.html -->
@@ -19,14 +20,22 @@
                     <a href="index.html" class="logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
                 </div>
+            <div class="mobile-header-right-group">
+
                 
-                <!-- Groupe mobile (visible sur mobile uniquement) -->
-                <div class="mobile-header-right-group">
-                    <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
-                </div>
-                
-                <!-- Groupe desktop (visible sur desktop uniquement) -->
+                <!-- Groupe droit pour langue, devise et avatar -->
                 <div class="header-right-group">
+                    <!-- Avatar utilisateur -->
+                    <div class="user-avatar" id="userAvatar" style="display: none;">
+                        <div class="avatar-img" id="avatarInitials">Y</div>
+                        <div class="user-menu">
+                            <a href="dashboard.html" data-i18n="payment.my_dashboard">Mon tableau de bord</a>
+                            <a href="profile.html" data-i18n="payment.my_profile">Mon profil</a>
+                            <a href="bookings.html" data-i18n="payment.my_bookings">Mes réservations</a>
+                            <a href="#" class="logout-btn" id="logoutBtn" data-i18n="dashboard.logout">Déconnexion</a>
+                        </div>
+                    </div>
+                    
                     <!-- Sélecteur de devise -->
                     <div class="currency-selector">
                         <i class="fas fa-money-bill-wave"></i>
@@ -38,9 +47,11 @@
                         <span class="flag">🌐</span>
                         <span data-i18n="header.language">EN</span>
                     </div>
-                    
-                    <!-- Bouton de connexion (remplacé par avatar si connecté) -->
-                    <a href="login.html" class="login-btn" data-i18n="header.login">Connexion</a>
+     <!-- Bouton Connexion/Dashboard Mobile -->
+    <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
+</div>                   
+                    <!-- Bouton de connexion (visible si non connecté) -->
+                    <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
                 </div>
             </div>
         </div>
@@ -195,7 +206,7 @@
                                     </div>
                                     <div class="detail-item">
                                         <span class="label" data-i18n="payment.interac_email">Email Interac:</span>
-                                        <span class="value" id="interacEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a1d8cec0cfcfc3ced4d3c3c8c0e1c6ccc0c8cd8fc2cecc">[email&#160;protected]</a></span>
+                                        <span class="value" id="interacEmail">yoannbourbia@gmail.com</span>
                                     </div>
                                     <div class="detail-item">
                                         <span class="label" data-i18n="payment.amount">Montant:</span>
@@ -244,7 +255,7 @@
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.paypal_email">Email PayPal</div>
-                                        <div class="info-value" id="paypalEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3e47515f5050105c514b4c5c575f7e59535f5752105d5153">[email&#160;protected]</a></div>
+                                        <div class="info-value" id="paypalEmail">yoann.bourbia@gmail.com</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label" data-i18n="payment.amount">Montant</div>
@@ -305,9 +316,19 @@
     </section>
 
     <!-- Script Stripe -->
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://js.stripe.com/v3/"></script>
+    <script src="https://js.stripe.com/v3/"></script>
     
     <!-- Scripts -->
     <script src="config.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="su
+    <script src="supabase.js"></script>
+    <script src="translation.js"></script>
+    <script src="currency.js"></script>
+    <script src="packages.js"></script>
+    <script src="auth.js"></script>
+    <script src="booking.js"></script>
+    <script src="payment.js"></script>
+    <script src="common.js"></script>
+    <script src="payment-ui.js" defer></script>
+</body>
+</html>
