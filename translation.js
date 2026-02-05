@@ -892,20 +892,22 @@ class TranslationManager {
     }
 
     updateLanguageSwitchers() {
-const languageSwitchers = document.querySelectorAll(
-    '.language-switcher span:last-child, ' +
-    '.mobile-language span:last-child, ' +
-    '.language-switcher-mobile span'
-);
+    const languageSwitchers = document.querySelectorAll(
+        '.language-switcher span:last-child, ' +
+        '.mobile-language span:last-child, ' +
+        '.language-switcher-mobile span'  // ← AJOUTER CETTE LIGNE
+    );
+    
+    languageSwitchers.forEach(switcher => {
+        // Mettre le texte à "FR" si la langue actuelle est "en", sinon "EN"
+        switcher.textContent = this.currentLanguage === 'fr' ? 'EN' : 'FR';
         
-        languageSwitchers.forEach(switcher => {
-            switcher.textContent = this.currentLanguage === 'fr' ? 'EN' : 'FR';
-            
-            const parent = switcher.closest('.language-switcher, .mobile-language');
-            if (parent) {
-                parent.title = this.currentLanguage === 'fr' 
-                    ? 'Switch to English' 
-                    : 'Passer en Français';
+        // Mettre à jour le titre (tooltip)
+        const parent = switcher.closest('.language-switcher, .mobile-language, .language-switcher-mobile');
+        if (parent) {
+            parent.title = this.currentLanguage === 'fr' 
+                ? 'Switch to English' 
+                : 'Passer en Français';
             }
         });
     }
