@@ -277,65 +277,98 @@
     <script src="common.js"></script>
     <script src="translation.js"></script>
     
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Navigation interne fluide
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function(e) {
-                    const href = this.getAttribute('href');
-                    if (href === '#') return;
-                    
-                    e.preventDefault();
-                    
-                    if (href.startsWith('#') && !href.includes('index.html')) {
-                        const target = document.querySelector(href);
-                        if (target) {
-                            window.scrollTo({
-                                top: target.offsetTop - 80,
-                                behavior: 'smooth'
-                            });
-                        }
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🌍 DOM Content Loaded');
+        
+        // Navigation interne fluide
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
+                
+                e.preventDefault();
+                
+                if (href.startsWith('#') && !href.includes('index.html')) {
+                    const target = document.querySelector(href);
+                    if (target) {
+                        window.scrollTo({
+                            top: target.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
                     }
-                });
+                }
             });
-            
-            // Navigation retour en haut
-            document.querySelectorAll('.back-to-top').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-                });
-            });
-            
-            // Initialiser le sélecteur de langue mobile
-            const languageSwitcherMobile = document.getElementById('languageSwitcherMobile');
-            if (languageSwitcherMobile && window.translationManager) {
-                languageSwitcherMobile.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.translationManager.toggleLanguage();
-                });
-            }
-            
-            // Initialiser le sélecteur de langue desktop
-            const languageSwitcherDesktop = document.getElementById('languageSwitcherDesktop');
-            if (languageSwitcherDesktop && window.translationManager) {
-                languageSwitcherDesktop.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.translationManager.toggleLanguage();
-                });
-            }
-            
-            // Vérifier que le gestionnaire de traduction est bien initialisé
-            console.log('🌍 Translation Manager loaded:', !!window.translationManager);
-            if (window.translationManager) {
-                window.translationManager.updatePage();
-            }
         });
-    </script>
+        
+        // Navigation retour en haut
+        document.querySelectorAll('.back-to-top').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // Initialiser le sélecteur de langue mobile
+        const languageSwitcherMobile = document.getElementById('languageSwitcherMobile');
+        if (languageSwitcherMobile) {
+            console.log('🌍 Mobile switcher found:', languageSwitcherMobile);
+            languageSwitcherMobile.addEventListener('click', function(e) {
+                console.log('🌍 Mobile switcher clicked');
+                e.preventDefault();
+                e.stopPropagation();
+                if (window.translationManager) {
+                    window.translationManager.toggleLanguage();
+                } else {
+                    console.error('🌍 Translation manager not found');
+                }
+            });
+        } else {
+            console.error('🌍 Mobile switcher not found');
+        }
+        
+        // Initialiser le sélecteur de langue desktop
+        const languageSwitcherDesktop = document.getElementById('languageSwitcherDesktop');
+        if (languageSwitcherDesktop) {
+            console.log('🌍 Desktop switcher found:', languageSwitcherDesktop);
+            languageSwitcherDesktop.addEventListener('click', function(e) {
+                console.log('🌍 Desktop switcher clicked');
+                e.preventDefault();
+                e.stopPropagation();
+                if (window.translationManager) {
+                    window.translationManager.toggleLanguage();
+                } else {
+                    console.error('🌍 Translation manager not found');
+                }
+            });
+        } else {
+            console.error('🌍 Desktop switcher not found');
+        }
+        
+        // Vérifier que le gestionnaire de traduction est bien initialisé
+        console.log('🌍 Translation Manager loaded:', !!window.translationManager);
+        if (window.translationManager) {
+            // Forcer une mise à jour initiale
+            window.translationManager.updatePage();
+            
+            // Ajouter les écouteurs manuellement (sécurité)
+            window.translationManager.addEventListeners();
+        } else {
+            console.error('🌍 Translation manager not available');
+        }
+        
+        // Debug: Afficher tous les éléments avec data-i18n
+        const translatableElements = document.querySelectorAll('[data-i18n]');
+        console.log(`🌍 Elements with data-i18n: ${translatableElements.length}`);
+        
+        // Debug: Vérifier les boutons de langue
+        console.log('🌍 Language switchers:');
+        console.log('- Mobile:', document.getElementById('languageSwitcherMobile'));
+        console.log('- Desktop:', document.getElementById('languageSwitcherDesktop'));
+    });
+</script>
 </body>
 </html>
