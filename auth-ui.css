@@ -80,21 +80,6 @@
     transform: scale(1.1);
 }
 
-/* Bouton Dashboard Mobile */
-.mobile-dashboard-btn {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px;
-    padding: 6px 12px !important;
-    background: #4f9ad1 !important;
-    color: white !important;
-    border-radius: 20px !important;
-    text-decoration: none !important;
-    font-size: 0.85rem !important;
-    font-weight: 600 !important;
-    transition: all 0.3s;
-}
-
 .mobile-dashboard-btn:hover {
     background: #3f8ac1 !important;
 }
@@ -110,21 +95,4 @@
     justify-content: center;
     font-size: 0.75rem !important;
     font-weight: bold;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-    .mobile-dashboard-btn {
-        padding: 3px 8px 3px 4px !important;
-        border-radius: 12px !important;
-        font-size: 0.65rem !important;
-        height: 26px !important;
-        min-width: 90px;
-    }
-    
-    .mobile-dashboard-btn .avatar-img {
-        width: 20px !important;
-        height: 20px !important;
-        font-size: 0.6rem !important;
-    }
 }
