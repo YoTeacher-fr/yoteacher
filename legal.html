@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mentions Légales - YoTeach</title>
+    <title data-i18n="legal.title">Mentions Légales - YoTeach</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="legal.css">
-<link rel="stylesheet" href="auth-ui.css">
+    <link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
     <!-- Header simplifié sans navlinks -->
@@ -20,7 +20,7 @@
             <div class="header-content">
                 <!-- Logo à gauche -->
                 <div class="logo-section">
-                    <a href="index.html" class="logo">Yoann</a>
+                    <a href="index.html" class="logo" data-i18n="header.logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
                 </div>
                 
@@ -28,11 +28,11 @@
                 <div class="mobile-header-right-group">
                     <!-- Langue mobile -->
                     <div class="language-switcher-mobile" id="languageSwitcherMobile">
-                        <span>EN</span>
+                        <span data-i18n="header.language">EN</span>
                     </div>
                     
                     <!-- Bouton Connexion/Dashboard Mobile -->
-                    <a href="login.html" class="mobile-login-btn-header">Connexion</a>
+                    <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
                 </div>
                 
                 <!-- Groupe des boutons de droite - FORCÉ À DROITE -->
@@ -40,10 +40,10 @@
                     <!-- Sélecteur de langue uniquement -->
                     <div class="language-switcher" id="languageSwitcherDesktop">
                         <span class="flag">🌐</span>
-                        <span>EN</span>
+                        <span data-i18n="header.language">EN</span>
                     </div>
                     
-                    <a href="login.html" class="login-btn">Connexion</a>
+                    <a href="login.html" class="login-btn" data-i18n="header.login">Connexion</a>
                 </div>
             </div>
         </div>
@@ -53,218 +53,218 @@
     <section class="legal-page">
         <div class="legal-container">
             <div class="legal-header">
-                <h1 class="legal-title">Mentions Légales</h1>
-                <p class="legal-intro">Informations légales, conditions de vente et politiques de YoTeach</p>
+                <h1 class="legal-title" data-i18n="legal.title">Mentions Légales</h1>
+                <p class="legal-intro" data-i18n="legal.intro">Informations légales, conditions de vente et politiques de YoTeach</p>
             </div>
             
             <!-- Navigation interne -->
             <nav class="legal-nav">
                 <ul class="legal-nav-list">
-                    <li><a href="#mentions-legales" class="legal-nav-link">Mentions Légales</a></li>
-                    <li><a href="#conditions-vente" class="legal-nav-link">Conditions de Vente</a></li>
-                    <li><a href="#confidentialite" class="legal-nav-link">Confidentialité</a></li>
-                    <li><a href="#annulation" class="legal-nav-link">Annulation</a></li>
+                    <li><a href="#mentions-legales" class="legal-nav-link" data-i18n="legal.nav.mentions">Mentions Légales</a></li>
+                    <li><a href="#conditions-vente" class="legal-nav-link" data-i18n="legal.nav.conditions">Conditions de Vente</a></li>
+                    <li><a href="#confidentialite" class="legal-nav-link" data-i18n="legal.nav.privacy">Confidentialité</a></li>
+                    <li><a href="#annulation" class="legal-nav-link" data-i18n="legal.nav.cancellation">Annulation</a></li>
                 </ul>
             </nav>
             
             <!-- Section Mentions Légales -->
             <section id="mentions-legales" class="legal-section">
-                <h2>Mentions Légales</h2>
+                <h2 data-i18n="legal.section1.title">Mentions Légales</h2>
                 
-                <h3>Éditeur du site</h3>
-                <p><strong>YoTeach</strong> - Cours de français en ligne</p>
-                <p><strong>Professeur :</strong> Yoann Bourbia</p>
-                <p><strong>Email :</strong> yoteachfr@gmail.com</p>
-                <p><strong>Localisation :</strong> Marseille, France</p>
+                <h3 data-i18n="legal.section1.editor.title">Éditeur du site</h3>
+                <p><strong data-i18n="legal.section1.editor.name">YoTeach</strong> <span data-i18n="legal.section1.editor.description">- Cours de français en ligne</span></p>
+                <p><strong data-i18n="legal.section1.editor.teacher_label">Professeur :</strong> <span data-i18n="legal.section1.editor.teacher_name">Yoann Bourbia</span></p>
+                <p><strong data-i18n="legal.section1.editor.email_label">Email :</strong> <span data-i18n="legal.section1.editor.email">yoteachfr@gmail.com</span></p>
+                <p><strong data-i18n="legal.section1.editor.location_label">Localisation :</strong> <span data-i18n="legal.section1.editor.location">Marseille, France</span></p>
                 
-                <h3>Activité</h3>
-                <p>Enseignement de la langue française en ligne à destination des adultes.</p>
-                <p>Cours particuliers et personnalisés via visioconférence.</p>
+                <h3 data-i18n="legal.section1.activity.title">Activité</h3>
+                <p data-i18n="legal.section1.activity.line1">Enseignement de la langue française en ligne à destination des adultes.</p>
+                <p data-i18n="legal.section1.activity.line2">Cours particuliers et personnalisés via visioconférence.</p>
               
                 
-                <h3>Propriété intellectuelle</h3>
-                <p>L'ensemble du contenu de ce site (textes, images, design, logos) est la propriété exclusive de YoTeach, sauf mention contraire. Toute reproduction, même partielle, est interdite sans autorisation écrite préalable.</p>
+                <h3 data-i18n="legal.section1.intellectual.title">Propriété intellectuelle</h3>
+                <p data-i18n="legal.section1.intellectual.content">L'ensemble du contenu de ce site (textes, images, design, logos) est la propriété exclusive de YoTeach, sauf mention contraire. Toute reproduction, même partielle, est interdite sans autorisation écrite préalable.</p>
                 
-                <h3>Responsabilité</h3>
-                <p>YoTeach met tout en œuvre pour assurer l'exactitude des informations diffusées sur son site. Cependant, YoTeach ne saurait être tenue responsable des erreurs, omissions, ou des résultats qui pourraient être obtenus par l'usage de ces informations.</p>
+                <h3 data-i18n="legal.section1.responsibility.title">Responsabilité</h3>
+                <p data-i18n="legal.section1.responsibility.content">YoTeach met tout en œuvre pour assurer l'exactitude des informations diffusées sur son site. Cependant, YoTeach ne saurait être tenue responsable des erreurs, omissions, ou des résultats qui pourraient être obtenus par l'usage de ces informations.</p>
                 
-                <a href="#" class="back-to-top">↑ Retour en haut</a>
+                <a href="#" class="back-to-top" data-i18n="legal.back_to_top">↑ Retour en haut</a>
             </section>
             
             <!-- Section Conditions Générales de Vente -->
             <section id="conditions-vente" class="legal-section">
-                <h2>Conditions Générales de Vente</h2>
+                <h2 data-i18n="legal.section2.title">Conditions Générales de Vente</h2>
                 
-                <h3>Article 1 - Objet</h3>
-                <p>Les présentes conditions générales de vente (CGV) ont pour objet de définir les relations contractuelles entre YoTeach et l'acheteur, ainsi que les conditions de vente des cours de français en ligne.</p>
+                <h3 data-i18n="legal.section2.article1.title">Article 1 - Objet</h3>
+                <p data-i18n="legal.section2.article1.content">Les présentes conditions générales de vente (CGV) ont pour objet de définir les relations contractuelles entre YoTeach et l'acheteur, ainsi que les conditions de vente des cours de français en ligne.</p>
                 
-                <h3>Article 2 - Prix</h3>
-                <p>Les prix des cours sont indiqués en euros (€) si aucune conversion automatique n'est faite. YoTeach se réserve le droit de modifier ses tarifs à tout moment, étant entendu que le prix applicable à la commande est celui en vigueur au jour de la commande.</p>
+                <h3 data-i18n="legal.section2.article2.title">Article 2 - Prix</h3>
+                <p data-i18n="legal.section2.article2.content">Les prix des cours sont indiqués en euros (€) si aucune conversion automatique n'est faite. YoTeach se réserve le droit de modifier ses tarifs à tout moment, étant entendu que le prix applicable à la commande est celui en vigueur au jour de la commande.</p>
                 
-                <h3>Article 3 - Commande et Paiement</h3>
-                <p>La commande de cours s'effectue en ligne via le site YoTeach. Le paiement est exigible immédiatement à la commande. Les moyens de paiement acceptés sont :</p>
+                <h3 data-i18n="legal.section2.article3.title">Article 3 - Commande et Paiement</h3>
+                <p data-i18n="legal.section2.article3.intro">La commande de cours s'effectue en ligne via le site YoTeach. Le paiement est exigible immédiatement à la commande. Les moyens de paiement acceptés sont :</p>
                 <ul>
-                    <li>Cartes bancaires (via Stripe)</li>
-                    <li>Revolut</li>
-                    <li>Wise</li>
-                    <li>PayPal</li>
-                    <li>Interac (Canada)</li>
+                    <li data-i18n="legal.section2.article3.payment1">Cartes bancaires (via Stripe)</li>
+                    <li data-i18n="legal.section2.article3.payment2">Revolut</li>
+                    <li data-i18n="legal.section2.article3.payment3">Wise</li>
+                    <li data-i18n="legal.section2.article3.payment4">PayPal</li>
+                    <li data-i18n="legal.section2.article3.payment5">Interac (Canada)</li>
                 </ul>
                 
-                <h3>Article 4 - Validation de la commande</h3>
-                <p>La commande ne sera considérée comme définitive qu'après réception du paiement complet. Une confirmation de commande sera envoyée par email à l'adresse fournie par l'acheteur.</p>
+                <h3 data-i18n="legal.section2.article4.title">Article 4 - Validation de la commande</h3>
+                <p data-i18n="legal.section2.article4.content">La commande ne sera considérée comme définitive qu'après réception du paiement complet. Une confirmation de commande sera envoyée par email à l'adresse fournie par l'acheteur.</p>
                 
-                <h3>Article 5 - Prestation de service</h3>
-                <p>Les cours sont dispensés en visioconférence via Zoom, Google Meet ou Microsoft Teams, selon le choix de l'élève. L'élève recevra le lien de connexion par email avant chaque séance.</p>
-                <p>YoTeach s'engage à respecter les horaires convenus et à fournir un service de qualité correspondant à la description des cours sur le site.</p>
+                <h3 data-i18n="legal.section2.article5.title">Article 5 - Prestation de service</h3>
+                <p data-i18n="legal.section2.article5.content1">Les cours sont dispensés en visioconférence via Zoom, Google Meet ou Microsoft Teams, selon le choix de l'élève. L'élève recevra le lien de connexion par email avant chaque séance.</p>
+                <p data-i18n="legal.section2.article5.content2">YoTeach s'engage à respecter les horaires convenus et à fournir un service de qualité correspondant à la description des cours sur le site.</p>
                 
-                <h3>Article 6 - Droit de rétractation</h3>
-                <p>Conformément à l'article L.221-28 du Code de la consommation, le droit de rétractation ne s'applique pas aux contrats de prestation de services pleinement exécutés avant la fin du délai de rétractation. Les cours réservés et payés ne peuvent donc pas être remboursés, sauf dans les conditions prévues à l'article 7.</p>
+                <h3 data-i18n="legal.section2.article6.title">Article 6 - Droit de rétractation</h3>
+                <p data-i18n="legal.section2.article6.content">Conformément à l'article L.221-28 du Code de la consommation, le droit de rétractation ne s'applique pas aux contrats de prestation de services pleinement exécutés avant la fin du délai de rétractation. Les cours réservés et payés ne peuvent donc pas être remboursés, sauf dans les conditions prévues à l'article 7.</p>
                 
-                <h3>Article 7 - Annulation et report</h3>
-                <p>L'élève peut annuler ou reporter un cours sans frais jusqu'à 24 heures avant l'horaire prévu. Au-delà de ce délai, le cours est dû intégralement. En cas d'absence non excusée, le cours est également dû intégralement.</p>
+                <h3 data-i18n="legal.section2.article7.title">Article 7 - Annulation et report</h3>
+                <p data-i18n="legal.section2.article7.content">L'élève peut annuler ou reporter un cours sans frais jusqu'à 24 heures avant l'horaire prévu. Au-delà de ce délai, le cours est dû intégralement. En cas d'absence non excusée, le cours est également dû intégralement.</p>
                 
-                <h3>Article 8 - Propriété intellectuelle</h3>
-                <p>Les supports de cours fournis par YoTeach (documents, exercices, enregistrements) sont protégés par le droit d'auteur et sont destinés à un usage personnel uniquement. Toute diffusion, reproduction ou exploitation commerciale est interdite.</p>
+                <h3 data-i18n="legal.section2.article8.title">Article 8 - Propriété intellectuelle</h3>
+                <p data-i18n="legal.section2.article8.content">Les supports de cours fournis par YoTeach (documents, exercices, enregistrements) sont protégés par le droit d'auteur et sont destinés à un usage personnel uniquement. Toute diffusion, reproduction ou exploitation commerciale est interdite.</p>
                 
-                <h3>Article 9 - Protection des données personnelles</h3>
-                <p>Les données personnelles collectées sont traitées conformément à notre Politique de confidentialité. L'élève dispose d'un droit d'accès, de rectification et de suppression de ses données.</p>
+                <h3 data-i18n="legal.section2.article9.title">Article 9 - Protection des données personnelles</h3>
+                <p data-i18n="legal.section2.article9.content">Les données personnelles collectées sont traitées conformément à notre Politique de confidentialité. L'élève dispose d'un droit d'accès, de rectification et de suppression de ses données.</p>
                 
-                <a href="#" class="back-to-top">↑ Retour en haut</a>
+                <a href="#" class="back-to-top" data-i18n="legal.back_to_top">↑ Retour en haut</a>
             </section>
             
             <!-- Section Politique de Confidentialité -->
             <section id="confidentialite" class="legal-section">
-                <h2>Politique de Confidentialité</h2>
+                <h2 data-i18n="legal.section3.title">Politique de Confidentialité</h2>
                 
-                <h3>1. Données collectées</h3>
-                <p>Nous collectons les données suivantes :</p>
+                <h3 data-i18n="legal.section3.data1.title">1. Données collectées</h3>
+                <p data-i18n="legal.section3.data1.intro">Nous collectons les données suivantes :</p>
                 <ul>
-                    <li><strong>Identité :</strong> Nom, prénom, email</li>
-                    <li><strong>Paiement :</strong> Informations de transaction (gardées par nos processeurs de paiement)</li>
-                    <li><strong>Apprentissage :</strong> Niveau de français, objectifs, notes sur les cours</li>
-                    <li><strong>Communication :</strong> Historique des échanges par email</li>
+                    <li><strong data-i18n="legal.section3.data1.type1">Identité :</strong> <span data-i18n="legal.section3.data1.detail1">Nom, prénom, email</span></li>
+                    <li><strong data-i18n="legal.section3.data1.type2">Paiement :</strong> <span data-i18n="legal.section3.data1.detail2">Informations de transaction (gardées par nos processeurs de paiement)</span></li>
+                    <li><strong data-i18n="legal.section3.data1.type3">Apprentissage :</strong> <span data-i18n="legal.section3.data1.detail3">Niveau de français, objectifs, notes sur les cours</span></li>
+                    <li><strong data-i18n="legal.section3.data1.type4">Communication :</strong> <span data-i18n="legal.section3.data1.detail4">Historique des échanges par email</span></li>
                 </ul>
                 
-                <h3>2. Finalités du traitement</h3>
-                <p>Vos données sont utilisées pour :</p>
+                <h3 data-i18n="legal.section3.purposes.title">2. Finalités du traitement</h3>
+                <p data-i18n="legal.section3.purposes.intro">Vos données sont utilisées pour :</p>
                 <ul>
-                    <li>Gérer votre compte étudiant</li>
-                    <li>Planifier et dispenser vos cours</li>
-                    <li>Traiter vos paiements</li>
-                    <li>Vous envoyer des informations sur vos cours</li>
-                    <li>Améliorer nos services</li>
+                    <li data-i18n="legal.section3.purposes.purpose1">Gérer votre compte étudiant</li>
+                    <li data-i18n="legal.section3.purposes.purpose2">Planifier et dispenser vos cours</li>
+                    <li data-i18n="legal.section3.purposes.purpose3">Traiter vos paiements</li>
+                    <li data-i18n="legal.section3.purposes.purpose4">Vous envoyer des informations sur vos cours</li>
+                    <li data-i18n="legal.section3.purposes.purpose5">Améliorer nos services</li>
                 </ul>
                 
-                <h3>3. Base légale</h3>
-                <p>Le traitement de vos données est basé sur :</p>
+                <h3 data-i18n="legal.section3.basis.title">3. Base légale</h3>
+                <p data-i18n="legal.section3.basis.intro">Le traitement de vos données est basé sur :</p>
                 <ul>
-                    <li>L'exécution du contrat (cours que vous réservez)</li>
-                    <li>L'intérêt légitime (amélioration des services, sécurité)</li>
+                    <li data-i18n="legal.section3.basis.basis1">L'exécution du contrat (cours que vous réservez)</li>
+                    <li data-i18n="legal.section3.basis.basis2">L'intérêt légitime (amélioration des services, sécurité)</li>
                 </ul>
                 
-                <h3>4. Conservation des données</h3>
-                <p>Vos données sont conservées :</p>
+                <h3 data-i18n="legal.section3.retention.title">4. Conservation des données</h3>
+                <p data-i18n="legal.section3.retention.intro">Vos données sont conservées :</p>
                 <ul>
-                    <li>Données de compte : 3 ans après la dernière activité</li>
-                    <li>Données de facturation : 10 ans (obligation légale)</li>
-                    <li>Données de cours : 5 ans après le dernier cours</li>
+                    <li data-i18n="legal.section3.retention.retention1">Données de compte : 3 ans après la dernière activité</li>
+                    <li data-i18n="legal.section3.retention.retention2">Données de facturation : 10 ans (obligation légale)</li>
+                    <li data-i18n="legal.section3.retention.retention3">Données de cours : 5 ans après le dernier cours</li>
                 </ul>
                 
-                <h3>5. Partage des données</h3>
-                <p>Vos données ne sont partagées qu'avec :</p>
+                <h3 data-i18n="legal.section3.sharing.title">5. Partage des données</h3>
+                <p data-i18n="legal.section3.sharing.intro">Vos données ne sont partagées qu'avec :</p>
                 <ul>
-                    <li>Nos processeurs de paiement (Stripe, PayPal, etc.)</li>
-                    <li>Nos outils de visioconférence (Zoom, etc.)</li>
-                    <li>Nos sous-traitants techniques (hébergeur, email)</li>
+                    <li data-i18n="legal.section3.sharing.share1">Nos processeurs de paiement (Stripe, PayPal, etc.)</li>
+                    <li data-i18n="legal.section3.sharing.share2">Nos outils de visioconférence (Zoom, etc.)</li>
+                    <li data-i18n="legal.section3.sharing.share3">Nos sous-traitants techniques (hébergeur, email)</li>
                 </ul>
-                <p>Aucune donnée n'est vendue à des tiers.</p>
+                <p data-i18n="legal.section3.sharing.note">Aucune donnée n'est vendue à des tiers.</p>
                 
-                <h3>6. Sécurité</h3>
-                <p>Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données contre tout accès non autorisé, modification, divulgation ou destruction.</p>
+                <h3 data-i18n="legal.section3.security.title">6. Sécurité</h3>
+                <p data-i18n="legal.section3.security.content">Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données contre tout accès non autorisé, modification, divulgation ou destruction.</p>
                 
-                <h3>7. Vos droits</h3>
-                <p>Vous disposez des droits suivants :</p>
+                <h3 data-i18n="legal.section3.rights.title">7. Vos droits</h3>
+                <p data-i18n="legal.section3.rights.intro">Vous disposez des droits suivants :</p>
                 <ul>
-                    <li>Droit d'accès à vos données</li>
-                    <li>Droit de rectification</li>
-                    <li>Droit à l'effacement ("droit à l'oubli")</li>
-                    <li>Droit à la limitation du traitement</li>
-                    <li>Droit à la portabilité des données</li>
-                    <li>Droit d'opposition</li>
+                    <li data-i18n="legal.section3.rights.right1">Droit d'accès à vos données</li>
+                    <li data-i18n="legal.section3.rights.right2">Droit de rectification</li>
+                    <li data-i18n="legal.section3.rights.right3">Droit à l'effacement ("droit à l'oubli")</li>
+                    <li data-i18n="legal.section3.rights.right4">Droit à la limitation du traitement</li>
+                    <li data-i18n="legal.section3.rights.right5">Droit à la portabilité des données</li>
+                    <li data-i18n="legal.section3.rights.right6">Droit d'opposition</li>
                 </ul>
-                <p>Pour exercer ces droits, contactez-nous à : yoteachfr@gmail.com</p>
+                <p data-i18n="legal.section3.rights.contact">Pour exercer ces droits, contactez-nous à : yoteachfr@gmail.com</p>
                 
-                <h3>8. Cookies</h3>
-                <p>Notre site utilise des cookies techniques essentiels au fonctionnement. Aucun cookie de tracking n'est utilisé.</p>
+                <h3 data-i18n="legal.section3.cookies.title">8. Cookies</h3>
+                <p data-i18n="legal.section3.cookies.content">Notre site utilise des cookies techniques essentiels au fonctionnement. Aucun cookie de tracking n'est utilisé.</p>
                 
-                <a href="#" class="back-to-top">↑ Retour en haut</a>
+                <a href="#" class="back-to-top" data-i18n="legal.back_to_top">↑ Retour en haut</a>
             </section>
             
             <!-- Section Politique d'Annulation -->
             <section id="annulation" class="legal-section">
-                <h2>Politique d'Annulation</h2>
+                <h2 data-i18n="legal.section4.title">Politique d'Annulation</h2>
                 
-                <h3>1. Annulation par l'élève</h3>
-                <p>L'élève peut annuler un cours sans frais jusqu'à <strong>24 heures</strong> avant l'horaire prévu. Pour annuler :</p>
+                <h3 data-i18n="legal.section4.cancellation1.title">1. Annulation par l'élève</h3>
+                <p data-i18n="legal.section4.cancellation1.intro">L'élève peut annuler un cours sans frais jusqu'à <strong data-i18n="legal.section4.cancellation1.time">24 heures</strong> avant l'horaire prévu. Pour annuler :</p>
                 <ul>
-                    <li>Via votre dashboard YoTeach</li>
-                    <li>Par email à yoteachfr@gmail.com</li>
+                    <li data-i18n="legal.section4.cancellation1.method1">Via votre dashboard YoTeach</li>
+                    <li data-i18n="legal.section4.cancellation1.method2">Par email à yoteachfr@gmail.com</li>
                 </ul>
                 
-                <h3>2. Retard dans l'annulation</h3>
-                <p>Si l'annulation intervient moins de 24 heures avant le cours :</p>
+                <h3 data-i18n="legal.section4.cancellation2.title">2. Retard dans l'annulation</h3>
+                <p data-i18n="legal.section4.cancellation2.intro">Si l'annulation intervient moins de 24 heures avant le cours :</p>
                 <ul>
-                    <li>Le cours est dû à 100%</li>
-                    <li>Aucun remboursement n'est effectué</li>
-                    <li>Le crédit est consommé</li>
+                    <li data-i18n="legal.section4.cancellation2.consequence1">Le cours est dû à 100%</li>
+                    <li data-i18n="legal.section4.cancellation2.consequence2">Aucun remboursement n'est effectué</li>
+                    <li data-i18n="legal.section4.cancellation2.consequence3">Le crédit est consommé</li>
                 </ul>
                 
-                <h3>3. Absence non excusée</h3>
-                <p>En cas d'absence sans annulation préalable :</p>
+                <h3 data-i18n="legal.section4.absence.title">3. Absence non excusée</h3>
+                <p data-i18n="legal.section4.absence.intro">En cas d'absence sans annulation préalable :</p>
                 <ul>
-                    <li>Le cours est dû à 100%</li>
-                    <li>Le professeur attend 10 minutes avant de considérer le cours comme annulé</li>
-                    <li>Aucun report automatique n'est effectué</li>
+                    <li data-i18n="legal.section4.absence.consequence1">Le cours est dû à 100%</li>
+                    <li data-i18n="legal.section4.absence.consequence2">Le professeur attend 10 minutes avant de considérer le cours comme annulé</li>
+                    <li data-i18n="legal.section4.absence.consequence3">Aucun report automatique n'est effectué</li>
                 </ul>
                 
-                <h3>4. Annulation par le professeur</h3>
-                <p>Dans le cas exceptionnel où le professeur doit annuler un cours :</p>
+                <h3 data-i18n="legal.section4.cancellation3.title">4. Annulation par le professeur</h3>
+                <p data-i18n="legal.section4.cancellation3.intro">Dans le cas exceptionnel où le professeur doit annuler un cours :</p>
                 <ul>
-                    <li>L'élève est prévenu au plus tôt par email</li>
-                    <li>Le cours est reporté à une date convenue mutuellement</li>
-                    <li>Le crédit est conservé pour la nouvelle date</li>
-                    <li>En cas d'impossibilité de report, un remboursement est effectué</li>
+                    <li data-i18n="legal.section4.cancellation3.consequence1">L'élève est prévenu au plus tôt par email</li>
+                    <li data-i18n="legal.section4.cancellation3.consequence2">Le cours est reporté à une date convenue mutuellement</li>
+                    <li data-i18n="legal.section4.cancellation3.consequence3">Le crédit est conservé pour la nouvelle date</li>
+                    <li data-i18n="legal.section4.cancellation3.consequence4">En cas d'impossibilité de report, un remboursement est effectué</li>
                 </ul>
                 
-                <h3>5. Report de cours</h3>
-                <p>Le report est possible jusqu'à 24 heures avant le cours, sous réserve de disponibilité du professeur. Pour reporter :</p>
+                <h3 data-i18n="legal.section4.reschedule.title">5. Report de cours</h3>
+                <p data-i18n="legal.section4.reschedule.intro">Le report est possible jusqu'à 24 heures avant le cours, sous réserve de disponibilité du professeur. Pour reporter :</p>
                 <ul>
-                    <li>Utilisez la fonction "Annuler" dans votre dashboard</li>
-                    <li>Un crédit vous est attribué automatiquement</li>
-                    <li>Réserver un nouveau créneau en utilisant votre crédit</li>
+                    <li data-i18n="legal.section4.reschedule.method1">Utilisez la fonction "Annuler" dans votre dashboard</li>
+                    <li data-i18n="legal.section4.reschedule.method2">Un crédit vous est attribué automatiquement</li>
+                    <li data-i18n="legal.section4.reschedule.method3">Réserver un nouveau créneau en utilisant votre crédit</li>
                 </ul>
                 
-                <h3>6. Forfaits de cours</h3>
-                <p>Pour les forfaits de 5 ou 10 cours :</p>
+                <h3 data-i18n="legal.section4.packages.title">6. Forfaits de cours</h3>
+                <p data-i18n="legal.section4.packages.intro">Pour les forfaits de 5 ou 10 cours :</p>
                 <ul>
-                    <li>Les crédits sont valables 3 mois à partir de la date d'achat</li>
-                    <li>Les annulations tardives consomment un crédit</li>
-                    <li>Les crédits non utilisés expirent sans remboursement</li>
+                    <li data-i18n="legal.section4.packages.rule1">Les crédits sont valables 3 mois à partir de la date d'achat</li>
+                    <li data-i18n="legal.section4.packages.rule2">Les annulations tardives consomment un crédit</li>
+                    <li data-i18n="legal.section4.packages.rule3">Les crédits non utilisés expirent sans remboursement</li>
                 </ul>
                 
-                <h3>7. Cours d'essai</h3>
-                <p>Le cours d'essai à 5€ suit les mêmes règles d'annulation. En cas d'annulation tardive ou d'absence, le montant n'est pas remboursé.</p>
+                <h3 data-i18n="legal.section4.trial.title">7. Cours d'essai</h3>
+                <p data-i18n="legal.section4.trial.content">Le cours d'essai à 5€ suit les mêmes règles d'annulation. En cas d'annulation tardive ou d'absence, le montant n'est pas remboursé.</p>
                 
-                <h3>8. Remboursements</h3>
-                <p>Les remboursements sont effectués selon les modalités suivantes :</p>
+                <h3 data-i18n="legal.section4.refunds.title">8. Remboursements</h3>
+                <p data-i18n="legal.section4.refunds.intro">Les remboursements sont effectués selon les modalités suivantes :</p>
                 <ul>
-                    <li>Via le même moyen de paiement que l'achat initial</li>
-                    <li>Sous 14 jours ouvrables maximum</li>
-                    <li>Les frais de transaction peuvent être déduits</li>
+                    <li data-i18n="legal.section4.refunds.method1">Via le même moyen de paiement que l'achat initial</li>
+                    <li data-i18n="legal.section4.refunds.method2">Sous 14 jours ouvrables maximum</li>
+                    <li data-i18n="legal.section4.refunds.method3">Les frais de transaction peuvent être déduits</li>
                 </ul>
                 
-                <a href="#" class="back-to-top">↑ Retour en haut</a>
+                <a href="#" class="back-to-top" data-i18n="legal.back_to_top">↑ Retour en haut</a>
             </section>
         </div>
     </section>
@@ -318,6 +318,22 @@
                     e.stopPropagation();
                     window.translationManager.toggleLanguage();
                 });
+            }
+            
+            // Initialiser le sélecteur de langue desktop
+            const languageSwitcherDesktop = document.getElementById('languageSwitcherDesktop');
+            if (languageSwitcherDesktop && window.translationManager) {
+                languageSwitcherDesktop.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.translationManager.toggleLanguage();
+                });
+            }
+            
+            // Vérifier que le gestionnaire de traduction est bien initialisé
+            console.log('🌍 Translation Manager loaded:', !!window.translationManager);
+            if (window.translationManager) {
+                window.translationManager.updatePage();
             }
         });
     </script>
