@@ -301,7 +301,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     window.addEventListener('currency:changed', function() {
-        console.log('💱 Devise changée, mise à jour');
+        console.log('💱 Devise changée, INVALIDATION du cache et mise à jour');
+        // Invalider le cache quand la devise change
+        cachedIntentData = null;
         updateSummary();
     });
     
@@ -670,9 +672,10 @@ document.addEventListener('DOMContentLoaded', function() {
             courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
             duration = '15 min'; // ✅ CORRECTION: Toujours 15 minutes pour l'essai
             
-            // Prix fixe 5 EUR
+            // Prix fixe 5 EUR - converti dans la devise courante
             if (window.currencyManager) {
-                price = window.currencyManager.formatPrice(5);
+                const convertedPrice = window.currencyManager.convert(5, 'EUR', window.currencyManager.currentCurrency);
+                price = window.currencyManager.formatPriceInCurrency(convertedPrice, window.currencyManager.currentCurrency);
             } else {
                 price = '5€';
             }
@@ -698,11 +701,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 // ✅ APPELER RPC calculate_price_estimate() (DB-ONLY)
                 if (window.supabase && selectedDate && selectedSlot) {
                     try {
-                        // Vérifier le cache
+                        // Vérifier le cache - INVALIDER LE CACHE SI LA DEVISE A CHANGÉ
+                        const currentCurrency = window.currencyManager ? window.currencyManager.currentCurrency : 'EUR';
                         if (cachedIntentData && 
                             cachedIntentData.course_type === courseType &&
                             cachedIntentData.duration === selectedDuration &&
-                            cachedIntentData.quantity === coursesCount) {
+                            cachedIntentData.quantity === coursesCount &&
+                            cachedIntentData.lastCurrency === currentCurrency) { // Vérifier aussi la devise
+                            
                             console.log('📦 Utilisation du cache pour le prix');
                             price = cachedIntentData.displayPrice;
                         } else {
@@ -734,23 +740,32 @@ document.addEventListener('DOMContentLoaded', function() {
                             } else {
                                 console.log('✅ Prix estimé par RPC (DB):', priceEstimate.price, priceEstimate.currency);
                                 
-                                // Formater le prix
+                                // Formater le prix dans la devise courante
                                 if (window.currencyManager) {
-                                    price = window.currencyManager.formatPriceInCurrency(priceEstimate.price, priceEstimate.currency);
+                                    // Convertir le prix de la devise retournée vers la devise courante
+                                    const currentCurrency = window.currencyManager.currentCurrency;
+                                    const convertedPrice = window.currencyManager.convert(
+                                        priceEstimate.price, 
+                                        priceEstimate.currency, 
+                                        currentCurrency
+                                    );
+                                    
+                                    price = window.currencyManager.formatPriceInCurrency(convertedPrice, currentCurrency);
+                                    
+                                    // Mettre en cache avec la devise actuelle
+                                    cachedIntentData = {
+                                        course_type: courseType,
+                                        duration: selectedDuration,
+                                        quantity: coursesCount,
+                                        displayPrice: price,
+                                        rawPrice: priceEstimate.price,
+                                        originalCurrency: priceEstimate.currency,
+                                        lastCurrency: currentCurrency, // Stocker la devise utilisée
+                                        is_vip: priceEstimate.is_vip
+                                    };
                                 } else {
                                     price = `${priceEstimate.price} ${priceEstimate.currency}`;
                                 }
-                                
-                                // Mettre en cache
-                                cachedIntentData = {
-                                    course_type: courseType,
-                                    duration: selectedDuration,
-                                    quantity: coursesCount,
-                                    displayPrice: price,
-                                    rawPrice: priceEstimate.price,
-                                    currency: priceEstimate.currency,
-                                    is_vip: priceEstimate.is_vip
-                                };
                             }
                         }
                     } catch (catchError) {
@@ -871,4 +886,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-console.log('✅ booking-ui.js chargé - Version DB-driven (prix calculés par RPC)');
+console.log('✅ booking-ui.js chargé - Version DB-driven (prix calculés par RPC) avec correction devise');
