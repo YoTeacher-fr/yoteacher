@@ -92,6 +92,7 @@
     font-size: 0.85rem !important;
     font-weight: 600 !important;
     transition: all 0.3s;
+	order: 2 !important; 
 }
 
 .mobile-dashboard-btn:hover {
@@ -119,6 +120,7 @@
         font-size: 0.65rem !important;
         height: 26px !important;
         min-width: 90px;
+order: 2 !important; 
     }
     
     .mobile-dashboard-btn .avatar-img {
