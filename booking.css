@@ -858,34 +858,7 @@ body .mobile-login-btn:hover {
     body .user-avatar {
         display: none;
     }
-    /* Styles pour le bouton dashboard mobile (quand connecté) */
-    .mobile-dashboard-btn {
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px;
-        padding: 6px 12px !important;
-        background: #4f9ad1 !important;
-        color: white !important;
-        border-radius: 20px !important;
-        text-decoration: none !important;
-        font-size: 0.85rem !important;
-        font-weight: 600 !important;
-        order: 3;
-        margin-left: 0 !important;
-    }
-    
-    .mobile-dashboard-btn .avatar-img {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #3c84f6, #1e88e5);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
+
     /* Groupe de droite sur mobile - même structure qu'index */
     .mobile-header-right-group {
         display: flex !important;
