@@ -836,41 +836,46 @@ document.addEventListener('DOMContentLoaded', function() {
             summaryPriceElement.title = "";
         }
 
-        // MISE À JOUR RÉCAPITULATIF MOBILE (identique au desktop)
-        const mobileSummaryTypeEl = document.getElementById('mobileSummaryType');
-        const mobileSummaryCoursesCountEl = document.getElementById('mobileSummaryCoursesCount');
-        const mobileSummaryDiscountEl = document.getElementById('mobileSummaryDiscount');
-        const mobileSummaryDateEl = document.getElementById('mobileSummaryDate');
-        const mobileSummaryTimeEl = document.getElementById('mobileSummaryTime');
-        const mobileSummaryDurationEl = document.getElementById('mobileSummaryDuration');
-        const mobileSummaryPlatformEl = document.getElementById('mobileSummaryPlatform');
-        const mobileSummaryPriceElement = document.getElementById('mobileSummaryPrice');
-        
-        if (mobileSummaryTypeEl) mobileSummaryTypeEl.textContent = courseName;
-        
-        if (courseType === 'essai') {
-            if (mobileSummaryCoursesCountEl) mobileSummaryCoursesCountEl.textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-            if (mobileSummaryDiscountEl) mobileSummaryDiscountEl.textContent = '0%';
-        } else {
-            if (mobileSummaryCoursesCountEl) mobileSummaryCoursesCountEl.textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-            if (mobileSummaryDiscountEl) mobileSummaryDiscountEl.textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
-        }
-        
-        if (mobileSummaryDateEl) mobileSummaryDateEl.textContent = formattedDate;
-        if (mobileSummaryTimeEl) mobileSummaryTimeEl.textContent = selectedTime || '-';
-        if (mobileSummaryDurationEl) mobileSummaryDurationEl.textContent = duration;
-        if (mobileSummaryPlatformEl) mobileSummaryPlatformEl.textContent = platform;
-        
-        if (mobileSummaryPriceElement) {
-            mobileSummaryPriceElement.innerHTML = price;
+        // MISE À JOUR RÉCAPITULATIF MOBILE - ✅ AVEC PROTECTION COMPLÈTE
+        try {
+            const mobileSummaryType = document.getElementById('mobileSummaryType');
+            const mobileSummaryCoursesCount = document.getElementById('mobileSummaryCoursesCount');
+            const mobileSummaryDiscount = document.getElementById('mobileSummaryDiscount');
+            const mobileSummaryDate = document.getElementById('mobileSummaryDate');
+            const mobileSummaryTime = document.getElementById('mobileSummaryTime');
+            const mobileSummaryDuration = document.getElementById('mobileSummaryDuration');
+            const mobileSummaryPlatform = document.getElementById('mobileSummaryPlatform');
+            const mobileSummaryPriceElement = document.getElementById('mobileSummaryPrice');
             
-            if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
-                mobileSummaryPriceElement.classList.add('vip-price-display');
-                mobileSummaryPriceElement.title = "Prix VIP personnel";
+            if (mobileSummaryType) mobileSummaryType.textContent = courseName;
+            
+            if (courseType === 'essai') {
+                if (mobileSummaryCoursesCount) mobileSummaryCoursesCount.textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+                if (mobileSummaryDiscount) mobileSummaryDiscount.textContent = '0%';
             } else {
-                mobileSummaryPriceElement.classList.remove('vip-price-display');
-                mobileSummaryPriceElement.title = "";
+                if (mobileSummaryCoursesCount) mobileSummaryCoursesCount.textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+                if (mobileSummaryDiscount) mobileSummaryDiscount.textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
             }
+            
+            if (mobileSummaryDate) mobileSummaryDate.textContent = formattedDate;
+            if (mobileSummaryTime) mobileSummaryTime.textContent = selectedTime || '-';
+            if (mobileSummaryDuration) mobileSummaryDuration.textContent = duration;
+            if (mobileSummaryPlatform) mobileSummaryPlatform.textContent = platform;
+            
+            if (mobileSummaryPriceElement) {
+                mobileSummaryPriceElement.innerHTML = price;
+                
+                if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
+                    mobileSummaryPriceElement.classList.add('vip-price-display');
+                    mobileSummaryPriceElement.title = "Prix VIP personnel";
+                } else {
+                    mobileSummaryPriceElement.classList.remove('vip-price-display');
+                    mobileSummaryPriceElement.title = "";
+                }
+            }
+        } catch (mobileUpdateError) {
+            // Erreur silencieuse - normal si les éléments mobiles n'existent pas
+            console.log('Note: Mise à jour mobile ignorée');
         }
 
         const canSubmit = selectedDate && selectedTime && courseType && 
