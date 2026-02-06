@@ -721,6 +721,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (hoursUntilStart > 24 && isCreditPayment) {
                 confirmMessage += '\n\n💰 Un crédit sera ajouté à votre compte';
+            } else if (hoursUntilStart > 24 && !isCreditPayment) {
+                confirmMessage += '\n\nℹ️ Ce cours a été payé par carte, aucun crédit ne sera remboursé';
             } else {
                 confirmMessage += '\n\n⚠️ ATTENTION : Le cours commence dans moins de 24h\n❌ Aucun crédit ne sera remboursé (cours perdu)';
             }
@@ -773,7 +775,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     successMessage += '\n   • Peut-être que ce cours était un cours d\'essai';
                     successMessage += '\n   • Ou il n\'était pas associé à un forfait';
                     successMessage += '\n   • Ou il a été payé par carte (Stripe)';
-                }  else {
+                } else if (!isCreditPayment) {
+                    successMessage += '\n\nℹ️ Ce cours a été payé par carte, aucun crédit n\'est remboursable.';
+                } else {
                     successMessage += '\n\nℹ️ Aucun crédit remboursé (annulation hors délai).';
                 }
                 
