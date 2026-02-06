@@ -621,7 +621,10 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
     // Gestion des boutons de confirmation de paiement
     function setupPaymentConfirmationButtons() {
         document.querySelectorAll('.btn-confirm-payment').forEach(button => {
-            button.addEventListener('click', async function() {
+            button.addEventListener('click', async function(event) {
+                // Empêcher la propagation pour éviter que le clic ferme le menu
+                event.stopPropagation();
+                
                 if (this.disabled) return;
                 
                 const method = this.getAttribute('data-method');
@@ -720,7 +723,10 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
     // Fermer les menus en cliquant en dehors
     function setupOutsideClickHandlers() {
         document.addEventListener('click', function(event) {
-            if (!event.target.closest('.payment-method-btn') && !event.target.closest('.payment-method-details')) {
+            // Ne pas fermer si on clique sur un bouton de méthode de paiement ou à l'intérieur des détails
+            if (!event.target.closest('.payment-method-btn') && 
+                !event.target.closest('.payment-method-details') &&
+                !event.target.closest('.btn-confirm-payment')) {
                 document.querySelectorAll('.payment-method-details').forEach(details => {
                     details.style.display = 'none';
                 });
@@ -729,6 +735,13 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
                     btn.classList.remove('active');
                 });
             }
+        });
+        
+        // Empêcher la propagation des clics à l'intérieur des détails de paiement
+        document.querySelectorAll('.payment-method-details').forEach(details => {
+            details.addEventListener('click', function(event) {
+                event.stopPropagation();
+            });
         });
     }
     

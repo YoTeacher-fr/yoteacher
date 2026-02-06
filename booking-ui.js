@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let isVipUser = false;
 
-    // Éléments DOM
+    // Éléments DOM - DÉCLARATION COMPLÈTE AVANT TOUTE FONCTION
     const errorDiv = document.getElementById('errorMessage');
     const successDiv = document.getElementById('successMessage');
     const errorText = document.getElementById('errorText');
@@ -33,49 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const coursesCountGroup = document.getElementById('coursesCountGroup');
     const coursesCountInput = document.getElementById('coursesCount');
     const discountPercentInput = document.getElementById('discountPercent');
+    const mobileSubmitBtn = document.getElementById('mobileSubmitBtn'); // DÉCLARÉ AVANT UTILISATION
 
     let preLoginCourseType = null;
-
-    // ============================================================================
-    // MISE À JOUR TEXTE BOUTON (conservée - appelle RPC pour vérifier)
-    // ============================================================================
-    async function updateSubmitButtonText() {
-        const user = window.authManager?.getCurrentUser();
-        const courseType = document.getElementById('courseType').value;
-        const coursesCount = parseInt(coursesCountInput.value) || 1;
-        const submitBtn = document.getElementById('submitBooking');
-        
-        // Pour l'essai, durée fixe à 15 minutes
-        let duration = parseInt(durationInput.value) || 60;
-        if (courseType === 'essai') {
-            duration = 15;
-        }
-        
-        if (!submitBtn || !user || courseType === 'essai' || coursesCount > 1) {
-            submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
-            submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
-            return;
-        }
-        
-        try {
-            if (window.packagesManager) {
-                const hasCredits = await window.packagesManager.hasCreditForDuration(user.id, courseType, duration);
-                console.log(`💳 Crédits disponibles pour ${courseType} ${duration}min:`, hasCredits);
-                
-                if (hasCredits) {
-                    submitBtn.innerHTML = `<i class="fas fa-ticket-alt"></i> Réserver avec un crédit (${duration}min)`;
-                    submitBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
-                    console.log(`✅ Bouton changé: "Réserver avec un crédit (${duration}min)"`);
-                } else {
-                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
-                    submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
-                    console.log(`❌ Pas de crédits pour ${duration}min, bouton normal`);
-                }
-            }
-        } catch (error) {
-            console.warn('Erreur vérification crédits:', error);
-        }
-    }
 
     // ============================================================================
     // INITIALISATION PAGE
@@ -183,7 +143,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================================================
     // GESTION BOUTON MOBILE
     // ============================================================================
-    const mobileSubmitBtn = document.getElementById('mobileSubmitBtn');
     if (mobileSubmitBtn) {
         mobileSubmitBtn.addEventListener('click', function() {
             document.getElementById('submitBooking').click();
@@ -651,6 +610,47 @@ document.addEventListener('DOMContentLoaded', function() {
         cachedIntentData = null;
         
         updateSummary();
+    }
+
+    // ============================================================================
+    // MISE À JOUR TEXTE BOUTON (conservée - appelle RPC pour vérifier)
+    // ============================================================================
+    async function updateSubmitButtonText() {
+        const user = window.authManager?.getCurrentUser();
+        const courseType = document.getElementById('courseType').value;
+        const coursesCount = parseInt(coursesCountInput.value) || 1;
+        const submitBtn = document.getElementById('submitBooking');
+        
+        // Pour l'essai, durée fixe à 15 minutes
+        let duration = parseInt(durationInput.value) || 60;
+        if (courseType === 'essai') {
+            duration = 15;
+        }
+        
+        if (!submitBtn || !user || courseType === 'essai' || coursesCount > 1) {
+            submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
+            submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
+            return;
+        }
+        
+        try {
+            if (window.packagesManager) {
+                const hasCredits = await window.packagesManager.hasCreditForDuration(user.id, courseType, duration);
+                console.log(`💳 Crédits disponibles pour ${courseType} ${duration}min:`, hasCredits);
+                
+                if (hasCredits) {
+                    submitBtn.innerHTML = `<i class="fas fa-ticket-alt"></i> Réserver avec un crédit (${duration}min)`;
+                    submitBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+                    console.log(`✅ Bouton changé: "Réserver avec un crédit (${duration}min)"`);
+                } else {
+                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
+                    submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
+                    console.log(`❌ Pas de crédits pour ${duration}min, bouton normal`);
+                }
+            }
+        } catch (error) {
+            console.warn('Erreur vérification crédits:', error);
+        }
     }
 
     // ============================================================================
