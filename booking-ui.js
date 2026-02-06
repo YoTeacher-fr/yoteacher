@@ -282,6 +282,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // ============================================================================
+    // GESTION BOUTON MOBILE
+    // ============================================================================
+    const mobileSubmitBtn = document.getElementById('mobileSubmitBtn');
+    if (mobileSubmitBtn) {
+        mobileSubmitBtn.addEventListener('click', function() {
+            document.getElementById('submitBooking').click();
+        });
+    }
+
     // Événements
     window.addEventListener('auth:login', function() {
         console.log('Utilisateur connecté, mise à jour interface');
@@ -786,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // MISE À JOUR INTERFACE
+        // MISE À JOUR INTERFACE DESKTOP
         document.getElementById('summaryType').textContent = courseName;
         
         if (courseType === 'essai') {
@@ -826,10 +836,51 @@ document.addEventListener('DOMContentLoaded', function() {
             summaryPriceElement.title = "";
         }
 
+        // ============================================================================
+        // SYNCHRONISATION AVEC LA CARTE MOBILE
+        // ============================================================================
+        const mobileElements = {
+            'mobileSummaryType': courseName,
+            'mobileSummaryCoursesCount': courseType === 'essai' ? 
+                `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}` :
+                `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`,
+            'mobileSummaryDiscount': courseType === 'essai' ? '0%' : (discountPercent > 0 ? `-${discountPercent}%` : '0%'),
+            'mobileSummaryDate': selectedDate ? formattedDate : '-',
+            'mobileSummaryTime': selectedTime || '-',
+            'mobileSummaryDuration': duration,
+            'mobileSummaryPlatform': platform,
+            'mobileSummaryPrice': price
+        };
+        
+        // Mettre à jour tous les éléments mobiles
+        Object.keys(mobileElements).forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = mobileElements[id];
+            }
+        });
+        
+        // Gérer le style VIP pour le prix mobile
+        const mobilePriceElement = document.getElementById('mobileSummaryPrice');
+        if (mobilePriceElement) {
+            if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
+                mobilePriceElement.classList.add('vip-price-display');
+                mobilePriceElement.title = "Prix VIP personnel";
+            } else {
+                mobilePriceElement.classList.remove('vip-price-display');
+                mobilePriceElement.title = "";
+            }
+        }
+
         const canSubmit = selectedDate && selectedTime && courseType && 
             (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
         
         submitButton.disabled = !canSubmit;
+        
+        // Mettre à jour l'état du bouton mobile
+        if (mobileSubmitBtn) {
+            mobileSubmitBtn.disabled = !canSubmit;
+        }
     }
 
     function showError(message) {
