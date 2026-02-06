@@ -34,6 +34,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const coursesCountInput = document.getElementById('coursesCount');
     const discountPercentInput = document.getElementById('discountPercent');
 
+    // Gestion du bouton de soumission mobile
+    const mobileSubmitBtn = document.getElementById('mobileSubmitBtn');
+    if (mobileSubmitBtn) {
+        mobileSubmitBtn.addEventListener('click', function() {
+            document.getElementById('submitBooking').click();
+        });
+    }
+
     let preLoginCourseType = null;
 
     // ============================================================================
@@ -787,14 +795,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // MISE À JOUR INTERFACE
-        document.getElementById('summaryType').textContent = courseName;
+        const summaryTypeElement = document.getElementById('summaryType');
+        if (summaryTypeElement) summaryTypeElement.textContent = courseName;
         
         if (courseType === 'essai') {
-            document.getElementById('summaryCoursesCount').textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-            document.getElementById('summaryDiscount').textContent = '0%';
+            const summaryCoursesCountElement = document.getElementById('summaryCoursesCount');
+            if (summaryCoursesCountElement) summaryCoursesCountElement.textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+            
+            const summaryDiscountElement = document.getElementById('summaryDiscount');
+            if (summaryDiscountElement) summaryDiscountElement.textContent = '0%';
         } else {
-            document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-            document.getElementById('summaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
+            const summaryCoursesCountElement = document.getElementById('summaryCoursesCount');
+            if (summaryCoursesCountElement) summaryCoursesCountElement.textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+            
+            const summaryDiscountElement = document.getElementById('summaryDiscount');
+            if (summaryDiscountElement) summaryDiscountElement.textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
         }
         
         if (selectedDate) {
@@ -806,30 +821,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 month: 'short',
                 day: 'numeric'
             });
-            document.getElementById('summaryDate').textContent = formattedDate;
+            const summaryDateElement = document.getElementById('summaryDate');
+            if (summaryDateElement) summaryDateElement.textContent = formattedDate;
         } else {
-            document.getElementById('summaryDate').textContent = '-';
+            const summaryDateElement = document.getElementById('summaryDate');
+            if (summaryDateElement) summaryDateElement.textContent = '-';
         }
         
-        document.getElementById('summaryTime').textContent = selectedTime || '-';
-        document.getElementById('summaryDuration').textContent = duration;
-        document.getElementById('summaryPlatform').textContent = platform;
+        const summaryTimeElement = document.getElementById('summaryTime');
+        if (summaryTimeElement) summaryTimeElement.textContent = selectedTime || '-';
+        
+        const summaryDurationElement = document.getElementById('summaryDuration');
+        if (summaryDurationElement) summaryDurationElement.textContent = duration;
+        
+        const summaryPlatformElement = document.getElementById('summaryPlatform');
+        if (summaryPlatformElement) summaryPlatformElement.textContent = platform;
         
         const summaryPriceElement = document.getElementById('summaryPrice');
-        summaryPriceElement.innerHTML = price;
-        
-        if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
-            summaryPriceElement.classList.add('vip-price-display');
-            summaryPriceElement.title = "Prix VIP personnel";
-        } else {
-            summaryPriceElement.classList.remove('vip-price-display');
-            summaryPriceElement.title = "";
+        if (summaryPriceElement) {
+            summaryPriceElement.innerHTML = price;
+            
+            if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
+                summaryPriceElement.classList.add('vip-price-display');
+                summaryPriceElement.title = "Prix VIP personnel";
+            } else {
+                summaryPriceElement.classList.remove('vip-price-display');
+                summaryPriceElement.title = "";
+            }
         }
 
         const canSubmit = selectedDate && selectedTime && courseType && 
             (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
         
         submitButton.disabled = !canSubmit;
+        
+        // Mettre à jour l'état du bouton mobile
+        if (mobileSubmitBtn) {
+            mobileSubmitBtn.disabled = !canSubmit;
+        }
     }
 
     function showError(message) {

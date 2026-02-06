@@ -785,6 +785,11 @@ body .mobile-login-btn:hover {
     background: #2c74e6;
 }
 
+/* ===== CARTE RÉCAPITULATIF MOBILE ===== */
+body .mobile-summary-card {
+    display: none;
+}
+
 /* Styles responsives */
 @media (max-width: 768px) {
     body .booking-section {
@@ -915,6 +920,46 @@ body .mobile-login-btn:hover {
     
     body .header-content {
         justify-content: space-between;
+    }
+    
+    /* ===== MODIFICATIONS POUR L'ORDRE MOBILE ===== */
+    /* Afficher la carte récapitulatif mobile */
+    body .mobile-summary-card {
+        display: block;
+    }
+    
+    /* Cacher le récapitulatif et le bouton dans le formulaire desktop */
+    body .booking-summary,
+    body #submitBooking {
+        display: none !important;
+    }
+    
+    /* Réorganiser l'ordre des 3 cartes */
+    body .booking-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* 1. Formulaire (sélections) */
+    body .booking-card:last-child {
+        order: 1;
+    }
+    
+    /* 2. Calendrier (créneaux) */
+    body .booking-card:first-child {
+        order: 2;
+    }
+    
+    /* 3. Récapitulatif mobile */
+    body .mobile-summary-card {
+        order: 3;
+    }
+    
+    /* Ajustements pour la carte mobile */
+    body .mobile-summary-card .booking-card {
+        margin-top: 0;
     }
 }
 

@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="booking.css">
-<link rel="stylesheet" href="auth-ui.css">
+    <link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
     <!-- Header réduit comme booking.html -->
@@ -45,7 +45,6 @@
                 </div>
             </div>
         </div>
-        
     </header>
 
     <section class="booking-section">
@@ -127,20 +126,20 @@
                         <div class="form-group courses-count-group" id="coursesCountGroup">
                             <label class="form-label" data-i18n="booking.courses_count">Nombre de cours</label>
                             <div class="courses-count-options">
-    <button type="button" class="courses-count-option selected" data-count="1" data-discount="0">
-        <span data-i18n="booking.one_course">1 cours</span>
-    </button>
-    
-    <button type="button" class="courses-count-option" data-count="5" data-discount="2">
-        <span data-i18n="booking.five_courses">5 cours</span>
-        <span class="discount-badge">-2%</span>
-    </button>
-    
-    <button type="button" class="courses-count-option" data-count="10" data-discount="5">
-        <span data-i18n="booking.ten_courses">10 cours</span>
-        <span class="discount-badge">-5%</span>
-    </button>
-</div>
+                                <button type="button" class="courses-count-option selected" data-count="1" data-discount="0">
+                                    <span data-i18n="booking.one_course">1 cours</span>
+                                </button>
+                                
+                                <button type="button" class="courses-count-option" data-count="5" data-discount="2">
+                                    <span data-i18n="booking.five_courses">5 cours</span>
+                                    <span class="discount-badge">-2%</span>
+                                </button>
+                                
+                                <button type="button" class="courses-count-option" data-count="10" data-discount="5">
+                                    <span data-i18n="booking.ten_courses">10 cours</span>
+                                    <span class="discount-badge">-5%</span>
+                                </button>
+                            </div>
                             <input type="hidden" id="coursesCount" value="1">
                             <input type="hidden" id="discountPercent" value="0">
                         </div>
@@ -216,11 +215,53 @@
                         <button type="submit" class="btn-booking" id="submitBooking" disabled style="background: linear-gradient(135deg, #3c84f6, #1e88e5);">
                             <i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>
                         </button>
-                        
-                        <div style="margin-top: 15px; text-align: center; font-size: 0.9rem; color: #666;">
-                            
-                        </div>
                     </form>
+                </div>
+                
+                <!-- Récapitulatif mobile (uniquement visible en mobile) -->
+                <div class="mobile-summary-card">
+                    <div class="booking-card">
+                        <h2 class="card-title" data-i18n="booking.summary">Récapitulatif</h2>
+                        
+                        <div class="booking-summary">
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_type">Type de cours:</span>
+                                <span id="summaryType">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_courses">Nombre de cours:</span>
+                                <span id="summaryCoursesCount">1 cours</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_discount">Réduction:</span>
+                                <span id="summaryDiscount">0%</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_date">Date:</span>
+                                <span id="summaryDate">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_time">Heure:</span>
+                                <span id="summaryTime">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_duration">Durée:</span>
+                                <span id="summaryDuration">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span data-i18n="booking.summary_platform">Plateforme:</span>
+                                <span id="summaryPlatform">Google Meet</span>
+                            </div>
+                            <div class="summary-item total">
+                                <span data-i18n="booking.summary_total">Total:</span>
+                                <span id="summaryPrice">-</span>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="btn-booking" id="mobileSubmitBtn" style="background: linear-gradient(135deg, #3c84f6, #1e88e5);">
+                            <i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
