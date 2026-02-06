@@ -701,9 +701,37 @@ background: linear-gradient(
     display: block;
 }
 
-/* Header mobile ajusté */
+/* ============================================
+   RÉORGANISATION MOBILE : RÉCAPITULATIF EN PREMIER
+   ============================================ */
+
 @media (max-width: 768px) {
+    /* RÉORGANISATION DE L'ORDRE DES SECTIONS */
+    .payment-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 25px !important;
+    }
     
+    /* Le récapitulatif (deuxième carte) passe en premier */
+    .payment-grid .payment-card:nth-child(2) {
+        order: 1 !important;
+        margin-bottom: 10px !important;
+    }
+    
+    /* Les moyens de paiement (première carte) passent en second */
+    .payment-grid .payment-card:nth-child(1) {
+        order: 2 !important;
+        margin-top: 10px !important;
+    }
+    
+    /* Ajustements visuels pour le récapitulatif en premier */
+    .payment-grid .payment-card:nth-child(2) {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 25px;
+    }
+    
+    /* Header mobile ajusté */
     .mobile-login-btn-header {
         display: block !important;
         background-color: #4f9ad1;
@@ -738,7 +766,8 @@ background: linear-gradient(
     .user-avatar {
         display: none !important;
     }
-        /* Styles pour le bouton dashboard mobile (quand connecté) */
+    
+    /* Styles pour le bouton dashboard mobile (quand connecté) */
     .mobile-dashboard-btn {
         display: flex !important;
         align-items: center !important;
@@ -766,6 +795,7 @@ background: linear-gradient(
         font-size: 0.75rem;
         font-weight: bold;
     }
+    
     /* Groupe de droite sur mobile - même structure qu'index */
     .mobile-header-right-group {
         display: flex !important;
@@ -785,6 +815,7 @@ background: linear-gradient(
     .mobile-header-right-group .mobile-dashboard-btn {
         display: flex !important;
     }
+    
     .logo-section {
         position: absolute;
         left: 50%;
@@ -794,33 +825,8 @@ background: linear-gradient(
     .header-content {
         justify-content: space-between;
     }
-}
-
-@media (max-width: 992px) {
-    .payment-grid {
-        grid-template-columns: 1fr;
-        gap: 30px;
-    }
     
-    .payment-details-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .qr-code-container {
-        order: 2;
-    }
-    
-    .payment-info {
-        order: 1;
-    }
-    
-    .payment-action {
-        grid-column: span 1;
-    }
-}
-
-@media (max-width: 768px) {
+    /* Ajustements spécifiques pour mobile */
     .payment-section {
         padding: 30px 15px;
         min-height: calc(100vh - 60px);
@@ -921,6 +927,32 @@ background: linear-gradient(
         width: 100%;
     }
 }
+
+@media (max-width: 992px) {
+    .payment-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    .payment-details-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .qr-code-container {
+        order: 2;
+    }
+    
+    .payment-info {
+        order: 1;
+    }
+    
+    .payment-action {
+        grid-column: span 1;
+    }
+}
+
+/* Ajustements pour très petits écrans */
 @media (max-width: 480px) {
     .payment-card {
         padding: 20px 15px;
@@ -949,5 +981,15 @@ background: linear-gradient(
     
     .qr-code-placeholder i {
         font-size: 2.5rem;
+    }
+    
+    /* Ajustements supplémentaires pour le récapitulatif en premier */
+    .payment-grid .payment-card:nth-child(2) {
+        padding-bottom: 20px !important;
+        margin-bottom: 5px !important;
+    }
+    
+    .payment-grid .payment-card:nth-child(1) {
+        margin-top: 15px !important;
     }
 }
