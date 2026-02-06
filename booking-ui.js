@@ -836,31 +836,41 @@ document.addEventListener('DOMContentLoaded', function() {
             summaryPriceElement.title = "";
         }
 
-        // MISE À JOUR RÉCAPITULATIF MOBILE
-        document.getElementById('mobileSummaryType').textContent = courseName;
+        // MISE À JOUR RÉCAPITULATIF MOBILE (identique au desktop)
+        const mobileSummaryTypeEl = document.getElementById('mobileSummaryType');
+        const mobileSummaryCoursesCountEl = document.getElementById('mobileSummaryCoursesCount');
+        const mobileSummaryDiscountEl = document.getElementById('mobileSummaryDiscount');
+        const mobileSummaryDateEl = document.getElementById('mobileSummaryDate');
+        const mobileSummaryTimeEl = document.getElementById('mobileSummaryTime');
+        const mobileSummaryDurationEl = document.getElementById('mobileSummaryDuration');
+        const mobileSummaryPlatformEl = document.getElementById('mobileSummaryPlatform');
+        const mobileSummaryPriceElement = document.getElementById('mobileSummaryPrice');
+        
+        if (mobileSummaryTypeEl) mobileSummaryTypeEl.textContent = courseName;
         
         if (courseType === 'essai') {
-            document.getElementById('mobileSummaryCoursesCount').textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-            document.getElementById('mobileSummaryDiscount').textContent = '0%';
+            if (mobileSummaryCoursesCountEl) mobileSummaryCoursesCountEl.textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+            if (mobileSummaryDiscountEl) mobileSummaryDiscountEl.textContent = '0%';
         } else {
-            document.getElementById('mobileSummaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-            document.getElementById('mobileSummaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
+            if (mobileSummaryCoursesCountEl) mobileSummaryCoursesCountEl.textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+            if (mobileSummaryDiscountEl) mobileSummaryDiscountEl.textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
         }
         
-        document.getElementById('mobileSummaryDate').textContent = formattedDate;
-        document.getElementById('mobileSummaryTime').textContent = selectedTime || '-';
-        document.getElementById('mobileSummaryDuration').textContent = duration;
-        document.getElementById('mobileSummaryPlatform').textContent = platform;
+        if (mobileSummaryDateEl) mobileSummaryDateEl.textContent = formattedDate;
+        if (mobileSummaryTimeEl) mobileSummaryTimeEl.textContent = selectedTime || '-';
+        if (mobileSummaryDurationEl) mobileSummaryDurationEl.textContent = duration;
+        if (mobileSummaryPlatformEl) mobileSummaryPlatformEl.textContent = platform;
         
-        const mobileSummaryPriceElement = document.getElementById('mobileSummaryPrice');
-        mobileSummaryPriceElement.innerHTML = price;
-        
-        if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
-            mobileSummaryPriceElement.classList.add('vip-price-display');
-            mobileSummaryPriceElement.title = "Prix VIP personnel";
-        } else {
-            mobileSummaryPriceElement.classList.remove('vip-price-display');
-            mobileSummaryPriceElement.title = "";
+        if (mobileSummaryPriceElement) {
+            mobileSummaryPriceElement.innerHTML = price;
+            
+            if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
+                mobileSummaryPriceElement.classList.add('vip-price-display');
+                mobileSummaryPriceElement.title = "Prix VIP personnel";
+            } else {
+                mobileSummaryPriceElement.classList.remove('vip-price-display');
+                mobileSummaryPriceElement.title = "";
+            }
         }
 
         const canSubmit = selectedDate && selectedTime && courseType && 
