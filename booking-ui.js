@@ -34,14 +34,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const coursesCountInput = document.getElementById('coursesCount');
     const discountPercentInput = document.getElementById('discountPercent');
 
-    // Gestion du bouton de soumission mobile
-    const mobileSubmitBtn = document.getElementById('mobileSubmitBtn');
-    if (mobileSubmitBtn) {
-        mobileSubmitBtn.addEventListener('click', function() {
-            document.getElementById('submitBooking').click();
-        });
-    }
-
     let preLoginCourseType = null;
 
     // ============================================================================
@@ -187,6 +179,16 @@ document.addEventListener('DOMContentLoaded', function() {
             updateSummary();
         });
     });
+
+    // ============================================================================
+    // GESTION BOUTON MOBILE
+    // ============================================================================
+    const mobileSubmitBtn = document.getElementById('mobileSubmitBtn');
+    if (mobileSubmitBtn) {
+        mobileSubmitBtn.addEventListener('click', function() {
+            document.getElementById('submitBooking').click();
+        });
+    }
 
     // ============================================================================
     // SOUMISSION FORMULAIRE - CORRECTION: DURÉE ESSAI FIXE À 15 MIN
@@ -794,60 +796,71 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // MISE À JOUR INTERFACE
-        const summaryTypeElement = document.getElementById('summaryType');
-        if (summaryTypeElement) summaryTypeElement.textContent = courseName;
-        
-        if (courseType === 'essai') {
-            const summaryCoursesCountElement = document.getElementById('summaryCoursesCount');
-            if (summaryCoursesCountElement) summaryCoursesCountElement.textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-            
-            const summaryDiscountElement = document.getElementById('summaryDiscount');
-            if (summaryDiscountElement) summaryDiscountElement.textContent = '0%';
-        } else {
-            const summaryCoursesCountElement = document.getElementById('summaryCoursesCount');
-            if (summaryCoursesCountElement) summaryCoursesCountElement.textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
-            
-            const summaryDiscountElement = document.getElementById('summaryDiscount');
-            if (summaryDiscountElement) summaryDiscountElement.textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
-        }
-        
+        // FORMATER LA DATE (utilisée pour les deux récapitulatifs)
+        let formattedDate = '-';
         if (selectedDate) {
             const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
             const dateObj = new Date(selectedDate);
-            const formattedDate = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
+            formattedDate = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
                 weekday: 'short',
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
             });
-            const summaryDateElement = document.getElementById('summaryDate');
-            if (summaryDateElement) summaryDateElement.textContent = formattedDate;
-        } else {
-            const summaryDateElement = document.getElementById('summaryDate');
-            if (summaryDateElement) summaryDateElement.textContent = '-';
         }
         
-        const summaryTimeElement = document.getElementById('summaryTime');
-        if (summaryTimeElement) summaryTimeElement.textContent = selectedTime || '-';
+        // MISE À JOUR RÉCAPITULATIF DESKTOP
+        document.getElementById('summaryType').textContent = courseName;
         
-        const summaryDurationElement = document.getElementById('summaryDuration');
-        if (summaryDurationElement) summaryDurationElement.textContent = duration;
+        if (courseType === 'essai') {
+            document.getElementById('summaryCoursesCount').textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+            document.getElementById('summaryDiscount').textContent = '0%';
+        } else {
+            document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+            document.getElementById('summaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
+        }
         
-        const summaryPlatformElement = document.getElementById('summaryPlatform');
-        if (summaryPlatformElement) summaryPlatformElement.textContent = platform;
+        document.getElementById('summaryDate').textContent = formattedDate;
+        document.getElementById('summaryTime').textContent = selectedTime || '-';
+        document.getElementById('summaryDuration').textContent = duration;
+        document.getElementById('summaryPlatform').textContent = platform;
         
         const summaryPriceElement = document.getElementById('summaryPrice');
-        if (summaryPriceElement) {
-            summaryPriceElement.innerHTML = price;
-            
-            if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
-                summaryPriceElement.classList.add('vip-price-display');
-                summaryPriceElement.title = "Prix VIP personnel";
-            } else {
-                summaryPriceElement.classList.remove('vip-price-display');
-                summaryPriceElement.title = "";
-            }
+        summaryPriceElement.innerHTML = price;
+        
+        if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
+            summaryPriceElement.classList.add('vip-price-display');
+            summaryPriceElement.title = "Prix VIP personnel";
+        } else {
+            summaryPriceElement.classList.remove('vip-price-display');
+            summaryPriceElement.title = "";
+        }
+
+        // MISE À JOUR RÉCAPITULATIF MOBILE
+        document.getElementById('mobileSummaryType').textContent = courseName;
+        
+        if (courseType === 'essai') {
+            document.getElementById('mobileSummaryCoursesCount').textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+            document.getElementById('mobileSummaryDiscount').textContent = '0%';
+        } else {
+            document.getElementById('mobileSummaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
+            document.getElementById('mobileSummaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
+        }
+        
+        document.getElementById('mobileSummaryDate').textContent = formattedDate;
+        document.getElementById('mobileSummaryTime').textContent = selectedTime || '-';
+        document.getElementById('mobileSummaryDuration').textContent = duration;
+        document.getElementById('mobileSummaryPlatform').textContent = platform;
+        
+        const mobileSummaryPriceElement = document.getElementById('mobileSummaryPrice');
+        mobileSummaryPriceElement.innerHTML = price;
+        
+        if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
+            mobileSummaryPriceElement.classList.add('vip-price-display');
+            mobileSummaryPriceElement.title = "Prix VIP personnel";
+        } else {
+            mobileSummaryPriceElement.classList.remove('vip-price-display');
+            mobileSummaryPriceElement.title = "";
         }
 
         const canSubmit = selectedDate && selectedTime && courseType && 
