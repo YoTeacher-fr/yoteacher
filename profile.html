@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon profil - YoTeach</title>
+    <title data-i18n="profile.title">Mon profil - YoTeach</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="profile.css">
-<link rel="stylesheet" href="auth-ui.css">
+    <link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
     <script>
@@ -139,13 +139,16 @@
 
                     <nav class="profile-nav">
                         <a href="#" class="nav-item active" data-tab="personal">
-                            <i class="fas fa-user"></i> <span>Informations</span>
+                            <i class="fas fa-user"></i> 
+                            <span data-i18n="profile.info_tab">Informations</span>
                         </a>
                         <a href="#" class="nav-item" data-tab="language">
-                            <i class="fas fa-language"></i> <span>Niveau français</span>
+                            <i class="fas fa-language"></i> 
+                            <span data-i18n="profile.language_tab">Niveau français</span>
                         </a>
                         <a href="#" class="nav-item" data-tab="password">
-                            <i class="fas fa-key"></i> <span>Mot de passe</span>
+                            <i class="fas fa-key"></i> 
+                            <span data-i18n="profile.password_tab">Mot de passe</span>
                         </a>
                     </nav>
                 </div>
@@ -163,55 +166,56 @@
 
                     <div class="tab-content active" id="personalTab">
                         <div class="tab-header">
-                            <h2>Informations personnelles</h2>
-                            <p>Mettez à jour vos informations de contact</p>
+                            <h2 data-i18n="profile.personal_info_title">Informations personnelles</h2>
+                            <p data-i18n="profile.personal_info_subtitle">Mettez à jour vos informations de contact</p>
                         </div>
 
                         <form id="personalForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="firstName" class="form-label">Prénom</label>
+                                    <label for="firstName" class="form-label" data-i18n="profile.first_name_label">Prénom</label>
                                     <input type="text" id="firstName" class="form-input" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="lastName" class="form-label">Nom</label>
+                                    <label for="lastName" class="form-label" data-i18n="profile.last_name_label">Nom</label>
                                     <input type="text" id="lastName" class="form-input" required>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label for="email" class="form-label">Adresse email</label>
+                                <label for="email" class="form-label" data-i18n="profile.email_label">Adresse email</label>
                                 <input type="email" id="email" class="form-input" required disabled>
-                                <small style="color: #888; font-size: 0.85rem;">L'email ne peut pas être modifié</small>
+                                <small style="color: #888; font-size: 0.85rem;" data-i18n="profile.email_hint">L'email ne peut pas être modifié</small>
                             </div>
 
                             <div class="form-group">
-                                <label for="country" class="form-label">Pays</label>
+                                <label for="country" class="form-label" data-i18n="profile.country_label">Pays</label>
                                 <select id="country" class="form-select country-select">
-                                    <option value="">Sélectionnez votre pays</option>
+                                    <option value="" data-i18n="profile.select_country">Sélectionnez votre pays</option>
                                 </select>
-                                <small style="color: #888; font-size: 0.85rem; display: block; margin-top: 5px;" id="countryInfo">
+                                <small style="color: #888; font-size: 0.85rem; display: block; margin-top: 5px;" id="countryInfo" data-i18n="profile.country_hint">
                                     Sélectionnez votre pays de résidence
                                 </small>
                             </div>
 
                             <button type="submit" class="btn-save" id="personalSaveBtn">
-                                <i class="fas fa-save"></i> <span>Enregistrer les modifications</span>
+                                <i class="fas fa-save"></i> 
+                                <span data-i18n="profile.save_personal_btn">Enregistrer les modifications</span>
                             </button>
                         </form>
                     </div>
 
                     <div class="tab-content" id="languageTab">
                         <div class="tab-header">
-                            <h2>Niveau de français</h2>
-                            <p>Définissez votre niveau actuel en français</p>
+                            <h2 data-i18n="profile.french_level_title">Niveau de français</h2>
+                            <p data-i18n="profile.french_level_subtitle">Définissez votre niveau actuel en français</p>
                         </div>
 
                         <form id="languageForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-group">
-                                <label for="frenchLevel" class="form-label">Niveau actuel (CEFR)</label>
+                                <label for="frenchLevel" class="form-label" data-i18n="profile.french_level_label">Niveau actuel (CEFR)</label>
                                 <select id="frenchLevel" class="form-select">
-                                    <option value="">Sélectionnez votre niveau</option>
+                                    <option value="" data-i18n="profile.select_level">Sélectionnez votre niveau</option>
                                     <option value="A1">A1 - Débutant</option>
                                     <option value="A2">A2 - Élémentaire</option>
                                     <option value="B1">B1 - Intermédiaire</option>
@@ -222,42 +226,44 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="learningGoals" class="form-label">Objectifs d'apprentissage</label>
-                                <textarea id="learningGoals" class="form-textarea large-textarea" placeholder="Ex: Préparer le DELF B2, Améliorer mon français professionnel, Préparer un examen, Voyager en France... (optionnel)"></textarea>
-                                <small style="color: #888; font-size: 0.85rem;">Décrivez vos objectifs en détail (optionnel)</small>
+                                <label for="learningGoals" class="form-label" data-i18n="profile.learning_goals_label">Objectifs d'apprentissage</label>
+                                <textarea id="learningGoals" class="form-textarea large-textarea" data-i18n-placeholder="profile.learning_goals_placeholder" placeholder="Ex: Préparer le DELF B2, Améliorer mon français professionnel, Préparer un examen, Voyager en France... (optionnel)"></textarea>
+                                <small style="color: #888; font-size: 0.85rem;" data-i18n="profile.learning_goals_hint">Décrivez vos objectifs en détail (optionnel)</small>
                             </div>
 
                             <button type="submit" class="btn-save" id="languageSaveBtn">
-                                <i class="fas fa-save"></i> <span>Enregistrer les préférences</span>
+                                <i class="fas fa-save"></i> 
+                                <span data-i18n="profile.save_language_btn">Enregistrer les préférences</span>
                             </button>
                         </form>
                     </div>
 
                     <div class="tab-content" id="passwordTab">
                         <div class="tab-header">
-                            <h2>Changer le mot de passe</h2>
-                            <p>Mettez à jour votre mot de passe de connexion</p>
+                            <h2 data-i18n="profile.change_password_title">Changer le mot de passe</h2>
+                            <p data-i18n="profile.change_password_subtitle">Mettez à jour votre mot de passe de connexion</p>
                         </div>
 
                         <form id="passwordForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-group">
-                                <label for="currentPassword" class="form-label">Mot de passe actuel</label>
+                                <label for="currentPassword" class="form-label" data-i18n="profile.current_password_label">Mot de passe actuel</label>
                                 <input type="password" id="currentPassword" class="form-input" required>
                             </div>
 
                             <div class="form-group">
-                                <label for="newPassword" class="form-label">Nouveau mot de passe</label>
+                                <label for="newPassword" class="form-label" data-i18n="profile.new_password_label">Nouveau mot de passe</label>
                                 <input type="password" id="newPassword" class="form-input" required>
-                                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">Minimum 8 caractères</small>
+                                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;" data-i18n="profile.new_password_hint">Minimum 8 caractères</small>
                             </div>
 
                             <div class="form-group">
-                                <label for="confirmPassword" class="form-label">Confirmer le nouveau mot de passe</label>
+                                <label for="confirmPassword" class="form-label" data-i18n="profile.confirm_password_label">Confirmer le nouveau mot de passe</label>
                                 <input type="password" id="confirmPassword" class="form-input" required>
                             </div>
 
                             <button type="submit" class="btn-save" id="passwordSaveBtn">
-                                <i class="fas fa-key"></i> <span>Changer le mot de passe</span>
+                                <i class="fas fa-key"></i> 
+                                <span data-i18n="profile.save_password_btn">Changer le mot de passe</span>
                             </button>
                         </form>
                     </div>
@@ -461,7 +467,7 @@
             
             // Marquer comme en cours
             window.PROFILE_STATE[`isSaving${type.charAt(0).toUpperCase() + type.slice(1)}`] = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sauvegarde...';
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (window.translationManager?.getTranslation('profile.saving') || 'Sauvegarde...');
             button.disabled = true;
             
             return { button, originalText };
@@ -513,13 +519,13 @@
                 
                 // Validation
                 if (!firstName || !lastName) {
-                    showError('Le prénom et le nom sont obligatoires');
+                    showError(window.translationManager?.getTranslation('profile.error_required_fields') || 'Le prénom et le nom sont obligatoires');
                     resetButton('personal', button, originalText);
                     return;
                 }
                 
                 if (!country) {
-                    showError('Veuillez sélectionner un pays');
+                    showError(window.translationManager?.getTranslation('profile.error_country') || 'Veuillez sélectionner un pays');
                     resetButton('personal', button, originalText);
                     return;
                 }
@@ -530,7 +536,7 @@
                     const result2 = await updateProfileField('country', country);
                     
                     if (!result1.success || !result2.success) {
-                        throw new Error('Erreur lors de la sauvegarde');
+                        throw new Error(window.translationManager?.getTranslation('profile.error_saving') || 'Erreur lors de la sauvegarde');
                     }
                     
                     // 2. Mettre à jour localement
@@ -544,7 +550,7 @@
                         console.log('💾 Données sauvegardées localStorage');
                     }
                     
-                    showSuccess('Profil mis à jour avec succès !');
+                    showSuccess(window.translationManager?.getTranslation('profile.update_success') || 'Profil mis à jour avec succès !');
                     
                 } catch (error) {
                     console.error('❌ Erreur sauvegarde:', error);
@@ -577,7 +583,7 @@
                 
                 // Validation simple
                 if (!frenchLevel) {
-                    showError('Veuillez sélectionner votre niveau');
+                    showError(window.translationManager?.getTranslation('profile.error_french_level') || 'Veuillez sélectionner votre niveau');
                     // Réinitialiser immédiatement
                     window.PROFILE_STATE.isSavingLanguage = false;
                     button.innerHTML = originalText;
@@ -590,7 +596,7 @@
                     const result = await updateProfileField('french_level', frenchLevel);
                     
                     if (!result.success) {
-                        throw new Error('Erreur lors de la sauvegarde du niveau');
+                        throw new Error(window.translationManager?.getTranslation('profile.error_saving') || 'Erreur lors de la sauvegarde du niveau');
                     }
                     
                     // 2. Mettre à jour les objectifs si remplis
@@ -613,7 +619,7 @@
                         window.authManager.saveUserToStorage();
                     }
                     
-                    showSuccess('Niveau de français mis à jour !');
+                    showSuccess(window.translationManager?.getTranslation('profile.level_update_success') || 'Niveau de français mis à jour !');
                     
                 } catch (error) {
                     console.error('❌ Erreur sauvegarde niveau:', error);
@@ -653,13 +659,13 @@
                 
                 // Validation
                 if (newPassword.length < 8) {
-                    showError('Le mot de passe doit contenir au moins 8 caractères');
+                    showError(window.translationManager?.getTranslation('profile.error_password_length') || 'Le mot de passe doit contenir au moins 8 caractères');
                     resetButton('password', button, originalText);
                     return;
                 }
                 
                 if (newPassword !== confirmPassword) {
-                    showError('Les mots de passe ne correspondent pas');
+                    showError(window.translationManager?.getTranslation('profile.error_password_match') || 'Les mots de passe ne correspondent pas');
                     resetButton('password', button, originalText);
                     return;
                 }
@@ -675,7 +681,7 @@
                     
                     if (error) throw error;
                     
-                    showSuccess('Mot de passe mis à jour avec succès !');
+                    showSuccess(window.translationManager?.getTranslation('profile.password_update_success') || 'Mot de passe mis à jour avec succès !');
                     document.getElementById('passwordForm').reset();
                     
                 } catch (error) {
@@ -811,17 +817,17 @@
             const passwordBtn = document.getElementById('passwordSaveBtn');
             
             if (personalBtn) {
-                personalBtn.innerHTML = '<i class="fas fa-save"></i> <span>Enregistrer les modifications</span>';
+                personalBtn.innerHTML = '<i class="fas fa-save"></i> <span>' + (window.translationManager?.getTranslation('profile.save_personal_btn') || 'Enregistrer les modifications') + '</span>';
                 personalBtn.disabled = false;
             }
             
             if (languageBtn) {
-                languageBtn.innerHTML = '<i class="fas fa-save"></i> <span>Enregistrer les préférences</span>';
+                languageBtn.innerHTML = '<i class="fas fa-save"></i> <span>' + (window.translationManager?.getTranslation('profile.save_language_btn') || 'Enregistrer les préférences') + '</span>';
                 languageBtn.disabled = false;
             }
             
             if (passwordBtn) {
-                passwordBtn.innerHTML = '<i class="fas fa-key"></i> <span>Changer le mot de passe</span>';
+                passwordBtn.innerHTML = '<i class="fas fa-key"></i> <span>' + (window.translationManager?.getTranslation('profile.save_password_btn') || 'Changer le mot de passe') + '</span>';
                 passwordBtn.disabled = false;
             }
             

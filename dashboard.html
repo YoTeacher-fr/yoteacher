@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Dashboard - YoTeach</title>
+    <title data-i18n="dashboard.title">Mon Dashboard - YoTeach</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
@@ -23,7 +23,7 @@
                 </div>
                 
                 <!-- Bouton Déconnexion Mobile -->
-                <a href="#" id="mobileLogoutBtn" class="mobile-login-btn-header">Déconnexion</a>
+                <a href="#" id="mobileLogoutBtn" class="mobile-login-btn-header" data-i18n="dashboard.logout_mobile">Déconnexion</a>
                 
                 <!-- Groupe des boutons de droite -->
                 <div class="header-right-group">
@@ -34,7 +34,7 @@
                     </div>
                     
                     <!-- Bouton Déconnexion Desktop -->
-                    <a href="#" id="logoutBtn" class="login-btn">Déconnexion</a>
+                    <a href="#" id="logoutBtn" class="login-btn" data-i18n="dashboard.logout_desktop">Déconnexion</a>
                 </div>
             </div>
         </div>
@@ -46,22 +46,22 @@
             <!-- En-tête du dashboard -->
             <div class="dashboard-header" id="welcomeMessage">
                 <div class="welcome-message">
-                    <h1>Chargement...</h1>
-                    <p>Veuillez patienter pendant le chargement de votre dashboard.</p>
+                    <h1 data-i18n="dashboard.welcome_loading">Chargement...</h1>
+                    <p data-i18n="dashboard.welcome_loading_message">Veuillez patienter pendant le chargement de votre dashboard.</p>
                 </div>
                 
                 <div class="dashboard-actions" id="dashboardActions" style="display: none;">
                     <a href="booking.html?type=essai" class="dashboard-action-btn">
                         <i class="fas fa-plus-circle"></i>
-                        <span>Réserver un essai</span>
+                        <span data-i18n="dashboard.book_trial">Réserver un essai</span>
                     </a>
                     <a href="profile.html" class="dashboard-action-btn">
                         <i class="fas fa-user-edit"></i>
-                        <span>Modifier mon profil</span>
+                        <span data-i18n="dashboard.edit_profile">Modifier mon profil</span>
                     </a>
                     <button class="dashboard-action-btn" id="refreshDashboardBtn">
                         <i class="fas fa-sync-alt"></i>
-                        <span>Actualiser</span>
+                        <span data-i18n="dashboard.refresh">Actualiser</span>
                     </button>
                 </div>
             </div>
@@ -69,7 +69,7 @@
             <!-- Section de chargement -->
             <div class="loading" id="loadingSection">
                 <i class="fas fa-spinner fa-spin"></i>
-                <p>Chargement de vos données...</p>
+                <p data-i18n="dashboard.loading_data">Chargement de vos données...</p>
             </div>
 
             <!-- Contenu principal du dashboard -->
@@ -81,7 +81,7 @@
                         <div class="card-header">
                             <div class="card-header-left">
                                 <i class="fas fa-calendar-check"></i>
-                                <h2>Cours à venir</h2>
+                                <h2 data-i18n="dashboard.upcoming_lessons_title">Cours à venir</h2>
                             </div>
                             <div class="lesson-nav" id="lessonNav" style="display: none;">
                                 <button class="nav-arrow" id="prevLessonBtn" disabled>
@@ -107,7 +107,7 @@
                         <div class="card-header">
                             <div class="card-header-left">
                                 <i class="fas fa-gift"></i>
-                                <h2>Mes forfaits</h2>
+                                <h2 data-i18n="dashboard.packages_title">Mes forfaits</h2>
                             </div>
                         </div>
                         <!-- Conteneur des cartes de forfaits (une seule visible) -->
@@ -121,7 +121,7 @@
                         <div class="card-header">
                             <div class="card-header-left">
                                 <i class="fas fa-user-circle"></i>
-                                <h2>Mon Profil</h2>
+                                <h2 data-i18n="dashboard.profile_title">Mon Profil</h2>
                             </div>
                         </div>
                         <div class="profile-info" id="profileInfo">
@@ -129,7 +129,7 @@
                         </div>
                         <a href="profile.html" class="btn-profile">
                             <i class="fas fa-edit"></i>
-                            <span>Modifier mon profil</span>
+                            <span data-i18n="dashboard.edit_profile_btn">Modifier mon profil</span>
                         </a>
                     </div>
                 </div>
@@ -139,28 +139,28 @@
                     <div class="card-header">
                         <div class="card-header-left">
                             <i class="fas fa-clock"></i>
-                            <h2>Réserver un cours</h2>
+                            <h2 data-i18n="dashboard.book_course_title">Réserver un cours</h2>
                         </div>
                     </div>
                     <div class="course-buttons-row">
                         <!-- Conversation -->
                         <a href="booking.html?type=conversation" class="course-button">
                             <div class="course-button-content" style="background: linear-gradient(135deg, #2d8de2, #2d8de2);">
-                                <div class="course-button-title">Conversation</div>
+                                <div class="course-button-title" data-i18n="dashboard.conversation_btn">Conversation</div>
                             </div>
                         </a>
 
                         <!-- Curriculum -->
                         <a href="booking.html?type=curriculum" class="course-button">
                             <div class="course-button-content" style="background: linear-gradient(135deg, #636dcd, #636dcd);">
-                                <div class="course-button-title">Curriculum</div>
+                                <div class="course-button-title" data-i18n="dashboard.curriculum_btn">Curriculum</div>
                             </div>
                         </a>
 
                         <!-- Examen -->
                         <a href="booking.html?type=examen" class="course-button">
                             <div class="course-button-content" style="background: linear-gradient(135deg, #135cb7, #135cb7);">
-                                <div class="course-button-title">Préparation d'examen</div>
+                                <div class="course-button-title" data-i18n="dashboard.exam_btn">Préparation d'examen</div>
                             </div>
                         </a>
                     </div>
