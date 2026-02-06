@@ -222,6 +222,9 @@ class TranslationManager {
                 'signup.success': 'Compte créé avec succès !',
                 
                 // Dashboard page - TRADUCTIONS AJOUTÉES
+'dashboard.greeting.morning': 'Bonjour',
+'dashboard.greeting.afternoon': 'Bon après-midi',
+'dashboard.greeting.evening': 'Bonsoir',
                 'dashboard.title': 'Mon Dashboard - YoTeach',
                 'dashboard.logout_desktop': 'Déconnexion',
                 'dashboard.logout_mobile': 'Déconnexion',
@@ -821,6 +824,9 @@ class TranslationManager {
                 'signup.success': 'Account created successfully!',
                 
                 // Dashboard page - ADDED TRANSLATIONS
+'dashboard.greeting.morning': 'Good morning',
+'dashboard.greeting.afternoon': 'Good afternoon',
+'dashboard.greeting.evening': 'Good evening',
                 'dashboard.title': 'My Dashboard - YoTeach',
                 'dashboard.logout_desktop': 'Logout',
                 'dashboard.logout_mobile': 'Logout',
