@@ -670,38 +670,47 @@
                     return;
                 }
                 
-                // Timeout de sécurité pour forcer la réinitialisation du bouton
-                const safetyTimeout = setTimeout(() => {
-                    console.warn('⚠️ Timeout de sécurité - réinitialisation du bouton');
-                    resetButton('password', button, originalText);
-                    showError('Le changement de mot de passe prend trop de temps. Veuillez réessayer.');
-                }, 15000);
-                
                 try {
                     if (!supabaseClient || !supabaseClient.auth) {
                         throw new Error('Supabase non disponible');
                     }
                     
                     console.log('🔐 Début du changement de mot de passe...');
-                    console.log('🔍 Type de supabaseClient.auth.updateUser:', typeof supabaseClient.auth.updateUser);
                     
-                    // Appel direct
-                    const result = await supabaseClient.auth.updateUser({
-                        password: newPassword
+                    // Créer une promesse qui écoute l'événement auth state change
+                    const updatePromise = new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => {
+                            reject(new Error('Timeout: pas de réponse après 15 secondes'));
+                        }, 15000);
+                        
+                        // Écouter l'événement de changement d'état auth
+                        const { data: authListener } = supabaseClient.auth.onAuthStateChange((event, session) => {
+                            if (event === 'USER_UPDATED') {
+                                console.log('✅ Événement USER_UPDATED reçu');
+                                clearTimeout(timeout);
+                                authListener?.subscription?.unsubscribe();
+                                resolve({ success: true });
+                            }
+                        });
+                        
+                        // Déclencher la mise à jour
+                        supabaseClient.auth.updateUser({ password: newPassword })
+                            .then(result => {
+                                console.log('📝 updateUser résolu:', result);
+                                // Ne pas résoudre ici, attendre l'événement USER_UPDATED
+                            })
+                            .catch(err => {
+                                console.error('❌ updateUser erreur:', err);
+                                clearTimeout(timeout);
+                                authListener?.subscription?.unsubscribe();
+                                reject(err);
+                            });
                     });
                     
-                    console.log('📝 Réponse brute reçue:', result);
-                    console.log('📝 Type de réponse:', typeof result);
-                    console.log('📝 Clés de la réponse:', result ? Object.keys(result) : 'null');
-                    
-                    // Vérifier si on a une erreur
-                    if (result && result.error) {
-                        console.error('❌ Erreur Supabase:', result.error);
-                        throw result.error;
-                    }
+                    // Attendre la promesse
+                    await updatePromise;
                     
                     console.log('✅ Mot de passe changé avec succès');
-                    clearTimeout(safetyTimeout); // Annuler le timeout de sécurité
                     showSuccess(window.translationManager?.getTranslation('profile.password_update_success') || 'Mot de passe mis à jour avec succès !');
                     document.getElementById('passwordForm').reset();
                     
@@ -712,8 +721,6 @@
                     
                 } catch (error) {
                     console.error('❌ Erreur changement mot de passe:', error);
-                    console.error('❌ Stack trace:', error.stack);
-                    clearTimeout(safetyTimeout); // Annuler le timeout de sécurité
                     showError('Erreur: ' + (error.message || 'Impossible de changer le mot de passe'));
                     
                     // Réinitialiser le bouton après erreur
