@@ -480,7 +480,6 @@ class AuthManager {
                 .insert({
                     id: this.user.id,
                     full_name: fullName,
-                    email: this.user.email,
                     is_vip: false,
                     created_at: new Date().toISOString()
                 });
