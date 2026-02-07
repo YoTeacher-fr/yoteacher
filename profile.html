@@ -771,18 +771,46 @@
                 attachFormEvents();
 // Initialiser le système de traduction
 if (window.translationManager) {
-    console.log('🌐 Initialisation du système de traduction...');
+    console.log('🌐 Initialisation du système de traduction dans le profil...');
     
-    // Attacher l'événement au bouton de langue
+    // Appliquer les traductions immédiatement
+    window.translationManager.applyTranslations();
+    
+    // Attacher l'événement au bouton de langue - VERSION CORRIGÉE
     const langSwitcher = document.getElementById('languageSwitcherDesktop');
     if (langSwitcher) {
-        langSwitcher.addEventListener('click', function() {
+        // Nettoyer les anciens écouteurs
+        const newSwitcher = langSwitcher.cloneNode(true);
+        langSwitcher.parentNode.replaceChild(newSwitcher, langSwitcher);
+        
+        // Ajouter le nouvel écouteur
+        document.getElementById('languageSwitcherDesktop').addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🌍 Clic sur le sélecteur de langue dans profile.html');
             window.translationManager.toggleLanguage();
         });
-        console.log('✅ Bouton de langue initialisé');
+        console.log('✅ Bouton de langue du profil initialisé');
     }
+    
+    // Écouter les changements de langue pour mettre à jour la page
+    window.addEventListener('language:changed', function() {
+        console.log('🌍 Langue changée, mise à jour du profil...');
+        setTimeout(() => {
+            // Recharger les données du profil pour s'assurer que tout est traduit
+            if (window.loadProfileData) {
+                window.loadProfileData();
+            }
+        }, 100);
+    });
 } else {
-    console.warn('⚠️ translationManager non disponible');
+    console.warn('⚠️ translationManager non disponible pour le profil');
+    // Essayer de réinitialiser le translationManager
+    setTimeout(() => {
+        if (window.translationManager) {
+            window.translationManager.init();
+        }
+    }, 1000);
 }
                 
                 // Marquer comme initialisé
