@@ -109,9 +109,10 @@
     }
     
     setTimeout(checkAuthentication, 200);
-</script>
+    </script>
 
-        <header class="main-header scrolled">
+    <!-- Header identique à legal.html -->
+    <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
                 <!-- Logo à gauche -->
@@ -145,6 +146,7 @@
         </div>
     </header>
 
+    <!-- Section profil -->
     <section class="profile-section">
         <div class="profile-container">
             <div class="profile-grid">
@@ -288,13 +290,13 @@
         </div>
     </section>
 
+    <!-- Scripts -->
     <script src="config.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
     <script src="auth.js"></script>
     <script src="common.js"></script>
-<script src="translation.js"></script>
-
+    <script src="translation.js"></script>
     <script src="pays.js"></script>
     
     <script>
@@ -785,49 +787,61 @@
                 
                 // Attacher les événements (une seule fois)
                 attachFormEvents();
-// Initialiser le système de traduction
-if (window.translationManager) {
-    console.log('🌐 Initialisation du système de traduction dans le profil...');
-    
-    // Appliquer les traductions immédiatement
-    window.translationManager.applyTranslations();
-    
-    // Attacher l'événement au bouton de langue - VERSION CORRIGÉE
-    const langSwitcher = document.getElementById('languageSwitcherDesktop');
-    if (langSwitcher) {
-        // Nettoyer les anciens écouteurs
-        const newSwitcher = langSwitcher.cloneNode(true);
-        langSwitcher.parentNode.replaceChild(newSwitcher, langSwitcher);
-        
-        // Ajouter le nouvel écouteur
-        document.getElementById('languageSwitcherDesktop').addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🌍 Clic sur le sélecteur de langue dans profile.html');
-            window.translationManager.toggleLanguage();
-        });
-        console.log('✅ Bouton de langue du profil initialisé');
-    }
-    
-    // Écouter les changements de langue pour mettre à jour la page
-    window.addEventListener('language:changed', function() {
-        console.log('🌍 Langue changée, mise à jour du profil...');
-        setTimeout(() => {
-            // Recharger les données du profil pour s'assurer que tout est traduit
-            if (window.loadProfileData) {
-                window.loadProfileData();
-            }
-        }, 100);
-    });
-} else {
-    console.warn('⚠️ translationManager non disponible pour le profil');
-    // Essayer de réinitialiser le translationManager
-    setTimeout(() => {
-        if (window.translationManager) {
-            window.translationManager.init();
-        }
-    }, 1000);
-}
+                
+                // Initialiser le système de traduction
+                if (window.translationManager) {
+                    console.log('🌐 Initialisation du système de traduction dans le profil...');
+                    
+                    // Appliquer les traductions immédiatement
+                    window.translationManager.applyTranslations();
+                    
+                    // Attacher l'événement au bouton de langue desktop
+                    const langSwitcherDesktop = document.getElementById('languageSwitcherDesktop');
+                    if (langSwitcherDesktop) {
+                        // Nettoyer les anciens écouteurs
+                        const newSwitcher = langSwitcherDesktop.cloneNode(true);
+                        langSwitcherDesktop.parentNode.replaceChild(newSwitcher, langSwitcherDesktop);
+                        
+                        // Ajouter le nouvel écouteur
+                        document.getElementById('languageSwitcherDesktop').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('🌍 Clic sur le sélecteur de langue desktop dans profile.html');
+                            window.translationManager.toggleLanguage();
+                        });
+                        console.log('✅ Bouton de langue desktop du profil initialisé');
+                    }
+                    
+                    // Attacher l'événement au bouton de langue mobile
+                    const langSwitcherMobile = document.getElementById('languageSwitcherMobile');
+                    if (langSwitcherMobile) {
+                        // Nettoyer les anciens écouteurs
+                        const newSwitcherMobile = langSwitcherMobile.cloneNode(true);
+                        langSwitcherMobile.parentNode.replaceChild(newSwitcherMobile, langSwitcherMobile);
+                        
+                        // Ajouter le nouvel écouteur
+                        document.getElementById('languageSwitcherMobile').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('🌍 Clic sur le sélecteur de langue mobile dans profile.html');
+                            window.translationManager.toggleLanguage();
+                        });
+                        console.log('✅ Bouton de langue mobile du profil initialisé');
+                    }
+                    
+                    // Écouter les changements de langue pour mettre à jour la page
+                    window.addEventListener('language:changed', function() {
+                        console.log('🌍 Langue changée, mise à jour du profil...');
+                        setTimeout(() => {
+                            // Recharger les données du profil pour s'assurer que tout est traduit
+                            if (window.loadProfileData) {
+                                window.loadProfileData();
+                            }
+                        }, 100);
+                    });
+                } else {
+                    console.warn('⚠️ translationManager non disponible pour le profil');
+                }
                 
                 // Marquer comme initialisé
                 window.PROFILE_STATE.initialized = true;
@@ -888,74 +902,6 @@ if (window.translationManager) {
         
         // Exposer l'initialisation
         window.initProfilePage = initProfilePage;
-        
-        // ===== FONCTIONS DE DÉBOGAGE =====
-        window.debugProfileState = function() {
-            console.group('🔍 ÉTAT PROFIL');
-            console.log('Initialisé:', window.PROFILE_STATE.initialized);
-            console.log('Événements attachés:', window.PROFILE_STATE.eventsAttached);
-            console.log('Sauvegarde personnelle en cours:', window.PROFILE_STATE.isSavingPersonal);
-            console.log('Sauvegarde niveau en cours:', window.PROFILE_STATE.isSavingLanguage);
-            console.log('Sauvegarde mot de passe en cours:', window.PROFILE_STATE.isSavingPassword);
-            console.log('Utilisateur:', window.PROFILE_STATE.currentUser?.email);
-            console.log('Supabase:', window.PROFILE_STATE.supabaseClient ? 'Disponible' : 'Indisponible');
-            console.groupEnd();
-        };
-        
-        // Fonction pour forcer la réinitialisation des boutons
-        window.resetAllProfileButtons = function() {
-            console.log('🔄 Réinitialisation forcée de tous les boutons...');
-            window.PROFILE_STATE.isSavingPersonal = false;
-            window.PROFILE_STATE.isSavingLanguage = false;
-            window.PROFILE_STATE.isSavingPassword = false;
-            
-            const personalBtn = document.getElementById('personalSaveBtn');
-            const languageBtn = document.getElementById('languageSaveBtn');
-            const passwordBtn = document.getElementById('passwordSaveBtn');
-            
-            if (personalBtn) {
-                personalBtn.innerHTML = '<i class="fas fa-save"></i> <span>' + (window.translationManager?.getTranslation('profile.save_personal_btn') || 'Enregistrer les modifications') + '</span>';
-                personalBtn.disabled = false;
-            }
-            
-            if (languageBtn) {
-                languageBtn.innerHTML = '<i class="fas fa-save"></i> <span>' + (window.translationManager?.getTranslation('profile.save_language_btn') || 'Enregistrer les préférences') + '</span>';
-                languageBtn.disabled = false;
-            }
-            
-            if (passwordBtn) {
-                passwordBtn.innerHTML = '<i class="fas fa-key"></i> <span>' + (window.translationManager?.getTranslation('profile.save_password_btn') || 'Changer le mot de passe') + '</span>';
-                passwordBtn.disabled = false;
-            }
-            
-            console.log('✅ Tous les boutons réinitialisés');
-        };
-        
-        // Fonction pour vérifier la connexion Supabase
-        window.checkSupabaseConnection = async function() {
-            const { supabaseClient, currentUser } = window.PROFILE_STATE;
-            
-            if (!supabaseClient) {
-                console.error('❌ Supabase non initialisé');
-                return;
-            }
-            
-            try {
-                const { data, error } = await supabaseClient
-                    .from('profiles')
-                    .select('id, full_name, country, french_level')
-                    .eq('id', currentUser?.id)
-                    .maybeSingle();
-                
-                if (error) {
-                    console.error('❌ Erreur connexion Supabase:', error);
-                } else {
-                    console.log('✅ Connexion Supabase OK - Données:', data);
-                }
-            } catch (error) {
-                console.error('❌ Exception vérification connexion:', error);
-            }
-        };
     </script>
 </body>
 </html>
