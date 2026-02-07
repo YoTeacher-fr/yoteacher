@@ -277,6 +277,8 @@
     <script src="supabase.js"></script>
     <script src="auth.js"></script>
     <script src="common.js"></script>
+<script src="translation.js"></script>
+
     <script src="pays.js"></script>
     
     <script>
@@ -767,6 +769,21 @@
                 
                 // Attacher les événements (une seule fois)
                 attachFormEvents();
+// Initialiser le système de traduction
+if (window.translationManager) {
+    console.log('🌐 Initialisation du système de traduction...');
+    
+    // Attacher l'événement au bouton de langue
+    const langSwitcher = document.getElementById('languageSwitcherDesktop');
+    if (langSwitcher) {
+        langSwitcher.addEventListener('click', function() {
+            window.translationManager.toggleLanguage();
+        });
+        console.log('✅ Bouton de langue initialisé');
+    }
+} else {
+    console.warn('⚠️ translationManager non disponible');
+}
                 
                 // Marquer comme initialisé
                 window.PROFILE_STATE.initialized = true;
