@@ -612,10 +612,93 @@ class AuthManager {
     }
 
     async applyInvitationCode(code) {
-        // Logique d'application du code VIP (conservée de l'original)
-        // Cette partie n'est pas modifiée car elle ne concerne pas les boutons
-        console.log('🎟️ Application code VIP (stub):', code);
-        return { success: true };
+        if (!this.supabaseReady || !window.supabase || !this.user) {
+            console.warn('⚠️ Impossible d\'appliquer le code VIP : Supabase ou utilisateur non disponible');
+            return { success: false, error: 'Service non disponible' };
+        }
+
+        try {
+            console.log('🎟️ Application du code VIP:', code);
+
+            // 1. Vérifier que le code existe dans vip_pricing avec user_id = NULL (templates)
+            const { data: vipTemplates, error: templateError } = await supabase
+                .from('vip_pricing')
+                .select('id, course_type, duration_minutes, price, currency, invitation_code')
+                .is('user_id', null)
+                .eq('invitation_code', code);
+
+            if (templateError) {
+                console.error('❌ Erreur recherche code VIP:', templateError);
+                return { success: false, error: 'Erreur lors de la vérification du code' };
+            }
+
+            if (!vipTemplates || vipTemplates.length === 0) {
+                console.warn('⚠️ Code VIP invalide:', code);
+                return { success: false, error: 'Code VIP invalide' };
+            }
+
+            console.log('✅ Code VIP valide trouvé avec', vipTemplates.length, 'tarifs');
+
+            // 2. Vérifier si l'utilisateur a déjà un code VIP appliqué
+            const { data: existingVipPrices, error: checkError } = await supabase
+                .from('vip_pricing')
+                .select('id, invitation_code')
+                .eq('user_id', this.user.id);
+
+            if (checkError) {
+                console.error('❌ Erreur vérification tarifs existants:', checkError);
+                return { success: false, error: 'Erreur lors de la vérification' };
+            }
+
+            if (existingVipPrices && existingVipPrices.length > 0) {
+                console.warn('⚠️ L\'utilisateur a déjà des tarifs VIP:', existingVipPrices[0].invitation_code);
+                return { 
+                    success: false, 
+                    error: `Vous avez déjà un code VIP appliqué (${existingVipPrices[0].invitation_code || 'code inconnu'})` 
+                };
+            }
+
+            // 3. METTRE À JOUR (UPDATE) les templates VIP en assignant l'user_id
+            // C'est la correction principale : UPDATE au lieu de INSERT
+            const { error: updateError } = await supabase
+                .from('vip_pricing')
+                .update({ user_id: this.user.id })
+                .is('user_id', null)
+                .eq('invitation_code', code);
+
+            if (updateError) {
+                console.error('❌ Erreur mise à jour tarifs VIP:', updateError);
+                return { success: false, error: 'Erreur lors de l\'application du code VIP' };
+            }
+
+            console.log('✅ Tarifs VIP mis à jour avec user_id:', this.user.id);
+
+            // 4. Mettre à jour le profil utilisateur pour le marquer comme VIP
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update({ is_vip: true })
+                .eq('id', this.user.id);
+
+            if (profileError) {
+                console.error('❌ Erreur mise à jour profil VIP:', profileError);
+                return { success: false, error: 'Erreur lors de l\'activation du statut VIP' };
+            }
+
+            console.log('✅ Profil utilisateur marqué comme VIP');
+
+            // 5. Recharger le profil et nettoyer le code en attente
+            await this.loadUserProfile();
+            sessionStorage.removeItem('invitation_code');
+            this.invitationCode = null;
+
+            console.log('🎉 Code VIP appliqué avec succès !');
+            
+            return { success: true };
+
+        } catch (error) {
+            console.error('❌ Exception lors de l\'application du code VIP:', error);
+            return { success: false, error: error.message };
+        }
     }
 
     // Méthode de compatibilité
