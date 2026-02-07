@@ -670,33 +670,53 @@
                     return;
                 }
                 
+                // Timeout de sécurité pour forcer la réinitialisation du bouton
+                const safetyTimeout = setTimeout(() => {
+                    console.warn('⚠️ Timeout de sécurité - réinitialisation du bouton');
+                    resetButton('password', button, originalText);
+                    showError('Le changement de mot de passe prend trop de temps. Veuillez réessayer.');
+                }, 15000);
+                
                 try {
                     if (!supabaseClient || !supabaseClient.auth) {
                         throw new Error('Supabase non disponible');
                     }
                     
                     console.log('🔐 Début du changement de mot de passe...');
+                    console.log('🔍 Type de supabaseClient.auth.updateUser:', typeof supabaseClient.auth.updateUser);
                     
-                    // Appel direct sans timeout pour éviter les faux positifs
-                    const { data, error } = await supabaseClient.auth.updateUser({
+                    // Appel direct
+                    const result = await supabaseClient.auth.updateUser({
                         password: newPassword
                     });
                     
-                    console.log('📝 Réponse reçue:', { data, error });
+                    console.log('📝 Réponse brute reçue:', result);
+                    console.log('📝 Type de réponse:', typeof result);
+                    console.log('📝 Clés de la réponse:', result ? Object.keys(result) : 'null');
                     
-                    if (error) {
-                        console.error('❌ Erreur Supabase:', error);
-                        throw error;
+                    // Vérifier si on a une erreur
+                    if (result && result.error) {
+                        console.error('❌ Erreur Supabase:', result.error);
+                        throw result.error;
                     }
                     
                     console.log('✅ Mot de passe changé avec succès');
+                    clearTimeout(safetyTimeout); // Annuler le timeout de sécurité
                     showSuccess(window.translationManager?.getTranslation('profile.password_update_success') || 'Mot de passe mis à jour avec succès !');
                     document.getElementById('passwordForm').reset();
                     
+                    // Réinitialiser le bouton après succès
+                    setTimeout(() => {
+                        resetButton('password', button, originalText);
+                    }, 500);
+                    
                 } catch (error) {
                     console.error('❌ Erreur changement mot de passe:', error);
+                    console.error('❌ Stack trace:', error.stack);
+                    clearTimeout(safetyTimeout); // Annuler le timeout de sécurité
                     showError('Erreur: ' + (error.message || 'Impossible de changer le mot de passe'));
-                } finally {
+                    
+                    // Réinitialiser le bouton après erreur
                     setTimeout(() => {
                         resetButton('password', button, originalText);
                     }, 500);
