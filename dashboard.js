@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     function checkAuthentication() {
-        console.log('🔐 Vérification de l\'authentification...');  // CORRECTION: apostrophe échappée
+        console.log('🔐 Vérification de l\'authentification...');
         
         // 1. Vérifier d'abord localStorage (le plus fiable)
         const storedUser = localStorage.getItem('yoteacher_user');
@@ -140,11 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Variables pour la navigation des forfaits
     let currentPackageIndex = 0;
     const packageTypes = ['conversation', 'curriculum', 'examen'];
-    const packageNames = {
-        'conversation': 'Conversation',
-        'curriculum': 'Cours', 
-        'examen': 'Examen'
-    };
     const packageColors = {
         'conversation': '#ff9800',
         'curriculum': '#4caf50',
@@ -155,6 +150,16 @@ document.addEventListener('DOMContentLoaded', () => {
         'curriculum': 'fas fa-book',
         'examen': 'fas fa-graduation-cap'
     };
+    
+    // Fonction pour obtenir les noms des forfaits selon la langue
+    function getPackageNames() {
+        const isFrench = window.translationManager?.getCurrentLanguage() === 'fr';
+        return {
+            'conversation': isFrench ? 'Conversation' : 'Conversation',
+            'curriculum': isFrench ? 'Cours' : 'Course',
+            'examen': isFrench ? 'Examen' : 'Exam'
+        };
+    }
     
     // Fonction utilitaire pour calculer les heures restantes
     function calculateHoursUntilStart(startTime) {
@@ -185,25 +190,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         const daysRemaining = calculateDaysRemaining(expiryDate);
+        const isFrench = window.translationManager?.getCurrentLanguage() === 'fr';
         
         let expiryHtml = '';
         
         if (daysRemaining > 0) {
+            const daysText = isFrench ? 
+                `${daysRemaining} jour${daysRemaining > 1 ? 's' : ''} restant${daysRemaining > 1 ? 's' : ''}` :
+                `${daysRemaining} day${daysRemaining > 1 ? 's' : ''} remaining`;
+            
+            const warningText = isFrench ? 
+                'Expire bientôt ! Utilisez vos crédits.' :
+                'Expiring soon! Use your credits.';
+            
             expiryHtml = `
                 <div class="package-expiry-container">
                     <div class="expiry-info">
                         <div class="expiry-date">
                             <i class="fas fa-calendar-alt expiry-icon"></i>
-                            <span class="expiry-text">Expire le ${formattedDate}</span>
+                            <span class="expiry-text">${isFrench ? 'Expire le' : 'Expires on'} ${formattedDate}</span>
                         </div>
                         <div class="expiry-days">
                             <i class="far fa-clock"></i>
-                            <span><span class="days-count">${daysRemaining}</span> jour${daysRemaining > 1 ? 's' : ''} restant${daysRemaining > 1 ? 's' : ''}</span>
+                            <span><span class="days-count">${daysRemaining}</span> ${daysText}</span>
                         </div>
                         ${daysRemaining <= 7 ? `
                         <div class="expiry-warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <span>Expire bientôt ! Utilisez vos crédits.</span>
+                            <span>${warningText}</span>
                         </div>
                         ` : ''}
                     </div>
@@ -215,11 +229,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="expiry-info">
                         <div class="expiry-date">
                             <i class="fas fa-calendar-alt expiry-icon"></i>
-                            <span class="expiry-text">Expire aujourd'hui !</span>
+                            <span class="expiry-text">${isFrench ? 'Expire aujourd\'hui !' : 'Expires today!'}</span>
                         </div>
                         <div class="expiry-warning" style="background-color: #f8d7da; border-color: #f5c6cb; color: #721c24;">
                             <i class="fas fa-exclamation-circle"></i>
-                            <span>Utilisez vos crédits aujourd'hui !</span>
+                            <span>${isFrench ? 'Utilisez vos crédits aujourd\'hui !' : 'Use your credits today!'}</span>
                         </div>
                     </div>
                 </div>
@@ -230,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="expiry-info">
                         <div class="expiry-date" style="color: #dc3545;">
                             <i class="fas fa-calendar-times"></i>
-                            <span>Expiré le ${formattedDate}</span>
+                            <span>${isFrench ? 'Expiré le' : 'Expired on'} ${formattedDate}</span>
                         </div>
                     </div>
                 </div>
@@ -238,6 +252,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         return expiryHtml;
+    }
+    
+    // Fonction pour mettre à jour le message de bienvenue
+    function updateWelcomeMessage(user) {
+        const welcomeDiv = document.getElementById('welcomeMessage');
+        if (!welcomeDiv) return;
+        
+        const userName = user.profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0];
+        const now = new Date();
+        const hour = now.getHours();
+        
+        let greeting;
+        if (window.translationManager?.getCurrentLanguage() === 'en') {
+            greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+        } else {
+            greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
+        }
+        
+        // Construire le HTML du message d'accueil
+        let welcomeHTML = `
+            <div class="welcome-message">
+                <h1>${greeting} ${userName} !`;
+    
+        // Ajouter le badge VIP si l'utilisateur est VIP, sinon ajouter l'émoji
+        if (user.profile?.is_vip) {
+            const vipText = window.translationManager?.getTranslation('dashboard.vip_member') || 'Membre VIP';
+            welcomeHTML += ` <span class="vip-badge">
+                    <i class="fas fa-crown"></i>
+                    <span>${vipText}</span>
+                </span>`;
+        } else {
+            welcomeHTML += ' 👋';
+        }
+        
+        welcomeHTML += `</h1></div>`;
+        welcomeDiv.innerHTML = welcomeHTML;
     }
     
     async function loadDashboard() {
@@ -266,9 +316,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadingSection.innerHTML = `
                     <div style="color: #e74c3c;">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <p>Erreur lors du chargement du dashboard. Veuillez rafraîchir la page.</p>
+                        <p>${window.translationManager?.getTranslation('dashboard.error_loading') || 'Erreur lors du chargement du dashboard. Veuillez rafraîchir la page.'}</p>
                         <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: #3c84f6; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            Rafraîchir
+                            ${window.translationManager?.getTranslation('dashboard.refresh') || 'Rafraîchir'}
                         </button>
                     </div>
                 `;
@@ -278,33 +328,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function loadUserData(user) {
         const welcomeDiv = document.getElementById('welcomeMessage');
-        const userName = user.profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0];
-        const now = new Date();
-        const hour = now.getHours();
         
-        let greeting;
-        if (window.translationManager?.getCurrentLanguage() === 'en') {
-            greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-        } else {
-            greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
-        }
+        if (!welcomeDiv) return;
         
-        // Construire le HTML du message d'accueil
-        let welcomeHTML = `
-            <div class="welcome-message">
-                <h1>${greeting} ${userName} !`;
-    
-        // Ajouter le badge VIP si l'utilisateur est VIP, sinon ajouter l'émoji
-        if (user.profile?.is_vip) {
-            welcomeHTML += ` <span class="vip-badge">
-                    <i class="fas fa-crown"></i>
-                    <span>Membre VIP</span>
-                </span>`;
-        } else {
-            welcomeHTML += ' 👋';
-        }
-                        
-        welcomeDiv.innerHTML = welcomeHTML;
+        // Mettre à jour le message de bienvenue
+        updateWelcomeMessage(user);
         
         // Mettre à jour les informations du profil
         updateProfileInfo(user);
@@ -325,30 +353,34 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function updateProfileInfo(user) {
         const profileInfo = document.getElementById('profileInfo');
-        const joinDate = new Date(user.created_at).toLocaleDateString('fr-FR', {
+        if (!profileInfo) return;
+        
+        const isFrench = window.translationManager?.getCurrentLanguage() === 'fr';
+        
+        const joinDate = new Date(user.created_at).toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
             day: 'numeric',
             month: 'long',
             year: 'numeric'
         });
         
         const timezone = user.profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const frenchLevel = user.profile?.french_level || 'Non spécifié';
+        const frenchLevel = user.profile?.french_level || (isFrench ? 'Non spécifié' : 'Not specified');
         
         profileInfo.innerHTML = `
             <div class="profile-field">
-                <span class="profile-label">Email</span>
+                <span class="profile-label">${window.translationManager?.getTranslation('dashboard.email_label') || 'Email'}</span>
                 <span class="profile-value">${user.email}</span>
             </div>
             <div class="profile-field">
-                <span class="profile-label">Membre depuis</span>
+                <span class="profile-label">${window.translationManager?.getTranslation('dashboard.member_since') || 'Membre depuis'}</span>
                 <span class="profile-value">${joinDate}</span>
             </div>
             <div class="profile-field">
-                <span class="profile-label">Fuseau horaire</span>
+                <span class="profile-label">${window.translationManager?.getTranslation('dashboard.timezone') || 'Fuseau horaire'}</span>
                 <span class="profile-value">${timezone}</span>
             </div>
             <div class="profile-field">
-                <span class="profile-label">Niveau</span>
+                <span class="profile-label">${window.translationManager?.getTranslation('dashboard.level') || 'Niveau'}</span>
                 <span class="profile-value">${frenchLevel}</span>
             </div>
         `;
@@ -421,6 +453,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function showPackageCard(type, typeData) {
         const container = document.getElementById('packagesContainer');
+        if (!container) return;
+        
+        const packageNames = getPackageNames();
         
         // Générer l'affichage de la date d'expiration avec jours restants
         const expiryHtml = formatExpiryInfo(typeData.expiry);
@@ -445,21 +480,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="duration-row">
                         <div class="duration-label">
                             <i class="far fa-clock"></i>
-                            <span>30min</span>
+                            <span>${window.translationManager?.getTranslation('dashboard.package_30min') || '30min'}</span>
                         </div>
                         <div class="duration-credits">${typeData[30] || 0}</div>
                     </div>
                     <div class="duration-row">
                         <div class="duration-label">
                             <i class="far fa-clock"></i>
-                            <span>45min</span>
+                            <span>${window.translationManager?.getTranslation('dashboard.package_45min') || '45min'}</span>
                         </div>
                         <div class="duration-credits">${typeData[45] || 0}</div>
                     </div>
                     <div class="duration-row">
                         <div class="duration-label">
                             <i class="far fa-clock"></i>
-                            <span>60min</span>
+                            <span>${window.translationManager?.getTranslation('dashboard.package_60min') || '60min'}</span>
                         </div>
                         <div class="duration-credits">${typeData[60] || 0}</div>
                     </div>
@@ -528,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 nextLessonContent.innerHTML = `
                     <div class="no-upcoming">
                         <i class="far fa-calendar"></i>
-                        <p>Aucun cours programmé</p>
+                        <p>${window.translationManager?.getTranslation('dashboard.no_lessons_message') || 'Aucun cours programmé'}</p>
                     </div>
                 `;
                 lessonNav.style.display = 'none';
@@ -554,7 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('nextLessonContent').innerHTML = `
                 <div class="no-upcoming">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <p>Erreur de chargement des cours</p>
+                    <p>${window.translationManager?.getTranslation('dashboard.error_loading_lessons') || 'Erreur de chargement des cours'}</p>
                     ${error.message.includes('Failed to fetch') || error.message.includes('CORS') ? 
                         '<small>Veuillez vérifier votre connexion ou réessayer plus tard</small>' : ''}
                 </div>
@@ -570,11 +605,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const lessonCounter = document.getElementById('lessonCounter');
         const externalActions = document.getElementById('lessonExternalActions');
         
+        if (!nextLessonContent || !lessonCounter) return;
+        
         // Mettre à jour le compteur
         lessonCounter.textContent = `${currentLessonIndex + 1}/${upcomingLessons.length}`;
         
         const lessonDate = new Date(lesson.start_time);
         const hoursUntilStart = calculateHoursUntilStart(lesson.start_time);
+        const isFrench = window.translationManager?.getCurrentLanguage() === 'fr';
         
         // Vérifier si l'annulation est possible (plus de 24h)
         const canCancel = hoursUntilStart > 24 && lesson.status !== 'cancelled';
@@ -582,9 +620,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mapping des plateformes pour l'affichage
         const platformNames = {
             'zoom': 'Zoom',
-            'meet': 'Google Meet',
-            'teams': 'Microsoft Teams',
-            'other': 'Autre'
+            'meet': isFrench ? 'Google Meet' : 'Google Meet',
+            'teams': isFrench ? 'Microsoft Teams' : 'Microsoft Teams',
+            'other': isFrench ? 'Autre' : 'Other'
         };
         
         const platformName = platformNames[lesson.platform] || lesson.platform || 'Zoom';
@@ -593,7 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="upcoming-lesson-card">
                 <div class="lesson-date">
                     <i class="fas fa-calendar-alt"></i>
-                    ${lessonDate.toLocaleDateString('fr-FR', { 
+                    ${lessonDate.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', { 
                         weekday: 'long', 
                         day: 'numeric', 
                         month: 'long',
@@ -602,35 +640,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="lesson-info">
                     <div class="lesson-info-item">
-                        <span class="lesson-info-label">Heure</span>
-                        <span class="lesson-info-value">${lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span class="lesson-info-label">${window.translationManager?.getTranslation('dashboard.lesson_time') || 'Heure'}</span>
+                        <span class="lesson-info-value">${lessonDate.toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <div class="lesson-info-item">
-                        <span class="lesson-info-label">Durée</span>
+                        <span class="lesson-info-label">${window.translationManager?.getTranslation('dashboard.lesson_duration') || 'Durée'}</span>
                         <span class="lesson-info-value">${lesson.duration_minutes || 60} min</span>
                     </div>
                     <div class="lesson-info-item">
-                        <span class="lesson-info-label">Type</span>
-                        <span class="lesson-info-value">${lesson.course_type || 'Cours'}</span>
+                        <span class="lesson-info-label">${window.translationManager?.getTranslation('dashboard.lesson_type') || 'Type'}</span>
+                        <span class="lesson-info-value">${lesson.course_type || (isFrench ? 'Cours' : 'Lesson')}</span>
                     </div>
                     <div class="lesson-info-item">
-                        <span class="lesson-info-label">Plateforme</span>
+                        <span class="lesson-info-label">${window.translationManager?.getTranslation('dashboard.lesson_platform') || 'Plateforme'}</span>
                         <span class="lesson-info-value">${platformName}</span>
                     </div>
                     <div class="lesson-info-item">
-                        <span class="lesson-info-label">Référence</span>
+                        <span class="lesson-info-label">${window.translationManager?.getTranslation('dashboard.lesson_reference') || 'Référence'}</span>
                         <span class="lesson-info-value">${lesson.booking_number || '#' + (lesson.id ? lesson.id.substring(0, 8) : '')}</span>
-                    </div>
-                    <div class="lesson-info-item">
-                        <span class="lesson-info-label">Mode de paiement</span>
-                        <span class="lesson-info-value">
-                            ${lesson.payment_method === 'credit' ? '✅ Crédit de forfait' : '💳 Carte bancaire'}
-                        </span>
                     </div>
                     ${hoursUntilStart <= 24 ? `
                     <div class="lesson-warning">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <span>Annulation impossible (moins de 24h avant le cours)</span>
+                        <span>${window.translationManager?.getTranslation('dashboard.cancel_not_allowed') || 'Annulation impossible (moins de 24h avant le cours)'}</span>
                     </div>
                     ` : ''}
                 </div>
@@ -640,45 +672,47 @@ document.addEventListener('DOMContentLoaded', () => {
         // ============================================================================
         // AFFICHER LES BOUTONS EN DEHORS DE LA CARTE
         // ============================================================================
-        externalActions.style.display = 'flex';
-        externalActions.innerHTML = '';
-        
-        // Bouton d'annulation (seulement si possible)
-        if (canCancel) {
-            const cancelButton = document.createElement('button');
-            cancelButton.className = 'btn-external btn-cancel-external';
-            cancelButton.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
+        if (externalActions) {
+            externalActions.style.display = 'flex';
+            externalActions.innerHTML = '';
             
-            // Utiliser addEventListener (plus propre que onclick)
-            cancelButton.addEventListener('click', async function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                await handleCancelLesson(lesson.id);
-            });
+            // Bouton d'annulation (seulement si possible)
+            if (canCancel) {
+                const cancelButton = document.createElement('button');
+                cancelButton.className = 'btn-external btn-cancel-external';
+                cancelButton.innerHTML = `<i class="fas fa-times"></i> ${window.translationManager?.getTranslation('dashboard.cancel_lesson_btn') || 'Annuler le cours'}`;
+                
+                // Utiliser addEventListener (plus propre que onclick)
+                cancelButton.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleCancelLesson(lesson.id);
+                });
+                
+                externalActions.appendChild(cancelButton);
+            }
             
-            externalActions.appendChild(cancelButton);
-        }
-        
-        // Bouton de connexion (toujours visible si lien disponible)
-        if (lesson.meeting_link) {
-            const joinLink = document.createElement('a');
-            joinLink.href = lesson.meeting_link;
-            joinLink.target = '_blank';
-            joinLink.className = 'btn-external btn-join-external';
-            joinLink.innerHTML = '<i class="fas fa-video"></i> Rejoindre';
-            externalActions.appendChild(joinLink);
-        }
-        
-        // Si aucun bouton n'est affiché, masquer la div
-        if (!canCancel && !lesson.meeting_link) {
-            externalActions.style.display = 'none';
+            // Bouton de connexion (toujours visible si lien disponible)
+            if (lesson.meeting_link) {
+                const joinLink = document.createElement('a');
+                joinLink.href = lesson.meeting_link;
+                joinLink.target = '_blank';
+                joinLink.className = 'btn-external btn-join-external';
+                joinLink.innerHTML = `<i class="fas fa-video"></i> ${window.translationManager?.getTranslation('dashboard.join_lesson_btn') || 'Rejoindre'}`;
+                externalActions.appendChild(joinLink);
+            }
+            
+            // Si aucun bouton n'est affiché, masquer la div
+            if (!canCancel && !lesson.meeting_link) {
+                externalActions.style.display = 'none';
+            }
         }
     }
     
     async function handleCancelLesson(bookingId) {
         const user = window.authManager?.getCurrentUser();
         if (!user) {
-            alert('Vous devez être connecté pour annuler un cours');
+            alert(window.translationManager?.getTranslation('dashboard.login_required_cancel') || 'Vous devez être connecté pour annuler un cours');
             return;
         }
         
@@ -697,12 +731,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Récupérer les infos du cours pour affichage dans la confirmation
             const lesson = upcomingLessons.find(l => l.id === bookingId);
             if (!lesson) {
-                alert('Cours non trouvé');
+                alert(window.translationManager?.getTranslation('dashboard.lesson_not_found') || 'Cours non trouvé');
                 return;
             }
             
             const lessonDate = new Date(lesson.start_time);
-            const formattedDate = lessonDate.toLocaleDateString('fr-FR', {
+            const isFrench = window.translationManager?.getCurrentLanguage() === 'fr';
+            const formattedDate = lessonDate.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',
@@ -713,18 +748,22 @@ document.addEventListener('DOMContentLoaded', () => {
             // Calculer les heures restantes
             const hoursUntilStart = (lessonDate - new Date()) / (1000 * 60 * 60);
             
-            // Vérifier le mode de paiement pour le message de confirmation
-            const isCreditPayment = lesson.payment_method === 'credit';
-            
             // Message de confirmation adapté
-            let confirmMessage = `Êtes-vous sûr de vouloir annuler ce cours ?\n\n📅 ${formattedDate}\n📚 ${lesson.course_type}\n⏱️ ${lesson.duration_minutes || 60}min`;
+            let confirmMessage = isFrench ? 
+                `Êtes-vous sûr de vouloir annuler ce cours ?\n\n📅 ${formattedDate}\n📚 ${lesson.course_type}\n⏱️ ${lesson.duration_minutes || 60}min` :
+                `Are you sure you want to cancel this lesson?\n\n📅 ${formattedDate}\n📚 ${lesson.course_type}\n⏱️ ${lesson.duration_minutes || 60}min`;
             
-            if (hoursUntilStart > 24 && isCreditPayment) {
-                confirmMessage += '\n\n💰 Un crédit sera ajouté à votre compte';
-            } else if (hoursUntilStart > 24 && !isCreditPayment) {
-                confirmMessage += '\n\nℹ️ Ce cours a été payé par carte, aucun crédit ne sera remboursé';
+            if (hoursUntilStart > 24) {
+                const isCreditPayment = lesson.payment_method === 'credit';
+                if (isCreditPayment) {
+                    confirmMessage += isFrench ? 
+                        '\n\n💰 Un crédit sera ajouté à votre compte' :
+                        '\n\n💰 A credit will be added to your account';
+                }
             } else {
-                confirmMessage += '\n\n⚠️ ATTENTION : Le cours commence dans moins de 24h\n❌ Aucun crédit ne sera remboursé (cours perdu)';
+                confirmMessage += isFrench ? 
+                    '\n\n⚠️ Le cours commence dans moins de 24h\n❌ Aucun crédit ne sera remboursé' :
+                    '\n\n⚠️ The lesson starts in less than 24 hours\n❌ No credit will be refunded';
             }
             
             if (!confirm(confirmMessage)) {
@@ -735,64 +774,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const cancelBtn = document.querySelector('.btn-cancel-external');
             if (cancelBtn) {
                 cancelBtn.disabled = true;
-                cancelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Annulation en cours...';
+                cancelBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${isFrench ? 'Annulation en cours...' : 'Cancelling...'}`;
             }
             
             console.log('🎫 Utilisation de bookingCancellation.cancelBooking...');
-            console.log('   Booking ID:', bookingId);
-            console.log('   User ID:', user.id);
-            console.log('   Heures restantes:', hoursUntilStart.toFixed(2));
-            console.log('   Mode de paiement:', lesson.payment_method);
-            console.log('   Paie par crédit?:', isCreditPayment);
             
-            // ============================================================================
-            // ✅ APPEL VIA bookingCancellation.cancelBooking()
-            // Cette méthode gère à la fois la DB et Cal.com
-            // ============================================================================
+            // Appel via bookingCancellation.cancelBooking()
             const result = await window.bookingCancellation.cancelBooking(bookingId, user.id);
             
             console.log('📥 Résultat annulation:', result);
             
-            // ============================================================================
-            // TRAITEMENT DU RÉSULTAT
-            // ============================================================================
-            
             if (result.success) {
                 console.log('✅ Annulation complète réussie');
-                console.log('   Booking ID:', result.bookingId);
-                console.log('   Booking Number:', result.bookingNumber);
-                console.log('   Crédit remboursé:', result.creditRefunded);
-                console.log('   Cal.com annulé:', result.calcomCancelled);
-                console.log('   Heures avant:', result.hoursBeforeStart);
                 
-                let successMessage = '✅ Cours annulé avec succès !';
+                let successMessage = isFrench ? '✅ Cours annulé avec succès' : '✅ Lesson cancelled successfully';
                 
-                // Message détaillé sur le crédit
+                // Message sur le crédit uniquement si remboursé
                 if (result.creditRefunded) {
-                    successMessage += '\n\n💰 1 crédit a été ajouté à votre compte.';
-                } else if (isCreditPayment && hoursUntilStart > 24) {
-                    successMessage += '\n\nℹ️ Pourquoi aucun crédit n\'a été remboursé ?';
-                    successMessage += '\n   • Peut-être que ce cours était un cours d\'essai';
-                    successMessage += '\n   • Ou il n\'était pas associé à un forfait';
-                    successMessage += '\n   • Ou il a été payé par carte (Stripe)';
-                } else if (!isCreditPayment) {
-                    successMessage += '\n\nℹ️ Ce cours a été payé par carte, aucun crédit n\'est remboursable.';
-                } else {
-                    successMessage += '\n\nℹ️ Aucun crédit remboursé (annulation hors délai).';
-                }
-                
-                // Message sur Cal.com
-                if (result.calcomCancelled === true) {
-                    successMessage += '\n\n✅ L\'événement Cal.com a été annulé avec succès.';
-                } else if (result.calcomCancelled === false) {
-                    successMessage += '\n\nℹ️ Note: Aucune réservation Cal.com n\'a été trouvée (peut-être déjà annulée).';
+                    successMessage += isFrench ? '\n💰 1 crédit ajouté à votre compte' : '\n💰 1 credit added to your account';
                 }
                 
                 // Afficher le message
                 if (window.utils && window.utils.showNotification) {
                     window.utils.showNotification(successMessage, 'success');
                 } else {
-                    // Créer une modal pour afficher le message détaillé
                     showDetailedAnnulationMessage(successMessage);
                 }
                 
@@ -809,12 +814,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 console.warn('⚠️ Annulation échouée ou partielle');
                 
-                let errorMessage = result.error || 'Annulation impossible';
+                let errorMessage = result.error || (isFrench ? 'Annulation impossible' : 'Cancellation failed');
                 
                 if (window.utils && window.utils.showNotification) {
                     window.utils.showNotification(errorMessage, 'error');
                 } else {
-                    alert('Erreur : ' + errorMessage);
+                    alert((isFrench ? 'Erreur : ' : 'Error: ') + errorMessage);
                 }
                 
                 // Rafraîchir quand même
@@ -824,39 +829,30 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('❌ Erreur annulation:', error);
             
-            // Log détaillé pour debugging
-            console.group('🔍 Détails erreur');
-            console.log('Booking ID:', bookingId);
-            console.log('User ID:', user?.id);
-            console.log('Message:', error.message);
-            console.log('Stack:', error.stack);
-            console.groupEnd();
-            
             // Réactiver le bouton
             const cancelBtn = document.querySelector('.btn-cancel-external');
             if (cancelBtn) {
                 cancelBtn.disabled = false;
-                cancelBtn.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
+                cancelBtn.innerHTML = `<i class="fas fa-times"></i> ${window.translationManager?.getTranslation('dashboard.cancel_lesson_btn') || 'Annuler le cours'}`;
             }
             
             // Afficher message d'erreur
-            let errorMessage = error.message || 'Erreur lors de l\'annulation';
+            let errorMessage = error.message || (isFrench ? 'Erreur lors de l\'annulation' : 'Error during cancellation');
             
-            // Messages d'erreur plus clairs
-            if (errorMessage.includes('moins de 24h')) {
-                errorMessage = 'Annulation impossible : le cours commence dans moins de 24h';
-            } else if (errorMessage.includes('déjà annulée') || errorMessage.includes('cancelled')) {
-                errorMessage = 'Cette réservation est déjà annulée';
+            if (errorMessage.includes('moins de 24h') || errorMessage.includes('less than 24h')) {
+                errorMessage = isFrench ? 'Annulation impossible : le cours commence dans moins de 24h' : 'Cancellation not possible: lesson starts in less than 24h';
+            } else if (errorMessage.includes('déjà annulée') || errorMessage.includes('already cancelled') || errorMessage.includes('cancelled')) {
+                errorMessage = isFrench ? 'Cette réservation est déjà annulée' : 'This booking is already cancelled';
             } else if (errorMessage.includes('non trouvée') || errorMessage.includes('not found')) {
-                errorMessage = 'Réservation introuvable';
+                errorMessage = isFrench ? 'Réservation introuvable' : 'Booking not found';
             } else if (errorMessage.includes('Failed to fetch')) {
-                errorMessage = 'Erreur de connexion au serveur. Veuillez vérifier votre connexion.';
+                errorMessage = isFrench ? 'Erreur de connexion au serveur. Veuillez vérifier votre connexion.' : 'Server connection error. Please check your connection.';
             }
             
             if (window.utils && window.utils.showNotification) {
                 window.utils.showNotification(errorMessage, 'error');
             } else {
-                showDetailedAnnulationMessage('❌ Erreur : ' + errorMessage, 'error');
+                showDetailedAnnulationMessage('❌ ' + errorMessage, 'error');
             }
         }
     }
@@ -901,7 +897,7 @@ document.addEventListener('DOMContentLoaded', () => {
         messageDiv.innerHTML = formattedMessage;
         
         const closeButton = document.createElement('button');
-        closeButton.textContent = 'Fermer';
+        closeButton.textContent = window.translationManager?.getTranslation('dashboard.close') || 'Fermer';
         closeButton.style.cssText = `
             margin-top: 20px;
             padding: 10px 20px;
@@ -942,7 +938,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const cancelBtn = document.querySelector('.btn-cancel-external');
             if (cancelBtn) {
                 cancelBtn.disabled = true;
-                cancelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Annulation en cours...';
+                const isFrench = window.translationManager?.getCurrentLanguage() === 'fr';
+                cancelBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${isFrench ? 'Annulation en cours...' : 'Cancelling...'}`;
             }
             
             console.log('📞 Appel RPC cancel_booking_safe...');
@@ -954,7 +951,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (error) {
                 console.error('❌ Erreur RPC:', error);
-                throw new Error(error.message || 'Erreur lors de l\'annulation');
+                throw new Error(error.message || (isFrench ? 'Erreur lors de l\'annulation' : 'Error during cancellation'));
             }
             
             console.log('📥 Résultat RPC:', result);
@@ -962,26 +959,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.success) {
                 console.log('✅ Annulation DB réussie');
                 
-                let successMessage = '✅ Cours annulé avec succès !';
+                let successMessage = isFrench ? '✅ Cours annulé avec succès' : '✅ Lesson cancelled successfully';
                 
                 if (result.credit_refunded) {
-                    successMessage += '\n💰 1 crédit a été ajouté à votre compte.';
-                } else {
-                    successMessage += '\n\nℹ️ Pourquoi aucun crédit n\'a été remboursé ?';
-                    successMessage += '\n   • Peut-être que ce cours était un cours d\'essai';
-                    successMessage += '\n   • Ou il n\'était pas associé à un forfait';
-                    successMessage += '\n   • Ou il a été payé par carte (Stripe)';
-                }
-                
-                // Vérifier si Cal.com a un calcom_uid
-                const { data: booking } = await supabase
-                    .from('bookings')
-                    .select('calcom_uid')
-                    .eq('id', bookingId)
-                    .single();
-                
-                if (booking?.calcom_uid) {
-                    successMessage += '\n\n⚠️ Note: L\'annulation Cal.com n\'a pas été effectuée (service bookingCancellation non disponible).';
+                    successMessage += isFrench ? '\n💰 1 crédit ajouté à votre compte' : '\n💰 1 credit added to your account';
                 }
                 
                 showDetailedAnnulationMessage(successMessage);
@@ -994,7 +975,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     await loadUserPackages(user.id);
                 }
             } else {
-                showDetailedAnnulationMessage('Erreur : ' + (result.error || 'Annulation impossible'), 'error');
+                showDetailedAnnulationMessage((isFrench ? 'Erreur : ' : 'Error: ') + (result.error || (isFrench ? 'Annulation impossible' : 'Cancellation failed')), 'error');
             }
             
         } catch (error) {
@@ -1004,10 +985,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const cancelBtn = document.querySelector('.btn-cancel-external');
             if (cancelBtn) {
                 cancelBtn.disabled = false;
-                cancelBtn.innerHTML = '<i class="fas fa-times"></i> Annuler le cours';
+                cancelBtn.innerHTML = `<i class="fas fa-times"></i> ${window.translationManager?.getTranslation('dashboard.cancel_lesson_btn') || 'Annuler le cours'}`;
             }
             
-            showDetailedAnnulationMessage('❌ Erreur : ' + error.message, 'error');
+            showDetailedAnnulationMessage('❌ ' + error.message, 'error');
         }
     }
     
@@ -1015,8 +996,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const prevBtn = document.getElementById('prevLessonBtn');
         const nextBtn = document.getElementById('nextLessonBtn');
         
-        prevBtn.disabled = currentLessonIndex === 0;
-        nextBtn.disabled = currentLessonIndex === upcomingLessons.length - 1;
+        if (prevBtn) prevBtn.disabled = currentLessonIndex === 0;
+        if (nextBtn) nextBtn.disabled = currentLessonIndex === upcomingLessons.length - 1;
     }
     
     // Gestion de la déconnexion
@@ -1027,7 +1008,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextLessonBtn = document.getElementById('nextLessonBtn');
     
     async function handleLogout() {
-        if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+        const isFrench = window.translationManager?.getCurrentLanguage() === 'fr';
+        const confirmMessage = isFrench ? 
+            'Voulez-vous vraiment vous déconnecter ?' : 
+            'Are you sure you want to log out?';
+        
+        if (confirm(confirmMessage)) {
             try {
                 await window.authManager.signOut();
                 // signOut() redirige déjà vers index.html
@@ -1055,9 +1041,10 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshBtn.addEventListener('click', async function() {
             const user = window.authManager?.getCurrentUser();
             if (user) {
-                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualisation...';
+                const isFrench = window.translationManager?.getCurrentLanguage() === 'fr';
+                this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${isFrench ? 'Actualisation...' : 'Refreshing...'}`;
                 await loadUserData(user);
-                this.innerHTML = '<i class="fas fa-sync-alt"></i> Actualiser';
+                this.innerHTML = `<i class="fas fa-sync-alt"></i> ${window.translationManager?.getTranslation('dashboard.refresh') || 'Actualiser'}`;
                 
                 // Animation de fade in pour les nouvelles cartes
                 document.querySelectorAll('.fade-in').forEach(card => {
@@ -1090,19 +1077,67 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Écouter les changements de langue
+    window.addEventListener('language:changed', function() {
+        console.log('🌍 Changement de langue détecté, mise à jour du dashboard...');
+        
+        const user = window.authManager?.getCurrentUser();
+        if (user) {
+            // Mettre à jour le message de bienvenue
+            updateWelcomeMessage(user);
+            
+            // Mettre à jour les informations du profil
+            updateProfileInfo(user);
+            
+            // Mettre à jour la carte de forfait actuelle
+            if (window.packagesData && currentPackageIndex < packageTypes.length) {
+                const currentType = packageTypes[currentPackageIndex];
+                showPackageCard(currentType, window.packagesData[currentType] || { 30: 0, 45: 0, 60: 0, expiry: null });
+            }
+            
+            // Mettre à jour l'affichage du cours actuel
+            if (upcomingLessons.length > 0) {
+                displayCurrentLesson();
+            }
+            
+            // Mettre à jour les boutons de cours
+            updateCourseButtons();
+        }
+    });
+    
+    // Fonction pour mettre à jour les boutons de cours
+    function updateCourseButtons() {
+        const conversationBtn = document.querySelector('[href="booking.html?type=conversation"] .course-button-title');
+        const curriculumBtn = document.querySelector('[href="booking.html?type=curriculum"] .course-button-title');
+        const examBtn = document.querySelector('[href="booking.html?type=examen"] .course-button-title');
+        
+        if (conversationBtn) {
+            conversationBtn.textContent = window.translationManager?.getTranslation('dashboard.conversation_btn') || 'Conversation';
+        }
+        
+        if (curriculumBtn) {
+            curriculumBtn.textContent = window.translationManager?.getTranslation('dashboard.curriculum_btn') || 'Curriculum';
+        }
+        
+        if (examBtn) {
+            examBtn.textContent = window.translationManager?.getTranslation('dashboard.exam_btn') || 'Préparation d\'examen';
+        }
+    }
+    
     // Initialiser le PackagesManager si nécessaire
     if (window.packagesManager && !window.packagesManager.isInitialized) {
         window.packagesManager.initialize();
     }
     
-    // Exposer la fonction de chargement globalement
+    // Exposer les fonctions globalement
     window.loadDashboard = loadDashboard;
-    
+    window.updateWelcomeMessage = updateWelcomeMessage;
+    window.updateProfileInfo = updateProfileInfo;
 });
 
 // Vérification directe au chargement
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔍 Vérification rapide de l\'authentification...');  // CORRECTION: apostrophe échappée
+    console.log('🔍 Vérification rapide de l\'authentification...');
     
     // Vérifier immédiatement dans localStorage
     const storedUser = localStorage.getItem('yoteacher_user');
@@ -1122,7 +1157,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 500);
     } else {
-        console.log('❌ Pas d\'utilisateur dans localStorage');  // CORRECTION: apostrophe échappée
+        console.log('❌ Pas d\'utilisateur dans localStorage');
         // Masquer le contenu mais ne pas rediriger immédiatement
         // La fonction checkAuthentication() se chargera de la redirection
     }
