@@ -675,18 +675,33 @@
                         throw new Error('Supabase non disponible');
                     }
                     
-                    const { error } = await supabaseClient.auth.updateUser({
+                    console.log('🔐 Début du changement de mot de passe...');
+                    
+                    // Créer une promesse avec timeout de 10 secondes
+                    const updatePromise = supabaseClient.auth.updateUser({
                         password: newPassword
                     });
                     
-                    if (error) throw error;
+                    const timeoutPromise = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('Timeout: le changement de mot de passe prend trop de temps')), 10000);
+                    });
                     
+                    const result = await Promise.race([updatePromise, timeoutPromise]);
+                    
+                    console.log('📝 Réponse reçue:', result);
+                    
+                    if (result && result.error) {
+                        console.error('❌ Erreur Supabase:', result.error);
+                        throw result.error;
+                    }
+                    
+                    console.log('✅ Mot de passe changé avec succès');
                     showSuccess(window.translationManager?.getTranslation('profile.password_update_success') || 'Mot de passe mis à jour avec succès !');
                     document.getElementById('passwordForm').reset();
                     
                 } catch (error) {
                     console.error('❌ Erreur changement mot de passe:', error);
-                    showError('Erreur: ' + error.message);
+                    showError('Erreur: ' + (error.message || 'Impossible de changer le mot de passe'));
                 } finally {
                     setTimeout(() => {
                         resetButton('password', button, originalText);
