@@ -677,22 +677,16 @@
                     
                     console.log('🔐 Début du changement de mot de passe...');
                     
-                    // Créer une promesse avec timeout de 10 secondes
-                    const updatePromise = supabaseClient.auth.updateUser({
+                    // Appel direct sans timeout pour éviter les faux positifs
+                    const { data, error } = await supabaseClient.auth.updateUser({
                         password: newPassword
                     });
                     
-                    const timeoutPromise = new Promise((_, reject) => {
-                        setTimeout(() => reject(new Error('Timeout: le changement de mot de passe prend trop de temps')), 10000);
-                    });
+                    console.log('📝 Réponse reçue:', { data, error });
                     
-                    const result = await Promise.race([updatePromise, timeoutPromise]);
-                    
-                    console.log('📝 Réponse reçue:', result);
-                    
-                    if (result && result.error) {
-                        console.error('❌ Erreur Supabase:', result.error);
-                        throw result.error;
+                    if (error) {
+                        console.error('❌ Erreur Supabase:', error);
+                        throw error;
                     }
                     
                     console.log('✅ Mot de passe changé avec succès');
