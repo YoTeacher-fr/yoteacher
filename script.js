@@ -85,26 +85,26 @@ const testimonialsData = [
     {
         id: 1,
         name: "Marina",
-        country: "🇧🇷 Brésil",
+        country: "🇺🇸 États-Unis",
         content: "Yoann est un professeur fantastique ! Ses cours sont dynamiques et il sait vraiment comment me mettre à l'aise. J'ai fait des progrès incroyables en seulement quelques mois.",
         rating: 5,
-        lessons: "42 cours"
+        lessons: "142 cours"
     },
     {
         id: 2,
         name: "Kay",
-        country: "🇺🇸 États-Unis",
+        country: "🇨🇦 Canada",
         content: "J'adore apprendre avec Yoann. Il est patient, professionnel et ses cours sont toujours bien préparés. Il s'adapte parfaitement à mon niveau et mes besoins.",
         rating: 5,
-        lessons: "28 cours"
+        lessons: "78 cours"
     },
     {
         id: 3,
         name: "Julia",
-        country: "🇩🇪 Allemagne",
+        country: "🇮🇹 Italie",
         content: "Les cours avec Yoann sont un vrai plaisir ! Il crée une atmosphère détendue où je n'ai pas peur de faire des erreurs. Ma confiance en français a vraiment augmenté.",
         rating: 5,
-        lessons: "15 cours"
+        lessons: "115 cours"
     },
     {
         id: 4,
@@ -116,8 +116,8 @@ const testimonialsData = [
     },
     {
         id: 5,
-        name: "Nahéma",
-        country: "🇨🇦 Canada",
+        name: "Nahema",
+        country: "🇦🇺 Australie",
         content: "Grâce à Yoann, j'ai réussi mon examen DELF B2 ! Sa méthode de préparation est efficace et il sait exactement comment vous préparer au succès.",
         rating: 5,
         lessons: "24 cours"
@@ -133,7 +133,7 @@ const testimonialsData = [
     {
         id: 7,
         name: "Luca",
-        country: "🇮🇹 Italie",
+        country: "🇩🇪 Allemagne",
         content: "Je prépare le DELF B1 avec Yoann et ses conseils sont précieux. Il connaît parfaitement les exigences de l'examen.",
         rating: 5,
         lessons: "18 cours"
@@ -148,8 +148,8 @@ const testimonialsData = [
     },
     {
         id: 9,
-        name: "Ahmed",
-        country: "🇲🇦 Maroc",
+        name: "Yago",
+        country: "🇧🇷 Brésil",
         content: "Professeur exceptionnel ! Yoann sait s'adapter à chaque élève et rend l'apprentissage du français agréable.",
         rating: 5,
         lessons: "25 cours"
