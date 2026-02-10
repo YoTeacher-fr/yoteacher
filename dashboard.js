@@ -351,28 +351,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Convertit un identifiant IANA (ex: "UTC", "Europe/Paris") en label UTC±H:MM lisible
+    // Convertit un identifiant IANA (ex: "UTC", "Asia/Colombo") en label UTC±H:MM lisible
     function formatTimezoneLabel(ianaTimezone) {
         try {
-            // Obtenir le décalage en minutes via l'API Intl
-            const formatter = new Intl.DateTimeFormat('en', {
-                timeZone: ianaTimezone,
-                timeZoneName: 'shortOffset'
-            });
-            const parts = formatter.formatToParts(new Date());
-            const offsetPart = parts.find(p => p.type === 'timeZoneName');
+            const now = new Date();
 
-            if (offsetPart) {
-                const raw = offsetPart.value; // ex: "GMT+1", "GMT-5", "GMT"
-                if (raw === 'GMT') return `${ianaTimezone} (UTC+0)`;
-                // Remplacer GMT par UTC pour cohérence
-                const utcLabel = raw.replace('GMT', 'UTC');
-                return `${ianaTimezone} (${utcLabel})`;
-            }
+            // Formatter la même date en UTC et dans la timezone cible, puis calculer la diff
+            const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+            const tzDate  = new Date(now.toLocaleString('en-US', { timeZone: ianaTimezone }));
+
+            // offsetMinutes positif = en avance sur UTC (ex: Colombo = +330)
+            const offsetMinutes = (tzDate - utcDate) / 60000;
+
+            const sign       = offsetMinutes >= 0 ? '+' : '-';
+            const absMinutes = Math.abs(offsetMinutes);
+            const hours      = Math.floor(absMinutes / 60);
+            const minutes    = absMinutes % 60;
+
+            const offsetStr = minutes > 0
+                ? `UTC${sign}${hours}:${String(minutes).padStart(2, '0')}`
+                : `UTC${sign}${hours}`;
+
+            return `${ianaTimezone} (${offsetStr})`;
         } catch (e) {
-            // Fallback si timezone invalide
+            return ianaTimezone;
         }
-        return ianaTimezone;
     }
 
     function updateProfileInfo(user) {
