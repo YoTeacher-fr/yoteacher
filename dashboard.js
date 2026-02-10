@@ -351,6 +351,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Convertit un identifiant IANA (ex: "UTC", "Europe/Paris") en label UTC±H:MM lisible
+    function formatTimezoneLabel(ianaTimezone) {
+        try {
+            // Obtenir le décalage en minutes via l'API Intl
+            const formatter = new Intl.DateTimeFormat('en', {
+                timeZone: ianaTimezone,
+                timeZoneName: 'shortOffset'
+            });
+            const parts = formatter.formatToParts(new Date());
+            const offsetPart = parts.find(p => p.type === 'timeZoneName');
+
+            if (offsetPart) {
+                const raw = offsetPart.value; // ex: "GMT+1", "GMT-5", "GMT"
+                if (raw === 'GMT') return `${ianaTimezone} (UTC+0)`;
+                // Remplacer GMT par UTC pour cohérence
+                const utcLabel = raw.replace('GMT', 'UTC');
+                return `${ianaTimezone} (${utcLabel})`;
+            }
+        } catch (e) {
+            // Fallback si timezone invalide
+        }
+        return ianaTimezone;
+    }
+
     function updateProfileInfo(user) {
         const profileInfo = document.getElementById('profileInfo');
         if (!profileInfo) return;
@@ -363,7 +387,8 @@ document.addEventListener('DOMContentLoaded', () => {
             year: 'numeric'
         });
         
-        const timezone = user.profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const rawTimezone = user.profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const timezone = formatTimezoneLabel(rawTimezone);
         const frenchLevel = user.profile?.french_level || (isFrench ? 'Non spécifié' : 'Not specified');
         
         profileInfo.innerHTML = `
