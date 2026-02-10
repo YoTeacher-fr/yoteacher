@@ -75,7 +75,7 @@ const coursesData = [
             { duration: "Forfait 10 cours", durationKey: "courses.detail_forfait", price: 285, basePriceEUR: 285, discount: "(-5%)", discountKey: "courses.discount" }
         ],
         buttonText: "Choisir ce cours",
-        buttonTextKey: "courses.button_choose",
+        buttonTextKey: "courses.button_reserve",
         featured: false
     }
 ];
