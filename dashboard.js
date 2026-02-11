@@ -390,7 +390,8 @@ document.addEventListener('DOMContentLoaded', () => {
             year: 'numeric'
         });
         
-        const rawTimezone = user.profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        // profile.timezone n'est jamais écrit en BDD → on utilise la timezone réelle du navigateur
+        const rawTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || user.profile?.timezone || 'UTC';
         const timezone = formatTimezoneLabel(rawTimezone);
         const frenchLevel = user.profile?.french_level || (isFrench ? 'Non spécifié' : 'Not specified');
         
