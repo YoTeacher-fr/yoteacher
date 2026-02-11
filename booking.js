@@ -4,7 +4,7 @@
 // ✅ Validation : DÉLÉGUÉE → gérée par triggers
 class BookingManager {
     constructor() {
-        const config = window.YOTEACHER_CONFIG || {};
+        const config = window.YOTEACH_CONFIG || {};
         this.calcomApiKey = config.CALCOM_API_KEY;
         this.calcomUsername = config.CALCOM_USERNAME || 'yoann-bourbia-6ido9g';
         this.apiBaseUrl = 'https://api.cal.com/v2';
@@ -31,11 +31,19 @@ class BookingManager {
         };
         
         console.log('📅 BookingManager initialisé (version DB-driven)');
+        this.translationManager = window.translationManager;
+    }
+
+    getTranslation(key, params = []) {
+        if (this.translationManager) {
+            return this.translationManager.getTranslation(key, params);
+        }
+        return key;
     }
 
     checkCalcomConfig() {
         if (!this.calcomApiKey) {
-            throw new Error('CALCOM_API_KEY non configurée');
+            throw new Error(this.getTranslation('booking.calcom_api_missing'));
         }
         return true;
     }
@@ -74,7 +82,7 @@ class BookingManager {
             if (reset) this.rateLimitInfo.reset = new Date(parseInt(reset) * 1000);
             
             if (this.rateLimitInfo.remaining < 10) {
-                console.warn(`⚠️ Rate limit proche: ${this.rateLimitInfo.remaining}/${this.rateLimitInfo.limit} requêtes restantes`);
+                console.warn(this.getTranslation('booking.rate_limit_warning', [this.rateLimitInfo.remaining, this.rateLimitInfo.limit]));
             }
         }
     }
@@ -87,7 +95,7 @@ class BookingManager {
             const eventTypeId = this.eventTypeMap[eventType];
             
             if (!eventTypeId) {
-                throw new Error(`Type de cours "${eventType}" non configuré dans Cal.com`);
+                throw new Error(this.getTranslation('booking.event_type_not_configured', [eventType]));
             }
 
             console.log(`🔍 Recherche créneaux pour eventTypeId: ${eventTypeId}, date: ${targetDate}, durée: ${duration || 'défaut'} min`);
@@ -122,16 +130,16 @@ class BookingManager {
                 });
                 
                 if (response.status === 429) {
-                    throw new Error('Rate limit atteint. Veuillez patienter.');
+                    throw new Error(this.getTranslation('booking.rate_limit_reached'));
                 }
                 
-                throw new Error(`API Cal.com: ${response.status}`);
+                throw new Error(this.getTranslation('booking.calcom_api_error', [response.status]));
             }
             
             const data = await response.json();
             
             if (!data || !data.data || typeof data.data !== 'object') {
-                console.warn('Aucun créneau disponible');
+                console.warn(this.getTranslation('booking.no_slots_available'));
                 return [];
             }
             
@@ -174,18 +182,18 @@ class BookingManager {
                 }).filter(slot => slot !== null);
             });
             
-            console.log(`✅ ${formattedSlots.length} créneau(x) disponible(s)`);
+            console.log(this.getTranslation('booking.slots_available', [formattedSlots.length]));
             return formattedSlots;
             
         } catch (error) {
             console.error('❌ Erreur Cal.com:', error);
             
             if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
-                console.warn('⚠️ Mode développement : simulation de créneaux');
+                console.warn(this.getTranslation('booking.dev_mode_slots'));
                 return this.generateMockSlots(date, eventType, duration);
             }
             
-            throw new Error(`Impossible de charger les créneaux : ${error.message}`);
+            throw new Error(this.getTranslation('booking.load_slots_error', [error.message]));
         }
     }
 
@@ -194,7 +202,7 @@ class BookingManager {
             const start = new Date(startTime);
             
             if (isNaN(start.getTime())) {
-                console.error('Date invalide:', startTime);
+                console.error(this.getTranslation('booking.invalid_date'), startTime);
                 return null;
             }
             
@@ -207,7 +215,7 @@ class BookingManager {
             const end = new Date(start.getTime() + duration * 60000);
             return end.toISOString();
         } catch (error) {
-            console.error('Erreur calculateEndTime:', error);
+            console.error(this.getTranslation('booking.calculate_end_time_error'), error);
             return null;
         }
     }
@@ -254,7 +262,7 @@ class BookingManager {
             });
         }
         
-        console.log(`⚠️ Mode simulation: ${slots.length} créneaux générés`);
+        console.log(this.getTranslation('booking.mock_slots_generated', [slots.length]));
         return slots;
     }
 
@@ -268,18 +276,18 @@ class BookingManager {
         
         // ✅ CORRECTION: Vérifier si l'utilisateur est connecté
         if (!user || !window.packagesManager) {
-            console.log('❌ Pas d\'utilisateur ou packagesManager non disponible');
+            console.log(this.getTranslation('booking.no_user_or_packages'));
             return false;
         }
         
         // ✅ CORRECTION: Les cours d'essai n'utilisent pas de crédits
         if (bookingData.courseType === 'essai') {
-            console.log('❌ Cours d\'essai - pas de crédits');
+            console.log(this.getTranslation('booking.trial_no_credits'));
             return false;
         }
         
         if (bookingData.packageQuantity && bookingData.packageQuantity > 1) {
-            console.log('❌ Package avec plusieurs cours - pas de crédits');
+            console.log(this.getTranslation('booking.package_no_credits'));
             return false;
         }
         
@@ -290,10 +298,10 @@ class BookingManager {
                 bookingData.courseType, 
                 duration
             );
-            console.log(`🔍 Crédits disponibles pour ${bookingData.courseType} (${duration}min):`, hasCredits);
+            console.log(this.getTranslation('booking.credits_check', [bookingData.courseType, duration, hasCredits]));
             return hasCredits;
         } catch (error) {
-            console.warn('Erreur vérification crédits:', error);
+            console.warn(this.getTranslation('booking.credits_check_error'), error);
             return false;
         }
     }
@@ -308,7 +316,7 @@ class BookingManager {
             
             const user = window.authManager?.getCurrentUser();
             if (!user) {
-                throw new Error('Utilisateur non connecté');
+                throw new Error(this.getTranslation('booking.user_not_logged_in'));
             }
             
             const duration = bookingData.duration || 60;
@@ -321,14 +329,14 @@ class BookingManager {
                     duration
                 );
                 if (!hasCredit) {
-                    throw new Error(`Aucun crédit disponible pour un cours de ${duration} minutes`);
+                    throw new Error(this.getTranslation('booking.no_credit_for_duration', [duration]));
                 }
             }
             
             // ========================================
             // ✅ ÉTAPE 1: CRÉER LE BOOKING EN STATUS 'PENDING'
             // ========================================
-            console.log('📝 Création du booking en status pending...');
+            console.log(this.getTranslation('booking.creating_pending'));
             
             const { data: pendingBooking, error: createError } = await window.supabase
                 .from('bookings')
@@ -347,23 +355,23 @@ class BookingManager {
                 .single();
             
             if (createError) {
-                console.error('❌ Erreur création booking pending:', createError);
-                throw new Error(`Échec création booking: ${createError.message}`);
+                console.error(this.getTranslation('booking.pending_error'), createError);
+                throw new Error(this.getTranslation('booking.creation_failed', [createError.message]));
             }
             
-            console.log('✅ Booking pending créé avec ID:', pendingBooking.id);
+            console.log(this.getTranslation('booking.pending_created', [pendingBooking.id]));
             
             // ========================================
             // ✅ ÉTAPE 2: CONFIRMER LE BOOKING AVEC CRÉDIT VIA RPC
             // ========================================
-            console.log('💰 Utilisation crédit via RPC avec booking ID:', pendingBooking.id);
+            console.log(this.getTranslation('booking.using_credit_via_rpc', [pendingBooking.id]));
             
             const { data: rpcResult, error: rpcError } = await window.supabase.rpc('create_booking_with_credit', {
                 p_booking_id: pendingBooking.id
             });
             
             if (rpcError) {
-                console.error('❌ Erreur RPC create_booking_with_credit:', rpcError);
+                console.error(this.getTranslation('booking.rpc_credit_error'), rpcError);
                 
                 // Nettoyer le booking pending en cas d'erreur
                 await window.supabase
@@ -371,7 +379,7 @@ class BookingManager {
                     .delete()
                     .eq('id', pendingBooking.id);
                 
-                throw new Error(`Erreur lors de l'utilisation du crédit: ${rpcError.message}`);
+                throw new Error(this.getTranslation('booking.credit_usage_error', [rpcError.message]));
             }
             
             if (!rpcResult || !rpcResult.success) {
@@ -381,10 +389,10 @@ class BookingManager {
                     .delete()
                     .eq('id', pendingBooking.id);
                     
-                throw new Error(rpcResult?.error || 'Échec utilisation crédit');
+                throw new Error(rpcResult?.error || this.getTranslation('booking.credit_failed'));
             }
             
-            console.log('✅ Crédit utilisé avec succès via RPC');
+            console.log(this.getTranslation('booking.credit_used_success'));
             console.log('   Package ID:', rpcResult.package_id);
             console.log('   Booking Number:', rpcResult.booking_number);
             
@@ -422,16 +430,16 @@ class BookingManager {
                 bookingNumber: rpcResult.booking_number
             };
             
-            console.log('📅 Création événement Cal.com via createBookingAfterPayment()...');
+            console.log(this.getTranslation('booking.creating_calcom_event'));
             
             // ✅ UTILISER createBookingAfterPayment() qui existe déjà
             const bookingResult = await this.createBookingAfterPayment(bookingForCalcom);
             
             if (!bookingResult || !bookingResult.success) {
-                console.warn('⚠️ Échec création Cal.com (booking DB déjà confirmé)');
+                console.warn(this.getTranslation('booking.calcom_failed_db_confirmed'));
                 // Ne pas throw car le booking est confirmé dans la DB
             } else {
-                console.log('✅ Événement Cal.com créé avec succès');
+                console.log(this.getTranslation('booking.calcom_created_success'));
             }
             
             // ========================================
@@ -446,17 +454,17 @@ class BookingManager {
                 supabaseBookingId: pendingBooking.id
             };
             
-            console.log('✅ Réservation avec crédit créée');
+            console.log(this.getTranslation('booking.credit_booking_created'));
             
             return {
                 success: true,
                 bookingData: finalBookingData,
                 redirectTo: `payment-success.html?booking=${encodeURIComponent(JSON.stringify(finalBookingData))}`,
-                message: 'Réservation avec crédit confirmée'
+                message: this.getTranslation('booking.credit_reservation_confirmed')
             };
             
         } catch (error) {
-            console.error('❌ Erreur réservation avec crédit:', error);
+            console.error(this.getTranslation('booking.credit_booking_error'), error);
             return { 
                 success: false, 
                 error: error.message 
@@ -472,12 +480,12 @@ class BookingManager {
             const user = window.authManager?.getCurrentUser();
             
             if (!bookingData) {
-                throw new Error('Données de réservation manquantes');
+                throw new Error(this.getTranslation('booking.missing_data'));
             }
             
             console.group('🎯 DÉBUT createBooking (DB-driven)');
             console.log('Données reçues:', bookingData);
-            console.log('Utilisateur:', user?.email || 'Non connecté');
+            console.log('Utilisateur:', user?.email || this.getTranslation('booking.not_logged_in'));
             console.groupEnd();
             
             // ✅ CORRECTION: Ajuster la durée pour l'essai
@@ -491,32 +499,32 @@ class BookingManager {
             if (user && bookingData.courseType !== 'essai') {
                 canUseCredit = await this.canUseCredit(bookingData);
             }
-            console.log('✅ Peut utiliser crédit?', canUseCredit);
+            console.log(this.getTranslation('booking.can_use_credit'), canUseCredit);
             
             if (canUseCredit) {
-                console.log('🚀 Flux crédit...');
+                console.log(this.getTranslation('booking.credit_flow'));
                 const creditResult = await this.createBookingWithCredit(bookingData);
                 
                 if (creditResult.success) {
                     return creditResult;
                 } else {
-                    console.warn('⚠️ Échec flux crédit, passage au paiement');
+                    console.warn(this.getTranslation('booking.credit_fallback'));
                 }
             }
             
             // ============================================================================
             // FLUX PAIEMENT - RÉUTILISER L'INTENTION DÉJÀ CRÉÉE
             // ============================================================================
-            console.log('💰 Flux paiement (réutilisation intention existante)');
+            console.log(this.getTranslation('booking.payment_flow'));
             
             if (!window.supabase) {
-                throw new Error('Supabase non disponible');
+                throw new Error(this.getTranslation('error.supabase_unavailable'));
             }
             
             const requiredFields = ['startTime', 'courseType'];
             for (const field of requiredFields) {
                 if (!bookingData[field]) {
-                    throw new Error(`Champ requis manquant: ${field}`);
+                    throw new Error(this.getTranslation('booking.missing_field', [field]));
                 }
             }
             
@@ -526,7 +534,7 @@ class BookingManager {
             let intentData = null;
             
             if (user) {
-                console.log('🔍 Recherche intention existante pour utilisateur connecté...');
+                console.log(this.getTranslation('booking.searching_existing_intent'));
                 
                 const { data: existingIntents, error: searchError } = await supabase
                     .from('bookings')
@@ -541,13 +549,13 @@ class BookingManager {
                     .limit(1);
                 
                 if (searchError) {
-                    console.error('❌ Erreur recherche intention:', searchError);
+                    console.error(this.getTranslation('booking.intent_search_error'), searchError);
                 }
                 
                 if (existingIntents && existingIntents.length > 0) {
                     // ✅ RÉUTILISER L'INTENTION EXISTANTE
                     const existingIntent = existingIntents[0];
-                    console.log('✅ Intention existante trouvée:', existingIntent.id);
+                    console.log(this.getTranslation('booking.existing_intent_found', [existingIntent.id]));
                     
                     intentData = {
                         success: true,
@@ -563,7 +571,7 @@ class BookingManager {
             
             // Si aucune intention trouvée (ou utilisateur non connecté), créer une nouvelle
             if (!intentData) {
-                console.log('📞 Création nouvelle intention...');
+                console.log(this.getTranslation('booking.creating_new_intent'));
                 
                 // ✅ CORRECTION: Préparer les paramètres RPC selon connexion
                 const rpcParams = {
@@ -580,24 +588,24 @@ class BookingManager {
                     rpcParams.p_user_id = user.id;
                 } else if (bookingData.courseType !== 'essai') {
                     // ✅ CORRECTION: Pour les cours payants sans compte, lever une erreur
-                    throw new Error('Vous devez être connecté pour réserver ce type de cours');
+                    throw new Error(this.getTranslation('booking.login_required_paid'));
                 }
                 
                 const { data: newIntent, error: intentError } = await supabase.rpc('create_booking_intent', rpcParams);
                 
                 if (intentError) {
-                    console.error('❌ Erreur create_booking_intent:', intentError);
-                    throw new Error('Impossible de calculer le prix: ' + intentError.message);
+                    console.error(this.getTranslation('booking.intent_error'), intentError);
+                    throw new Error(this.getTranslation('booking.price_calculation_error', [intentError.message]));
                 }
                 
                 if (!newIntent || !newIntent.success) {
-                    throw new Error('Échec création intention: ' + (newIntent?.error || 'Erreur inconnue'));
+                    throw new Error(this.getTranslation('booking.intent_failed', [newIntent?.error || this.getTranslation('error.unknown')]));
                 }
                 
                 intentData = newIntent;
             }
             
-            console.log('✅ Intention prête:', {
+            console.log(this.getTranslation('booking.intent_ready'), {
                 intent_id: intentData.intent_id,
                 price: intentData.price,
                 currency: intentData.currency,
@@ -644,14 +652,14 @@ class BookingManager {
                 success: true,
                 bookingData: completeBookingData,
                 redirectTo: `payment.html?booking=${encodeURIComponent(JSON.stringify(completeBookingData))}`,
-                message: 'Redirection vers le paiement...'
+                message: this.getTranslation('booking.redirect_payment')
             };
             
         } catch (error) {
-            console.error('❌ Erreur préparation réservation:', error);
+            console.error(this.getTranslation('booking.preparation_error'), error);
             return { 
                 success: false, 
-                error: `Échec de la préparation : ${error.message}` 
+                error: this.getTranslation('booking.preparation_failed', [error.message])
             };
         }
     }
@@ -667,7 +675,7 @@ class BookingManager {
             const eventTypeId = this.eventTypeMap[bookingData.eventType];
             
             if (!eventTypeId) {
-                throw new Error(`Type de cours "${bookingData.eventType}" non configuré`);
+                throw new Error(this.getTranslation('booking.event_type_not_configured', [bookingData.eventType]));
             }
 
             const bookingPayload = {
@@ -707,7 +715,7 @@ class BookingManager {
                 bookingPayload.lengthInMinutes = duration;
             }
 
-            console.log('📤 Création réservation Cal.com:', bookingPayload);
+            console.log(this.getTranslation('booking.creating_calcom_booking'), bookingPayload);
 
             const response = await fetch(
                 `${this.apiBaseUrl}/bookings`,
@@ -722,13 +730,13 @@ class BookingManager {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Erreur Cal.com:', errorText);
-                throw new Error(`API Cal.com: ${response.status}`);
+                console.error(this.getTranslation('booking.calcom_error_detail'), errorText);
+                throw new Error(this.getTranslation('booking.calcom_api_error', [response.status]));
             }
 
             const result = await response.json();
             const data = result.data || result;
-            console.log('✅ Réservation Cal.com créée:', data);
+            console.log(this.getTranslation('booking.calcom_booking_created'), data);
             
             // Sauvegarder dans Supabase
             const bookingId = await this.saveBookingToSupabase(data, user, bookingData, 'confirmed');
@@ -737,17 +745,17 @@ class BookingManager {
                 success: true, 
                 data,
                 supabaseBookingId: bookingId,
-                message: 'Réservation confirmée'
+                message: this.getTranslation('booking.reservation_confirmed')
             };
             
         } catch (error) {
-            console.error('❌ Erreur création après paiement:', error);
+            console.error(this.getTranslation('booking.after_payment_error'), error);
             
             if (window.location.hostname === 'localhost') {
                 return this.mockBookingAfterPayment(bookingData);
             }
             
-            throw new Error(`Échec création : ${error.message}`);
+            throw new Error(this.getTranslation('booking.creation_failed_generic', [error.message]));
         }
     }
 
@@ -759,7 +767,7 @@ class BookingManager {
                     uid: `mock_${Date.now()}`,
                     start: bookingData.startTime,
                     end: bookingData.endTime,
-                    title: `Cours ${bookingData.courseType}`,
+                    title: this.getTranslation('booking.mock_title', [bookingData.courseType]),
                     attendees: [{
                         email: bookingData.email,
                         name: bookingData.name
@@ -775,12 +783,12 @@ class BookingManager {
     async saveBookingToSupabase(calcomBooking, user, bookingData, status = 'confirmed') {
         try {
             if (!window.supabase) {
-                console.warn('⚠️ Supabase non disponible, skip sauvegarde');
+                console.warn(this.getTranslation('booking.supabase_unavailable_warn'));
                 return null;
             }
 
             if (bookingData.intentId) {
-                console.log('📝 Mise à jour booking existant (intent_id:', bookingData.intentId + ')');
+                console.log(this.getTranslation('booking.updating_existing_booking', [bookingData.intentId]));
                 
                 const { data, error } = await supabase
                     .from('bookings')
@@ -797,16 +805,16 @@ class BookingManager {
                     .select();
 
                 if (error) {
-                    console.error('❌ Erreur UPDATE bookings:', error);
-                    throw new Error(`Impossible de confirmer la réservation: ${error.message}`);
+                    console.error(this.getTranslation('booking.update_error'), error);
+                    throw new Error(this.getTranslation('booking.confirmation_error', [error.message]));
                 }
 
                 if (!data || data.length === 0) {
-                    console.error('❌ Aucun booking trouvé avec intent_id:', bookingData.intentId);
-                    throw new Error('Réservation introuvable');
+                    console.error(this.getTranslation('booking.booking_not_found', [bookingData.intentId]));
+                    throw new Error(this.getTranslation('booking.booking_not_found_generic'));
                 }
 
-                console.log('✅ Booking confirmé (UPDATE):', data[0].id);
+                console.log(this.getTranslation('booking.booking_confirmed', [data[0].id]));
                 console.log('   Booking Number:', data[0].booking_number);
                 console.log('   Status:', data[0].status);
                 console.log('   Meeting Link:', data[0].meeting_link);
@@ -814,7 +822,7 @@ class BookingManager {
                 return data[0].id;
             }
             
-            console.log('📝 Création nouveau booking (mode legacy - pas d\'intent)');
+            console.log(this.getTranslation('booking.creating_legacy_booking'));
             
             const bookingNumber = `BK-${Date.now().toString().slice(-8)}`;
             let platformValue = this.getPlatformName(bookingData.location);
@@ -849,29 +857,29 @@ class BookingManager {
                 .select();
 
             if (error) {
-                console.error('❌ Erreur INSERT bookings:', error);
+                console.error(this.getTranslation('booking.insert_error'), error);
                 
                 if (error.message?.includes('duplicate key')) {
-                    throw new Error('Cette réservation existe déjà');
+                    throw new Error(this.getTranslation('booking.duplicate_booking'));
                 } else if (error.message?.includes('foreign key')) {
-                    throw new Error('Erreur de référence (utilisateur ou package invalide)');
+                    throw new Error(this.getTranslation('booking.foreign_key_error'));
                 } else {
-                    throw new Error(`Erreur lors de la création: ${error.message}`);
+                    throw new Error(this.getTranslation('booking.creation_error', [error.message]));
                 }
             }
 
             if (!data || data.length === 0) {
-                throw new Error('Aucune donnée retournée après insertion');
+                throw new Error(this.getTranslation('booking.no_data_returned'));
             }
 
-            console.log('✅ Booking créé (INSERT legacy):', data[0].id);
+            console.log(this.getTranslation('booking.booking_created', [data[0].id]));
             console.log('   Booking Number:', data[0].booking_number);
             console.log('   Price Paid:', data[0].price_paid, data[0].currency);
             
             return data[0].id;
             
         } catch (error) {
-            console.error('❌ Exception saveBookingToSupabase:', error);
+            console.error(this.getTranslation('booking.save_booking_exception'), error);
             
             console.group('🔍 Détails erreur');
             console.log('Error message:', error.message);
@@ -918,7 +926,7 @@ class BookingManager {
                 year: 'numeric'
             });
         } catch (error) {
-            return dateTime || 'Date non disponible';
+            return dateTime || this.getTranslation('booking.date_unavailable');
         }
     }
 

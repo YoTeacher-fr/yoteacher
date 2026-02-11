@@ -925,6 +925,52 @@ const appTranslationManager = {
     }
 };
 
+// ===== EXTENSION AUTHMANAGER : getVipPrice =====
+function patchAuthManagerWithVipPrice() {
+    if (!window.authManager || window.authManager._vipPricePatched) return;
+
+    window.authManager.getVipPrice = async function(courseType, durationMinutes) {
+        if (!this.isUserVip() || !window.supabase || !this.user || !this.user.id) {
+            return null;
+        }
+        try {
+            const { data, error } = await window.supabase
+                .from("vip_pricing")
+                .select("price, currency")
+                .eq("user_id", this.user.id)
+                .eq("course_type", courseType)
+                .eq("duration_minutes", durationMinutes)
+                .maybeSingle();
+
+            if (error) {
+                console.warn("getVipPrice erreur " + courseType + " " + durationMinutes + "min:", error.message);
+                return null;
+            }
+            return data || null;
+        } catch (e) {
+            console.warn("Exception getVipPrice:", e);
+            return null;
+        }
+    };
+
+    window.authManager._vipPricePatched = true;
+    console.log("authManager.getVipPrice injecte");
+}
+
+// ===== EXTENSION CURRENCYMANAGER : convertVIPPrice =====
+function patchCurrencyManagerWithVipConvert() {
+    if (!window.currencyManager || window.currencyManager._vipConvertPatched) return;
+
+    window.currencyManager.convertVIPPrice = function(vipPriceData) {
+        if (!vipPriceData || vipPriceData.price == null) return null;
+        const display = this.formatPrice(vipPriceData.price);
+        return { display };
+    };
+
+    window.currencyManager._vipConvertPatched = true;
+    console.log("currencyManager.convertVIPPrice injecte");
+}
+
 // ===== GESTION DES PRIX VIP =====
 const vipPriceManager = {
     init: () => {
@@ -950,6 +996,8 @@ const vipPriceManager = {
             setTimeout(() => {
                 if (window.authManager && window.authManager.isUserVip()) {
                     console.log('👑 Utilisateur VIP, chargement des prix');
+                    patchAuthManagerWithVipPrice();
+                    patchCurrencyManagerWithVipConvert();
                     vipPriceManager.updateVIPPrices();
                 }
             }, 1500);
@@ -1276,6 +1324,9 @@ const app = {
                 appTranslationManager.init();
                 
                 console.log('8. Initialisation des prix VIP...');
+                // Injecter getVipPrice et convertVIPPrice avant d'initialiser le manager VIP
+                patchAuthManagerWithVipPrice();
+                patchCurrencyManagerWithVipConvert();
                 vipPriceManager.init();
                 
                 console.log('✅ Application prête !');

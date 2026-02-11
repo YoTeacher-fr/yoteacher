@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="login.css">
-<link rel="stylesheet" href="auth-ui.css">
+    <link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
     <!-- Header simplifié sans navlinks -->
@@ -116,7 +116,31 @@
             const errorText = document.getElementById('errorText');
             const successText = document.getElementById('successText');
             const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+            
+            function getTranslation(key, params = []) {
+                if (window.translationManager) {
+                    return window.translationManager.getTranslation(key, params);
+                }
+                return key;
+            }
 
+            function showError(message) {
+                errorText.textContent = message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            }
+
+            function showSuccess(message) {
+                successText.textContent = message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+            }
+
+            function hideMessages() {
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }
+            
             // Attendre que l'AuthManager soit initialisé avant de vérifier
             setTimeout(() => {
                 if (window.authManager && window.authManager.isAuthenticated && 
@@ -138,7 +162,7 @@
 
                 // Validation basique
                 if (!email || !password) {
-                    showError('Veuillez remplir tous les champs');
+                    showError(getTranslation('login.error.required_fields'));
                     return;
                 }
 
@@ -148,14 +172,14 @@
                 // Afficher chargement
                 const button = form.querySelector('button');
                 const originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (window.translationManager?.getTranslation('login.loading') || 'Connexion en cours...');
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + getTranslation('login.loading');
                 button.disabled = true;
 
                 try {
                     const result = await window.authManager.signIn(email, password);
                     
                     if (result.success) {
-                        showSuccess(window.translationManager?.getTranslation('login.success') || 'Connexion réussie ! Redirection...');
+                        showSuccess(getTranslation('login.success'));
                         
                         // Utiliser le redirectUrl de la réponse (forcément dashboard.html)
                         const redirectUrl = result.redirectUrl || 'dashboard.html';
@@ -164,12 +188,12 @@
                             window.location.href = redirectUrl;
                         }, 1500);
                     } else {
-                        showError(result.error || 'Erreur de connexion');
+                        showError(result.error || getTranslation('login.error.generic'));
                         button.innerHTML = originalText;
                         button.disabled = false;
                     }
                 } catch (error) {
-                    showError('Une erreur est survenue : ' + error.message);
+                    showError(getTranslation('login.error.generic', [error.message]));
                     button.innerHTML = originalText;
                     button.disabled = false;
                 }
@@ -182,7 +206,7 @@
                 const email = document.getElementById('email').value;
                 
                 if (!email) {
-                    showError('Veuillez entrer votre adresse email pour réinitialiser votre mot de passe');
+                    showError(getTranslation('login.reset_email_required'));
                     return;
                 }
 
@@ -191,35 +215,16 @@
                 try {
                     const { error } = await supabase.auth.resetPasswordForEmail(email, {
                         redirectTo: 'https://yoteach.fr/reset-password.html'
-
                     });
 
                     if (error) throw error;
                     
-                    showSuccess('Un email de réinitialisation a été envoyé à ' + email);
+                    showSuccess(getTranslation('login.success.reset_email', [email]));
                 } catch (error) {
-                    showError('Erreur : ' + error.message);
+                    showError(getTranslation('login.error.reset_email', [error.message]));
                 }
             });
 
-            // Fonctions d'affichage des messages
-            function showError(message) {
-                errorText.textContent = message;
-                errorDiv.style.display = 'block';
-                successDiv.style.display = 'none';
-            }
-
-            function showSuccess(message) {
-                successText.textContent = message;
-                successDiv.style.display = 'block';
-                errorDiv.style.display = 'none';
-            }
-
-            function hideMessages() {
-                errorDiv.style.display = 'none';
-                successDiv.style.display = 'none';
-            }
-            
             // Ajouter le paramètre redirect au lien d'inscription
             const signupLink = document.querySelector('.auth-footer a[href="signup.html"]');
             if (signupLink) {

@@ -1,4 +1,4 @@
-// translation.js - Version complète avec toutes les pages
+// translation.js - Version complète avec toutes les pages et messages
 class TranslationManager {
     constructor() {
         this.currentLanguage = 'fr';
@@ -192,6 +192,20 @@ class TranslationManager {
                 'booking.or': 'ou',
                 'booking.create_account': 'créez un compte',
                 
+                // Booking page - Messages d'erreur et succès
+                'booking.error.select_date_time': 'Veuillez sélectionner une date et une heure',
+                'booking.error.required_fields': 'Veuillez remplir tous les champs obligatoires',
+                'booking.error.login_required_course': 'Veuillez vous connecter pour réserver ce type de cours',
+                'booking.error.generic': 'Erreur : {0}',
+                'booking.success.redirecting': 'Redirection...',
+                'booking.error.no_slot_selected': 'Aucun créneau sélectionné',
+                'booking.error.price_calculation': 'Erreur calcul',
+                'booking.error.booking_preparation': 'Prix à calculer',
+                'booking.success.booking_prepared': 'Réservation préparée avec succès',
+                'booking.error.loading_slots': 'Erreur lors du chargement des créneaux: {0}',
+                'booking.status.loading': 'Chargement...',
+                'booking.status.select_date_time': 'Sélectionnez date et heure',
+                
                 // Login page
                 'login.title': 'Connexion - YoTeacher',
                 'login.subtitle': 'Connectez-vous à votre espace étudiant',
@@ -205,6 +219,14 @@ class TranslationManager {
                 'login.sign_up_free': 'S\'inscrire gratuitement',
                 'login.loading': 'Connexion en cours...',
                 'login.success': 'Connexion réussie ! Redirection...',
+                
+                // Login page - Messages d'erreur et succès
+                'login.error.required_fields': 'Veuillez remplir tous les champs',
+                'login.error.password_length': 'Le mot de passe doit contenir au moins 6 caractères',
+                'login.error.password_mismatch': 'Les mots de passe ne correspondent pas',
+                'login.error.generic': 'Une erreur est survenue : {0}',
+                'login.success.reset_email': 'Un email de réinitialisation a été envoyé à {0}',
+                'login.error.reset_email': 'Erreur lors de l\'envoi de l\'email de réinitialisation : {0}',
                 
                 // Signup page
                 'signup.title': 'Inscription - YoTeacher',
@@ -221,10 +243,16 @@ class TranslationManager {
                 'signup.loading': 'Création du compte...',
                 'signup.success': 'Compte créé avec succès !',
                 
-                // Dashboard page - TRADUCTIONS AJOUTÉES
-'dashboard.greeting.morning': 'Bonjour',
-'dashboard.greeting.afternoon': 'Bon après-midi',
-'dashboard.greeting.evening': 'Bonsoir',
+                // Signup page - Messages d'erreur et succès
+                'signup.error.required_fields': 'Veuillez remplir tous les champs',
+                'signup.error.password_length': 'Le mot de passe doit contenir au moins 6 caractères',
+                'signup.error.password_mismatch': 'Les mots de passe ne correspondent pas',
+                'signup.error.generic': 'Une erreur est survenue : {0}',
+                
+                // Dashboard page
+                'dashboard.greeting.morning': 'Bonjour',
+                'dashboard.greeting.afternoon': 'Bon après-midi',
+                'dashboard.greeting.evening': 'Bonsoir',
                 'dashboard.title': 'Mon Dashboard - YoTeach',
                 'dashboard.logout_desktop': 'Déconnexion',
                 'dashboard.logout_mobile': 'Déconnexion',
@@ -298,7 +326,15 @@ class TranslationManager {
                 'dashboard.logout': 'Déconnexion',
                 'dashboard.my_dashboard': 'Mon tableau de bord',
                 
-                // Profile page - TRADUCTIONS AJOUTÉES
+                // Dashboard - Messages d'erreur et succès
+                'dashboard.error.loading_data': 'Erreur lors du chargement de vos données : {0}',
+                'dashboard.success.cancellation': 'Cours annulé avec succès',
+                'dashboard.error.cancellation': 'Erreur lors de l\'annulation du cours : {0}',
+                'dashboard.confirm.cancellation': 'Êtes-vous sûr de vouloir annuler ce cours ?',
+                'dashboard.info.no_credits': 'Aucun crédit disponible pour le moment',
+                'dashboard.info.credit_expiring': 'Votre crédit expire bientôt !',
+                
+                // Profile page
                 'profile.back_to_dashboard': 'Retour au dashboard',
                 'profile.personal_info_title': 'Informations personnelles',
                 'profile.personal_info_subtitle': 'Mettez à jour vos informations de contact',
@@ -507,7 +543,7 @@ class TranslationManager {
                 'legal.section2.article4.content': 'La commande ne sera considérée comme définitive qu\'après réception du paiement complet. Une confirmation de commande sera envoyée par email à l\'adresse fournie par l\'acheteur.',
                 'legal.section2.article5.title': 'Article 5 - Prestation de service',
                 'legal.section2.article5.content1': 'Les cours sont dispensés en visioconférence via Zoom, Google Meet ou Microsoft Teams, selon le choix de l\'élève. L\'élève recevra le lien de connexion par email avant chaque séance.',
-                'legal.section2.article5.content2': 'YoTeach s\'engage à respectar les horaires convenus et à fournir un service de qualité correspondant à la description des cours sur le site.',
+                'legal.section2.article5.content2': 'YoTeach s\'engage à respecter les horaires convenus et à fournir un service de qualité correspondant à la description des cours sur le site.',
                 'legal.section2.article6.title': 'Article 6 - Droit de rétractation',
                 'legal.section2.article6.content': 'Conformément à l\'article L.221-28 du Code de la consommation, le droit de rétractation ne s\'applique pas aux contrats de prestation de services pleinement exécutés avant la fin du délai de rétractation. Les cours réservés et payés ne peuvent donc pas être remboursés, sauf dans les conditions prévues à l\'article 7.',
                 'legal.section2.article7.title': 'Article 7 - Annulation et report',
@@ -604,7 +640,445 @@ class TranslationManager {
                 'legal.section4.refunds.intro': 'Les remboursements sont effectués selon les modalités suivantes :',
                 'legal.section4.refunds.method1': 'Via le même moyen de paiement que l\'achat initial',
                 'legal.section4.refunds.method2': 'Sous 14 jours ouvrables maximum',
-                'legal.section4.refunds.method3': 'Les frais de transaction peuvent être déduits'
+                'legal.section4.refunds.method3': 'Les frais de transaction peuvent être déduits',
+
+                // ===== MESSAGES GÉNÉRAUX =====
+                // Messages d'erreur généraux
+                'error.generic': 'Une erreur est survenue',
+                'error.network': 'Erreur de réseau. Veuillez vérifier votre connexion internet.',
+                'error.server': 'Erreur serveur. Veuillez réessayer plus tard.',
+                'error.unauthorized': 'Accès non autorisé. Veuillez vous connecter.',
+                'error.forbidden': 'Accès interdit. Vous n\'avez pas les permissions nécessaires.',
+                'error.not_found': 'Ressource non trouvée.',
+                'error.validation': 'Erreur de validation. Veuillez vérifier les informations saisies.',
+                'error.timeout': 'Délai d\'attente dépassé. Veuillez réessayer.',
+                'error.unknown': 'Erreur inconnue. Veuillez contacter le support.',
+                
+                // Messages de succès généraux
+                'success.generic': 'Opération réussie',
+                'success.saved': 'Enregistrement réussi',
+                'success.updated': 'Mise à jour réussie',
+                'success.deleted': 'Suppression réussie',
+                'success.created': 'Création réussie',
+                'success.sent': 'Envoi réussi',
+                'success.processed': 'Traitement réussi',
+                
+                // Messages de chargement
+                'loading.generic': 'Chargement...',
+                'loading.please_wait': 'Veuillez patienter...',
+                'loading.processing': 'Traitement en cours...',
+                'loading.saving': 'Sauvegarde en cours...',
+                'loading.updating': 'Mise à jour en cours...',
+                'loading.deleting': 'Suppression en cours...',
+                
+                // Messages d'information
+                'info.no_data': 'Aucune donnée disponible',
+                'info.select_option': 'Sélectionnez une option',
+                'info.required_field': 'Champ obligatoire',
+                'info.optional_field': 'Champ optionnel',
+                'info.coming_soon': 'Bientôt disponible',
+                'info.maintenance': 'Maintenance en cours',
+                
+                // Messages de confirmation
+                'confirm.action': 'Êtes-vous sûr de vouloir continuer ?',
+                'confirm.delete': 'Êtes-vous sûr de vouloir supprimer cet élément ?',
+                'confirm.cancel': 'Êtes-vous sûr de vouloir annuler ?',
+                'confirm.logout': 'Êtes-vous sûr de vouloir vous déconnecter ?',
+                'confirm.unsaved_changes': 'Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter ?',
+                
+                // Boutons et actions
+                'button.ok': 'OK',
+                'button.cancel': 'Annuler',
+                'button.confirm': 'Confirmer',
+                'button.save': 'Enregistrer',
+                'button.delete': 'Supprimer',
+                'button.edit': 'Modifier',
+                'button.view': 'Voir',
+                'button.back': 'Retour',
+                'button.next': 'Suivant',
+                'button.previous': 'Précédent',
+                'button.close': 'Fermer',
+                'button.submit': 'Envoyer',
+                'button.reset': 'Réinitialiser',
+                'button.search': 'Rechercher',
+                'button.filter': 'Filtrer',
+                'button.sort': 'Trier',
+                'button.refresh': 'Actualiser',
+                'button.download': 'Télécharger',
+                'button.upload': 'Téléverser',
+                'button.print': 'Imprimer',
+                'button.help': 'Aide',
+                'button.more_info': 'Plus d\'informations',
+                
+                // Messages système
+                'system.offline': 'Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées.',
+                'system.online': 'Vous êtes de nouveau en ligne.',
+                'system.error_report': 'Signaler une erreur',
+                'system.feedback': 'Donner votre avis',
+                'system.support': 'Support technique',
+                'system.contact': 'Contact',
+                'system.settings': 'Paramètres',
+                'system.profile': 'Profil',
+                'system.logout': 'Déconnexion',
+                'system.login': 'Connexion',
+                'system.register': 'Inscription',
+                'system.forgot_password': 'Mot de passe oublié',
+                'system.reset_password': 'Réinitialiser le mot de passe',
+                'system.change_password': 'Changer le mot de passe',
+                'system.language': 'Langue',
+                'system.currency': 'Devise',
+                'system.timezone': 'Fuseau horaire',
+                'system.date_format': 'Format de date',
+                'system.time_format': 'Format d\'heure',
+                'system.notifications': 'Notifications',
+                'system.privacy': 'Confidentialité',
+                'system.terms': 'Conditions d\'utilisation',
+                'system.cookies': 'Cookies',
+                'system.about': 'À propos',
+                'system.version': 'Version',
+                'system.copyright': 'Droits d\'auteur',
+                'system.licence': 'Licence',
+                'system.developer': 'Développeur',
+                'system.powered_by': 'Propulsé par',
+                
+                // Messages de validation
+                'validation.required': 'Ce champ est obligatoire',
+                'validation.email': 'Veuillez saisir une adresse email valide',
+                'validation.password_length': 'Le mot de passe doit contenir au moins {0} caractères',
+                'validation.password_match': 'Les mots de passe ne correspondent pas',
+                'validation.number': 'Veuillez saisir un nombre valide',
+                'validation.min': 'La valeur doit être au moins {0}',
+                'validation.max': 'La valeur ne doit pas dépasser {0}',
+                'validation.min_length': 'Le texte doit contenir au moins {0} caractères',
+                'validation.max_length': 'Le texte ne doit pas dépasser {0} caractères',
+                'validation.pattern': 'Le format est incorrect',
+                'validation.url': 'Veuillez saisir une URL valide',
+                'validation.date': 'Veuillez saisir une date valide',
+                'validation.time': 'Veuillez saisir une heure valide',
+                'validation.phone': 'Veuillez saisir un numéro de téléphone valide',
+                'validation.zip': 'Veuillez saisir un code postal valide',
+                'validation.country': 'Veuillez sélectionner un pays',
+                'validation.language': 'Veuillez sélectionner une langue',
+                'validation.currency': 'Veuillez sélectionner une devise',
+                
+                // Messages de statut
+                'status.pending': 'En attente',
+                'status.processing': 'En traitement',
+                'status.completed': 'Terminé',
+                'status.failed': 'Échoué',
+                'status.cancelled': 'Annulé',
+                'status.refunded': 'Remboursé',
+                'status.paid': 'Payé',
+                'status.unpaid': 'Non payé',
+                'status.active': 'Actif',
+                'status.inactive': 'Inactif',
+                'status.enabled': 'Activé',
+                'status.disabled': 'Désactivé',
+                'status.visible': 'Visible',
+                'status.hidden': 'Masqué',
+                'status.published': 'Publié',
+                'status.draft': 'Brouillon',
+                'status.archived': 'Archivé',
+                'status.deleted': 'Supprimé',
+                
+                // Messages de formatage
+                'format.date': 'dd/MM/yyyy',
+                'format.time': 'HH:mm',
+                'format.datetime': 'dd/MM/yyyy HH:mm',
+                'format.currency': '{0} {1}',
+                'format.percentage': '{0}%',
+                'format.decimal': '{0}',
+                'format.integer': '{0}',
+                'format.phone': '{0}',
+                'format.address': '{0}',
+                'format.name': '{0} {1}',
+                'format.email': '{0}',
+                'format.url': '{0}',
+                
+                // Messages de pagination
+                'pagination.page': 'Page {0}',
+                'pagination.of': 'sur {0}',
+                'pagination.items': '{0} éléments',
+                'pagination.per_page': 'par page',
+                'pagination.first': 'Première',
+                'pagination.last': 'Dernière',
+                'pagination.previous': 'Précédent',
+                'pagination.next': 'Suivant',
+                'pagination.showing': 'Affichage de {0} à {1} sur {2} éléments',
+                
+                // Messages de recherche
+                'search.placeholder': 'Rechercher...',
+                'search.no_results': 'Aucun résultat trouvé',
+                'search.results': '{0} résultats trouvés',
+                'search.advanced': 'Recherche avancée',
+                'search.clear': 'Effacer la recherche',
+                'search.filter': 'Filtrer les résultats',
+                'search.sort': 'Trier par',
+                'search.relevance': 'Pertinence',
+                'search.date': 'Date',
+                'search.name': 'Nom',
+                'search.price': 'Prix',
+                'search.rating': 'Note',
+                'search.popularity': 'Popularité',
+                
+                // Messages de notification
+                'notification.new': 'Nouveau',
+                'notification.unread': 'Non lu',
+                'notification.read': 'Lu',
+                'notification.all': 'Toutes les notifications',
+                'notification.mark_read': 'Marquer comme lu',
+                'notification.mark_unread': 'Marquer comme non lu',
+                'notification.delete': 'Supprimer la notification',
+                'notification.delete_all': 'Supprimer toutes les notifications',
+                'notification.empty': 'Aucune notification',
+                'notification.error': 'Erreur de notification',
+                'notification.success': 'Notification de succès',
+                'notification.warning': 'Notification d\'avertissement',
+                'notification.info': 'Notification d\'information',
+                
+                // Messages d'alerte
+                'alert.success': 'Succès',
+                'alert.error': 'Erreur',
+                'alert.warning': 'Avertissement',
+                'alert.info': 'Information',
+                'alert.confirm': 'Confirmation',
+                'alert.prompt': 'Saisie',
+                'alert.loading': 'Chargement',
+                
+                // Messages de calendrier
+                'calendar.today': 'Aujourd\'hui',
+                'calendar.yesterday': 'Hier',
+                'calendar.tomorrow': 'Demain',
+                'calendar.this_week': 'Cette semaine',
+                'calendar.last_week': 'La semaine dernière',
+                'calendar.next_week': 'La semaine prochaine',
+                'calendar.this_month': 'Ce mois-ci',
+                'calendar.last_month': 'Le mois dernier',
+                'calendar.next_month': 'Le mois prochain',
+                'calendar.this_year': 'Cette année',
+                'calendar.last_year': 'L\'année dernière',
+                'calendar.next_year': 'L\'année prochaine',
+                'calendar.monday': 'Lundi',
+                'calendar.tuesday': 'Mardi',
+                'calendar.wednesday': 'Mercredi',
+                'calendar.thursday': 'Jeudi',
+                'calendar.friday': 'Vendredi',
+                'calendar.saturday': 'Samedi',
+                'calendar.sunday': 'Dimanche',
+                'calendar.january': 'Janvier',
+                'calendar.february': 'Février',
+                'calendar.march': 'Mars',
+                'calendar.april': 'Avril',
+                'calendar.may': 'Mai',
+                'calendar.june': 'Juin',
+                'calendar.july': 'Juillet',
+                'calendar.august': 'Août',
+                'calendar.september': 'Septembre',
+                'calendar.october': 'Octobre',
+                'calendar.november': 'Novembre',
+                'calendar.december': 'Décembre',
+                'calendar.day': 'Jour',
+                'calendar.week': 'Semaine',
+                'calendar.month': 'Mois',
+                'calendar.year': 'Année',
+                'calendar.agenda': 'Agenda',
+                'calendar.schedule': 'Planning',
+                'calendar.events': 'Événements',
+                'calendar.no_events': 'Aucun événement',
+                'calendar.add_event': 'Ajouter un événement',
+                'calendar.edit_event': 'Modifier l\'événement',
+                'calendar.delete_event': 'Supprimer l\'événement',
+                'calendar.event_title': 'Titre de l\'événement',
+                'calendar.event_description': 'Description de l\'événement',
+                'calendar.event_location': 'Lieu de l\'événement',
+                'calendar.event_start': 'Début de l\'événement',
+                'calendar.event_end': 'Fin de l\'événement',
+                'calendar.event_all_day': 'Toute la journée',
+                'calendar.event_recurring': 'Événement récurrent',
+                'calendar.event_reminder': 'Rappel',
+                'calendar.event_color': 'Couleur',
+                'calendar.event_guests': 'Invités',
+                'calendar.event_private': 'Privé',
+                'calendar.event_public': 'Public',
+                'calendar.event_confirmed': 'Confirmé',
+                'calendar.event_tentative': 'Tentative',
+                'calendar.event_cancelled': 'Annulé',
+                'calendar.event_completed': 'Terminé',
+                
+                // Messages de temps
+                'time.now': 'Maintenant',
+                'time.minute_ago': 'Il y a une minute',
+                'time.minutes_ago': 'Il y a {0} minutes',
+                'time.hour_ago': 'Il y a une heure',
+                'time.hours_ago': 'Il y a {0} heures',
+                'time.day_ago': 'Il y a un jour',
+                'time.days_ago': 'Il y a {0} jours',
+                'time.week_ago': 'Il y a une semaine',
+                'time.weeks_ago': 'Il y a {0} semaines',
+                'time.month_ago': 'Il y a un mois',
+                'time.months_ago': 'Il y a {0} mois',
+                'time.year_ago': 'Il y a un an',
+                'time.years_ago': 'Il y a {0} ans',
+                'time.in_minute': 'Dans une minute',
+                'time.in_minutes': 'Dans {0} minutes',
+                'time.in_hour': 'Dans une heure',
+                'time.in_hours': 'Dans {0} heures',
+                'time.in_day': 'Dans un jour',
+                'time.in_days': 'Dans {0} jours',
+                'time.in_week': 'Dans une semaine',
+                'time.in_weeks': 'Dans {0} semaines',
+                'time.in_month': 'Dans un mois',
+                'time.in_months': 'Dans {0} mois',
+                'time.in_year': 'Dans un an',
+                'time.in_years': 'Dans {0} ans',
+
+                // ===== NOUVELLES CLÉS AJOUTÉES POUR LES CORRECTIONS =====
+                // booking-cancel.js
+                'booking.cancellation.success': 'Réservation annulée avec succès',
+                'booking.cancellation.failed': 'Échec de l\'annulation',
+                'booking.cancellation.log_success': 'Réservation {0} annulée avec succès',
+                'booking.cancellation.log_error': 'Erreur annulation réservation {0}: {1}',
+                'booking.cancellation_reason': 'Annulé par l\'étudiant via YoTeacher',
+                
+                // booking-cancel.js (Cal.com)
+                'booking.calcom_uid_error': '⚠️ Impossible de récupérer calcom_uid:',
+                'booking.calcom_cancelled': '✅ Cal.com annulé',
+                'booking.calcom_not_cancelled': '⚠️ Cal.com non annulé',
+                'booking.calcom_error': '⚠️ Erreur annulation Cal.com (non bloquant):',
+                'booking.no_calcom_uid': 'ℹ️ Aucun calcom_uid, annulation Cal.com ignorée',
+                'booking.calcom_api_missing': '⚠️ Clé API Cal.com non configurée',
+                'booking.calcom_not_found': 'ℹ️ Réservation Cal.com non trouvée (déjà annulée ou inexistante)',
+                'booking.calcom_check_error': '⚠️ Erreur vérification Cal.com:',
+                'booking.calcom_success': '✅ Annulation Cal.com réussie',
+                'booking.calcom_failed': '⚠️ Annulation Cal.com échouée:',
+                'booking.calcom_exception': '⚠️ Exception lors de l\'annulation Cal.com:',
+                'booking.calcom_already_cancelled': 'ℹ️ Réservation Cal.com déjà annulée ou inexistante',
+                'booking.log_error': '⚠️ Erreur création log:',
+                
+                // Erreurs générales
+                'error.supabase_unavailable': 'Supabase non disponible',
+                
+                // Messages booking.js
+                'booking.event_type_not_configured': 'Type de cours "{0}" non configuré dans Cal.com',
+                'booking.rate_limit_reached': 'Rate limit atteint. Veuillez patienter.',
+                'booking.calcom_api_error': 'API Cal.com: {0}',
+                'booking.no_slots_available': 'Aucun créneau disponible',
+                'booking.slots_available': '✅ {0} créneau(x) disponible(s)',
+                'booking.dev_mode_slots': '⚠️ Mode développement : simulation de créneaux',
+                'booking.load_slots_error': 'Impossible de charger les créneaux : {0}',
+                'booking.invalid_date': 'Date invalide:',
+                'booking.calculate_end_time_error': 'Erreur calculateEndTime:',
+                'booking.mock_slots_generated': '⚠️ Mode simulation: {0} créneaux générés',
+                'booking.rate_limit_warning': '⚠️ Rate limit proche: {0}/{1} requêtes restantes',
+                
+                // Messages crédits
+                'booking.no_user_or_packages': '❌ Pas d\'utilisateur ou packagesManager non disponible',
+                'booking.trial_no_credits': '❌ Cours d\'essai - pas de crédits',
+                'booking.package_no_credits': '❌ Package avec plusieurs cours - pas de crédits',
+                'booking.credits_check': '🔍 Crédits disponibles pour {0} ({1}min): {2}',
+                'booking.credits_check_error': 'Erreur vérification crédits:',
+                
+                // Réservation avec crédit
+                'booking.user_not_logged_in': 'Utilisateur non connecté',
+                'booking.no_credit_for_duration': 'Aucun crédit disponible pour un cours de {0} minutes',
+                'booking.creating_pending': '📝 Création du booking en status pending...',
+                'booking.pending_error': '❌ Erreur création booking pending:',
+                'booking.creation_failed': 'Échec création booking: {0}',
+                'booking.pending_created': '✅ Booking pending créé avec ID: {0}',
+                'booking.using_credit_via_rpc': '💰 Utilisation crédit via RPC avec booking ID: {0}',
+                'booking.rpc_credit_error': '❌ Erreur RPC create_booking_with_credit:',
+                'booking.credit_usage_error': 'Erreur lors de l\'utilisation du crédit: {0}',
+                'booking.credit_failed': 'Échec utilisation crédit',
+                'booking.credit_used_success': '✅ Crédit utilisé avec succès via RPC',
+                'booking.creating_calcom_event': '📅 Création événement Cal.com via createBookingAfterPayment()...',
+                'booking.calcom_failed_db_confirmed': '⚠️ Échec création Cal.com (booking DB déjà confirmé)',
+                'booking.calcom_created_success': '✅ Événement Cal.com créé avec succès',
+                'booking.credit_booking_created': '✅ Réservation avec crédit créée',
+                'booking.can_use_credit': '✅ Peut utiliser crédit? {0}',
+                'booking.credit_flow': '🚀 Flux crédit...',
+                'booking.credit_fallback': '⚠️ Échec flux crédit, passage au paiement',
+                'booking.payment_flow': '💰 Flux paiement (réutilisation intention existante)',
+                'booking.missing_data': 'Données de réservation manquantes',
+                'booking.not_logged_in': 'Non connecté',
+                
+                // Intentions
+                'booking.searching_existing_intent': '🔍 Recherche intention existante pour utilisateur connecté...',
+                'booking.intent_search_error': '❌ Erreur recherche intention:',
+                'booking.existing_intent_found': '✅ Intention existante trouvée: {0}',
+                'booking.creating_new_intent': '📞 Création nouvelle intention...',
+                'booking.intent_error': '❌ Erreur create_booking_intent:',
+                'booking.price_calculation_error': 'Impossible de calculer le prix: {0}',
+                'booking.intent_failed': 'Échec création intention: {0}',
+                'booking.intent_ready': '✅ Intention prête:',
+                'booking.redirect_payment': 'Redirection vers le paiement...',
+                'booking.preparation_error': '❌ Erreur préparation réservation:',
+                'booking.preparation_failed': 'Échec de la préparation : {0}',
+                
+                // Champs requis
+                'booking.missing_field': 'Champ requis manquant: {0}',
+                'booking.login_required_paid': 'Vous devez être connecté pour réserver ce type de cours',
+                
+                // Création après paiement
+                'booking.creating_calcom_booking': '📤 Création réservation Cal.com:',
+                'booking.calcom_error_detail': 'Erreur Cal.com:',
+                'booking.calcom_booking_created': '✅ Réservation Cal.com créée:',
+                'booking.after_payment_error': '❌ Erreur création après paiement:',
+                'booking.creation_failed_generic': 'Échec création : {0}',
+                'booking.mock_title': 'Cours {0}',
+                
+                // Sauvegarde Supabase
+                'booking.supabase_unavailable_warn': '⚠️ Supabase non disponible, skip sauvegarde',
+                'booking.updating_existing_booking': '📝 Mise à jour booking existant (intent_id: {0})',
+                'booking.update_error': '❌ Erreur UPDATE bookings:',
+                'booking.confirmation_error': 'Impossible de confirmer la réservation: {0}',
+                'booking.booking_not_found': '❌ Aucun booking trouvé avec intent_id: {0}',
+                'booking.booking_not_found_generic': 'Réservation introuvable',
+                'booking.booking_confirmed': '✅ Booking confirmé (UPDATE): {0}',
+                'booking.creating_legacy_booking': '📝 Création nouveau booking (mode legacy - pas d\'intent)',
+                'booking.insert_error': '❌ Erreur INSERT bookings:',
+                'booking.duplicate_booking': 'Cette réservation existe déjà',
+                'booking.foreign_key_error': 'Erreur de référence (utilisateur ou package invalide)',
+                'booking.creation_error': 'Erreur lors de la création: {0}',
+                'booking.no_data_returned': 'Aucune donnée retournée après insertion',
+                'booking.booking_created': '✅ Booking créé (INSERT legacy): {0}',
+                'booking.save_booking_exception': '❌ Exception saveBookingToSupabase:',
+                'booking.date_unavailable': 'Date non disponible',
+                
+                // Messages login/signup
+                'login.reset_email_required': 'Veuillez entrer votre adresse email pour réinitialiser votre mot de passe',
+                
+                // Titre page d'accueil
+                'index.title': 'Yoann - Professeur de Français pour Adultes',
+                
+                // booking-ui.js (nouvelles clés)
+                'booking.event.user_logged_in': 'Utilisateur connecté, mise à jour interface',
+                'booking.event.user_logged_out': 'Utilisateur déconnecté, mise à jour interface',
+                'booking.status.credit_booking': 'Réservation avec crédit...',
+                'booking.status.preparing_payment': 'Préparation du paiement...',
+                'booking.error.try_again': 'Veuillez réessayer',
+                'booking.button.book_with_credit': 'Réserver avec un crédit ({0}min)',
+                'booking.button.changed_to_credit': '✅ Bouton changé: "Réserver avec un crédit ({0}min)"',
+                'booking.button.no_credits': '❌ Pas de crédits pour {0}min, bouton normal',
+                'booking.platform.google_meet': 'Google Meet',
+                'booking.platform.zoom': 'Zoom',
+                'booking.platform.teams': 'Microsoft Teams',
+                'booking.duration.trial': '15 min',
+                'booking.duration.default': '60 min',
+                'booking.unit.minutes': 'min',
+                'booking.price.trial': '5€',
+                'booking.price.trial_display': '✅ Prix essai: {0}',
+                'booking.calling_price_estimate': '📞 Appel calculate_price_estimate() pour afficher prix',
+                'booking.using_cache': '📦 Utilisation du cache pour le prix',
+                'booking.rpc_estimate_params': '📤 Paramètres RPC estimate:',
+                'booking.rpc_estimate_response': '📥 Réponse RPC estimate:',
+                'booking.rpc_estimate_error': '❌ Erreur RPC calculate_price_estimate:',
+                'booking.rpc_estimate_failed': '⚠️ RPC estimate échoué:',
+                'booking.price_estimated_by_rpc': '✅ Prix estimé par RPC (DB):',
+                'booking.rpc_estimate_exception': '❌ Exception appel RPC estimate:',
+                'booking.final_price_display': '✅ Prix final affiché: {0}',
+                'booking.status.connect_to_see_price': 'Connectez-vous',
+                'booking.vip_price_title': 'Prix VIP personnel',
+                'booking.mobile_update_ignored': 'Note: Mise à jour mobile ignorée',
             },
             en: {
                 // ===== EXISTING TRANSLATIONS =====
@@ -794,6 +1268,20 @@ class TranslationManager {
                 'booking.or': 'or',
                 'booking.create_account': 'create an account',
                 
+                // Booking page - Messages d'erreur et succès
+                'booking.error.select_date_time': 'Please select a date and time',
+                'booking.error.required_fields': 'Please fill in all required fields',
+                'booking.error.login_required_course': 'Please log in to book this type of course',
+                'booking.error.generic': 'Error: {0}',
+                'booking.success.redirecting': 'Redirecting...',
+                'booking.error.no_slot_selected': 'No time slot selected',
+                'booking.error.price_calculation': 'Calculation error',
+                'booking.error.booking_preparation': 'Price to calculate',
+                'booking.success.booking_prepared': 'Booking prepared successfully',
+                'booking.error.loading_slots': 'Error loading time slots: {0}',
+                'booking.status.loading': 'Loading...',
+                'booking.status.select_date_time': 'Select date and time',
+                
                 // Login page
                 'login.title': 'Login - YoTeacher',
                 'login.subtitle': 'Log in to your student space',
@@ -807,6 +1295,14 @@ class TranslationManager {
                 'login.sign_up_free': 'Sign up for free',
                 'login.loading': 'Logging in...',
                 'login.success': 'Login successful! Redirecting...',
+                
+                // Login page - Messages d'erreur et succès
+                'login.error.required_fields': 'Please fill in all fields',
+                'login.error.password_length': 'Password must be at least 6 characters',
+                'login.error.password_mismatch': 'Passwords do not match',
+                'login.error.generic': 'An error occurred: {0}',
+                'login.success.reset_email': 'A reset email has been sent to {0}',
+                'login.error.reset_email': 'Error sending reset email: {0}',
                 
                 // Signup page
                 'signup.title': 'Sign Up - YoTeacher',
@@ -823,10 +1319,16 @@ class TranslationManager {
                 'signup.loading': 'Creating account...',
                 'signup.success': 'Account created successfully!',
                 
+                // Signup page - Messages d'erreur et succès
+                'signup.error.required_fields': 'Please fill in all fields',
+                'signup.error.password_length': 'Password must be at least 6 characters',
+                'signup.error.password_mismatch': 'Passwords do not match',
+                'signup.error.generic': 'An error occurred: {0}',
+                
                 // Dashboard page - ADDED TRANSLATIONS
-'dashboard.greeting.morning': 'Good morning',
-'dashboard.greeting.afternoon': 'Good afternoon',
-'dashboard.greeting.evening': 'Good evening',
+                'dashboard.greeting.morning': 'Good morning',
+                'dashboard.greeting.afternoon': 'Good afternoon',
+                'dashboard.greeting.evening': 'Good evening',
                 'dashboard.title': 'My Dashboard - YoTeach',
                 'dashboard.logout_desktop': 'Logout',
                 'dashboard.logout_mobile': 'Logout',
@@ -899,6 +1401,14 @@ class TranslationManager {
                 'dashboard.reschedule_function': 'Reschedule function to implement',
                 'dashboard.logout': 'Logout',
                 'dashboard.my_dashboard': 'My dashboard',
+                
+                // Dashboard - Messages d'erreur et succès
+                'dashboard.error.loading_data': 'Error loading your data: {0}',
+                'dashboard.success.cancellation': 'Lesson cancelled successfully',
+                'dashboard.error.cancellation': 'Error cancelling lesson: {0}',
+                'dashboard.confirm.cancellation': 'Are you sure you want to cancel this lesson?',
+                'dashboard.info.no_credits': 'No credits available at the moment',
+                'dashboard.info.credit_expiring': 'Your credit is expiring soon!',
                 
                 // Profile page - ADDED TRANSLATIONS
                 'profile.back_to_dashboard': 'Back to dashboard',
@@ -1208,7 +1718,445 @@ class TranslationManager {
                 'legal.section4.refunds.intro': 'Refunds are made according to the following terms:',
                 'legal.section4.refunds.method1': 'Via the same payment method as the initial purchase',
                 'legal.section4.refunds.method2': 'Within 14 business days maximum',
-                'legal.section4.refunds.method3': 'Transaction fees may be deducted'
+                'legal.section4.refunds.method3': 'Transaction fees may be deducted',
+
+                // ===== MESSAGES GÉNÉRAUX =====
+                // Messages d'erreur généraux
+                'error.generic': 'An error occurred',
+                'error.network': 'Network error. Please check your internet connection.',
+                'error.server': 'Server error. Please try again later.',
+                'error.unauthorized': 'Unauthorized access. Please log in.',
+                'error.forbidden': 'Access forbidden. You do not have the necessary permissions.',
+                'error.not_found': 'Resource not found.',
+                'error.validation': 'Validation error. Please check the information entered.',
+                'error.timeout': 'Timeout. Please try again.',
+                'error.unknown': 'Unknown error. Please contact support.',
+                
+                // Messages de succès généraux
+                'success.generic': 'Operation successful',
+                'success.saved': 'Save successful',
+                'success.updated': 'Update successful',
+                'success.deleted': 'Delete successful',
+                'success.created': 'Creation successful',
+                'success.sent': 'Send successful',
+                'success.processed': 'Processing successful',
+                
+                // Messages de chargement
+                'loading.generic': 'Loading...',
+                'loading.please_wait': 'Please wait...',
+                'loading.processing': 'Processing...',
+                'loading.saving': 'Saving...',
+                'loading.updating': 'Updating...',
+                'loading.deleting': 'Deleting...',
+                
+                // Messages d'information
+                'info.no_data': 'No data available',
+                'info.select_option': 'Select an option',
+                'info.required_field': 'Required field',
+                'info.optional_field': 'Optional field',
+                'info.coming_soon': 'Coming soon',
+                'info.maintenance': 'Maintenance in progress',
+                
+                // Messages de confirmation
+                'confirm.action': 'Are you sure you want to continue?',
+                'confirm.delete': 'Are you sure you want to delete this item?',
+                'confirm.cancel': 'Are you sure you want to cancel?',
+                'confirm.logout': 'Are you sure you want to log out?',
+                'confirm.unsaved_changes': 'You have unsaved changes. Are you sure you want to leave?',
+                
+                // Boutons et actions
+                'button.ok': 'OK',
+                'button.cancel': 'Cancel',
+                'button.confirm': 'Confirm',
+                'button.save': 'Save',
+                'button.delete': 'Delete',
+                'button.edit': 'Edit',
+                'button.view': 'View',
+                'button.back': 'Back',
+                'button.next': 'Next',
+                'button.previous': 'Previous',
+                'button.close': 'Close',
+                'button.submit': 'Submit',
+                'button.reset': 'Reset',
+                'button.search': 'Search',
+                'button.filter': 'Filter',
+                'button.sort': 'Sort',
+                'button.refresh': 'Refresh',
+                'button.download': 'Download',
+                'button.upload': 'Upload',
+                'button.print': 'Print',
+                'button.help': 'Help',
+                'button.more_info': 'More information',
+                
+                // Messages système
+                'system.offline': 'You are offline. Some features may be limited.',
+                'system.online': 'You are back online.',
+                'system.error_report': 'Report an error',
+                'system.feedback': 'Give your feedback',
+                'system.support': 'Technical support',
+                'system.contact': 'Contact',
+                'system.settings': 'Settings',
+                'system.profile': 'Profile',
+                'system.logout': 'Logout',
+                'system.login': 'Login',
+                'system.register': 'Register',
+                'system.forgot_password': 'Forgot password',
+                'system.reset_password': 'Reset password',
+                'system.change_password': 'Change password',
+                'system.language': 'Language',
+                'system.currency': 'Currency',
+                'system.timezone': 'Timezone',
+                'system.date_format': 'Date format',
+                'system.time_format': 'Time format',
+                'system.notifications': 'Notifications',
+                'system.privacy': 'Privacy',
+                'system.terms': 'Terms of use',
+                'system.cookies': 'Cookies',
+                'system.about': 'About',
+                'system.version': 'Version',
+                'system.copyright': 'Copyright',
+                'system.licence': 'Licence',
+                'system.developer': 'Developer',
+                'system.powered_by': 'Powered by',
+                
+                // Messages de validation
+                'validation.required': 'This field is required',
+                'validation.email': 'Please enter a valid email address',
+                'validation.password_length': 'Password must be at least {0} characters',
+                'validation.password_match': 'Passwords do not match',
+                'validation.number': 'Please enter a valid number',
+                'validation.min': 'Value must be at least {0}',
+                'validation.max': 'Value must not exceed {0}',
+                'validation.min_length': 'Text must be at least {0} characters',
+                'validation.max_length': 'Text must not exceed {0} characters',
+                'validation.pattern': 'Format is incorrect',
+                'validation.url': 'Please enter a valid URL',
+                'validation.date': 'Please enter a valid date',
+                'validation.time': 'Please enter a valid time',
+                'validation.phone': 'Please enter a valid phone number',
+                'validation.zip': 'Please enter a valid postal code',
+                'validation.country': 'Please select a country',
+                'validation.language': 'Please select a language',
+                'validation.currency': 'Please select a currency',
+                
+                // Messages de statut
+                'status.pending': 'Pending',
+                'status.processing': 'Processing',
+                'status.completed': 'Completed',
+                'status.failed': 'Failed',
+                'status.cancelled': 'Cancelled',
+                'status.refunded': 'Refunded',
+                'status.paid': 'Paid',
+                'status.unpaid': 'Unpaid',
+                'status.active': 'Active',
+                'status.inactive': 'Inactive',
+                'status.enabled': 'Enabled',
+                'status.disabled': 'Disabled',
+                'status.visible': 'Visible',
+                'status.hidden': 'Hidden',
+                'status.published': 'Published',
+                'status.draft': 'Draft',
+                'status.archived': 'Archived',
+                'status.deleted': 'Deleted',
+                
+                // Messages de formatage
+                'format.date': 'dd/MM/yyyy',
+                'format.time': 'HH:mm',
+                'format.datetime': 'dd/MM/yyyy HH:mm',
+                'format.currency': '{0} {1}',
+                'format.percentage': '{0}%',
+                'format.decimal': '{0}',
+                'format.integer': '{0}',
+                'format.phone': '{0}',
+                'format.address': '{0}',
+                'format.name': '{0} {1}',
+                'format.email': '{0}',
+                'format.url': '{0}',
+                
+                // Messages de pagination
+                'pagination.page': 'Page {0}',
+                'pagination.of': 'of {0}',
+                'pagination.items': '{0} items',
+                'pagination.per_page': 'per page',
+                'pagination.first': 'First',
+                'pagination.last': 'Last',
+                'pagination.previous': 'Previous',
+                'pagination.next': 'Next',
+                'pagination.showing': 'Showing {0} to {1} of {2} items',
+                
+                // Messages de recherche
+                'search.placeholder': 'Search...',
+                'search.no_results': 'No results found',
+                'search.results': '{0} results found',
+                'search.advanced': 'Advanced search',
+                'search.clear': 'Clear search',
+                'search.filter': 'Filter results',
+                'search.sort': 'Sort by',
+                'search.relevance': 'Relevance',
+                'search.date': 'Date',
+                'search.name': 'Name',
+                'search.price': 'Price',
+                'search.rating': 'Rating',
+                'search.popularity': 'Popularity',
+                
+                // Messages de notification
+                'notification.new': 'New',
+                'notification.unread': 'Unread',
+                'notification.read': 'Read',
+                'notification.all': 'All notifications',
+                'notification.mark_read': 'Mark as read',
+                'notification.mark_unread': 'Mark as unread',
+                'notification.delete': 'Delete notification',
+                'notification.delete_all': 'Delete all notifications',
+                'notification.empty': 'No notifications',
+                'notification.error': 'Error notification',
+                'notification.success': 'Success notification',
+                'notification.warning': 'Warning notification',
+                'notification.info': 'Information notification',
+                
+                // Messages d'alerte
+                'alert.success': 'Success',
+                'alert.error': 'Error',
+                'alert.warning': 'Warning',
+                'alert.info': 'Information',
+                'alert.confirm': 'Confirmation',
+                'alert.prompt': 'Input',
+                'alert.loading': 'Loading',
+                
+                // Messages de calendrier
+                'calendar.today': 'Today',
+                'calendar.yesterday': 'Yesterday',
+                'calendar.tomorrow': 'Tomorrow',
+                'calendar.this_week': 'This week',
+                'calendar.last_week': 'Last week',
+                'calendar.next_week': 'Next week',
+                'calendar.this_month': 'This month',
+                'calendar.last_month': 'Last month',
+                'calendar.next_month': 'Next month',
+                'calendar.this_year': 'This year',
+                'calendar.last_year': 'Last year',
+                'calendar.next_year': 'Next year',
+                'calendar.monday': 'Monday',
+                'calendar.tuesday': 'Tuesday',
+                'calendar.wednesday': 'Wednesday',
+                'calendar.thursday': 'Thursday',
+                'calendar.friday': 'Friday',
+                'calendar.saturday': 'Saturday',
+                'calendar.sunday': 'Sunday',
+                'calendar.january': 'January',
+                'calendar.february': 'February',
+                'calendar.march': 'March',
+                'calendar.april': 'April',
+                'calendar.may': 'May',
+                'calendar.june': 'June',
+                'calendar.july': 'July',
+                'calendar.august': 'August',
+                'calendar.september': 'September',
+                'calendar.october': 'October',
+                'calendar.november': 'November',
+                'calendar.december': 'December',
+                'calendar.day': 'Day',
+                'calendar.week': 'Week',
+                'calendar.month': 'Month',
+                'calendar.year': 'Year',
+                'calendar.agenda': 'Agenda',
+                'calendar.schedule': 'Schedule',
+                'calendar.events': 'Events',
+                'calendar.no_events': 'No events',
+                'calendar.add_event': 'Add event',
+                'calendar.edit_event': 'Edit event',
+                'calendar.delete_event': 'Delete event',
+                'calendar.event_title': 'Event title',
+                'calendar.event_description': 'Event description',
+                'calendar.event_location': 'Event location',
+                'calendar.event_start': 'Event start',
+                'calendar.event_end': 'Event end',
+                'calendar.event_all_day': 'All day',
+                'calendar.event_recurring': 'Recurring event',
+                'calendar.event_reminder': 'Reminder',
+                'calendar.event_color': 'Color',
+                'calendar.event_guests': 'Guests',
+                'calendar.event_private': 'Private',
+                'calendar.event_public': 'Public',
+                'calendar.event_confirmed': 'Confirmed',
+                'calendar.event_tentative': 'Tentative',
+                'calendar.event_cancelled': 'Cancelled',
+                'calendar.event_completed': 'Completed',
+                
+                // Messages de temps
+                'time.now': 'Now',
+                'time.minute_ago': 'A minute ago',
+                'time.minutes_ago': '{0} minutes ago',
+                'time.hour_ago': 'An hour ago',
+                'time.hours_ago': '{0} hours ago',
+                'time.day_ago': 'A day ago',
+                'time.days_ago': '{0} days ago',
+                'time.week_ago': 'A week ago',
+                'time.weeks_ago': '{0} weeks ago',
+                'time.month_ago': 'A month ago',
+                'time.months_ago': '{0} months ago',
+                'time.year_ago': 'A year ago',
+                'time.years_ago': '{0} years ago',
+                'time.in_minute': 'In a minute',
+                'time.in_minutes': 'In {0} minutes',
+                'time.in_hour': 'In an hour',
+                'time.in_hours': 'In {0} hours',
+                'time.in_day': 'In a day',
+                'time.in_days': 'In {0} days',
+                'time.in_week': 'In a week',
+                'time.in_weeks': 'In {0} weeks',
+                'time.in_month': 'In a month',
+                'time.in_months': 'In {0} months',
+                'time.in_year': 'In a year',
+                'time.in_years': 'In {0} years',
+
+                // ===== NEW KEYS ADDED FOR CORRECTIONS =====
+                // booking-cancel.js
+                'booking.cancellation.success': 'Booking cancelled successfully',
+                'booking.cancellation.failed': 'Cancellation failed',
+                'booking.cancellation.log_success': 'Reservation {0} cancelled successfully',
+                'booking.cancellation.log_error': 'Error cancelling reservation {0}: {1}',
+                'booking.cancellation_reason': 'Cancelled by student via YoTeacher',
+                
+                // booking-cancel.js (Cal.com)
+                'booking.calcom_uid_error': '⚠️ Unable to retrieve calcom_uid:',
+                'booking.calcom_cancelled': '✅ Cal.com cancelled',
+                'booking.calcom_not_cancelled': '⚠️ Cal.com not cancelled',
+                'booking.calcom_error': '⚠️ Cal.com cancellation error (non-blocking):',
+                'booking.no_calcom_uid': 'ℹ️ No calcom_uid, Cal.com cancellation ignored',
+                'booking.calcom_api_missing': '⚠️ Cal.com API key not configured',
+                'booking.calcom_not_found': 'ℹ️ Cal.com reservation not found (already cancelled or non-existent)',
+                'booking.calcom_check_error': '⚠️ Cal.com check error:',
+                'booking.calcom_success': '✅ Cal.com cancellation successful',
+                'booking.calcom_failed': '⚠️ Cal.com cancellation failed:',
+                'booking.calcom_exception': '⚠️ Exception during Cal.com cancellation:',
+                'booking.calcom_already_cancelled': 'ℹ️ Cal.com reservation already cancelled or non-existent',
+                'booking.log_error': '⚠️ Log creation error:',
+                
+                // General errors
+                'error.supabase_unavailable': 'Supabase unavailable',
+                
+                // booking.js messages
+                'booking.event_type_not_configured': 'Course type "{0}" not configured in Cal.com',
+                'booking.rate_limit_reached': 'Rate limit reached. Please wait.',
+                'booking.calcom_api_error': 'Cal.com API: {0}',
+                'booking.no_slots_available': 'No slots available',
+                'booking.slots_available': '✅ {0} slot(s) available',
+                'booking.dev_mode_slots': '⚠️ Development mode: simulating slots',
+                'booking.load_slots_error': 'Unable to load slots: {0}',
+                'booking.invalid_date': 'Invalid date:',
+                'booking.calculate_end_time_error': 'Error calculateEndTime:',
+                'booking.mock_slots_generated': '⚠️ Simulation mode: {0} slots generated',
+                'booking.rate_limit_warning': '⚠️ Rate limit approaching: {0}/{1} requests remaining',
+                
+                // Credits messages
+                'booking.no_user_or_packages': '❌ No user or packagesManager available',
+                'booking.trial_no_credits': '❌ Trial lesson - no credits',
+                'booking.package_no_credits': '❌ Package with multiple lessons - no credits',
+                'booking.credits_check': '🔍 Credits available for {0} ({1}min): {2}',
+                'booking.credits_check_error': 'Error checking credits:',
+                
+                // Credit booking
+                'booking.user_not_logged_in': 'User not logged in',
+                'booking.no_credit_for_duration': 'No credit available for a {0} minute lesson',
+                'booking.creating_pending': '📝 Creating booking in pending status...',
+                'booking.pending_error': '❌ Error creating pending booking:',
+                'booking.creation_failed': 'Booking creation failed: {0}',
+                'booking.pending_created': '✅ Pending booking created with ID: {0}',
+                'booking.using_credit_via_rpc': '💰 Using credit via RPC with booking ID: {0}',
+                'booking.rpc_credit_error': '❌ RPC create_booking_with_credit error:',
+                'booking.credit_usage_error': 'Error using credit: {0}',
+                'booking.credit_failed': 'Credit usage failed',
+                'booking.credit_used_success': '✅ Credit used successfully via RPC',
+                'booking.creating_calcom_event': '📅 Creating Cal.com event via createBookingAfterPayment()...',
+                'booking.calcom_failed_db_confirmed': '⚠️ Cal.com creation failed (DB booking already confirmed)',
+                'booking.calcom_created_success': '✅ Cal.com event created successfully',
+                'booking.credit_booking_created': '✅ Credit booking created',
+                'booking.can_use_credit': '✅ Can use credit? {0}',
+                'booking.credit_flow': '🚀 Credit flow...',
+                'booking.credit_fallback': '⚠️ Credit flow failed, switching to payment',
+                'booking.payment_flow': '💰 Payment flow (reusing existing intent)',
+                'booking.missing_data': 'Missing booking data',
+                'booking.not_logged_in': 'Not logged in',
+                
+                // Intents
+                'booking.searching_existing_intent': '🔍 Searching for existing intent for logged in user...',
+                'booking.intent_search_error': '❌ Intent search error:',
+                'booking.existing_intent_found': '✅ Existing intent found: {0}',
+                'booking.creating_new_intent': '📞 Creating new intent...',
+                'booking.intent_error': '❌ create_booking_intent error:',
+                'booking.price_calculation_error': 'Unable to calculate price: {0}',
+                'booking.intent_failed': 'Intent creation failed: {0}',
+                'booking.intent_ready': '✅ Intent ready:',
+                'booking.redirect_payment': 'Redirecting to payment...',
+                'booking.preparation_error': '❌ Booking preparation error:',
+                'booking.preparation_failed': 'Preparation failed: {0}',
+                
+                // Required fields
+                'booking.missing_field': 'Missing required field: {0}',
+                'booking.login_required_paid': 'You must be logged in to book this type of course',
+                
+                // After payment creation
+                'booking.creating_calcom_booking': '📤 Creating Cal.com booking:',
+                'booking.calcom_error_detail': 'Cal.com error:',
+                'booking.calcom_booking_created': '✅ Cal.com booking created:',
+                'booking.after_payment_error': '❌ After payment creation error:',
+                'booking.creation_failed_generic': 'Creation failed: {0}',
+                'booking.mock_title': '{0} lesson',
+                
+                // Supabase saving
+                'booking.supabase_unavailable_warn': '⚠️ Supabase unavailable, skipping save',
+                'booking.updating_existing_booking': '📝 Updating existing booking (intent_id: {0})',
+                'booking.update_error': '❌ UPDATE bookings error:',
+                'booking.confirmation_error': 'Unable to confirm reservation: {0}',
+                'booking.booking_not_found': '❌ No booking found with intent_id: {0}',
+                'booking.booking_not_found_generic': 'Reservation not found',
+                'booking.booking_confirmed': '✅ Booking confirmed (UPDATE): {0}',
+                'booking.creating_legacy_booking': '📝 Creating new booking (legacy mode - no intent)',
+                'booking.insert_error': '❌ INSERT bookings error:',
+                'booking.duplicate_booking': 'This reservation already exists',
+                'booking.foreign_key_error': 'Reference error (invalid user or package)',
+                'booking.creation_error': 'Error during creation: {0}',
+                'booking.no_data_returned': 'No data returned after insertion',
+                'booking.booking_created': '✅ Booking created (INSERT legacy): {0}',
+                'booking.save_booking_exception': '❌ Exception saveBookingToSupabase:',
+                'booking.date_unavailable': 'Date unavailable',
+                
+                // Login/signup messages
+                'login.reset_email_required': 'Please enter your email address to reset your password',
+                
+                // Home page title
+                'index.title': 'Yoann - French Teacher for Adults',
+                
+                // booking-ui.js (new keys)
+                'booking.event.user_logged_in': 'User logged in, updating interface',
+                'booking.event.user_logged_out': 'User logged out, updating interface',
+                'booking.status.credit_booking': 'Booking with credit...',
+                'booking.status.preparing_payment': 'Preparing payment...',
+                'booking.error.try_again': 'Please try again',
+                'booking.button.book_with_credit': 'Book with credit ({0}min)',
+                'booking.button.changed_to_credit': '✅ Button changed: "Book with credit ({0}min)"',
+                'booking.button.no_credits': '❌ No credits for {0}min, normal button',
+                'booking.platform.google_meet': 'Google Meet',
+                'booking.platform.zoom': 'Zoom',
+                'booking.platform.teams': 'Microsoft Teams',
+                'booking.duration.trial': '15 min',
+                'booking.duration.default': '60 min',
+                'booking.unit.minutes': 'min',
+                'booking.price.trial': '5€',
+                'booking.price.trial_display': '✅ Trial price: {0}',
+                'booking.calling_price_estimate': '📞 Calling calculate_price_estimate() to display price',
+                'booking.using_cache': '📦 Using cache for price',
+                'booking.rpc_estimate_params': '📤 RPC estimate parameters:',
+                'booking.rpc_estimate_response': '📥 RPC estimate response:',
+                'booking.rpc_estimate_error': '❌ RPC calculate_price_estimate error:',
+                'booking.rpc_estimate_failed': '⚠️ RPC estimate failed:',
+                'booking.price_estimated_by_rpc': '✅ Price estimated by RPC (DB):',
+                'booking.rpc_estimate_exception': '❌ Exception calling RPC estimate:',
+                'booking.final_price_display': '✅ Final price displayed: {0}',
+                'booking.status.connect_to_see_price': 'Log in',
+                'booking.vip_price_title': 'Personal VIP price',
+                'booking.mobile_update_ignored': 'Note: Mobile update ignored',
             }
         };
         
@@ -1227,8 +2175,6 @@ class TranslationManager {
             }
         }
         
-        console.log(`🌍 Langue initiale: ${this.currentLanguage}`);
-        
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.init();
@@ -1239,33 +2185,25 @@ class TranslationManager {
     }
 
     init() {
-        console.log('🌍 Initialisation du gestionnaire de traduction...');
-        
         this.updatePage();
         this.addEventListeners();
     }
 
     addEventListeners() {
-        console.log('🌍 Ajout des écouteurs d\'événements...');
-        
         const desktopSwitcher = document.getElementById('languageSwitcherDesktop');
         if (desktopSwitcher) {
-            console.log('🌍 Found desktop switcher:', desktopSwitcher);
             desktopSwitcher.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🌍 Clic sur le sélecteur de langue desktop');
                 this.toggleLanguage();
             });
         }
         
         const mobileSwitcher = document.getElementById('languageSwitcherMobile');
         if (mobileSwitcher) {
-            console.log('🌍 Found mobile switcher:', mobileSwitcher);
             mobileSwitcher.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🌍 Clic sur le sélecteur de langue mobile');
                 this.toggleLanguage();
                 
                 const mobileMenu = document.getElementById('mobileMenu');
@@ -1274,15 +2212,11 @@ class TranslationManager {
                 }
             });
         }
-        
-        console.log('✅ Écouteurs d\'événements ajoutés');
     }
 
     toggleLanguage() {
         this.currentLanguage = this.currentLanguage === 'fr' ? 'en' : 'fr';
         localStorage.setItem('language', this.currentLanguage);
-        
-        console.log(`🌍 Changement de langue vers: ${this.currentLanguage}`);
         
         this.updatePage();
         
@@ -1292,69 +2226,53 @@ class TranslationManager {
     }
 
     updatePage() {
-        console.log(`🌍 Mise à jour de la page en ${this.currentLanguage}`);
-        
         document.documentElement.lang = this.currentLanguage;
         this.applyTranslations();
         this.updateLanguageSwitchers();
+    }
+
+    applyTranslations() {
+        // Traduire les éléments avec data-i18n
+        document.querySelectorAll('[data-i18n]').forEach((element) => {
+            const key = element.getAttribute('data-i18n');
+            const translation = this.getTranslation(key);
+            if (translation && translation !== key) {
+                if (translation.includes('<')) {
+                    element.innerHTML = translation;
+                } else {
+                    element.textContent = translation;
+                }
+            }
+        });
+
+        // Traduire les placeholders
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+            const key = element.getAttribute('data-i18n-placeholder');
+            const translation = this.getTranslation(key);
+            if (translation && translation !== key) {
+                element.placeholder = translation;
+            }
+        });
+
+        // Traduire les titles
+        document.querySelectorAll('[data-i18n-title]').forEach(element => {
+            const key = element.getAttribute('data-i18n-title');
+            const translation = this.getTranslation(key);
+            if (translation && translation !== key) {
+                element.title = translation;
+            }
+        });
         
-        console.log('✅ Page traduite avec succès');
-    }
-
-applyTranslations() {
-    console.log(`🌍 Applying translations in ${this.currentLanguage}`);
-    
-    // Compter les éléments
-    const elements = document.querySelectorAll('[data-i18n]');
-    console.log(`🌍 Found ${elements.length} elements with data-i18n`);
-    
-    elements.forEach((element, index) => {
-        const key = element.getAttribute('data-i18n');
-        const translation = this.getTranslation(key);
-        if (translation && translation !== key) {
-            // Préserver les balises HTML si présentes
-            if (translation.includes('<')) {
-                element.innerHTML = translation;
-            } else {
-                element.textContent = translation;
+        // Mettre à jour les titres de page
+        const title = document.querySelector('title[data-i18n]');
+        if (title) {
+            const key = title.getAttribute('data-i18n');
+            const translation = this.getTranslation(key);
+            if (translation && translation !== key) {
+                title.textContent = translation;
             }
-            if (index < 5) { // Afficher les 5 premiers pour debug
-                console.log(`🌍 Translated: ${key} -> ${translation.substring(0, 50)}...`);
-            }
-        } else if (!translation) {
-            console.warn(`🌍 No translation for key: ${key}`);
-        }
-    });
-
-    // Même chose pour les placeholders et titles
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
-        const key = element.getAttribute('data-i18n-placeholder');
-        const translation = this.getTranslation(key);
-        if (translation && translation !== key) {
-            element.placeholder = translation;
-        }
-    });
-
-    document.querySelectorAll('[data-i18n-title]').forEach(element => {
-        const key = element.getAttribute('data-i18n-title');
-        const translation = this.getTranslation(key);
-        if (translation && translation !== key) {
-            element.title = translation;
-        }
-    });
-    
-    // Mettre à jour les titres de page UNIQUEMENT s'ils ont un attribut data-i18n
-    const title = document.querySelector('title[data-i18n]');
-    if (title) {
-        const key = title.getAttribute('data-i18n');
-        const translation = this.getTranslation(key);
-        if (translation && translation !== key) {
-            title.textContent = translation;
         }
     }
-    
-    console.log('✅ Translations applied');
-}
 
     updateLanguageSwitchers() {
         const languageSwitchers = document.querySelectorAll(
@@ -1364,10 +2282,8 @@ applyTranslations() {
         );
         
         languageSwitchers.forEach(switcher => {
-            // Mettre le texte à "FR" si la langue actuelle est "en", sinon "EN"
             switcher.textContent = this.currentLanguage === 'fr' ? 'EN' : 'FR';
             
-            // Mettre à jour le titre (tooltip)
             const parent = switcher.closest('.language-switcher, .mobile-language, .language-switcher-mobile');
             if (parent) {
                 parent.title = this.currentLanguage === 'fr' 
@@ -1377,16 +2293,25 @@ applyTranslations() {
         });
     }
 
-    getTranslation(key) {
+    getTranslation(key, params = []) {
+        let translation = '';
+        
         if (this.translations[this.currentLanguage] && this.translations[this.currentLanguage][key]) {
-            return this.translations[this.currentLanguage][key];
+            translation = this.translations[this.currentLanguage][key];
+        } else if (this.translations['fr'] && this.translations['fr'][key]) {
+            translation = this.translations['fr'][key];
+        } else {
+            return key;
         }
         
-        if (this.translations['fr'] && this.translations['fr'][key]) {
-            return this.translations['fr'][key];
+        // Remplacer les paramètres {0}, {1}, etc.
+        if (params && params.length > 0) {
+            params.forEach((param, index) => {
+                translation = translation.replace(`{${index}}`, param);
+            });
         }
         
-        return key;
+        return translation;
     }
 
     getCurrentLanguage() {

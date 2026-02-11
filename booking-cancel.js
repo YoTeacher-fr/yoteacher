@@ -8,6 +8,14 @@
 class BookingCancellation {
     constructor() {
         console.log('🎫 BookingCancellation initialisé (version DB-driven)');
+        this.translationManager = window.translationManager;
+    }
+
+    getTranslation(key, params = []) {
+        if (this.translationManager) {
+            return this.translationManager.getTranslation(key, params);
+        }
+        return key;
     }
 
     /**
@@ -20,7 +28,7 @@ class BookingCancellation {
     async cancelBooking(bookingId, userId) {
         try {
             if (!window.supabase) {
-                throw new Error('Supabase non disponible');
+                throw new Error(this.getTranslation('error.supabase_unavailable'));
             }
 
             console.log('🔄 Appel de cancel_booking_safe() pour booking:', bookingId);
@@ -38,7 +46,7 @@ class BookingCancellation {
             }
 
             if (!data || !data.success) {
-                const errorMsg = data?.error || 'Échec de l\'annulation';
+                const errorMsg = data?.error || this.getTranslation('booking.cancellation.failed');
                 console.error('❌ RPC a échoué:', errorMsg);
                 throw new Error(errorMsg);
             }
@@ -63,19 +71,19 @@ class BookingCancellation {
                 .single();
 
             if (bookingError) {
-                console.warn('⚠️ Impossible de récupérer calcom_uid:', bookingError.message);
+                console.warn(this.getTranslation('booking.calcom_uid_error'), bookingError.message);
             } else if (booking?.calcom_uid) {
                 console.log('📞 Tentative d\'annulation Cal.com pour UID:', booking.calcom_uid);
                 
                 try {
                     calcomCancelled = await this.cancelCalcomBooking(booking.calcom_uid);
-                    console.log(calcomCancelled ? '✅ Cal.com annulé' : '⚠️ Cal.com non annulé');
+                    console.log(calcomCancelled ? this.getTranslation('booking.calcom_cancelled') : this.getTranslation('booking.calcom_not_cancelled'));
                 } catch (calcomError) {
-                    console.warn('⚠️ Erreur annulation Cal.com (non bloquant):', calcomError.message);
+                    console.warn(this.getTranslation('booking.calcom_error'), calcomError.message);
                     // Ne pas faire échouer l'annulation si Cal.com échoue
                 }
             } else {
-                console.log('ℹ️ Aucun calcom_uid, annulation Cal.com ignorée');
+                console.log(this.getTranslation('booking.no_calcom_uid'));
             }
 
             // ============================================================================
@@ -93,7 +101,7 @@ class BookingCancellation {
                 creditRefunded: data.credit_refunded,
                 hoursBeforeStart: data.hours_before,
                 calcomCancelled: calcomCancelled,
-                message: data.message || 'Réservation annulée avec succès'
+                message: data.message || this.getTranslation('booking.cancellation.success')
             };
 
         } catch (error) {
@@ -115,10 +123,10 @@ class BookingCancellation {
      * @returns {Promise<boolean>} true si annulé, false sinon
      */
     async cancelCalcomBooking(calcomUid) {
-        const config = window.YOTEACHER_CONFIG;
+        const config = window.YOTEACH_CONFIG;
         
         if (!config || !config.CALCOM_API_KEY) {
-            console.warn('⚠️ Clé API Cal.com non configurée');
+            console.warn(this.getTranslation('booking.calcom_api_missing'));
             return false;
         }
 
@@ -138,13 +146,13 @@ class BookingCancellation {
             });
 
             if (checkResponse.status === 404) {
-                console.log('ℹ️ Réservation Cal.com non trouvée (déjà annulée ou inexistante)');
+                console.log(this.getTranslation('booking.calcom_not_found'));
                 return false;
             }
 
             if (!checkResponse.ok) {
                 const errorText = await checkResponse.text();
-                console.warn('⚠️ Erreur vérification Cal.com:', errorText);
+                console.warn(this.getTranslation('booking.calcom_check_error'), errorText);
                 return false;
             }
 
@@ -160,25 +168,25 @@ class BookingCancellation {
                     'Cal-API-Version': 'v2'
                 },
                 body: JSON.stringify({
-                    cancellationReason: 'Annulé par l\'étudiant via YoTeacher'
+                    cancellationReason: this.getTranslation('booking.cancellation_reason')
                 })
             });
 
             if (postResponse.ok) {
-                console.log('✅ Annulation Cal.com réussie');
+                console.log(this.getTranslation('booking.calcom_success'));
                 return true;
             }
 
             const errorText = await postResponse.text();
-            console.warn('⚠️ Annulation Cal.com échouée:', errorText);
+            console.warn(this.getTranslation('booking.calcom_failed'), errorText);
             return false;
 
         } catch (error) {
-            console.warn('⚠️ Exception lors de l\'annulation Cal.com:', error.message);
+            console.warn(this.getTranslation('booking.calcom_exception'), error.message);
             
             // Si 404, considérer comme déjà annulé
             if (error.message.includes('404') || error.message.includes('Not Found')) {
-                console.log('ℹ️ Réservation Cal.com déjà annulée ou inexistante');
+                console.log(this.getTranslation('booking.calcom_already_cancelled'));
                 return false;
             }
             
@@ -199,7 +207,7 @@ class BookingCancellation {
                 user_id: userId,
                 log_level: 'INFO',
                 source: 'booking-cancel.js',
-                message: `Réservation ${rpcResult.booking_number || bookingId} annulée avec succès`,
+                message: this.getTranslation('booking.cancellation.log_success', [rpcResult.booking_number || bookingId]),
                 metadata: {
                     bookingId: bookingId,
                     bookingNumber: rpcResult.booking_number,
@@ -211,7 +219,7 @@ class BookingCancellation {
                 }
             });
         } catch (logError) {
-            console.warn('⚠️ Erreur création log succès:', logError.message);
+            console.warn(this.getTranslation('booking.log_error'), logError.message);
         }
     }
 
@@ -225,7 +233,7 @@ class BookingCancellation {
                 user_id: userId,
                 log_level: 'ERROR',
                 source: 'booking-cancel.js',
-                message: `Erreur annulation réservation ${bookingId}: ${error.message}`,
+                message: this.getTranslation('booking.cancellation.log_error', [bookingId, error.message]),
                 metadata: {
                     bookingId: bookingId,
                     error: error.message,
@@ -234,7 +242,7 @@ class BookingCancellation {
                 }
             });
         } catch (logError) {
-            console.warn('⚠️ Erreur création log erreur:', logError.message);
+            console.warn(this.getTranslation('booking.log_error'), logError.message);
         }
     }
 }
