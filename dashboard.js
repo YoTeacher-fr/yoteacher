@@ -351,6 +351,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Détection de changement de timezone : vérifie toutes les 30s et met à jour l'affichage + la BDD
+    let _lastDetectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setInterval(async () => {
+        const currentTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (currentTz !== _lastDetectedTimezone) {
+            console.log(`🌍 Timezone changée: ${_lastDetectedTimezone} → ${currentTz}`);
+            _lastDetectedTimezone = currentTz;
+
+            // Mettre à jour l'affichage immédiatement
+            const user = window.authManager?.getCurrentUser();
+            if (user) {
+                updateProfileInfo(user);
+
+                // Persister en BDD si Supabase est disponible
+                if (window.supabase && user.id) {
+                    try {
+                        await window.supabase
+                            .from('profiles')
+                            .update({ timezone: currentTz, updated_at: new Date().toISOString() })
+                            .eq('id', user.id);
+                        console.log('✅ Timezone mis à jour en BDD:', currentTz);
+
+                        // Mettre à jour le cache local
+                        if (user.profile) user.profile.timezone = currentTz;
+                        if (window.authManager?.saveUserToStorage) {
+                            window.authManager.saveUserToStorage();
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ Impossible de sauvegarder la timezone en BDD:', e);
+                    }
+                }
+            }
+        }
+    }, 30000);
+
     // Convertit un identifiant IANA (ex: "UTC", "Asia/Colombo") en label UTC±H:MM lisible
     function formatTimezoneLabel(ianaTimezone) {
         try {
@@ -393,6 +428,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // profile.timezone n'est jamais écrit en BDD → on utilise la timezone réelle du navigateur
         const rawTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || user.profile?.timezone || 'UTC';
         const timezone = formatTimezoneLabel(rawTimezone);
+
+        // Persister la timezone en BDD si elle a changé ou n'est pas encore enregistrée
+        if (window.supabase && user.id && user.profile?.timezone !== rawTimezone) {
+            window.supabase
+                .from('profiles')
+                .update({ timezone: rawTimezone, updated_at: new Date().toISOString() })
+                .eq('id', user.id)
+                .then(() => {
+                    if (user.profile) user.profile.timezone = rawTimezone;
+                    if (window.authManager?.saveUserToStorage) window.authManager.saveUserToStorage();
+                    console.log('✅ Timezone synchronisée en BDD:', rawTimezone);
+                })
+                .catch(e => console.warn('⚠️ Sync timezone BDD échouée:', e));
+        }
         const frenchLevel = user.profile?.french_level || (isFrench ? 'Non spécifié' : 'Not specified');
         
         profileInfo.innerHTML = `
