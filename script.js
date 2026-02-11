@@ -36,8 +36,8 @@ const coursesData = [
         typeKey: "courses.curriculum",
         focus: "Grammaire, exercices, structure",
         focusKey: "courses.curriculum_focus",
-        price: 35,
-        basePriceEUR: 35,
+        price: 40,
+        basePriceEUR: 40,
         duration: "60 minutes",
         features: [
             { text: "Grammaire approfondie", key: "courses.feature5" },
@@ -46,9 +46,9 @@ const coursesData = [
             { text: "Programme sur mesure", key: "courses.feature8" }
         ],
         details: [
-            { duration: "30min", durationKey: "courses.detail_30min", price: 17.5, basePriceEUR: 17.5 },
-            { duration: "45min", durationKey: "courses.detail_45min", price: 26.25, basePriceEUR: 26.25 },
-            { duration: "Forfait 10 cours", durationKey: "courses.detail_forfait", price: 332.50, basePriceEUR: 332.50, discount: "(-5%)", discountKey: "courses.discount" }
+            { duration: "30min", durationKey: "courses.detail_30min", price: 20, basePriceEUR: 20 },
+            { duration: "45min", durationKey: "courses.detail_45min", price: 30, basePriceEUR: 30 },
+            { duration: "Forfait 10 cours", durationKey: "courses.detail_forfait", price: 380, basePriceEUR: 380, discount: "(-5%)", discountKey: "courses.discount" }
         ],
         buttonText: "Choisir ce cours",
         buttonTextKey: "courses.button_choose",
