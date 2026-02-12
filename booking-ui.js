@@ -12,17 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let cachedIntentData = null; // Cache du dernier appel RPC
     
     let isVipUser = false;
-    
-    // Référence au gestionnaire de traduction
-    let translationManager = window.translationManager;
-
-    // Fonction helper pour les traductions
-    function getTranslation(key, params = []) {
-        if (translationManager) {
-            return translationManager.getTranslation(key, params);
-        }
-        return key;
-    }
 
     // Éléments DOM - DÉCLARATION COMPLÈTE AVANT TOUTE FONCTION
     const errorDiv = document.getElementById('errorMessage');
@@ -169,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('💰 Début préparation réservation');
         
         if (!selectedDate || !selectedTime) {
-            showError(getTranslation('booking.error.select_date_time'));
+            showError('Veuillez sélectionner une date et une heure');
             return;
         }
 
@@ -188,12 +177,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (!courseType || !name || !email) {
-            showError(getTranslation('booking.error.required_fields'));
+            showError('Veuillez remplir tous les champs obligatoires');
             return;
         }
 
         if ((courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') && !window.authManager?.getCurrentUser()) {
-            showError(getTranslation('booking.error.login_required_course'));
+            showError('Veuillez vous connecter pour réserver ce type de cours');
             return;
         }
 
@@ -208,21 +197,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     const hasCredits = await window.packagesManager.hasCreditForDuration(user.id, courseType, duration);
                     
                     if (hasCredits) {
-                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + getTranslation('booking.status.credit_booking');
+                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation avec crédit...';
                     } else {
-                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + getTranslation('booking.status.preparing_payment');
+                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
                     }
                 }
             } catch (error) {
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + getTranslation('booking.status.preparing_payment');
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
             }
         } else {
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + getTranslation('booking.status.preparing_payment');
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
         }
 
         try {
             if (!selectedSlot) {
-                throw new Error(getTranslation('booking.error.no_slot_selected'));
+                throw new Error('Aucun créneau sélectionné');
             }
 
             const bookingData = {
@@ -245,18 +234,18 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('📥 Résultat:', result);
             
             if (result.success) {
-                showSuccess(getTranslation('booking.success.redirecting'));
+                showSuccess('Redirection...');
                 
                 setTimeout(() => {
                     window.location.href = result.redirectTo;
                 }, 1000);
             } else {
-                throw new Error(result.error || getTranslation('error.unknown'));
+                throw new Error(result.error || 'Erreur inconnue');
             }
 
         } catch (error) {
             console.error('❌ Erreur préparation:', error);
-            showError(getTranslation('booking.error.generic', [error.message]));
+            showError('Erreur : ' + error.message);
             submitButton.disabled = false;
             updateSubmitButtonText();
         }
@@ -264,13 +253,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Événements
     window.addEventListener('auth:login', function() {
-        console.log(getTranslation('booking.event.user_logged_in'));
+        console.log('Utilisateur connecté, mise à jour interface');
         updateUserInterface();
         setTimeout(updateSubmitButtonText, 500);
     });
 
     window.addEventListener('auth:logout', function() {
-        console.log(getTranslation('booking.event.user_logged_out'));
+        console.log('Utilisateur déconnecté, mise à jour interface');
         updateUserInterface();
         updateSubmitButtonText();
     });
@@ -375,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function initCalendar() {
-        const isFrench = !translationManager || translationManager.getCurrentLanguage() === 'fr';
+        const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
         
         const monthNames = isFrench ? 
             ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'] :
@@ -480,10 +469,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 coursesCountGroup.style.display = 'none';
                 loginRequired.style.display = 'block';
                 
-                if (translationManager) {
-                    if (courseType === 'conversation') courseTypeName.textContent = getTranslation('courses.conversation');
-                    else if (courseType === 'curriculum') courseTypeName.textContent = getTranslation('courses.curriculum');
-                    else if (courseType === 'examen') courseTypeName.textContent = getTranslation('courses.exam');
+                if (window.translationManager) {
+                    if (courseType === 'conversation') courseTypeName.textContent = window.translationManager.getTranslation('courses.conversation');
+                    else if (courseType === 'curriculum') courseTypeName.textContent = window.translationManager.getTranslation('courses.curriculum');
+                    else if (courseType === 'examen') courseTypeName.textContent = window.translationManager.getTranslation('courses.exam');
                 }
             }
         } else {
@@ -506,7 +495,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadAvailableSlots(date = null) {
         try {
-            const loadingText = getTranslation('booking.loading_slots');
+            const loadingText = window.translationManager ? 
+                window.translationManager.getTranslation('booking.loading_slots') : 
+                'Chargement des créneaux...';
             
             timeSlots.innerHTML = `<div class="loading-slots"><i class="fas fa-spinner fa-spin"></i> ${loadingText}</div>`;
             
@@ -525,7 +516,9 @@ document.addEventListener('DOMContentLoaded', function() {
             timeSlots.innerHTML = '';
             
             if (slots.length === 0) {
-                const noSlotsText = getTranslation('booking.no_slots');
+                const noSlotsText = window.translationManager ?
+                    window.translationManager.getTranslation('booking.no_slots') :
+                    'Aucun créneau disponible pour cette date.';
                 timeSlots.innerHTML = `<p class="no-slots">${noSlotsText}</p>`;
                 return;
             }
@@ -541,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const slotElement = document.createElement('div');
                     slotElement.className = 'time-slot';
                     
-                    const isFrench = !translationManager || translationManager.getCurrentLanguage() === 'fr';
+                    const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
                     const timeOptions = { hour: '2-digit', minute: '2-digit' };
                     
                     slotElement.innerHTML = `
@@ -560,20 +553,24 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!hasFutureSlots) {
-                const noFutureSlotsText = getTranslation('booking.no_future_slots');
+                const noFutureSlotsText = window.translationManager ?
+                    window.translationManager.getTranslation('booking.no_future_slots') :
+                    'Tous les créneaux sont complets pour aujourd\'hui.';
                 timeSlots.innerHTML = `<p class="no-slots">${noFutureSlotsText}</p>`;
             }
 
         } catch (error) {
             console.error('Erreur chargement créneaux:', error);
             
-            const errorTitle = getTranslation('booking.error_loading');
+            const errorTitle = window.translationManager ?
+                window.translationManager.getTranslation('booking.error_loading') :
+                'Erreur lors du chargement des créneaux';
             
             timeSlots.innerHTML = `
                 <div class="error-slots">
                     <i class="fas fa-exclamation-triangle"></i>
                     <p>${errorTitle}</p>
-                    <p class="error-details">${error.message || getTranslation('booking.error.try_again')}</p>
+                    <p class="error-details">${error.message || 'Veuillez réessayer'}</p>
                 </div>
             `;
         }
@@ -604,7 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         selectedSlot = slot;
         
-        const isFrench = !translationManager || translationManager.getCurrentLanguage() === 'fr';
+        const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
         const timeOptions = { hour: '2-digit', minute: '2-digit' };
         
         selectedTime = new Date(slot.start).toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions);
@@ -639,20 +636,20 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             if (window.packagesManager) {
                 const hasCredits = await window.packagesManager.hasCreditForDuration(user.id, courseType, duration);
-                console.log(getTranslation('booking.credits_check', [courseType, duration, hasCredits]));
+                console.log(`💳 Crédits disponibles pour ${courseType} ${duration}min:`, hasCredits);
                 
                 if (hasCredits) {
-                    submitBtn.innerHTML = `<i class="fas fa-ticket-alt"></i> ${getTranslation('booking.button.book_with_credit', [duration])}`;
+                    submitBtn.innerHTML = `<i class="fas fa-ticket-alt"></i> Réserver avec un crédit (${duration}min)`;
                     submitBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
-                    console.log(getTranslation('booking.button.changed_to_credit', [duration]));
+                    console.log(`✅ Bouton changé: "Réserver avec un crédit (${duration}min)"`);
                 } else {
                     submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
                     submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
-                    console.log(getTranslation('booking.button.no_credits', [duration]));
+                    console.log(`❌ Pas de crédits pour ${duration}min, bouton normal`);
                 }
             }
         } catch (error) {
-            console.warn(getTranslation('booking.credits_check_error'), error);
+            console.warn('Erreur vérification crédits:', error);
         }
     }
 
@@ -667,7 +664,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let courseName = '-';
         let price = '-';
         let duration = '-';
-        let platform = getTranslation('booking.platform.google_meet');
+        let platform = 'Google Meet';
         const coursesCount = parseInt(coursesCountInput.value);
         const discountPercent = parseFloat(discountPercentInput.value);
         
@@ -675,41 +672,41 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Plateforme
         const locationValue = selectedLocationInput.value;
-        if (locationValue.includes('zoom')) platform = getTranslation('booking.platform.zoom');
-        else if (locationValue.includes('google')) platform = getTranslation('booking.platform.google_meet');
-        else if (locationValue.includes('teams')) platform = getTranslation('booking.platform.teams');
+        if (locationValue.includes('zoom')) platform = 'Zoom';
+        else if (locationValue.includes('google')) platform = 'Google Meet';
+        else if (locationValue.includes('teams')) platform = 'Microsoft Teams';
 
         // COURS D'ESSAI - Prix fixe
         if (courseType === 'essai') {
             console.log('🎫 Cours d\'essai');
-            courseName = getTranslation('courses.trial');
-            duration = getTranslation('booking.duration.trial'); // ✅ CORRECTION: Toujours 15 minutes pour l'essai
+            courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
+            duration = '15 min'; // ✅ CORRECTION: Toujours 15 minutes pour l'essai
             
             // Prix fixe 5 EUR - converti dans la devise courante
             if (window.currencyManager) {
                 const convertedPrice = window.currencyManager.convert(5, 'EUR', window.currencyManager.currentCurrency);
                 price = window.currencyManager.formatPriceInCurrency(convertedPrice, window.currencyManager.currentCurrency);
             } else {
-                price = getTranslation('booking.price.trial');
+                price = '5€';
             }
             
-            console.log(getTranslation('booking.price.trial_display', [price]));
+            console.log(`✅ Prix essai: ${price}`);
         } 
         // COURS PAYANTS - APPELER calculate_price_estimate() (DB-ONLY)
         else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
             if (courseType === 'conversation') {
-                courseName = getTranslation('courses.conversation');
+                courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
             } else if (courseType === 'curriculum') {
-                courseName = getTranslation('courses.curriculum');
+                courseName = window.translationManager ? window.translationManager.getTranslation('courses.curriculum') : 'Curriculum complet';
             } else if (courseType === 'examen') {
-                courseName = getTranslation('courses.exam');
+                courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
             }
             
             if (user && durationGroup.classList.contains('visible')) {
                 const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
-                duration = selectedDuration + ' ' + getTranslation('booking.unit.minutes');
+                duration = selectedDuration + ' min';
                 
-                console.log(getTranslation('booking.calling_price_estimate'));
+                console.log(`📞 Appel calculate_price_estimate() pour afficher prix`);
                 
                 // ✅ APPELER RPC calculate_price_estimate() (DB-ONLY)
                 if (window.supabase && selectedDate && selectedSlot) {
@@ -722,15 +719,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             cachedIntentData.quantity === coursesCount &&
                             cachedIntentData.lastCurrency === currentCurrency) { // Vérifier aussi la devise
                             
-                            console.log(getTranslation('booking.using_cache'));
+                            console.log('📦 Utilisation du cache pour le prix');
                             price = cachedIntentData.displayPrice;
                         } else {
-                            console.log(getTranslation('booking.rpc_estimate_params', {
+                            console.log('📤 Paramètres RPC estimate:', {
                                 p_user_id: user.id,
                                 p_course_type: courseType,
                                 p_duration: selectedDuration,
                                 p_quantity: coursesCount
-                            }));
+                            });
 
                             // ✅ APPEL RPC (DB-ONLY)
                             const { data: priceEstimate, error: estimateError } = await supabase.rpc('calculate_price_estimate', {
@@ -740,18 +737,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                 p_quantity: coursesCount
                             });
                             
-                            console.log(getTranslation('booking.rpc_estimate_response'), { priceEstimate, estimateError });
+                            console.log('📥 Réponse RPC estimate:', { priceEstimate, estimateError });
                             
                             if (estimateError) {
-                                console.error(getTranslation('booking.rpc_estimate_error'), estimateError);
+                                console.error('❌ Erreur RPC calculate_price_estimate:', estimateError);
                                 console.error('   Code:', estimateError.code);
                                 console.error('   Message:', estimateError.message);
-                                price = getTranslation('booking.error.price_calculation');
+                                price = 'Erreur calcul';
                             } else if (!priceEstimate || !priceEstimate.success) {
-                                console.warn(getTranslation('booking.rpc_estimate_failed'), priceEstimate);
-                                price = getTranslation('booking.error.booking_preparation');
+                                console.warn('⚠️ RPC estimate échoué:', priceEstimate);
+                                price = 'Prix à calculer';
                             } else {
-                                console.log(getTranslation('booking.price_estimated_by_rpc'), priceEstimate.price, priceEstimate.currency);
+                                console.log('✅ Prix estimé par RPC (DB):', priceEstimate.price, priceEstimate.currency);
                                 
                                 // Formater le prix dans la devise courante
                                 if (window.currencyManager) {
@@ -782,27 +779,27 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
                     } catch (catchError) {
-                        console.error(getTranslation('booking.rpc_estimate_exception'), catchError);
+                        console.error('❌ Exception appel RPC estimate:', catchError);
                         console.error('   Type:', catchError.name);
                         console.error('   Message:', catchError.message);
-                        price = getTranslation('booking.error.price_calculation');
+                        price = 'Erreur calcul';
                     }
                 } else {
-                    price = getTranslation('booking.status.select_date_time');
+                    price = 'Sélectionnez date et heure';
                 }
                 
-                console.log(getTranslation('booking.final_price_display', [price]));
+                console.log(`✅ Prix final affiché: ${price}`);
                 
             } else {
-                duration = getTranslation('booking.duration.default');
-                price = getTranslation('booking.status.connect_to_see_price');
+                duration = '60 min';
+                price = 'Connectez-vous';
             }
         }
         
         // FORMATER LA DATE (utilisée pour les deux récapitulatifs)
         let formattedDate = '-';
         if (selectedDate) {
-            const isFrench = !translationManager || translationManager.getCurrentLanguage() === 'fr';
+            const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
             const dateObj = new Date(selectedDate);
             formattedDate = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
                 weekday: 'short',
@@ -816,10 +813,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('summaryType').textContent = courseName;
         
         if (courseType === 'essai') {
-            document.getElementById('summaryCoursesCount').textContent = `1 ${getTranslation('booking.courses')}`;
+            document.getElementById('summaryCoursesCount').textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
             document.getElementById('summaryDiscount').textContent = '0%';
         } else {
-            document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${getTranslation('booking.courses')}`;
+            document.getElementById('summaryCoursesCount').textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
             document.getElementById('summaryDiscount').textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
         }
         
@@ -833,7 +830,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
             summaryPriceElement.classList.add('vip-price-display');
-            summaryPriceElement.title = getTranslation('booking.vip_price_title');
+            summaryPriceElement.title = "Prix VIP personnel";
         } else {
             summaryPriceElement.classList.remove('vip-price-display');
             summaryPriceElement.title = "";
@@ -853,10 +850,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (mobileSummaryType) mobileSummaryType.textContent = courseName;
             
             if (courseType === 'essai') {
-                if (mobileSummaryCoursesCount) mobileSummaryCoursesCount.textContent = `1 ${getTranslation('booking.courses')}`;
+                if (mobileSummaryCoursesCount) mobileSummaryCoursesCount.textContent = `1 ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
                 if (mobileSummaryDiscount) mobileSummaryDiscount.textContent = '0%';
             } else {
-                if (mobileSummaryCoursesCount) mobileSummaryCoursesCount.textContent = `${coursesCount} ${getTranslation('booking.courses')}`;
+                if (mobileSummaryCoursesCount) mobileSummaryCoursesCount.textContent = `${coursesCount} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}`;
                 if (mobileSummaryDiscount) mobileSummaryDiscount.textContent = discountPercent > 0 ? `-${discountPercent}%` : '0%';
             }
             
@@ -870,7 +867,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (isVipUser && courseType !== 'essai' && cachedIntentData?.is_vip) {
                     mobileSummaryPriceElement.classList.add('vip-price-display');
-                    mobileSummaryPriceElement.title = getTranslation('booking.vip_price_title');
+                    mobileSummaryPriceElement.title = "Prix VIP personnel";
                 } else {
                     mobileSummaryPriceElement.classList.remove('vip-price-display');
                     mobileSummaryPriceElement.title = "";
@@ -878,7 +875,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (mobileUpdateError) {
             // Erreur silencieuse - normal si les éléments mobiles n'existent pas
-            console.log(getTranslation('booking.mobile_update_ignored'));
+            console.log('Note: Mise à jour mobile ignorée');
         }
 
         const canSubmit = selectedDate && selectedTime && courseType && 
