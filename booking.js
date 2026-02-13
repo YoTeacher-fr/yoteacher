@@ -614,7 +614,7 @@ class BookingManager {
                 // ✅ PRIX DEPUIS LA DB (SOURCE UNIQUE)
                 price: intentData.price,
                 currency: intentData.currency,
-                
+                originalCurrency: intentData.currency,
                 duration: duration,
                 location: bookingData.location,
                 

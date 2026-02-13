@@ -199,7 +199,16 @@ class PaymentManager {
             }
 
             console.log('📡 Création PaymentIntent sur le serveur...');
-            
+                    const targetCurrency = window.currencyManager?.currentCurrency || this.currentBooking.currency || 'EUR';
+        const originalCurrency = this.currentBooking.originalCurrency || this.currentBooking.currency; // fallback
+
+        let amount = this.currentBooking.price; // prix en unités monétaires (ex: 1 USD)
+        if (window.currencyManager && originalCurrency !== targetCurrency) {
+            amount = window.currencyManager.convert(amount, originalCurrency, targetCurrency);
+        }
+        const amountInCents = Math.round(amount * 100); // conversion en centimes
+
+        console.log(`💰 Montant pour Stripe: ${amountInCents} ${targetCurrency} (original: ${this.currentBooking.price} ${originalCurrency})`);
                 const intentResponse = await fetch('/api/stripe-payment', {
       method: 'POST',
       headers: {
