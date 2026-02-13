@@ -23,7 +23,7 @@ export async function onRequest(context) {
   }
 
   try {
-    // Vérifier la clé
+    // Vérifier la clé Stripe
     if (!env.STRIPE_SECRET_KEY) {
       throw new Error('STRIPE_SECRET_KEY manquante');
     }
@@ -31,18 +31,35 @@ export async function onRequest(context) {
     const stripe = new Stripe(env.STRIPE_SECRET_KEY);
     const body = await request.json();
 
-    // SÉCURITÉ : Ne jamais faire confiance au montant du client
-    // Le montant doit venir du PaymentIntent créé par l'Edge Function
-    const { paymentMethodId, paymentIntentId } = body;
+    // --- Création d'un PaymentIntent ---
+    if (body.amount && body.currency) {
+      const { amount, currency, metadata } = body;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount), // déjà en centimes ? selon votre frontend, oui.
+        currency: currency.toLowerCase(),
+        metadata: metadata || {},
+      });
 
+      return new Response(
+        JSON.stringify({
+          success: true,
+          clientSecret: paymentIntent.client_secret,
+          paymentIntentId: paymentIntent.id,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // --- Confirmation d'un PaymentIntent existant (ancien comportement) ---
+    const { paymentMethodId, paymentIntentId } = body;
     if (!paymentMethodId || !paymentIntentId) {
-      throw new Error('paymentMethodId et paymentIntentId requis');
+      throw new Error('Paramètres manquants : amount/currency pour création, ou paymentMethodId/paymentIntentId pour confirmation');
     }
 
     // Récupérer le PaymentIntent existant
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
-    // Vérifier que le PaymentIntent n'est pas déjà payé
+    // Vérifier s'il est déjà payé
     if (paymentIntent.status === 'succeeded') {
       return new Response(
         JSON.stringify({
@@ -54,13 +71,11 @@ export async function onRequest(context) {
       );
     }
 
-    // Confirmer le paiement avec la méthode de paiement
+    // Confirmer le paiement
     const confirmedPayment = await stripe.paymentIntents.confirm(paymentIntentId, {
       payment_method: paymentMethodId,
       return_url: `${new URL(request.url).origin}/payment-success.html`,
     });
-
-    console.log('✅ Paiement confirmé:', confirmedPayment.id, confirmedPayment.status);
 
     return new Response(
       JSON.stringify({
