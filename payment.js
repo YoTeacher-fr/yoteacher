@@ -1,4 +1,4 @@
-// payment.js - Version corrigée avec DÉDUCTION CRÉDIT AUTOMATIQUE
+// payment.js - Version OPTIMALE utilisant Cloudflare Function stripe-payment.js
 class PaymentManager {
     constructor() {
         this.stripe = null;
@@ -95,10 +95,8 @@ class PaymentManager {
 
             const user = window.authManager?.getCurrentUser();
             
-            // ✅ AJOUT : Détecter cours d'essai
             const isTrialCourse = this.currentBooking.courseType === 'essai';
             
-            // ✅ AJOUT : Validation conditionnelle
             if (!isTrialCourse && (!user || !user.id)) {
                 throw new Error('Vous devez être connecté pour réserver ce type de cours');
             }
@@ -198,61 +196,156 @@ class PaymentManager {
                 throw new Error('Veuillez vous connecter pour payer par carte');
             }
 
-            console.log('📡 Création PaymentIntent sur le serveur...');
+            // ========================================================================
+            // ÉTAPE 1 : CRÉER LE PAYMENTINTENT via Edge Function Supabase
+            // ========================================================================
+            console.log('📡 Création PaymentIntent sur le serveur Supabase...');
             
-            const intentResponse = await fetch(`${window.YOTEACHER_CONFIG.EDGE_FUNCTIONS_URL}/create-payment-intent`, {
+            const edgeFunctionUrl = `${window.YOTEACHER_CONFIG.EDGE_FUNCTIONS_URL}/create-payment-intent`;
+            
+            const requestBody = {
+                courseType: this.currentBooking.courseType,
+                duration: this.currentBooking.duration || 60,
+                quantity: this.currentBooking.packageQuantity || 1,
+                email: this.currentBooking.studentEmail || session.user.email,
+                name: this.currentBooking.studentName || session.user.user_metadata?.full_name || session.user.email,
+                userId: session.user.id,
+                startTime: this.currentBooking.dateTime,
+                endTime: new Date(new Date(this.currentBooking.dateTime).getTime() + (this.currentBooking.duration || 60) * 60000).toISOString(),
+                location: 'integrations:google:meet'
+            };
+
+            console.log('📤 Données envoyées à Edge Function:', requestBody);
+
+            const intentResponse = await fetch(edgeFunctionUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'x-user-token': session.access_token
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!intentResponse.ok) {
+                const errorText = await intentResponse.text();
+                console.error('❌ Erreur serveur Supabase:', intentResponse.status, errorText);
+                
+                let errorData;
+                try {
+                    errorData = JSON.parse(errorText);
+                } catch {
+                    throw new Error(`Erreur serveur (${intentResponse.status}): ${errorText}`);
+                }
+                
+                throw new Error(errorData.error || 'Erreur création PaymentIntent');
+            }
+
+            const intentData = await intentResponse.json();
+            
+            console.log('📥 Réponse Edge Function:', intentData);
+
+            const { clientSecret, paymentIntentId, intentId } = intentData;
+            
+            if (!clientSecret || !paymentIntentId) {
+                throw new Error('Réponse invalide du serveur');
+            }
+
+            this.clientSecret = clientSecret;
+            this.paymentIntentId = paymentIntentId;
+            
+            if (intentId) {
+                this.currentBooking.intentId = intentId;
+            }
+
+            console.log('✅ PaymentIntent créé:', paymentIntentId);
+
+            // ========================================================================
+            // ÉTAPE 2 : CRÉER LA PAYMENTMETHOD avec Stripe.js
+            // ========================================================================
+            console.log('💳 Création méthode de paiement...');
+            
+            const { paymentMethod, error: pmError } = await this.stripe.createPaymentMethod({
+                type: 'card',
+                card: this.cardElement,
+                billing_details: {
+                    name: this.currentBooking.studentName || session.user.user_metadata?.full_name,
+                    email: this.currentBooking.studentEmail || session.user.email
+                }
+            });
+
+            if (pmError) {
+                throw new Error(pmError.message);
+            }
+
+            console.log('✅ Méthode de paiement créée:', paymentMethod.id);
+
+            // ========================================================================
+            // ÉTAPE 3 : CONFIRMER LE PAIEMENT via Cloudflare Function
+            // ========================================================================
+            console.log('🔐 Confirmation paiement via Cloudflare Function...');
+            
+            const confirmUrl = '/functions/api/stripe-payment';
+            
+            const confirmResponse = await fetch(confirmUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
                 },
                 body: JSON.stringify({
-                    amount: Math.round(this.currentBooking.price * 100),
-                    currency: this.currentBooking.currency || 'eur',
-                    metadata: {
-                        bookingId: this.currentBooking.id,
-                        intentId: this.currentBooking.intentId,
-                        courseType: this.currentBooking.courseType,
-                        packageQuantity: this.currentBooking.packageQuantity,
-                        userId: session.user.id
-                    }
+                    paymentMethodId: paymentMethod.id,
+                    paymentIntentId: this.paymentIntentId
                 })
             });
 
-            if (!intentResponse.ok) {
-                const errorData = await intentResponse.json();
-                throw new Error(errorData.error || 'Erreur création PaymentIntent');
-            }
-
-            const { clientSecret, paymentIntentId } = await intentResponse.json();
-            
-            this.clientSecret = clientSecret;
-            this.paymentIntentId = paymentIntentId;
-
-            console.log('✅ PaymentIntent créé:', paymentIntentId);
-            console.log('💳 Confirmation du paiement...');
-
-            const { error: confirmError, paymentIntent } = await this.stripe.confirmCardPayment(
-                clientSecret,
-                {
-                    payment_method: {
-                        card: this.cardElement,
-                        billing_details: {
-                            name: this.currentBooking.name,
-                            email: this.currentBooking.email
-                        }
-                    }
+            if (!confirmResponse.ok) {
+                const errorText = await confirmResponse.text();
+                console.error('❌ Erreur confirmation Cloudflare:', confirmResponse.status, errorText);
+                
+                let errorData;
+                try {
+                    errorData = JSON.parse(errorText);
+                } catch {
+                    throw new Error(`Erreur confirmation (${confirmResponse.status}): ${errorText}`);
                 }
-            );
-
-            if (confirmError) {
-                throw new Error(confirmError.message);
+                
+                throw new Error(errorData.error || 'Erreur confirmation paiement');
             }
 
-            if (paymentIntent.status === 'succeeded') {
-                console.log('✅ Paiement réussi:', paymentIntent.id);
+            const confirmation = await confirmResponse.json();
+            
+            console.log('📥 Réponse Cloudflare Function:', confirmation);
 
-                const result = await this.processManualPayment('stripe', session.user, paymentIntent.id);
+            if (!confirmation.success) {
+                throw new Error(confirmation.error || 'Erreur confirmation paiement');
+            }
+
+            // ========================================================================
+            // ÉTAPE 4 : GÉRER 3D SECURE si nécessaire
+            // ========================================================================
+            if (confirmation.requiresAction && confirmation.clientSecret) {
+                console.log('🔐 Action supplémentaire requise (3D Secure)...');
+                
+                const { error: actionError } = await this.stripe.handleCardAction(
+                    confirmation.clientSecret
+                );
+
+                if (actionError) {
+                    throw new Error(actionError.message);
+                }
+                
+                console.log('✅ 3D Secure complété');
+            }
+
+            // Vérifier le statut final
+            if (confirmation.status === 'succeeded' || confirmation.alreadyPaid) {
+                console.log('✅ Paiement confirmé avec succès');
+
+                // ========================================================================
+                // ÉTAPE 5 : ENREGISTRER DANS SUPABASE
+                // ========================================================================
+                const result = await this.processManualPayment('stripe', session.user, this.paymentIntentId, false);
                 
                 if (result.success) {
                     setTimeout(() => {
@@ -262,22 +355,22 @@ class PaymentManager {
                     throw new Error(result.error || 'Erreur enregistrement paiement');
                 }
             } else {
-                throw new Error('Le paiement n\'a pas été confirmé');
+                throw new Error(`Paiement non confirmé. Statut: ${confirmation.status}`);
             }
 
         } catch (error) {
             console.error('❌ Erreur paiement Stripe:', error);
             
-            const errorElement = document.getElementById('card-errors');
-            if (errorElement) {
-                errorElement.textContent = error.message;
-                errorElement.style.display = 'block';
-            }
-
             const processBtn = document.getElementById('processCardPayment');
             if (processBtn) {
                 processBtn.disabled = false;
-                processBtn.innerHTML = '<i class="fas fa-credit-card"></i> Payer par carte';
+                processBtn.innerHTML = '<i class="fas fa-lock"></i> Payer par carte';
+            }
+            
+            const errorDiv = document.getElementById('card-errors');
+            if (errorDiv) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
             }
             
             throw error;
@@ -286,112 +379,66 @@ class PaymentManager {
 
     async processManualPayment(method, user, transactionId = null, isTrialCourse = false) {
         try {
-            if (!isTrialCourse && (!user || !user.id)) {
-                throw new Error('Utilisateur non authentifié');
-            }
-
+            console.log(`💰 Traitement paiement ${method}...`);
+            
             if (!transactionId) {
-                transactionId = `${method.toUpperCase()}-${Date.now()}`;
+                transactionId = `${method.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             }
 
-            console.log('💰 Traitement paiement manuel:', {
-                method: method,
-                userId: user?.id || 'anonymous',
-                transactionId: transactionId,
-                isTrialCourse: isTrialCourse,
-                isPackage: this.currentBooking.isPackage,
-                packageQuantity: this.currentBooking.packageQuantity
-            });
+            let supabaseBookingId = null;
+            
+            if (this.currentBooking.intentId) {
+                console.log('📋 Création booking dans Supabase avec intent_id...');
+                
+                const bookingInsert = {
+                    intent_id: this.currentBooking.intentId,
+                    student_email: this.currentBooking.studentEmail || user?.email,
+                    course_type: this.currentBooking.courseType,
+                    duration: this.currentBooking.duration || 60,
+                    scheduled_at: this.currentBooking.dateTime,
+                    price: this.currentBooking.price,
+                    currency: this.currentBooking.currency,
+                    payment_method: method,
+                    status: isTrialCourse ? 'confirmed' : 'pending',
+                    calcom_uid: this.currentBooking.calcomUid || null,
+                    meeting_link: this.currentBooking.meetingLink || null
+                };
 
-            // ============================================================================
-            // ÉTAPE 1 : CRÉER D'ABORD LA RÉSERVATION CAL.COM ET SUPABASE
-            // ============================================================================
-            console.log('📞 Création réservation Cal.com et Supabase...');
-            
-            if (!window.bookingManager) {
-                throw new Error('BookingManager non disponible');
-            }
-            
-            const bookingForCalcom = {
-                startTime: this.currentBooking.startTime,
-                endTime: this.currentBooking.endTime,
-                eventType: this.currentBooking.courseType,
-                courseType: this.currentBooking.courseType,
-                duration: this.currentBooking.duration || 60,
-                location: this.currentBooking.location || 'integrations:google:meet',
-                name: this.currentBooking.name,
-                email: this.currentBooking.email,
-                notes: this.currentBooking.notes || '',
-                userId: user?.id,
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                language: 'fr',
-                
-                // Prix à 0 si multi-cours (sera payé par crédit)
-                price: (this.currentBooking.isPackage && this.currentBooking.packageQuantity > 1) ? 0 : this.currentBooking.price,
-                currency: this.currentBooking.currency,
-                paymentMethod: method,
-                transactionId: transactionId,
-                
-                // Données pour confirmer le booking
-                intentId: this.currentBooking.intentId,
-                status: 'pending' // Sera confirmé après création forfait
-            };
-            
-            console.log('📤 Données Cal.com:', {
-                courseType: bookingForCalcom.courseType,
-                startTime: bookingForCalcom.startTime,
-                duration: bookingForCalcom.duration,
-                intentId: bookingForCalcom.intentId,
-                userId: bookingForCalcom.userId || 'anonymous'
-            });
-            
-            // Créer la réservation (Cal.com + Supabase)
-            const bookingResult = await window.bookingManager.createBookingAfterPayment(bookingForCalcom);
-            
-            if (!bookingResult.success) {
-                console.error('❌ Échec création réservation:', bookingResult);
-                throw new Error(`Échec création réservation: ${bookingResult.error || 'Erreur inconnue'}`);
-            }
-            
-            const supabaseBookingId = bookingResult.supabaseBookingId;
-            
-            console.log('✅ Réservation créée:', {
-                supabase_id: supabaseBookingId,
-                calcom_id: bookingResult.data?.id,
-                calcom_uid: bookingResult.data?.uid,
-                meeting_link: bookingResult.data?.location
-            });
-            
-            // Mettre à jour les données locales
-            this.currentBooking.calcomId = bookingResult.data?.id || bookingResult.data?.uid;
-            this.currentBooking.calcomUid = bookingResult.data?.uid;
-            this.currentBooking.meetingLink = bookingResult.data?.location;
-            this.currentBooking.supabaseBookingId = supabaseBookingId;
+                if (user && user.id) {
+                    bookingInsert.user_id = user.id;
+                }
 
-            // ============================================================================
-            // ÉTAPE 2 : TRAITER SELON LE TYPE DE COURS
-            // ============================================================================
-            
-            // ✅ AJOUT : Gestion spécifique pour cours d'essai
-            if (isTrialCourse) {
-                console.log('🎫 Cours d\'essai - Confirmation directe sans forfait');
-                
-                // Confirmer la réservation (SEULEMENT status, comme code original)
-                const { error: confirmError } = await window.supabase
+                const { data: bookingData, error: bookingError } = await window.supabase
                     .from('bookings')
-                    .update({
-                        status: 'confirmed'
-                    })
-                    .eq('id', supabaseBookingId);
+                    .insert(bookingInsert)
+                    .select('id')
+                    .single();
                 
-                if (confirmError) {
-                    console.error('❌ Erreur confirmation cours d\'essai:', confirmError);
-                    throw new Error('Erreur confirmation: ' + confirmError.message);
+                if (bookingError) {
+                    console.error('❌ Erreur création booking:', bookingError);
+                    throw new Error(`Impossible de créer la réservation: ${bookingError.message}`);
+                }
+                
+                supabaseBookingId = bookingData.id;
+                console.log('✅ Booking créé avec ID:', supabaseBookingId);
+            }
+
+            if (isTrialCourse) {
+                console.log('🎓 Traitement cours d\'essai - Pas de création de forfait');
+                
+                if (supabaseBookingId) {
+                    const { error: updateError } = await window.supabase
+                        .from('bookings')
+                        .update({ status: 'confirmed' })
+                        .eq('id', supabaseBookingId);
+                    
+                    if (updateError) {
+                        console.warn('⚠️ Erreur confirmation cours d\'essai:', updateError);
+                    }
                 }
                 
                 console.log('✅ Cours d\'essai confirmé');
                 
-                // Récupérer le booking_number (EXACTEMENT comme code original)
                 const { data: bookingData, error: fetchError } = await window.supabase
                     .from('bookings')
                     .select('booking_number, status')
@@ -417,9 +464,6 @@ class PaymentManager {
                 };
             }
 
-            // ============================================================================
-            // ÉTAPE 2 (COURS PAYANTS) : CRÉER LE FORFAIT AVEC LE BOOKING_ID (si multi-cours)
-            // ============================================================================
             let packageId = null;
             
             if (this.currentBooking.isPackage && this.currentBooking.packageQuantity > 1) {
@@ -434,7 +478,7 @@ class PaymentManager {
                         p_price_paid: this.currentBooking.price,
                         p_currency: this.currentBooking.currency,
                         p_stripe_payment_id: transactionId,
-                        p_booking_id: supabaseBookingId // ✅ PASSÉ ICI : le crédit sera déduit automatiquement
+                        p_booking_id: supabaseBookingId
                     });
                 
                 if (packageError) {
@@ -450,16 +494,13 @@ class PaymentManager {
                 console.log('✅ Forfait créé avec déduction automatique du 1er crédit:', {
                     package_id: packageId,
                     total_credits: this.currentBooking.packageQuantity,
-                    remaining_credits: packageResult.remaining_credits, // Devrait être quantity - 1
+                    remaining_credits: packageResult.remaining_credits,
                     expires_at: packageResult.expires_at
                 });
                 
                 this.currentBooking.packageId = packageId;
             }
 
-            // ============================================================================
-            // ÉTAPE 3 : CONFIRMER LE BOOKING DANS SUPABASE
-            // ============================================================================
             if (supabaseBookingId) {
                 console.log('✅ Confirmation du booking dans Supabase...');
                 
@@ -478,9 +519,6 @@ class PaymentManager {
                 }
             }
             
-            // ============================================================================
-            // ÉTAPE 4 : RÉCUPÉRER LE BOOKING NUMBER DEPUIS SUPABASE
-            // ============================================================================
             if (supabaseBookingId) {
                 console.log('📋 Récupération booking_number depuis Supabase...');
                 
@@ -501,9 +539,6 @@ class PaymentManager {
                 this.currentBooking.bookingNumber = `BK-${method.toUpperCase()}-${Date.now().toString().slice(-8)}`;
             }
 
-            // ============================================================================
-            // ÉTAPE 5 : SAUVEGARDER ET REDIRIGER
-            // ============================================================================
             const finalBookingData = {
                 ...this.currentBooking,
                 paymentMethod: method,
@@ -577,4 +612,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('✅ PaymentManager chargé (version CRÉDIT AUTO-DÉDUIT lors achat forfait)');
+console.log('✅ PaymentManager chargé (version OPTIMALE avec Cloudflare Function)');

@@ -27,6 +27,8 @@ const config = {
     // Supabase
     SUPABASE_URL: process.env.SUPABASE_URL || '',
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
+EDGE_FUNCTIONS_URL: process.env.EDGE_FUNCTIONS_URL || (process.env.SUPABASE_URL ? process.env.SUPABASE_URL.replace('.supabase.co', '.supabase.co/functions/v1') : ''),
+
     
     // Stripe
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || '',
