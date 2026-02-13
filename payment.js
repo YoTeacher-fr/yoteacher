@@ -200,34 +200,35 @@ class PaymentManager {
 
             console.log('📡 Création PaymentIntent sur le serveur...');
             
-            const intentResponse = await fetch(`${window.YOTEACHER_CONFIG.EDGE_FUNCTIONS_URL}/create-payment-intent`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    amount: Math.round(this.currentBooking.price * 100),
-                    currency: this.currentBooking.currency || 'eur',
-                    metadata: {
-                        bookingId: this.currentBooking.id,
-                        intentId: this.currentBooking.intentId,
-                        courseType: this.currentBooking.courseType,
-                        packageQuantity: this.currentBooking.packageQuantity,
-                        userId: session.user.id
-                    }
-                })
-            });
+                const intentResponse = await fetch('/api/stripe-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+        // Plus besoin du token Supabase ici, car l'API Cloudflare n'en a pas besoin pour créer un PaymentIntent.
+        // Si vous souhaitez sécuriser l'accès, vous pouvez ajouter un système de token interne, mais ce n'est pas obligatoire.
+      },
+      body: JSON.stringify({
+        amount: Math.round(this.currentBooking.price * 100), // en centimes
+        currency: this.currentBooking.currency || 'eur',
+        metadata: {
+          bookingId: this.currentBooking.id,
+          intentId: this.currentBooking.intentId,
+          courseType: this.currentBooking.courseType,
+          packageQuantity: this.currentBooking.packageQuantity,
+          userId: session.user.id
+        }
+      })
+    });
 
-            if (!intentResponse.ok) {
-                const errorData = await intentResponse.json();
-                throw new Error(errorData.error || 'Erreur création PaymentIntent');
-            }
+    if (!intentResponse.ok) {
+      const errorData = await intentResponse.json();
+      throw new Error(errorData.error || 'Erreur création PaymentIntent');
+    }
 
-            const { clientSecret, paymentIntentId } = await intentResponse.json();
-            
-            this.clientSecret = clientSecret;
-            this.paymentIntentId = paymentIntentId;
+    const { clientSecret, paymentIntentId } = await intentResponse.json();
+    
+    this.clientSecret = clientSecret;
+    this.paymentIntentId = paymentIntentId;
 
             console.log('✅ PaymentIntent créé:', paymentIntentId);
             console.log('💳 Confirmation du paiement...');
