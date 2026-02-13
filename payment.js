@@ -1,4 +1,4 @@
-// payment.js - Version corrigée avec DÉDUCTION CRÉDIT AUTOMATIQUE
+// payment.js - Version corrigée (uniquement pour Stripe)
 class PaymentManager {
     constructor() {
         this.stripe = null;
@@ -95,10 +95,8 @@ class PaymentManager {
 
             const user = window.authManager?.getCurrentUser();
             
-            // ✅ AJOUT : Détecter cours d'essai
             const isTrialCourse = this.currentBooking.courseType === 'essai';
             
-            // ✅ AJOUT : Validation conditionnelle
             if (!isTrialCourse && (!user || !user.id)) {
                 throw new Error('Vous devez être connecté pour réserver ce type de cours');
             }
@@ -108,6 +106,7 @@ class PaymentManager {
                 return;
             }
 
+            // Pour les autres méthodes (Revolut, Wise, etc.), on appelle processManualPayment sans valeurs réelles
             const result = await this.processManualPayment(method, user, null, isTrialCourse);
             
             if (result.success) {
@@ -198,46 +197,45 @@ class PaymentManager {
                 throw new Error('Veuillez vous connecter pour payer par carte');
             }
 
-            console.log('📡 Création PaymentIntent sur le serveur...');
-                    const targetCurrency = window.currencyManager?.currentCurrency || this.currentBooking.currency || 'EUR';
-        const originalCurrency = this.currentBooking.originalCurrency || this.currentBooking.currency; // fallback
+            // Déterminer la devise cible (celle affichée dans l'interface)
+            const targetCurrency = window.currencyManager?.currentCurrency || this.currentBooking.currency || 'EUR';
+            const originalCurrency = this.currentBooking.currency; // devise d'origine (celle de la base)
 
-        let amount = this.currentBooking.price; // prix en unités monétaires (ex: 1 USD)
-        if (window.currencyManager && originalCurrency !== targetCurrency) {
-            amount = window.currencyManager.convert(amount, originalCurrency, targetCurrency);
-        }
-        const amountInCents = Math.round(amount * 100); // conversion en centimes
+            let amount = this.currentBooking.price; // prix en unités monétaires
+            if (window.currencyManager && originalCurrency !== targetCurrency) {
+                amount = window.currencyManager.convert(amount, originalCurrency, targetCurrency);
+            }
+            const amountInCents = Math.round(amount * 100); // conversion en centimes
 
-        console.log(`💰 Montant pour Stripe: ${amountInCents} ${targetCurrency} (original: ${this.currentBooking.price} ${originalCurrency})`);
-                const intentResponse = await fetch('/api/stripe-payment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-        // Plus besoin du token Supabase ici, car l'API Cloudflare n'en a pas besoin pour créer un PaymentIntent.
-        // Si vous souhaitez sécuriser l'accès, vous pouvez ajouter un système de token interne, mais ce n'est pas obligatoire.
-      },
-      body: JSON.stringify({
-        amount: Math.round(this.currentBooking.price * 100), // en centimes
-        currency: this.currentBooking.currency || 'eur',
-        metadata: {
-          bookingId: this.currentBooking.id,
-          intentId: this.currentBooking.intentId,
-          courseType: this.currentBooking.courseType,
-          packageQuantity: this.currentBooking.packageQuantity,
-          userId: session.user.id
-        }
-      })
-    });
+            console.log(`💰 Montant pour Stripe: ${amountInCents} ${targetCurrency} (original: ${this.currentBooking.price} ${originalCurrency})`);
 
-    if (!intentResponse.ok) {
-      const errorData = await intentResponse.json();
-      throw new Error(errorData.error || 'Erreur création PaymentIntent');
-    }
+            const intentResponse = await fetch('/api/stripe-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: amountInCents,
+                    currency: targetCurrency.toLowerCase(), // important : minuscules pour Stripe
+                    metadata: {
+                        bookingId: this.currentBooking.id,
+                        intentId: this.currentBooking.intentId,
+                        courseType: this.currentBooking.courseType,
+                        packageQuantity: this.currentBooking.packageQuantity,
+                        userId: session.user.id,
+                        originalAmount: this.currentBooking.price,
+                        originalCurrency: originalCurrency
+                    }
+                })
+            });
 
-    const { clientSecret, paymentIntentId } = await intentResponse.json();
-    
-    this.clientSecret = clientSecret;
-    this.paymentIntentId = paymentIntentId;
+            if (!intentResponse.ok) {
+                const errorData = await intentResponse.json();
+                throw new Error(errorData.error || 'Erreur création PaymentIntent');
+            }
+
+            const { clientSecret, paymentIntentId } = await intentResponse.json();
+            
+            this.clientSecret = clientSecret;
+            this.paymentIntentId = paymentIntentId;
 
             console.log('✅ PaymentIntent créé:', paymentIntentId);
             console.log('💳 Confirmation du paiement...');
@@ -260,9 +258,17 @@ class PaymentManager {
             }
 
             if (paymentIntent.status === 'succeeded') {
-                console.log('✅ Paiement réussi:', paymentIntent.id);
+                console.log('✅ Paiement réussi:', paymentIntent.id, 'devise:', paymentIntent.currency, 'montant:', paymentIntent.amount);
 
-                const result = await this.processManualPayment('stripe', session.user, paymentIntent.id);
+                // ⭐ Appel à processManualPayment avec les valeurs réelles du paiement
+                const result = await this.processManualPayment(
+                    'stripe', 
+                    session.user, 
+                    paymentIntent.id, 
+                    false, // isTrialCourse
+                    paymentIntent.amount / 100, // montant en unités
+                    paymentIntent.currency.toUpperCase() // devise en majuscules
+                );
                 
                 if (result.success) {
                     setTimeout(() => {
@@ -294,7 +300,8 @@ class PaymentManager {
         }
     }
 
-    async processManualPayment(method, user, transactionId = null, isTrialCourse = false) {
+    // ⭐ MODIFIÉ : ajout de actualPrice et actualCurrency (optionnels) pour Stripe
+    async processManualPayment(method, user, transactionId = null, isTrialCourse = false, actualPrice = null, actualCurrency = null) {
         try {
             if (!isTrialCourse && (!user || !user.id)) {
                 throw new Error('Utilisateur non authentifié');
@@ -304,13 +311,19 @@ class PaymentManager {
                 transactionId = `${method.toUpperCase()}-${Date.now()}`;
             }
 
+            // ⭐ Utiliser les valeurs fournies si elles existent, sinon celles de currentBooking
+            const pricePaid = actualPrice !== null ? actualPrice : this.currentBooking.price;
+            const currencyPaid = actualCurrency !== null ? actualCurrency : this.currentBooking.currency;
+
             console.log('💰 Traitement paiement manuel:', {
                 method: method,
                 userId: user?.id || 'anonymous',
                 transactionId: transactionId,
                 isTrialCourse: isTrialCourse,
                 isPackage: this.currentBooking.isPackage,
-                packageQuantity: this.currentBooking.packageQuantity
+                packageQuantity: this.currentBooking.packageQuantity,
+                pricePaid: pricePaid,
+                currencyPaid: currencyPaid
             });
 
             // ============================================================================
@@ -337,8 +350,8 @@ class PaymentManager {
                 language: 'fr',
                 
                 // Prix à 0 si multi-cours (sera payé par crédit)
-                price: (this.currentBooking.isPackage && this.currentBooking.packageQuantity > 1) ? 0 : this.currentBooking.price,
-                currency: this.currentBooking.currency,
+                price: (this.currentBooking.isPackage && this.currentBooking.packageQuantity > 1) ? 0 : pricePaid,
+                currency: currencyPaid,
                 paymentMethod: method,
                 transactionId: transactionId,
                 
@@ -382,11 +395,11 @@ class PaymentManager {
             // ÉTAPE 2 : TRAITER SELON LE TYPE DE COURS
             // ============================================================================
             
-            // ✅ AJOUT : Gestion spécifique pour cours d'essai
+            // Gestion spécifique pour cours d'essai
             if (isTrialCourse) {
                 console.log('🎫 Cours d\'essai - Confirmation directe sans forfait');
                 
-                // Confirmer la réservation (SEULEMENT status, comme code original)
+                // Confirmer la réservation
                 const { error: confirmError } = await window.supabase
                     .from('bookings')
                     .update({
@@ -401,7 +414,7 @@ class PaymentManager {
                 
                 console.log('✅ Cours d\'essai confirmé');
                 
-                // Récupérer le booking_number (EXACTEMENT comme code original)
+                // Récupérer le booking_number
                 const { data: bookingData, error: fetchError } = await window.supabase
                     .from('bookings')
                     .select('booking_number, status')
@@ -441,10 +454,10 @@ class PaymentManager {
                         p_course_type: this.currentBooking.courseType,
                         p_duration: this.currentBooking.duration || 60,
                         p_quantity: this.currentBooking.packageQuantity,
-                        p_price_paid: this.currentBooking.price,
-                        p_currency: this.currentBooking.currency,
+                        p_price_paid: pricePaid,          // ← valeur mise à jour
+                        p_currency: currencyPaid,          // ← valeur mise à jour
                         p_stripe_payment_id: transactionId,
-                        p_booking_id: supabaseBookingId // ✅ PASSÉ ICI : le crédit sera déduit automatiquement
+                        p_booking_id: supabaseBookingId
                     });
                 
                 if (packageError) {
@@ -460,7 +473,7 @@ class PaymentManager {
                 console.log('✅ Forfait créé avec déduction automatique du 1er crédit:', {
                     package_id: packageId,
                     total_credits: this.currentBooking.packageQuantity,
-                    remaining_credits: packageResult.remaining_credits, // Devrait être quantity - 1
+                    remaining_credits: packageResult.remaining_credits,
                     expires_at: packageResult.expires_at
                 });
                 
@@ -477,7 +490,9 @@ class PaymentManager {
                     .from('bookings')
                     .update({ 
                         status: 'confirmed',
-                        package_id: packageId
+                        package_id: packageId,
+                        price_paid: pricePaid,          // ← mise à jour avec la valeur réelle
+                        currency: currencyPaid           // ← mise à jour avec la devise réelle
                     })
                     .eq('id', supabaseBookingId);
                 
