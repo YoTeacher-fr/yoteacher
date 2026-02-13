@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="signup.css">
-    <link rel="stylesheet" href="auth-ui.css">
+<link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
     <!-- Header simplifié sans navlinks -->
@@ -111,7 +111,7 @@
                         <span data-i18n="signup.have_account">Déjà un compte ?</span><br /> 
                         <a href="login.html" class="auth-link" data-i18n="login.sign_in">Se connecter</a>
                     </p>
-    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -131,30 +131,6 @@
             const successDiv = document.getElementById('successMessage');
             const errorText = document.getElementById('errorText');
             const successText = document.getElementById('successText');
-            
-            function getTranslation(key, params = []) {
-                if (window.translationManager) {
-                    return window.translationManager.getTranslation(key, params);
-                }
-                return key;
-            }
-
-            function showError(message) {
-                errorText.textContent = message;
-                errorDiv.style.display = 'block';
-                successDiv.style.display = 'none';
-            }
-
-            function showSuccess(message) {
-                successText.textContent = message;
-                successDiv.style.display = 'block';
-                errorDiv.style.display = 'none';
-            }
-
-            function hideMessages() {
-                errorDiv.style.display = 'none';
-                successDiv.style.display = 'none';
-            }
 
             // Attendre que l'AuthManager soit initialisé avant de vérifier
             setTimeout(() => {
@@ -176,17 +152,17 @@
 
                 // Validation
                 if (!fullName || !email || !password || !confirmPassword) {
-                    showError(getTranslation('signup.error.required_fields'));
+                    showError('Veuillez remplir tous les champs');
                     return;
                 }
 
                 if (password.length < 6) {
-                    showError(getTranslation('signup.error.password_length'));
+                    showError('Le mot de passe doit contenir au moins 6 caractères');
                     return;
                 }
 
                 if (password !== confirmPassword) {
-                    showError(getTranslation('signup.error.password_mismatch'));
+                    showError('Les mots de passe ne correspondent pas');
                     return;
                 }
 
@@ -196,30 +172,48 @@
                 // Afficher chargement
                 const button = form.querySelector('button');
                 const originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + getTranslation('signup.loading');
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (window.translationManager?.getTranslation('signup.loading') || 'Création du compte...');
                 button.disabled = true;
 
                 try {
                     const result = await window.authManager.signUp(email, password, fullName);
                     
                     if (result.success) {
-                        showSuccess(getTranslation('signup.success'));
+                        showSuccess(window.translationManager?.getTranslation('signup.success') || "Compte créé avec succès !");
                         
                         setTimeout(() => {
                             window.location.href = 'dashboard.html';
                         }, 1000);
                     } else {
-                        showError(result.error || getTranslation('signup.error.generic'));
+                        showError(result.error);
                         button.innerHTML = originalText;
                         button.disabled = false;
                     }
                 } catch (error) {
-                    showError(getTranslation('signup.error.generic', [error.message]));
+                    showError('Une erreur est survenue : ' + error.message);
                     button.innerHTML = originalText;
                     button.disabled = false;
                 }
             });
 
+            // Fonctions d'affichage des messages
+            function showError(message) {
+                errorText.textContent = message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            }
+
+            function showSuccess(message) {
+                successText.textContent = message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+            }
+
+            function hideMessages() {
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }
+            
             // Ajouter le paramètre redirect au lien de connexion
             const loginLink = document.querySelector('.auth-footer a[href="login.html"]');
             if (loginLink) {
