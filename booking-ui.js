@@ -534,32 +534,46 @@ document.addEventListener('DOMContentLoaded', function() {
                     const slotElement = document.createElement('div');
                     slotElement.className = 'time-slot';
                     
-                    const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
-                    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                    const timeOptions = { 
+                    // ✅ CORRECTION: Utiliser directement slot.time qui est déjà formaté correctement
+                    // au lieu de re-formatter avec toLocaleTimeString qui cause une double conversion
+                    const displayTime = slot.time || slotDate.toLocaleTimeString([], { 
                         hour: '2-digit', 
-                        minute: '2-digit',
-                        timeZone: userTimeZone
-                    };
+                        minute: '2-digit'
+                    });
                     
-                    // Formater la date complète dans le timezone utilisateur
-                    const fullDateOptions = {
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        timeZone: userTimeZone
-                    };
+                    // Pour la description longue, extraire aussi depuis la string originale
+                    let longDateDescription = '';
+                    if (typeof slot.start === 'string' && slot.start.includes('T')) {
+                        // Parser la date ISO pour avoir le jour/mois/année correct
+                        const datePart = slot.start.split('T')[0]; // "2026-02-18"
+                        const [year, month, day] = datePart.split('-');
+                        const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                        
+                        const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                        longDateDescription = dateObj.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                        }) + ' à ' + displayTime;
+                    } else {
+                        // Fallback
+                        const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
+                        longDateDescription = slotDate.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                        }) + ' à ' + displayTime;
+                    }
                     
                     slotElement.innerHTML = `
                         <div class="time-slot-time">
                             <i class="far fa-clock"></i>
-                            ${slotDate.toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions)}
+                            ${displayTime}
                         </div>
                         <div class="time-slot-duration">
-                            ${slotDate.toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', fullDateOptions)} - ${slot.duration}
+                            ${longDateDescription} - ${slot.duration}
                         </div>
                     `;
                     

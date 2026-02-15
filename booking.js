@@ -140,6 +140,7 @@ class BookingManager {
             // 🔍 DEBUG: Afficher les données brutes de Cal.com
             console.group('🔍 DEBUG Timezone Cal.com');
             console.log('Timezone demandé:', this.timeZone);
+            console.log('Timezone navigateur:', Intl.DateTimeFormat().resolvedOptions().timeZone);
             console.log('Données brutes Cal.com:', slotsData);
             console.log('Type de slotsData:', typeof slotsData);
             console.log('Clés de slotsData:', Object.keys(slotsData));
@@ -160,6 +161,11 @@ class BookingManager {
                     console.log('Type de slotTime:', typeof slotTime);
                     
                     try {
+                        // ✅ CORRECTION CRITIQUE: Cal.com envoie déjà la date dans le bon timezone
+                        // Par exemple: "2026-02-18T06:00:00.000-08:00"
+                        // Si on parse avec new Date(), le navigateur la convertit dans SON timezone
+                        // Solution: Extraire l'heure directement de la string
+                        
                         const startDate = new Date(slotTime);
                         if (isNaN(startDate.getTime())) {
                             console.error('❌ Date invalide');
@@ -170,15 +176,27 @@ class BookingManager {
                         // 🔍 DEBUG: Afficher la date parsée
                         console.log('Date parsée (objet):', startDate);
                         console.log('Date ISO:', startDate.toISOString());
-                        console.log('Date locale (browser):', startDate.toString());
+                        console.log('Timezone navigateur:', Intl.DateTimeFormat().resolvedOptions().timeZone);
                         
-                        // Test des différents formats
-                        const testFormats = {
-                            'Sans timezone': startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-                            'Avec this.timeZone': startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: this.timeZone }),
-                            'Avec detect auto': startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
-                        };
-                        console.log('Formats testés:', testFormats);
+                        // ✅ SOLUTION: Extraire l'heure depuis la string originale au lieu de re-formatter
+                        // Format attendu: "2026-02-18T06:00:00.000-08:00"
+                        let displayTime = '';
+                        
+                        if (typeof slotTime === 'string' && slotTime.includes('T')) {
+                            // Extraire la partie heure de la string ISO
+                            const timePart = slotTime.split('T')[1]; // "06:00:00.000-08:00"
+                            const hourMinute = timePart.substring(0, 5); // "06:00"
+                            displayTime = hourMinute;
+                            console.log('✅ Heure extraite directement:', displayTime);
+                        } else {
+                            // Fallback: formatter avec le timezone explicite
+                            displayTime = startDate.toLocaleTimeString([], { 
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                timeZone: this.timeZone
+                            });
+                            console.log('⚠️ Heure formatée (fallback):', displayTime);
+                        }
                         
                         // ✅ CORRECTION: Pour l'essai, durée doit être 15
                         let slotDuration = duration || this.getDefaultDuration(eventType);
@@ -190,11 +208,7 @@ class BookingManager {
                             id: slotTime,
                             start: slotTime,
                             end: this.calculateEndTime(slotTime, eventType, slotDuration),
-                            time: startDate.toLocaleTimeString([], { 
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                timeZone: this.timeZone
-                            }),
+                            time: displayTime,
                             duration: `${slotDuration} min`,
                             durationInMinutes: slotDuration,
                             eventTypeId: eventTypeId
