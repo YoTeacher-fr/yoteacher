@@ -162,7 +162,8 @@ class BookingManager {
                             end: this.calculateEndTime(slotTime, eventType, slotDuration),
                             time: startDate.toLocaleTimeString('fr-FR', { 
                                 hour: '2-digit', 
-                                minute: '2-digit' 
+                                minute: '2-digit',
+   			        timeZone: this.timeZone 
                             }),
                             duration: `${slotDuration} min`,
                             durationInMinutes: slotDuration,
