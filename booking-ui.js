@@ -535,7 +535,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     slotElement.className = 'time-slot';
                     
                     const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
-                    const timeOptions = { hour: '2-digit', minute: '2-digit' };
+                    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    const timeOptions = { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        timeZone: userTimeZone
+                    };
+                    
+                    // Formater la date complète dans le timezone utilisateur
+                    const fullDateOptions = {
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        timeZone: userTimeZone
+                    };
                     
                     slotElement.innerHTML = `
                         <div class="time-slot-time">
@@ -543,7 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${slotDate.toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions)}
                         </div>
                         <div class="time-slot-duration">
-                            ${window.bookingManager.formatTime(slot.start)} - ${slot.duration}
+                            ${slotDate.toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', fullDateOptions)} - ${slot.duration}
                         </div>
                     `;
                     

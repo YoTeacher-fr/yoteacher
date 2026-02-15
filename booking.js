@@ -136,6 +136,15 @@ class BookingManager {
             }
             
             const slotsData = data.data;
+            
+            // 🔍 DEBUG: Afficher les données brutes de Cal.com
+            console.group('🔍 DEBUG Timezone Cal.com');
+            console.log('Timezone demandé:', this.timeZone);
+            console.log('Données brutes Cal.com:', slotsData);
+            console.log('Type de slotsData:', typeof slotsData);
+            console.log('Clés de slotsData:', Object.keys(slotsData));
+            console.groupEnd();
+            
             const formattedSlots = Object.entries(slotsData).flatMap(([date, slots]) => {
                 if (!Array.isArray(slots)) {
                     return [];
@@ -144,11 +153,32 @@ class BookingManager {
                 return slots.map(slot => {
                     const slotTime = slot.start || slot.time || slot;
                     
+                    // 🔍 DEBUG: Tracer chaque slot
+                    console.group('🔍 DEBUG Slot individuel');
+                    console.log('Slot brut:', slot);
+                    console.log('slotTime extrait:', slotTime);
+                    console.log('Type de slotTime:', typeof slotTime);
+                    
                     try {
                         const startDate = new Date(slotTime);
                         if (isNaN(startDate.getTime())) {
+                            console.error('❌ Date invalide');
+                            console.groupEnd();
                             return null;
                         }
+                        
+                        // 🔍 DEBUG: Afficher la date parsée
+                        console.log('Date parsée (objet):', startDate);
+                        console.log('Date ISO:', startDate.toISOString());
+                        console.log('Date locale (browser):', startDate.toString());
+                        
+                        // Test des différents formats
+                        const testFormats = {
+                            'Sans timezone': startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                            'Avec this.timeZone': startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: this.timeZone }),
+                            'Avec detect auto': startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
+                        };
+                        console.log('Formats testés:', testFormats);
                         
                         // ✅ CORRECTION: Pour l'essai, durée doit être 15
                         let slotDuration = duration || this.getDefaultDuration(eventType);
@@ -156,20 +186,27 @@ class BookingManager {
                             slotDuration = 15;
                         }
                         
-                        return {
+                        const formattedSlot = {
                             id: slotTime,
                             start: slotTime,
                             end: this.calculateEndTime(slotTime, eventType, slotDuration),
-                            time: startDate.toLocaleTimeString('fr-FR', { 
+                            time: startDate.toLocaleTimeString([], { 
                                 hour: '2-digit', 
                                 minute: '2-digit',
-   			        timeZone: this.timeZone 
+                                timeZone: this.timeZone
                             }),
                             duration: `${slotDuration} min`,
                             durationInMinutes: slotDuration,
                             eventTypeId: eventTypeId
                         };
+                        
+                        console.log('✅ Slot formaté:', formattedSlot);
+                        console.groupEnd();
+                        
+                        return formattedSlot;
                     } catch (error) {
+                        console.error('❌ Erreur parsing slot:', error);
+                        console.groupEnd();
                         return null;
                     }
                 }).filter(slot => slot !== null);
@@ -910,13 +947,15 @@ class BookingManager {
     formatTime(dateTime) {
         try {
             const date = new Date(dateTime);
+            const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             return date.toLocaleTimeString('fr-FR', { 
                 hour: '2-digit', 
                 minute: '2-digit',
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',
-                year: 'numeric'
+                year: 'numeric',
+                timeZone: userTimeZone
             });
         } catch (error) {
             return dateTime || 'Date non disponible';
