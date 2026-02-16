@@ -1,7 +1,7 @@
-// booking-ui.js - VERSION DB-DRIVEN
-// ✅ Calcul prix : SUPPRIMÉ → affiché depuis create_booking_intent()
-// ✅ Réductions : SUPPRIMÉES → gérées par RPC
-// ✅ Prix VIP : SUPPRIMÉS → gérés par RPC
+// booking-ui.js - VERSION DB-DRIVEN + CORRECTION MOBILE
+// ✅ CORRECTION 1: Condition canSubmit plus robuste
+// ✅ CORRECTION 2: Synchronisation bouton mobile dans updateSubmitButtonText()
+// ✅ CORRECTION 3: Vérification explicite de la visibilité du groupe durée
 
 document.addEventListener('DOMContentLoaded', function() {
     let selectedDate = null;
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedSlot = null;
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
-    let cachedIntentData = null; // Cache du dernier appel RPC
+    let cachedIntentData = null;
     
     let isVipUser = false;
 
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const coursesCountGroup = document.getElementById('coursesCountGroup');
     const coursesCountInput = document.getElementById('coursesCount');
     const discountPercentInput = document.getElementById('discountPercent');
-    const mobileSubmitBtn = document.getElementById('mobileSubmitBtn'); // DÉCLARÉ AVANT UTILISATION
+    const mobileSubmitBtn = document.getElementById('mobileSubmitBtn');
 
     let preLoginCourseType = null;
 
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedDate) {
             loadAvailableSlots(selectedDate);
         }
-        cachedIntentData = null; // Reset cache
+        cachedIntentData = null;
         updateSummary();
         updateSubmitButtonText();
     });
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadAvailableSlots(selectedDate);
                 }
                 
-                cachedIntentData = null; // Reset cache
+                cachedIntentData = null;
                 updateSummary();
                 updateSubmitButtonText();
             });
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
             coursesCountInput.value = count;
             discountPercentInput.value = discount;
             
-            cachedIntentData = null; // Reset cache
+            cachedIntentData = null;
             updateSummary();
             updateSubmitButtonText();
         });
@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ============================================================================
-    // GESTION BOUTON MOBILE
+    // GESTION BOUTON MOBILE - ✅ CORRECTION: Synchronisation avec bouton desktop
     // ============================================================================
     if (mobileSubmitBtn) {
         mobileSubmitBtn.addEventListener('click', function() {
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ============================================================================
-    // SOUMISSION FORMULAIRE - CORRECTION: DURÉE ESSAI FIXE À 15 MIN
+    // SOUMISSION FORMULAIRE
     // ============================================================================
     bookingForm.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -170,10 +170,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const coursesCount = parseInt(coursesCountInput.value);
         const discountPercent = parseFloat(discountPercentInput.value);
         
-        // CORRECTION: Durée fixe à 15 minutes pour l'essai
         let duration = parseInt(durationInput.value) || 60;
         if (courseType === 'essai') {
-            duration = 15; // Durée fixe pour l'essai
+            duration = 15;
         }
 
         if (!courseType || !name || !email) {
@@ -187,7 +186,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         hideMessages();
+        
+        // ✅ CORRECTION: Désactiver LES DEUX boutons
         submitButton.disabled = true;
+        if (mobileSubmitBtn) {
+            mobileSubmitBtn.disabled = true;
+        }
         
         const user = window.authManager?.getCurrentUser();
         
@@ -196,17 +200,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (window.packagesManager) {
                     const hasCredits = await window.packagesManager.hasCreditForDuration(user.id, courseType, duration);
                     
-                    if (hasCredits) {
-                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation avec crédit...';
-                    } else {
-                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+                    const loadingText = hasCredits ? 
+                        '<i class="fas fa-spinner fa-spin"></i> Réservation avec crédit...' :
+                        '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+                    
+                    submitButton.innerHTML = loadingText;
+                    if (mobileSubmitBtn) {
+                        mobileSubmitBtn.innerHTML = loadingText;
                     }
                 }
             } catch (error) {
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+                const loadingText = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+                submitButton.innerHTML = loadingText;
+                if (mobileSubmitBtn) {
+                    mobileSubmitBtn.innerHTML = loadingText;
+                }
             }
         } else {
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+            const loadingText = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+            submitButton.innerHTML = loadingText;
+            if (mobileSubmitBtn) {
+                mobileSubmitBtn.innerHTML = loadingText;
+            }
         }
 
         try {
@@ -218,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 startTime: selectedSlot.start,
                 endTime: selectedSlot.end,
                 courseType: courseType,
-                duration: duration, // ✅ Utilise la durée corrigée (15 pour essai)
+                duration: duration,
                 location: location,
                 name: name,
                 email: email,
@@ -247,6 +262,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('❌ Erreur préparation:', error);
             showError('Erreur : ' + error.message);
             submitButton.disabled = false;
+            if (mobileSubmitBtn) {
+                mobileSubmitBtn.disabled = false;
+            }
             updateSubmitButtonText();
         }
     });
@@ -271,7 +289,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     window.addEventListener('currency:changed', function() {
         console.log('💱 Devise changée, INVALIDATION du cache et mise à jour');
-        // Invalider le cache quand la devise change
         cachedIntentData = null;
         updateSummary();
     });
@@ -457,7 +474,6 @@ document.addEventListener('DOMContentLoaded', function() {
             durationGroup.classList.remove('visible');
             coursesCountGroup.style.display = 'none';
             loginRequired.style.display = 'none';
-            // CORRECTION: Forcer la durée à 15 pour l'essai
             durationInput.value = '15';
         } else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
             if (isLoggedIn) {
@@ -507,7 +523,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (courseType !== 'essai' && durationGroup.classList.contains('visible')) {
                 duration = parseInt(durationInput.value) || 60;
             } else if (courseType === 'essai') {
-                // CORRECTION: Durée fixe à 15 minutes pour l'essai
                 duration = 15;
             }
             
@@ -534,18 +549,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     const slotElement = document.createElement('div');
                     slotElement.className = 'time-slot';
                     
-                    // ✅ CORRECTION: Utiliser directement slot.time qui est déjà formaté correctement
-                    // au lieu de re-formatter avec toLocaleTimeString qui cause une double conversion
                     const displayTime = slot.time || slotDate.toLocaleTimeString([], { 
                         hour: '2-digit', 
                         minute: '2-digit'
                     });
                     
-                    // Pour la description longue, extraire aussi depuis la string originale
                     let longDateDescription = '';
                     if (typeof slot.start === 'string' && slot.start.includes('T')) {
-                        // Parser la date ISO pour avoir le jour/mois/année correct
-                        const datePart = slot.start.split('T')[0]; // "2026-02-18"
+                        const datePart = slot.start.split('T')[0];
                         const [year, month, day] = datePart.split('-');
                         const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                         
@@ -557,7 +568,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             year: 'numeric'
                         }) + ' à ' + displayTime;
                     } else {
-                        // Fallback
                         const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
                         longDateDescription = slotDate.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
                             weekday: 'long',
@@ -636,14 +646,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         selectedTime = new Date(slot.start).toLocaleTimeString(isFrench ? 'fr-FR' : 'en-US', timeOptions);
         
-        // ✅ INVALIDER LE CACHE quand on change de créneau
         cachedIntentData = null;
         
         updateSummary();
     }
 
     // ============================================================================
-    // MISE À JOUR TEXTE BOUTON (conservée - appelle RPC pour vérifier)
+    // ✅ CORRECTION 2: Synchronisation des DEUX boutons
     // ============================================================================
     async function updateSubmitButtonText() {
         const user = window.authManager?.getCurrentUser();
@@ -651,15 +660,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const coursesCount = parseInt(coursesCountInput.value) || 1;
         const submitBtn = document.getElementById('submitBooking');
         
-        // Pour l'essai, durée fixe à 15 minutes
         let duration = parseInt(durationInput.value) || 60;
         if (courseType === 'essai') {
             duration = 15;
         }
         
+        // Texte et style par défaut
+        const defaultText = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
+        const defaultStyle = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
+        
         if (!submitBtn || !user || courseType === 'essai' || coursesCount > 1) {
-            submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
-            submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
+            submitBtn.innerHTML = defaultText;
+            submitBtn.style.background = defaultStyle;
+            
+            // ✅ CORRECTION: Synchroniser le bouton mobile
+            if (mobileSubmitBtn) {
+                mobileSubmitBtn.innerHTML = defaultText;
+                mobileSubmitBtn.style.background = defaultStyle;
+            }
             return;
         }
         
@@ -669,13 +687,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`💳 Crédits disponibles pour ${courseType} ${duration}min:`, hasCredits);
                 
                 if (hasCredits) {
-                    submitBtn.innerHTML = `<i class="fas fa-ticket-alt"></i> Réserver avec un crédit (${duration}min)`;
-                    submitBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
-                    console.log(`✅ Bouton changé: "Réserver avec un crédit (${duration}min)"`);
+                    const creditText = `<i class="fas fa-ticket-alt"></i> Réserver avec un crédit (${duration}min)`;
+                    const creditStyle = 'linear-gradient(135deg, #28a745, #20c997)';
+                    
+                    submitBtn.innerHTML = creditText;
+                    submitBtn.style.background = creditStyle;
+                    
+                    // ✅ CORRECTION: Synchroniser le bouton mobile
+                    if (mobileSubmitBtn) {
+                        mobileSubmitBtn.innerHTML = creditText;
+                        mobileSubmitBtn.style.background = creditStyle;
+                    }
+                    
+                    console.log(`✅ Boutons changés: "Réserver avec un crédit (${duration}min)"`);
                 } else {
-                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
-                    submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
-                    console.log(`❌ Pas de crédits pour ${duration}min, bouton normal`);
+                    submitBtn.innerHTML = defaultText;
+                    submitBtn.style.background = defaultStyle;
+                    
+                    // ✅ CORRECTION: Synchroniser le bouton mobile
+                    if (mobileSubmitBtn) {
+                        mobileSubmitBtn.innerHTML = defaultText;
+                        mobileSubmitBtn.style.background = defaultStyle;
+                    }
+                    
+                    console.log(`❌ Pas de crédits pour ${duration}min, boutons normaux`);
                 }
             }
         } catch (error) {
@@ -684,7 +719,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ============================================================================
-    // MISE À JOUR RÉCAPITULATIF - APPELLE calculate_price_estimate()
+    // MISE À JOUR RÉCAPITULATIF
     // ============================================================================
     async function updateSummary() {
         console.log('📋 Mise à jour récapitulatif (DB-driven)');
@@ -700,19 +735,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         isVipUser = window.authManager?.isUserVip();
         
-        // Plateforme
         const locationValue = selectedLocationInput.value;
         if (locationValue.includes('zoom')) platform = 'Zoom';
         else if (locationValue.includes('google')) platform = 'Google Meet';
         else if (locationValue.includes('teams')) platform = 'Microsoft Teams';
 
-        // COURS D'ESSAI - Prix fixe
         if (courseType === 'essai') {
             console.log('🎫 Cours d\'essai');
             courseName = window.translationManager ? window.translationManager.getTranslation('courses.trial') : 'Cours d\'essai';
-            duration = '15 min'; // ✅ CORRECTION: Toujours 15 minutes pour l'essai
+            duration = '15 min';
             
-            // Prix fixe 5 EUR - converti dans la devise courante
             if (window.currencyManager) {
                 const convertedPrice = window.currencyManager.convert(5, 'EUR', window.currencyManager.currentCurrency);
                 price = window.currencyManager.formatPriceInCurrency(convertedPrice, window.currencyManager.currentCurrency);
@@ -722,7 +754,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log(`✅ Prix essai: ${price}`);
         } 
-        // COURS PAYANTS - APPELER calculate_price_estimate() (DB-ONLY)
         else if (courseType === 'conversation' || courseType === 'curriculum' || courseType === 'examen') {
             if (courseType === 'conversation') {
                 courseName = window.translationManager ? window.translationManager.getTranslation('courses.conversation') : 'Conversation';
@@ -732,22 +763,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 courseName = window.translationManager ? window.translationManager.getTranslation('courses.exam') : 'Préparation d\'examen';
             }
             
-            if (user && durationGroup.classList.contains('visible')) {
+            // ✅ CORRECTION 3: Vérification explicite de la visibilité
+            const isDurationVisible = durationGroup && (
+                durationGroup.classList.contains('visible') || 
+                window.getComputedStyle(durationGroup).display !== 'none'
+            );
+            
+            if (user && isDurationVisible) {
                 const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
                 duration = selectedDuration + ' min';
                 
                 console.log(`📞 Appel calculate_price_estimate() pour afficher prix`);
                 
-                // ✅ APPELER RPC calculate_price_estimate() (DB-ONLY)
                 if (window.supabase && selectedDate && selectedSlot) {
                     try {
-                        // Vérifier le cache - INVALIDER LE CACHE SI LA DEVISE A CHANGÉ
                         const currentCurrency = window.currencyManager ? window.currencyManager.currentCurrency : 'EUR';
                         if (cachedIntentData && 
                             cachedIntentData.course_type === courseType &&
                             cachedIntentData.duration === selectedDuration &&
                             cachedIntentData.quantity === coursesCount &&
-                            cachedIntentData.lastCurrency === currentCurrency) { // Vérifier aussi la devise
+                            cachedIntentData.lastCurrency === currentCurrency) {
                             
                             console.log('📦 Utilisation du cache pour le prix');
                             price = cachedIntentData.displayPrice;
@@ -759,7 +794,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 p_quantity: coursesCount
                             });
 
-                            // ✅ APPEL RPC (DB-ONLY)
                             const { data: priceEstimate, error: estimateError } = await supabase.rpc('calculate_price_estimate', {
                                 p_user_id: user.id,
                                 p_course_type: courseType,
@@ -771,8 +805,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             if (estimateError) {
                                 console.error('❌ Erreur RPC calculate_price_estimate:', estimateError);
-                                console.error('   Code:', estimateError.code);
-                                console.error('   Message:', estimateError.message);
                                 price = 'Erreur calcul';
                             } else if (!priceEstimate || !priceEstimate.success) {
                                 console.warn('⚠️ RPC estimate échoué:', priceEstimate);
@@ -780,9 +812,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             } else {
                                 console.log('✅ Prix estimé par RPC (DB):', priceEstimate.price, priceEstimate.currency);
                                 
-                                // Formater le prix dans la devise courante
                                 if (window.currencyManager) {
-                                    // Convertir le prix de la devise retournée vers la devise courante
                                     const currentCurrency = window.currencyManager.currentCurrency;
                                     const convertedPrice = window.currencyManager.convert(
                                         priceEstimate.price, 
@@ -792,7 +822,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                     
                                     price = window.currencyManager.formatPriceInCurrency(convertedPrice, currentCurrency);
                                     
-                                    // Mettre en cache avec la devise actuelle
                                     cachedIntentData = {
                                         course_type: courseType,
                                         duration: selectedDuration,
@@ -800,7 +829,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         displayPrice: price,
                                         rawPrice: priceEstimate.price,
                                         originalCurrency: priceEstimate.currency,
-                                        lastCurrency: currentCurrency, // Stocker la devise utilisée
+                                        lastCurrency: currentCurrency,
                                         is_vip: priceEstimate.is_vip
                                     };
                                 } else {
@@ -810,8 +839,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     } catch (catchError) {
                         console.error('❌ Exception appel RPC estimate:', catchError);
-                        console.error('   Type:', catchError.name);
-                        console.error('   Message:', catchError.message);
                         price = 'Erreur calcul';
                     }
                 } else {
@@ -826,7 +853,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // FORMATER LA DATE (utilisée pour les deux récapitulatifs)
         let formattedDate = '-';
         if (selectedDate) {
             const isFrench = !window.translationManager || window.translationManager.getCurrentLanguage() === 'fr';
@@ -866,7 +892,7 @@ document.addEventListener('DOMContentLoaded', function() {
             summaryPriceElement.title = "";
         }
 
-        // MISE À JOUR RÉCAPITULATIF MOBILE - ✅ AVEC PROTECTION COMPLÈTE
+        // MISE À JOUR RÉCAPITULATIF MOBILE
         try {
             const mobileSummaryType = document.getElementById('mobileSummaryType');
             const mobileSummaryCoursesCount = document.getElementById('mobileSummaryCoursesCount');
@@ -904,16 +930,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         } catch (mobileUpdateError) {
-            // Erreur silencieuse - normal si les éléments mobiles n'existent pas
             console.log('Note: Mise à jour mobile ignorée');
         }
 
+        // ✅ CORRECTION 3: Condition canSubmit plus robuste avec vérification explicite
+        const isDurationVisible = courseType === 'essai' || !durationGroup || (
+            durationGroup.classList.contains('visible') || 
+            window.getComputedStyle(durationGroup).display !== 'none'
+        );
+        
         const canSubmit = selectedDate && selectedTime && courseType && 
-            (courseType === 'essai' || (user && durationGroup.classList.contains('visible')));
+            (courseType === 'essai' || (user && isDurationVisible));
+        
+        console.log('🔍 Vérification canSubmit:', {
+            selectedDate: !!selectedDate,
+            selectedTime: !!selectedTime,
+            courseType: courseType,
+            isEssai: courseType === 'essai',
+            user: !!user,
+            isDurationVisible: isDurationVisible,
+            canSubmit: canSubmit
+        });
         
         submitButton.disabled = !canSubmit;
         
-        // Mettre à jour l'état du bouton mobile
+        // ✅ CORRECTION: Synchroniser l'état du bouton mobile
         if (mobileSubmitBtn) {
             mobileSubmitBtn.disabled = !canSubmit;
         }
@@ -973,4 +1014,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-console.log('✅ booking-ui.js chargé - Version DB-driven (prix calculés par RPC) avec correction devise');
+console.log('✅ booking-ui.js chargé - Version DB-driven avec CORRECTIONS MOBILE (3 corrections appliquées)');
