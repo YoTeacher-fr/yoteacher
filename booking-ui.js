@@ -144,10 +144,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // GESTION BOUTON MOBILE
     // ============================================================================
     if (mobileSubmitBtn) {
+        // Synchroniser l'état initial du bouton mobile avec le desktop
+        mobileSubmitBtn.disabled = submitButton.disabled;
+        
         mobileSubmitBtn.addEventListener('click', function() {
             document.getElementById('submitBooking').click();
         });
     }
+
+    // ============================================================================
+    // EVENT DELEGATION POUR LES CRÉNEAUX HORAIRES
+    // Correction bug mobile : utiliser la délégation d'événements au lieu
+    // d'attacher des listeners individuels qui sont perdus lors des recréations
+    // ============================================================================
+    timeSlots.addEventListener('click', function(e) {
+        const slotElement = e.target.closest('.time-slot');
+        if (slotElement && slotElement.dataset.slotData) {
+            try {
+                const slot = JSON.parse(slotElement.dataset.slotData);
+                selectTimeSlot(slot, slotElement);
+            } catch (error) {
+                console.error('Erreur parsing slot data:', error);
+            }
+        }
+    });
 
     // ============================================================================
     // SOUMISSION FORMULAIRE - CORRECTION: DURÉE ESSAI FIXE À 15 MIN
@@ -288,6 +308,15 @@ document.addEventListener('DOMContentLoaded', function() {
         updateUserInterface();
         cachedIntentData = null;
         updateSummary();
+    });
+    
+    // Protection contre bfcache mobile - forcer la resynchronisation de l'état du bouton
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted && mobileSubmitBtn && submitButton) {
+            // Page restaurée depuis bfcache - synchroniser l'état du bouton mobile
+            console.log('📱 Pageshow (bfcache) - resynchronisation bouton mobile');
+            mobileSubmitBtn.disabled = submitButton.disabled;
+        }
     });
 
     // ============================================================================
@@ -577,7 +606,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     `;
                     
-                    slotElement.addEventListener('click', () => selectTimeSlot(slot, slotElement));
+                    // Stocker les données du slot dans un attribut data pour la délégation d'événements
+                    // Correction bug mobile : éviter l'attachement individuel d'event listeners
+                    slotElement.dataset.slotData = JSON.stringify(slot);
+                    
                     timeSlots.appendChild(slotElement);
                 }
             });
@@ -913,9 +945,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         submitButton.disabled = !canSubmit;
         
-        // Mettre à jour l'état du bouton mobile
+        // Mettre à jour l'état du bouton mobile - TOUJOURS synchronisé avec desktop
         if (mobileSubmitBtn) {
-            mobileSubmitBtn.disabled = !canSubmit;
+            mobileSubmitBtn.disabled = submitButton.disabled;
         }
     }
 
