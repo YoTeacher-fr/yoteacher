@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="expiry-days">
                             <i class="far fa-clock"></i>
-                            <span><span class="days-count">${daysRemaining}</span> ${daysText}</span>
+                            <span>${daysText}</span>
                         </div>
                         ${daysRemaining <= 7 ? `
                         <div class="expiry-warning">
