@@ -1,0 +1,38 @@
+# robots.txt pour YoTeach - Yoann Bourbia
+
+User-agent: *
+Allow: /
+
+# Pages importantes à indexer en priorité
+Allow: /index.html
+Allow: /booking.html
+Allow: /about.html
+Allow: /courses.html
+
+# Ne pas indexer les pages techniques
+Disallow: /config.js
+Disallow: /dashboard.html
+Disallow: /profile.html
+Disallow: /login.html
+Disallow: /signup.html
+Disallow: /admin/
+Disallow: /api/
+Disallow: /*.js$
+Disallow: /*.json$
+
+# Sitemap
+Sitemap: https://yoteach.fr/sitemap.xml
+
+# Bots spécifiques
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Bloquer les mauvais bots (optionnel)
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
