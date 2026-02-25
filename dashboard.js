@@ -25,6 +25,10 @@ window.forceUserSync = function() {
     return false;
 };
 
+// Protection contre les appels multiples à loadDashboard
+let isLoadingDashboard = false;
+let dashboardLoaded = false;
+
 document.addEventListener('DOMContentLoaded', () => {
     // Code du premier bloc <script>
     document.body.style.opacity = '0';
@@ -291,11 +295,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function loadDashboard() {
+        // Protection contre les appels multiples
+        if (isLoadingDashboard || dashboardLoaded) {
+            console.log('⚠️ loadDashboard déjà en cours ou complété, ignoré');
+            return;
+        }
+        
+        isLoadingDashboard = true;
+        console.log('📊 Début chargement dashboard...');
+        
         try {
             const user = window.authManager?.getCurrentUser();
             
             if (!user) {
                 console.log('Utilisateur non trouvé');
+                isLoadingDashboard = false;
                 return;
             }
             
@@ -309,8 +323,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (dashboardContent) dashboardContent.style.display = 'block';
             if (dashboardActions) dashboardActions.style.display = 'flex';
             
+            dashboardLoaded = true;
+            isLoadingDashboard = false;
+            console.log('✅ Dashboard chargé avec succès');
+            
         } catch (error) {
             console.error('Erreur chargement dashboard:', error);
+            isLoadingDashboard = false;
+            
             const loadingSection = document.getElementById('loadingSection');
             if (loadingSection) {
                 loadingSection.innerHTML = `
@@ -633,6 +653,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 
             if (error) throw error;
             
+            // DEBUG: Vérifier si meeting_link est présent
+            if (bookings && bookings.length > 0) {
+                console.log('📊 Premier cours récupéré:', {
+                    id: bookings[0].id,
+                    booking_number: bookings[0].booking_number,
+                    platform: bookings[0].platform,
+                    meeting_link: bookings[0].meeting_link,
+                    has_meeting_link: !!bookings[0].meeting_link
+                });
+            }
+            
             const nextLessonContent = document.getElementById('nextLessonContent');
             const lessonNav = document.getElementById('lessonNav');
             const externalActions = document.getElementById('lessonExternalActions');
@@ -651,6 +682,35 @@ document.addEventListener('DOMContentLoaded', () => {
             
             upcomingLessons = bookings;
             currentLessonIndex = 0;
+            
+            // CORRECTION BUG: Si meeting_link est absent, le récupérer depuis la table bookings
+            // Cela peut arriver si la vue upcoming_bookings ne contient pas ce champ
+            const needsMeetingLink = bookings.some(b => !b.meeting_link && b.id);
+            if (needsMeetingLink) {
+                console.log('⚠️ meeting_link absent dans upcoming_bookings, récupération depuis bookings...');
+                
+                try {
+                    const bookingIds = bookings.filter(b => b.id).map(b => b.id);
+                    const { data: fullBookings, error: fullError } = await supabase
+                        .from('bookings')
+                        .select('id, meeting_link, platform')
+                        .in('id', bookingIds);
+                    
+                    if (!fullError && fullBookings) {
+                        // Merger les meeting_link dans upcomingLessons
+                        upcomingLessons = bookings.map(lesson => {
+                            const fullBooking = fullBookings.find(fb => fb.id === lesson.id);
+                            if (fullBooking && fullBooking.meeting_link) {
+                                return { ...lesson, meeting_link: fullBooking.meeting_link };
+                            }
+                            return lesson;
+                        });
+                        console.log('✅ meeting_link récupérés depuis bookings');
+                    }
+                } catch (linkError) {
+                    console.warn('⚠️ Impossible de récupérer meeting_link:', linkError);
+                }
+            }
             
             // Afficher la navigation si plus d'un cours
             if (bookings.length > 1) {
@@ -1121,6 +1181,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (user) {
                 const isFrench = window.translationManager?.getCurrentLanguage() === 'fr';
                 this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${isFrench ? 'Actualisation...' : 'Refreshing...'}`;
+                
+                // Réinitialiser les flags pour permettre un nouveau chargement
+                dashboardLoaded = false;
+                isLoadingDashboard = false;
+                
                 await loadUserData(user);
                 this.innerHTML = `<i class="fas fa-sync-alt"></i> ${window.translationManager?.getTranslation('dashboard.refresh') || 'Actualiser'}`;
                 
@@ -1211,32 +1276,4 @@ document.addEventListener('DOMContentLoaded', () => {
     window.loadDashboard = loadDashboard;
     window.updateWelcomeMessage = updateWelcomeMessage;
     window.updateProfileInfo = updateProfileInfo;
-});
-
-// Vérification directe au chargement
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔍 Vérification rapide de l\'authentification...');
-    
-    // Vérifier immédiatement dans localStorage
-    const storedUser = localStorage.getItem('yoteacher_user');
-    
-    if (storedUser) {
-        console.log('✅ Utilisateur trouvé dans localStorage');
-        // Forcer l'opacité du body
-        document.body.style.opacity = '1';
-        document.body.style.visibility = 'visible';
-        
-        // Attendre que le dashboard se charge
-        setTimeout(function() {
-            if (window.loadDashboard) {
-                window.loadDashboard();
-            } else if (window.forceUserSync) {
-                window.forceUserSync();
-            }
-        }, 500);
-    } else {
-        console.log('❌ Pas d\'utilisateur dans localStorage');
-        // Masquer le contenu mais ne pas rediriger immédiatement
-        // La fonction checkAuthentication() se chargera de la redirection
-    }
 });

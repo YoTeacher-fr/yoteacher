@@ -178,35 +178,5 @@
     <script src="booking-cancel.js"></script>
     <script src="common.js"></script>
     <script src="translation.js"></script>
-    
-    <script>
-        // Vérification directe au chargement
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔍 Vérification rapide de l\'authentification...');
-            
-            // Vérifier immédiatement dans localStorage
-            const storedUser = localStorage.getItem('yoteacher_user');
-            
-            if (storedUser) {
-                console.log('✅ Utilisateur trouvé dans localStorage');
-                // Forcer l'opacité du body
-                document.body.style.opacity = '1';
-                document.body.style.visibility = 'visible';
-                
-                // Attendre que le dashboard se charge
-                setTimeout(function() {
-                    if (window.loadDashboard) {
-                        window.loadDashboard();
-                    } else if (window.forceUserSync) {
-                        window.forceUserSync();
-                    }
-                }, 500);
-            } else {
-                console.log('❌ Pas d\'utilisateur dans localStorage');
-                // Masquer le contenu mais ne pas rediriger immédiatement
-                // La fonction checkAuthentication() se chargera de la redirection
-            }
-        });
-    </script>
 </body>
 </html>
