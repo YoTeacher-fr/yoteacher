@@ -1,38 +1,74 @@
 # robots.txt pour YoTeach - Yoann Bourbia
+# Domaine : https://yoteach.fr
 
+# ===== RÈGLES POUR TOUS LES BOTS =====
 User-agent: *
+
+# Autoriser l'accès à tout le site (par défaut)
 Allow: /
 
-# Pages importantes à indexer en priorité
-Allow: /index.html
-Allow: /booking.html
-Allow: /about.html
-Allow: /courses.html
-
-# Ne pas indexer les pages techniques
-Disallow: /config.js
+# Bloquer uniquement les pages sensibles/techniques
 Disallow: /dashboard.html
 Disallow: /profile.html
 Disallow: /login.html
 Disallow: /signup.html
 Disallow: /admin/
 Disallow: /api/
-Disallow: /*.js$
-Disallow: /*.json$
+Disallow: /config.js
+Disallow: /supabase.js
 
-# Sitemap
+# Bloquer les fichiers de configuration sensibles
+Disallow: /.env
+Disallow: /.git/
+Disallow: /node_modules/
+
+# ===== SITEMAP =====
 Sitemap: https://yoteach.fr/sitemap.xml
 
-# Bots spécifiques
+# ===== BOTS SPÉCIFIQUES =====
+
+# Google (indexation prioritaire)
 User-agent: Googlebot
 Allow: /
+# Autoriser JavaScript/CSS pour rendu correct
+Allow: /*.js
+Allow: /*.css
 
+# Google Images
+User-agent: Googlebot-Image
+Allow: /assets/images/
+Disallow: /dashboard.html
+
+# Bing
 User-agent: Bingbot
 Allow: /
 
-# Bloquer les mauvais bots (optionnel)
+# ===== BLOQUER LES MAUVAIS BOTS =====
+
+# AhrefsBot (scraper SEO agressif)
 User-agent: AhrefsBot
 Disallow: /
 
+# MJ12bot (scraper Majestic)
 User-agent: MJ12bot
 Disallow: /
+
+# SemrushBot (scraper SEO)
+User-agent: SemrushBot
+Disallow: /
+
+# DotBot (scraper Moz)
+User-agent: dotbot
+Disallow: /
+
+# Bots de scraping communs
+User-agent: DataForSeoBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+# ===== CRAWL DELAY (OPTIONNEL) =====
+# Ralentir les bots agressifs si nécessaire
+# User-agent: *
+# Crawl-delay: 10
