@@ -244,7 +244,7 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
         const config = window.YOTEACHER_CONFIG || {};
         
         const contactName = config.CONTACT_NAME || "Yoann Bourbia";
-        const contactEmail = config.CONTACT_EMAIL || "yoannbourbia@gmail.com";
+        const contactEmail = config.CONTACT_EMAIL || "yoteachfr@gmail.com";
         const revolutLink = config.REVOLUT_PAYMENT_LINK || "https://revolut.me/yoann";
         const wiseLink = config.WISE_PAYMENT_LINK || "https://wise.com/pay/yoann";
         const paypalEmail = config.PAYPAL_BUSINESS_EMAIL || "yoann.bourbia@gmail.com";
