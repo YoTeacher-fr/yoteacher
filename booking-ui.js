@@ -195,11 +195,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const discountPercent = parseFloat(discountPercentInput.value);
         
         // CORRECTION: Durée fixe à 15 minutes pour l'essai
-        let duration = parseInt(durationInput.value) || 60;
+        // Lire depuis le bouton visuellement sélectionné (source de vérité fiable)
+        const selectedDurationBtn = document.querySelector('.duration-option[data-duration].selected');
+        let duration = selectedDurationBtn ? parseInt(selectedDurationBtn.getAttribute('data-duration')) : (parseInt(durationInput.value) || 60);
         if (courseType === 'essai') {
             duration = 15; // Durée fixe pour l'essai
         }
-
         if (!courseType || !name || !email) {
             showError('Veuillez remplir tous les champs obligatoires');
             return;
@@ -574,7 +575,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             let duration = null;
             if (courseType !== 'essai' && durationGroup.classList.contains('visible')) {
-                duration = parseInt(durationInput.value) || 60;
+                // Lire depuis le bouton visuellement sélectionné (source de vérité fiable)
+                const selectedDurationBtn = document.querySelector('.duration-option[data-duration].selected');
+                duration = selectedDurationBtn ? parseInt(selectedDurationBtn.getAttribute('data-duration')) : (parseInt(durationInput.value) || 60);
             } else if (courseType === 'essai') {
                 // CORRECTION: Durée fixe à 15 minutes pour l'essai
                 duration = 15;
@@ -724,7 +727,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const submitBtn = document.getElementById('submitBooking');
         
         // Pour l'essai, durée fixe à 15 minutes
-        let duration = parseInt(durationInput.value) || 60;
+        // Lire depuis le bouton visuellement sélectionné (source de vérité fiable)
+        const selectedDurationBtn = document.querySelector('.duration-option[data-duration].selected');
+        let duration = selectedDurationBtn ? parseInt(selectedDurationBtn.getAttribute('data-duration')) : (parseInt(durationInput.value) || 60);
         if (courseType === 'essai') {
             duration = 15;
         }
@@ -805,7 +810,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (user && durationGroup.classList.contains('visible')) {
-                const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : (parseInt(durationInput.value) || 60);
+                // Lire depuis le bouton visuellement sélectionné (source de vérité fiable)
+                const selectedDurationBtn = document.querySelector('.duration-option[data-duration].selected');
+                const durationFromBtn = selectedDurationBtn ? parseInt(selectedDurationBtn.getAttribute('data-duration')) : (parseInt(durationInput.value) || 60);
+                const selectedDuration = selectedSlot ? selectedSlot.durationInMinutes : durationFromBtn;
                 duration = selectedDuration + ' min';
                 
                 console.log(`📞 Appel calculate_price_estimate() pour afficher prix`);
