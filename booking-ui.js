@@ -476,7 +476,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!zoomBtn) return;
 
         const courseType = document.getElementById('courseType').value;
-        const duration = parseInt(durationInput.value) || 60;
+
+        // Lire la durée depuis le bouton visuellement sélectionné (source de vérité fiable)
+        // durationInput.value peut être désynchronisé (ex: reste à 15 après un cours essai)
+        const selectedDurationBtn = document.querySelector('.duration-option[data-duration].selected');
+        const duration = selectedDurationBtn ? parseInt(selectedDurationBtn.getAttribute('data-duration')) : (parseInt(durationInput.value) || 60);
 
         // Zoom désactivé pour 45 min et 60 min, sauf pour le cours essai
         const zoomDisabled = courseType !== 'essai' && (duration === 45 || duration === 60);
