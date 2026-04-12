@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cachedIntentData = null; // Reset cache
         updateSummary();
         updateSubmitButtonText();
+        updateZoomButtonState();
     });
 
     // Gestion durée
@@ -96,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 cachedIntentData = null; // Reset cache
                 updateSummary();
                 updateSubmitButtonText();
+                updateZoomButtonState();
             });
         }
     });
@@ -467,6 +469,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function updateZoomButtonState() {
+        const zoomBtn = document.querySelector('.location-btn[data-location="integrations:zoom"]');
+        if (!zoomBtn) return;
+
+        const courseType = document.getElementById('courseType').value;
+        const duration = parseInt(durationInput.value) || 60;
+
+        // Zoom désactivé pour 45 min et 60 min, sauf pour le cours essai
+        const zoomDisabled = courseType !== 'essai' && (duration === 45 || duration === 60);
+
+        if (zoomDisabled) {
+            zoomBtn.disabled = true;
+            zoomBtn.classList.add('disabled-location');
+            zoomBtn.title = 'Zoom non disponible pour cette durée';
+
+            // Si Zoom était sélectionné, basculer automatiquement sur Meet
+            if (zoomBtn.classList.contains('selected')) {
+                zoomBtn.classList.remove('selected');
+                const meetBtn = document.querySelector('.location-btn[data-location="integrations:google:meet"]');
+                if (meetBtn) {
+                    meetBtn.classList.add('selected');
+                    selectedLocationInput.value = 'integrations:google:meet';
+                }
+            }
+        } else {
+            zoomBtn.disabled = false;
+            zoomBtn.classList.remove('disabled-location');
+            zoomBtn.title = '';
+        }
+    }
+
     function updateUIForCourseType(courseType, forceUpdate = false) {
         console.log('updateUIForCourseType:', courseType);
         
@@ -520,6 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         updateSummary();
+        updateZoomButtonState();
     }
 
     async function loadAvailableSlots(date = null) {
