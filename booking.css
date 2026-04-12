@@ -1070,9 +1070,17 @@ body .vip-indicator {
     vertical-align: middle;
 }
 /* Bouton Zoom désactivé pour durées 45min et 60min */
-.location-btn.disabled-location {
+body .location-btn.disabled-location,
+body .location-btn.disabled-location:hover,
+body .location-btn.disabled-location:focus,
+body .location-btn.disabled-location:active {
     opacity: 0.4;
     cursor: not-allowed;
     pointer-events: none;
     filter: grayscale(100%);
+    background: #f8f9fa;
+    border-color: #e0e0e0;
+    color: #555;
+    transform: none;
+    box-shadow: none;
 }

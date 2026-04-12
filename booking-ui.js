@@ -72,7 +72,6 @@ document.addEventListener('DOMContentLoaded', function() {
         cachedIntentData = null; // Reset cache
         updateSummary();
         updateSubmitButtonText();
-        updateZoomButtonState();
     });
 
     // Gestion durée
@@ -128,6 +127,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.location-btn').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
+            
+            // Bloquer le clic si le bouton est désactivé
+            if (this.disabled || this.classList.contains('disabled-location')) return;
             
             document.querySelectorAll('.location-btn').forEach(btn => {
                 btn.classList.remove('selected');
