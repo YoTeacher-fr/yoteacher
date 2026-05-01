@@ -357,7 +357,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mettre à jour les informations du profil
         updateProfileInfo(user);
         
-        if (window.supabase) {
+        // Attendre que le client Supabase soit réellement initialisé
+        // (window.supabase peut déjà contenir le constructeur CDN avant que le client soit créé)
+        if (window.supabaseInitialized) {
+            await window.supabaseInitialized;
+        }
+
+        if (window.supabase && typeof window.supabase.from === 'function') {
             try {
                 // Charger les forfaits
                 await loadUserPackages(user.id);
@@ -368,6 +374,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error('Erreur chargement données:', error);
             }
+        } else {
+            console.warn('⚠️ Client Supabase non prêt, données non chargées');
         }
     }
     
@@ -494,13 +502,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
-            // Attendre que Supabase soit initialisé
-            if (!window.supabase && window.supabaseInitialized) {
+            // Attendre que le client Supabase soit réellement initialisé
+            if (window.supabaseInitialized) {
                 await window.supabaseInitialized;
             }
             
-            if (!window.supabase) {
-                throw new Error('Supabase non initialisé');
+            if (!window.supabase || typeof window.supabase.from !== 'function') {
+                throw new Error('Client Supabase non initialisé');
             }
             
             // Charger les forfaits actifs
@@ -636,13 +644,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function loadUpcomingLessons(userId) {
         try {
-            // Attendre que Supabase soit initialisé
-            if (!window.supabase && window.supabaseInitialized) {
+            // Attendre que le client Supabase soit réellement initialisé
+            if (window.supabaseInitialized) {
                 await window.supabaseInitialized;
             }
             
-            if (!window.supabase) {
-                throw new Error('Supabase non initialisé');
+            if (!window.supabase || typeof window.supabase.from !== 'function') {
+                throw new Error('Client Supabase non initialisé');
             }
             
             const { data: bookings, error } = await supabase
