@@ -1,4 +1,4 @@
-// admin.js – version stable avec vérifications
+// admin.js – Dashboard administrateur (version finale avec correction CSS)
 console.log('admin.js chargé');
 
 let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
@@ -143,6 +143,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const adminEmailElem = document.getElementById('adminEmail');
         if (adminEmailElem) adminEmailElem.innerText = userEmail;
         await loadDashboard();
+
+        // ✅ CORRECTION ÉCRAN BLANC : rendre le body visible
+        document.body.classList.add('loaded');
 
         // Attachement sécurisé des événements
         const refreshBtn = document.getElementById('refreshAdminBtn');
