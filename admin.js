@@ -1,15 +1,41 @@
-// admin.js - Dashboard admin via Edge Function Supabase
+// admin.js - Dashboard admin sécurisé via Edge Functions Supabase
+// VERSION CORRIGÉE - Attend que Supabase soit initialisé
 
 let revenueChart = null;
 let currentMonthOffset = 0;
-let allMonthlyRevenue = {}; // stocké depuis l'API
+let allMonthlyRevenue = {};
 
-// Helper pour appeler l'Edge Function dashboard
+// ----------------------------------------------------------------------
+// Attendre que Supabase soit complètement initialisé
+// ----------------------------------------------------------------------
+async function waitForSupabase() {
+    // Si la promesse d'initialisation existe, attendre sa résolution
+    if (window.supabaseInitialized) {
+        await window.supabaseInitialized;
+    }
+    // Vérification finale
+    if (!window.supabase || typeof window.supabase.auth?.getSession !== 'function') {
+        throw new Error('Supabase non initialisé ou auth manquant');
+    }
+    return window.supabase;
+}
+
+// ----------------------------------------------------------------------
+// Récupérer le token d'accès (avec attente)
+// ----------------------------------------------------------------------
+async function getAccessToken() {
+    const supabase = await waitForSupabase();
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw new Error(error.message);
+    if (!session?.access_token) throw new Error('Non authentifié');
+    return session.access_token;
+}
+
+// ----------------------------------------------------------------------
+// Appels aux Edge Functions
+// ----------------------------------------------------------------------
 async function fetchAdminDashboard() {
-    const session = await window.supabase.auth.getSession();
-    const token = session.data.session?.access_token;
-    if (!token) throw new Error('Non authentifié');
-
+    const token = await getAccessToken();
     const response = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
     });
@@ -20,10 +46,8 @@ async function fetchAdminDashboard() {
     return response.json();
 }
 
-// Helper pour annuler un cours (Edge Function admin-cancel-booking)
 async function cancelBookingAdmin(bookingId) {
-    const session = await window.supabase.auth.getSession();
-    const token = session.data.session?.access_token;
+    const token = await getAccessToken();
     const response = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-cancel-booking`, {
         method: 'POST',
         headers: {
@@ -39,26 +63,22 @@ async function cancelBookingAdmin(bookingId) {
     return response.json();
 }
 
-async function loadAdminDashboard() {
-    try {
-        const data = await fetchAdminDashboard();
-        // data = { upcoming, students, activePackages, monthlyRevenue }
-        displayUpcomingLessons(data.upcoming);
-        displayStudents(data.students);
-        displayActivePackages(data.activePackages);
-        allMonthlyRevenue = data.monthlyRevenue || {};
-        updateRevenueChart();
-    } catch (err) {
-        console.error(err);
-        alert('Erreur chargement : ' + err.message);
-        if (err.message.includes('Non autorisé') || err.message.includes('Accès interdit')) {
-            window.location.href = 'index.html';
-        }
-    }
+// ----------------------------------------------------------------------
+// Fonctions d'affichage (inchangées)
+// ----------------------------------------------------------------------
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 
 function displayUpcomingLessons(lessons) {
     const container = document.getElementById('adminUpcomingLessons');
+    if (!container) return;
     if (!lessons || lessons.length === 0) {
         container.innerHTML = '<div class="no-upcoming">Aucun cours à venir</div>';
         return;
@@ -80,28 +100,26 @@ function displayUpcomingLessons(lessons) {
     html += '</div>';
     container.innerHTML = html;
 
-    // Attacher événements annulation
     document.querySelectorAll('.cancel-admin-booking').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const bookingId = btn.dataset.id;
-            if (confirm('Annuler ce cours ? Un crédit sera ajouté à l\'étudiant.')) {
-                btn.disabled = true;
-                btn.innerText = 'Annulation...';
-                try {
-                    const result = await cancelBookingAdmin(bookingId);
-                    if (result.success) {
-                        alert('Cours annulé avec succès (crédit ajouté)');
-                        loadAdminDashboard(); // recharger tout
-                    } else {
-                        alert('Erreur : ' + (result.error || 'Inconnue'));
-                        btn.disabled = false;
-                        btn.innerText = 'Annuler le cours';
-                    }
-                } catch (err) {
-                    alert('Erreur : ' + err.message);
+            if (!confirm('Annuler ce cours ? Un crédit sera ajouté à l\'étudiant.')) return;
+            btn.disabled = true;
+            btn.innerText = 'Annulation...';
+            try {
+                const result = await cancelBookingAdmin(bookingId);
+                if (result.success) {
+                    alert('Cours annulé avec succès (crédit ajouté)');
+                    loadAdminDashboard(); // recharger toutes les données
+                } else {
+                    alert('Erreur : ' + (result.error || 'Inconnue'));
                     btn.disabled = false;
                     btn.innerText = 'Annuler le cours';
                 }
+            } catch (err) {
+                alert('Erreur : ' + err.message);
+                btn.disabled = false;
+                btn.innerText = 'Annuler le cours';
             }
         });
     });
@@ -109,6 +127,7 @@ function displayUpcomingLessons(lessons) {
 
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
+    if (!container) return;
     if (!students || students.length === 0) {
         container.innerHTML = '<div>Aucun étudiant</div>';
         return;
@@ -141,21 +160,24 @@ function displayStudents(students) {
     html += '</div>';
     container.innerHTML = html;
 
-    // Gestion clic pour ouvrir/fermer
+    // Gestion du clic pour ouvrir/fermer le détail
     document.querySelectorAll('.student-row').forEach(row => {
         const icon = row.querySelector('.toggle-icon');
         const detail = row.querySelector('.student-detail');
         row.addEventListener('click', (e) => {
             if (e.target.tagName === 'BUTTON') return;
-            detail.classList.toggle('open');
-            icon.classList.toggle('fa-chevron-down');
-            icon.classList.toggle('fa-chevron-up');
+            if (detail) detail.classList.toggle('open');
+            if (icon) {
+                icon.classList.toggle('fa-chevron-down');
+                icon.classList.toggle('fa-chevron-up');
+            }
         });
     });
 }
 
 function displayActivePackages(packages) {
     const container = document.getElementById('activePackagesList');
+    if (!container) return;
     if (!packages || packages.length === 0) {
         container.innerHTML = '<div>Aucun forfait actif</div>';
         return;
@@ -178,13 +200,11 @@ function displayActivePackages(packages) {
 
 function updateRevenueChart() {
     const now = new Date();
-    let startDate, endDate;
     let labelMonths = [];
     let revenueData = [];
 
     if (currentMonthOffset === 0) {
         // 6 derniers mois
-        startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
         for (let i = -5; i <= 0; i++) {
             let d = new Date(now.getFullYear(), now.getMonth() + i, 1);
             let key = d.toISOString().substring(0, 7);
@@ -195,7 +215,7 @@ function updateRevenueChart() {
     } else {
         // Slider 12 mois
         const offsetMonths = currentMonthOffset;
-        startDate = new Date(now.getFullYear(), now.getMonth() - 11 + offsetMonths, 1);
+        const startDate = new Date(now.getFullYear(), now.getMonth() - 11 + offsetMonths, 1);
         for (let i = 0; i < 12; i++) {
             let d = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
             let key = d.toISOString().substring(0, 7);
@@ -229,43 +249,106 @@ function updateRevenueChart() {
     });
 }
 
-// Utilitaires
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
+// ----------------------------------------------------------------------
+// Chargement principal avec gestion d'erreur
+// ----------------------------------------------------------------------
+async function loadAdminDashboard() {
+    try {
+        const data = await fetchAdminDashboard();
+        displayUpcomingLessons(data.upcoming);
+        displayStudents(data.students);
+        displayActivePackages(data.activePackages);
+        allMonthlyRevenue = data.monthlyRevenue || {};
+        updateRevenueChart();
+    } catch (err) {
+        console.error('Erreur chargement dashboard admin:', err);
+        alert('Erreur chargement : ' + err.message);
+        if (err.message.includes('Non autorisé') || err.message.includes('Accès interdit')) {
+            window.location.href = 'index.html';
+        }
+    }
 }
 
-// Initialisation
+// ----------------------------------------------------------------------
+// Initialisation de la page : attendre Supabase, AuthManager, puis vérifier l'admin
+// ----------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', async () => {
-    // Attendre que authManager soit prêt
-    const checkAuth = () => {
+    // Attendre que tout soit prêt
+    try {
+        await waitForSupabase();
+    } catch (err) {
+        console.error('Supabase non initialisé', err);
+        alert('Erreur technique, veuillez rafraîchir');
+        return;
+    }
+
+    // Attendre que l'utilisateur soit connecté (via authManager)
+    let user = null;
+    let attempts = 0;
+    while (!user && attempts < 50) {
         if (window.authManager && window.authManager.isAuthenticated()) {
-            const user = window.authManager.getCurrentUser();
-            document.getElementById('adminEmail').textContent = user.email;
-            loadAdminDashboard();
-        } else {
-            setTimeout(checkAuth, 200);
+            user = window.authManager.getCurrentUser();
+            break;
         }
-    };
-    checkAuth();
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+    }
 
-    document.getElementById('logoutAdminBtn').addEventListener('click', async () => {
-        await window.authManager.signOut();
-        window.location.href = 'index.html';
-    });
-    document.getElementById('refreshAdminBtn').addEventListener('click', () => loadAdminDashboard());
+    if (!user) {
+        // Non connecté, rediriger vers login
+        window.location.href = 'login.html';
+        return;
+    }
 
-    document.getElementById('monthSliderPrev').addEventListener('click', () => {
-        currentMonthOffset--;
-        updateRevenueChart();
-    });
-    document.getElementById('monthSliderNext').addEventListener('click', () => {
-        currentMonthOffset++;
-        updateRevenueChart();
-    });
+    // Récupérer l'email de l'utilisateur
+    const userEmail = user.email;
+    document.getElementById('adminEmail').textContent = userEmail;
+
+    // (Optionnel) Vérifier côté client que l'email est dans ADMIN_EMAILS ?
+    // La vérification se fera dans l'Edge Function, mais on peut déjà filtrer
+    try {
+        await loadAdminDashboard();
+    } catch (err) {
+        console.error(err);
+        // Si l'erreur est "Accès interdit", rediriger
+        if (err.message.includes('Accès interdit')) {
+            alert('Vous n\'êtes pas autorisé à accéder à cette page.');
+            window.location.href = 'index.html';
+        }
+    }
+});
+
+// ----------------------------------------------------------------------
+// Écouteurs d'événements (après chargement du DOM)
+// ----------------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    const logoutBtn = document.getElementById('logoutAdminBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            if (window.authManager) {
+                await window.authManager.signOut();
+                window.location.href = 'index.html';
+            }
+        });
+    }
+
+    const refreshBtn = document.getElementById('refreshAdminBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => loadAdminDashboard());
+    }
+
+    const prevBtn = document.getElementById('monthSliderPrev');
+    const nextBtn = document.getElementById('monthSliderNext');
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            currentMonthOffset--;
+            updateRevenueChart();
+        });
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            currentMonthOffset++;
+            updateRevenueChart();
+        });
+    }
 });
