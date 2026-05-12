@@ -1,4 +1,4 @@
-// admin.js – Dashboard administrateur (version finale avec correction CSS)
+// admin.js – version finale avec calcul précis des dépenses
 console.log('admin.js chargé');
 
 let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
@@ -62,28 +62,41 @@ function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
-    container.innerHTML = students.map(s => `
-        <div class="student-row">
-            <div class="student-summary">
-                <span class="student-name">${escapeHtml(s.full_name || 'Sans nom')}</span>
-                <div class="student-stats">
-                    <span>📚 ${s.total_courses || 0} cours</span>
-                    <span>💰 ${(s.total_spent_eur || 0).toFixed(2)} €</span>
+    container.innerHTML = students.map(s => {
+        // Calcul du total dépensé en EUR avec currencyManager
+        let totalSpentEur = 0;
+        if (s.packages && window.currencyManager) {
+            for (const pkg of s.packages) {
+                let amount = parseFloat(pkg.price_paid);
+                if (pkg.currency && pkg.currency !== 'EUR') {
+                    amount = window.currencyManager.convert(amount, pkg.currency, 'EUR');
+                }
+                totalSpentEur += amount;
+            }
+        }
+        return `
+            <div class="student-row">
+                <div class="student-summary">
+                    <span class="student-name">${escapeHtml(s.full_name || 'Sans nom')}</span>
+                    <div class="student-stats">
+                        <span>📚 ${s.total_courses || 0} cours</span>
+                        <span>💰 ${totalSpentEur.toFixed(2)} €</span>
+                    </div>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
                 </div>
-                <i class="fas fa-chevron-down toggle-icon"></i>
-            </div>
-            <div class="student-detail">
-                <strong>Historique :</strong>
-                <div class="booking-history-list">
-                    ${(s.bookings || []).map(b => `
-                        <div class="booking-history-item">
-                            ${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status})
-                        </div>
-                    `).join('') || 'Aucune réservation'}
+                <div class="student-detail">
+                    <strong>Historique :</strong>
+                    <div class="booking-history-list">
+                        ${(s.bookings || []).map(b => `
+                            <div class="booking-history-item">
+                                ${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status})
+                            </div>
+                        `).join('') || 'Aucune réservation'}
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
     document.querySelectorAll('.student-row').forEach(row => {
         const icon = row.querySelector('.toggle-icon');
         const detail = row.querySelector('.student-detail');
@@ -108,20 +121,29 @@ function updateRevenueChart() {
     const canvas = document.getElementById('revenueChart');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const now = new Date();
-    let start = currentMonthOffset === 0 ? -5 : -11 + currentMonthOffset;
-    let end = currentMonthOffset === 0 ? 0 : start + 11;
-    let labels = [], data = [];
-    for (let i = start; i <= end; i++) {
-        let d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-        let key = d.toISOString().slice(0,7);
-        labels.push(d.toLocaleDateString('fr', { month:'short', year:'numeric' }));
-        data.push(allMonthlyRevenue[key] || 0);
-    }
+    
+    // Extraire tous les mois disponibles (triés chronologiquement)
+    const months = Object.keys(allMonthlyRevenue).sort();
+    if (months.length === 0) return;
+    
+    const startIndex = currentMonthOffset === 0 ? Math.max(0, months.length - 6) : Math.max(0, months.length - 12 + currentMonthOffset);
+    const endIndex = currentMonthOffset === 0 ? months.length - 1 : Math.min(months.length - 1, startIndex + 11);
+    const visibleMonths = months.slice(startIndex, endIndex + 1);
+    
+    const labels = visibleMonths.map(m => {
+        const [y, mo] = m.split('-');
+        return new Date(parseInt(y), parseInt(mo)-1, 1).toLocaleDateString('fr', { month:'short', year:'numeric' });
+    });
+    const data = visibleMonths.map(m => allMonthlyRevenue[m] || 0);
+    
     if (revenueChart) revenueChart.destroy();
-    revenueChart = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label:'Revenus (EUR)', data, backgroundColor:'#3c84f6', borderRadius:8 }] }, options:{ responsive:true, maintainAspectRatio:true, plugins:{ tooltip:{ callbacks:{ label: ctx => `${ctx.raw.toFixed(2)} €` } } } } });
-    const monthLabel = document.getElementById('monthRangeLabel');
-    if (monthLabel) monthLabel.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
+    revenueChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Revenus (EUR)', data, backgroundColor: '#3c84f6', borderRadius: 8 }] },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: ctx => `${ctx.raw.toFixed(2)} €` } } } }
+    });
+    const labelElem = document.getElementById('monthRangeLabel');
+    if (labelElem) labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
 async function loadDashboard() {
@@ -138,16 +160,13 @@ async function loadDashboard() {
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         await waitForSupabase();
-        await getToken(); // vérifie la session
+        await getToken();
         const userEmail = (await supabase.auth.getUser()).data.user?.email;
         const adminEmailElem = document.getElementById('adminEmail');
         if (adminEmailElem) adminEmailElem.innerText = userEmail;
         await loadDashboard();
+        document.body.classList.add('loaded');  // corrige l'écran blanc
 
-        // ✅ CORRECTION ÉCRAN BLANC : rendre le body visible
-        document.body.classList.add('loaded');
-
-        // Attachement sécurisé des événements
         const refreshBtn = document.getElementById('refreshAdminBtn');
         if (refreshBtn) refreshBtn.addEventListener('click', () => loadDashboard());
         const logoutBtn = document.getElementById('logoutAdminBtn');
