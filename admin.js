@@ -1,5 +1,5 @@
 // admin.js - Dashboard admin sécurisé via Edge Functions Supabase
-// VERSION CORRIGÉE - Attend que Supabase soit initialisé
+// Version robuste avec gestion d'erreur et affichage
 
 let revenueChart = null;
 let currentMonthOffset = 0;
@@ -9,19 +9,17 @@ let allMonthlyRevenue = {};
 // Attendre que Supabase soit complètement initialisé
 // ----------------------------------------------------------------------
 async function waitForSupabase() {
-    // Si la promesse d'initialisation existe, attendre sa résolution
     if (window.supabaseInitialized) {
         await window.supabaseInitialized;
     }
-    // Vérification finale
     if (!window.supabase || typeof window.supabase.auth?.getSession !== 'function') {
-        throw new Error('Supabase non initialisé ou auth manquant');
+        throw new Error('Supabase non initialisé');
     }
     return window.supabase;
 }
 
 // ----------------------------------------------------------------------
-// Récupérer le token d'accès (avec attente)
+// Récupérer le token d'accès
 // ----------------------------------------------------------------------
 async function getAccessToken() {
     const supabase = await waitForSupabase();
@@ -32,7 +30,7 @@ async function getAccessToken() {
 }
 
 // ----------------------------------------------------------------------
-// Appels aux Edge Functions
+// Appels aux Edge Functions (admin-dashboard et admin-cancel-booking)
 // ----------------------------------------------------------------------
 async function fetchAdminDashboard() {
     const token = await getAccessToken();
@@ -64,7 +62,7 @@ async function cancelBookingAdmin(bookingId) {
 }
 
 // ----------------------------------------------------------------------
-// Fonctions d'affichage (inchangées)
+// Fonctions d'affichage avec vérification des éléments DOM
 // ----------------------------------------------------------------------
 function escapeHtml(str) {
     if (!str) return '';
@@ -85,7 +83,7 @@ function displayUpcomingLessons(lessons) {
     }
     let html = '<div class="upcoming-list">';
     for (const lesson of lessons) {
-        const studentName = lesson.profiles?.full_name || lesson.profiles?.email || 'Inconnu';
+        const studentName = lesson.profiles?.full_name || 'Étudiant';
         const start = new Date(lesson.start_time);
         html += `
             <div class="upcoming-lesson-card" data-booking-id="${lesson.id}">
@@ -110,7 +108,7 @@ function displayUpcomingLessons(lessons) {
                 const result = await cancelBookingAdmin(bookingId);
                 if (result.success) {
                     alert('Cours annulé avec succès (crédit ajouté)');
-                    loadAdminDashboard(); // recharger toutes les données
+                    loadAdminDashboard();
                 } else {
                     alert('Erreur : ' + (result.error || 'Inconnue'));
                     btn.disabled = false;
@@ -137,7 +135,7 @@ function displayStudents(students) {
         html += `
             <div class="student-row" data-student-id="${student.id}">
                 <div class="student-summary">
-                    <span class="student-name">${escapeHtml(student.full_name || student.email)}</span>
+                    <span class="student-name">${escapeHtml(student.full_name || 'Sans nom')}</span>
                     <div class="student-stats">
                         <span>📚 ${student.total_courses || 0} cours</span>
                         <span>💰 ${(student.total_spent_eur || 0).toFixed(2)} €</span>
@@ -160,7 +158,6 @@ function displayStudents(students) {
     html += '</div>';
     container.innerHTML = html;
 
-    // Gestion du clic pour ouvrir/fermer le détail
     document.querySelectorAll('.student-row').forEach(row => {
         const icon = row.querySelector('.toggle-icon');
         const detail = row.querySelector('.student-detail');
@@ -185,7 +182,7 @@ function displayActivePackages(packages) {
     let html = '<div class="active-packages-table">';
     for (const pkg of packages) {
         const student = pkg.profiles;
-        const name = student?.full_name || student?.email || 'Inconnu';
+        const name = student?.full_name || 'Étudiant';
         html += `
             <div class="active-package-item">
                 <span><strong>${escapeHtml(name)}</strong> - ${pkg.course_type} (${pkg.duration_minutes} min)</span>
@@ -199,12 +196,16 @@ function displayActivePackages(packages) {
 }
 
 function updateRevenueChart() {
+    const canvas = document.getElementById('revenueChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
     const now = new Date();
     let labelMonths = [];
     let revenueData = [];
 
     if (currentMonthOffset === 0) {
-        // 6 derniers mois
         for (let i = -5; i <= 0; i++) {
             let d = new Date(now.getFullYear(), now.getMonth() + i, 1);
             let key = d.toISOString().substring(0, 7);
@@ -213,7 +214,6 @@ function updateRevenueChart() {
         }
         document.getElementById('monthRangeLabel').innerText = '6 derniers mois';
     } else {
-        // Slider 12 mois
         const offsetMonths = currentMonthOffset;
         const startDate = new Date(now.getFullYear(), now.getMonth() - 11 + offsetMonths, 1);
         for (let i = 0; i < 12; i++) {
@@ -222,11 +222,9 @@ function updateRevenueChart() {
             labelMonths.push(d.toLocaleDateString('fr', { month: 'short', year: 'numeric' }));
             revenueData.push(allMonthlyRevenue[key] || 0);
         }
-        const endDateLabel = new Date(startDate.getFullYear(), startDate.getMonth() + 11, 1);
         document.getElementById('monthRangeLabel').innerText = `${labelMonths[0]} - ${labelMonths[11]}`;
     }
 
-    const ctx = document.getElementById('revenueChart').getContext('2d');
     if (revenueChart) revenueChart.destroy();
     revenueChart = new Chart(ctx, {
         type: 'bar',
@@ -249,40 +247,48 @@ function updateRevenueChart() {
     });
 }
 
-// ----------------------------------------------------------------------
-// Chargement principal avec gestion d'erreur
-// ----------------------------------------------------------------------
 async function loadAdminDashboard() {
     try {
+        // Afficher un indicateur de chargement
+        document.getElementById('adminUpcomingLessons').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
+        document.getElementById('studentsList').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
+        document.getElementById('activePackagesList').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
+        
         const data = await fetchAdminDashboard();
         displayUpcomingLessons(data.upcoming);
         displayStudents(data.students);
         displayActivePackages(data.activePackages);
         allMonthlyRevenue = data.monthlyRevenue || {};
         updateRevenueChart();
+        
+        // Cacher l'éventuel message d'erreur
+        const dashboardContent = document.getElementById('dashboardContent');
+        if (dashboardContent) dashboardContent.style.display = 'block';
     } catch (err) {
         console.error('Erreur chargement dashboard admin:', err);
-        alert('Erreur chargement : ' + err.message);
-        if (err.message.includes('Non autorisé') || err.message.includes('Accès interdit')) {
-            window.location.href = 'index.html';
-        }
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'error-message';
+        errorMsg.style.cssText = 'background:#fee; border:1px solid #fcc; padding:20px; margin:20px; border-radius:8px; color:#c00;';
+        errorMsg.innerHTML = `<strong>Erreur de chargement :</strong> ${escapeHtml(err.message)}<br><button onclick="location.reload()" style="margin-top:10px; padding:5px 12px; background:#3c84f6; color:white; border:none; border-radius:4px;">Recharger</button>`;
+        const container = document.querySelector('.dashboard-container');
+        if (container) container.prepend(errorMsg);
     }
 }
 
 // ----------------------------------------------------------------------
-// Initialisation de la page : attendre Supabase, AuthManager, puis vérifier l'admin
+// Initialisation de la page
 // ----------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', async () => {
-    // Attendre que tout soit prêt
+    // Attendre Supabase
     try {
         await waitForSupabase();
     } catch (err) {
-        console.error('Supabase non initialisé', err);
-        alert('Erreur technique, veuillez rafraîchir');
+        console.error('Supabase non prêt', err);
+        document.body.innerHTML = '<div style="color:red; padding:20px;">Erreur technique : Supabase non initialisé. Veuillez rafraîchir.</div>';
         return;
     }
 
-    // Attendre que l'utilisateur soit connecté (via authManager)
+    // Attendre que l'utilisateur soit connecté
     let user = null;
     let attempts = 0;
     while (!user && attempts < 50) {
@@ -293,62 +299,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         await new Promise(r => setTimeout(r, 100));
         attempts++;
     }
-
     if (!user) {
-        // Non connecté, rediriger vers login
         window.location.href = 'login.html';
         return;
     }
+    document.getElementById('adminEmail') && (document.getElementById('adminEmail').textContent = user.email);
 
-    // Récupérer l'email de l'utilisateur
-    const userEmail = user.email;
-    document.getElementById('adminEmail').textContent = userEmail;
+    // Charger le dashboard
+    await loadAdminDashboard();
 
-    // (Optionnel) Vérifier côté client que l'email est dans ADMIN_EMAILS ?
-    // La vérification se fera dans l'Edge Function, mais on peut déjà filtrer
-    try {
-        await loadAdminDashboard();
-    } catch (err) {
-        console.error(err);
-        // Si l'erreur est "Accès interdit", rediriger
-        if (err.message.includes('Accès interdit')) {
-            alert('Vous n\'êtes pas autorisé à accéder à cette page.');
-            window.location.href = 'index.html';
-        }
-    }
-});
-
-// ----------------------------------------------------------------------
-// Écouteurs d'événements (après chargement du DOM)
-// ----------------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', () => {
+    // Écouteurs des boutons
     const logoutBtn = document.getElementById('logoutAdminBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
-            if (window.authManager) {
-                await window.authManager.signOut();
-                window.location.href = 'index.html';
-            }
+            if (window.authManager) await window.authManager.signOut();
+            window.location.href = 'index.html';
         });
     }
-
     const refreshBtn = document.getElementById('refreshAdminBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => loadAdminDashboard());
-    }
-
+    if (refreshBtn) refreshBtn.addEventListener('click', () => loadAdminDashboard());
     const prevBtn = document.getElementById('monthSliderPrev');
+    if (prevBtn) prevBtn.addEventListener('click', () => { currentMonthOffset--; updateRevenueChart(); });
     const nextBtn = document.getElementById('monthSliderNext');
-    if (prevBtn) {
-        prevBtn.addEventListener('click', () => {
-            currentMonthOffset--;
-            updateRevenueChart();
-        });
-    }
-    if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
-            currentMonthOffset++;
-            updateRevenueChart();
-        });
-    }
+    if (nextBtn) nextBtn.addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
 });
