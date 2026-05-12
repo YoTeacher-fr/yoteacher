@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - YoTeach</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="main-header scrolled">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <a href="index.html" class="logo">YoTeach Admin</a>
+                </div>
+                <div class="header-right-group">
+                    <div class="language-switcher" id="languageSwitcher">
+                        <span class="flag">🌐</span>
+                        <span>FR</span>
+                    </div>
+                    <a href="#" id="logoutAdminBtn" class="login-btn">Déconnexion</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard admin-dashboard">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <div class="welcome-message">
+                    <h1>Tableau de bord administrateur</h1>
+                    <p id="adminEmail"></p>
+                </div>
+                <div class="dashboard-actions">
+                    <button id="refreshAdminBtn" class="dashboard-action-btn">
+                        <i class="fas fa-sync-alt"></i> Actualiser
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section Revenue avec graphique -->
+            <div class="revenue-section">
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i>
+                    <h2>Revenus (EUR)</h2>
+                </div>
+                <div class="revenue-controls">
+                    <button id="monthSliderPrev" class="slider-btn-small"><i class="fas fa-chevron-left"></i></button>
+                    <span id="monthRangeLabel">6 derniers mois</span>
+                    <button id="monthSliderNext" class="slider-btn-small"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <canvas id="revenueChart" width="800" height="300"></canvas>
+            </div>
+
+            <!-- Prochains cours -->
+            <div class="card-upcoming admin-card">
+                <div class="card-header">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h2>Prochains cours (tous les étudiants)</h2>
+                </div>
+                <div id="adminUpcomingLessons">
+                    <div class="loading"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>
+                </div>
+            </div>
+
+            <!-- Liste des étudiants -->
+            <div class="card-profile admin-card">
+                <div class="card-header">
+                    <i class="fas fa-users"></i>
+                    <h2>Étudiants</h2>
+                </div>
+                <div id="studentsList">
+                    <div class="loading"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>
+                </div>
+            </div>
+
+            <!-- Forfaits actifs -->
+            <div class="card-packages admin-card">
+                <div class="card-header">
+                    <i class="fas fa-boxes"></i>
+                    <h2>Forfaits actifs</h2>
+                </div>
+                <div id="activePackagesList">
+                    <div class="loading"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="auth.js"></script>
+    <script src="currency.js"></script>
+    <script src="booking-cancel.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

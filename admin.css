@@ -1,0 +1,122 @@
+/* admin.css - styles spécifiques au dashboard admin */
+.admin-dashboard .revenue-section {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.revenue-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.slider-btn-small {
+    background: #f0f0f0;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.slider-btn-small:hover {
+    background: #3c84f6;
+    color: white;
+}
+
+#monthRangeLabel {
+    font-weight: 600;
+    min-width: 120px;
+    text-align: center;
+}
+
+.admin-card {
+    margin-bottom: 30px;
+}
+
+.student-row {
+    border-bottom: 1px solid #eee;
+    padding: 12px 0;
+    cursor: pointer;
+}
+
+.student-row:hover {
+    background: #f9f9f9;
+}
+
+.student-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.student-name {
+    font-weight: 700;
+    font-size: 1rem;
+    flex: 2;
+}
+
+.student-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.student-detail {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    display: none;
+}
+
+.student-detail.open {
+    display: block;
+}
+
+.booking-history-item {
+    font-size: 0.85rem;
+    padding: 6px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.active-package-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn-cancel-admin {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-cancel-admin:hover {
+    background: #c0392b;
+}
+
+@media (max-width: 768px) {
+    .student-summary {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .student-stats {
+        flex-wrap: wrap;
+    }
+}
