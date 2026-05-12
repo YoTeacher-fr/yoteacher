@@ -1,8 +1,11 @@
-// admin.js – version finale avec calcul précis des dépenses
+// admin.js – Dashboard administrateur final
 console.log('admin.js chargé');
 
 let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
 
+// ----------------------------------------------------------------------
+// Utilitaires d'attente et token
+// ----------------------------------------------------------------------
 async function waitForSupabase() {
     if (window.supabaseInitialized) await window.supabaseInitialized;
     if (!window.supabase || !window.supabase.auth) throw new Error('Supabase non initialisé');
@@ -16,6 +19,9 @@ async function getToken() {
     return session.access_token;
 }
 
+// ----------------------------------------------------------------------
+// Appels aux Edge Functions
+// ----------------------------------------------------------------------
 async function fetchAdminDashboard() {
     const token = await getToken();
     const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-dashboard`, {
@@ -25,17 +31,56 @@ async function fetchAdminDashboard() {
     return res.json();
 }
 
-async function cancelBooking(bookingId) {
+async function cancelBookingAdmin(bookingId) {
     const token = await getToken();
     const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-cancel-booking`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ bookingId })
     });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Erreur annulation');
+
+    // === ANNULATION CAL.COM (exactement comme dans booking-cancel.js) ===
+    if (result.calcomUid && window.YOTEACHER_CONFIG?.CALCOM_API_KEY) {
+        try {
+            const apiUrl = `https://api.cal.com/v2/bookings/${result.calcomUid}`;
+            // Vérifier si la réservation existe (optionnel)
+            const checkRes = await fetch(apiUrl, {
+                headers: {
+                    'Authorization': `Bearer ${window.YOTEACHER_CONFIG.CALCOM_API_KEY}`,
+                    'Cal-API-Version': 'v2'
+                }
+            });
+            if (checkRes.ok) {
+                const cancelRes = await fetch(`${apiUrl}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${window.YOTEACHER_CONFIG.CALCOM_API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Cal-API-Version': 'v2'
+                    },
+                    body: JSON.stringify({ cancellationReason: 'Annulé par administrateur' })
+                });
+                if (!cancelRes.ok) console.warn('Échec annulation Cal.com');
+            } else if (checkRes.status === 404) {
+                // déjà annulée ou inexistante → rien à faire
+            }
+        } catch (err) {
+            console.warn('Erreur annulation Cal.com (non bloquante)', err);
+        }
+    }
+    // ================================================================
+
+    return result;
 }
 
+// ----------------------------------------------------------------------
+// Affichage (HTML sécurisé)
+// ----------------------------------------------------------------------
 function escapeHtml(str) { return (str || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
 function displayUpcoming(lessons) {
@@ -49,13 +94,22 @@ function displayUpcoming(lessons) {
             <button class="btn-cancel-admin" data-id="${lesson.id}">Annuler le cours</button>
         </div>
     `).join('');
-    document.querySelectorAll('.btn-cancel-admin').forEach(btn => btn.addEventListener('click', async e => {
-        const id = btn.dataset.id;
-        if (!confirm('Annuler ce cours ? Un crédit sera ajouté.')) return;
-        btn.disabled = true; btn.innerText = 'Annulation...';
-        try { await cancelBooking(id); alert('Annulé'); location.reload(); } 
-        catch (err) { alert('Erreur: ' + err.message); btn.disabled = false; btn.innerText = 'Annuler le cours'; }
-    }));
+
+    document.querySelectorAll('.btn-cancel-admin').forEach(btn => {
+        btn.addEventListener('click', async e => {
+            const id = btn.dataset.id;
+            if (!confirm('Annuler ce cours ? Un crédit sera ajouté.')) return;
+            btn.disabled = true; btn.innerText = 'Annulation...';
+            try {
+                await cancelBookingAdmin(id);
+                alert('Cours annulé (crédit rendu, Cal.com annulé)');
+                location.reload();
+            } catch (err) {
+                alert('Erreur: ' + err.message);
+                btn.disabled = false; btn.innerText = 'Annuler le cours';
+            }
+        });
+    });
 }
 
 function displayStudents(students) {
@@ -63,7 +117,7 @@ function displayStudents(students) {
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
     container.innerHTML = students.map(s => {
-        // Calcul du total dépensé en EUR avec currencyManager
+        // Calcul du total dépensé en EUR via currencyManager
         let totalSpentEur = 0;
         if (s.packages && window.currencyManager) {
             for (const pkg of s.packages) {
@@ -97,10 +151,18 @@ function displayStudents(students) {
             </div>
         `;
     }).join('');
+
+    // Gestion clic pour ouvrir/fermer les détails
     document.querySelectorAll('.student-row').forEach(row => {
         const icon = row.querySelector('.toggle-icon');
         const detail = row.querySelector('.student-detail');
-        row.addEventListener('click', (e) => { if (e.target.tagName !== 'BUTTON') { detail.classList.toggle('open'); icon.classList.toggle('fa-chevron-down'); icon.classList.toggle('fa-chevron-up'); } });
+        row.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON') {
+                detail.classList.toggle('open');
+                icon.classList.toggle('fa-chevron-down');
+                icon.classList.toggle('fa-chevron-up');
+            }
+        });
     });
 }
 
@@ -121,21 +183,19 @@ function updateRevenueChart() {
     const canvas = document.getElementById('revenueChart');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    
-    // Extraire tous les mois disponibles (triés chronologiquement)
     const months = Object.keys(allMonthlyRevenue).sort();
     if (months.length === 0) return;
-    
+
     const startIndex = currentMonthOffset === 0 ? Math.max(0, months.length - 6) : Math.max(0, months.length - 12 + currentMonthOffset);
     const endIndex = currentMonthOffset === 0 ? months.length - 1 : Math.min(months.length - 1, startIndex + 11);
-    const visibleMonths = months.slice(startIndex, endIndex + 1);
-    
-    const labels = visibleMonths.map(m => {
+    const visible = months.slice(startIndex, endIndex + 1);
+
+    const labels = visible.map(m => {
         const [y, mo] = m.split('-');
         return new Date(parseInt(y), parseInt(mo)-1, 1).toLocaleDateString('fr', { month:'short', year:'numeric' });
     });
-    const data = visibleMonths.map(m => allMonthlyRevenue[m] || 0);
-    
+    const data = visible.map(m => allMonthlyRevenue[m] || 0);
+
     if (revenueChart) revenueChart.destroy();
     revenueChart = new Chart(ctx, {
         type: 'bar',
@@ -154,28 +214,39 @@ async function loadDashboard() {
         displayPackages(data.activePackages);
         allMonthlyRevenue = data.monthlyRevenue || {};
         updateRevenueChart();
-    } catch (err) { console.error(err); alert('Erreur chargement: ' + err.message); }
+    } catch (err) {
+        console.error(err);
+        alert('Erreur chargement: ' + err.message);
+    }
 }
 
+// ----------------------------------------------------------------------
+// Initialisation
+// ----------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         await waitForSupabase();
-        await getToken();
-        const userEmail = (await supabase.auth.getUser()).data.user?.email;
-        const adminEmailElem = document.getElementById('adminEmail');
-        if (adminEmailElem) adminEmailElem.innerText = userEmail;
-        await loadDashboard();
-        document.body.classList.add('loaded');  // corrige l'écran blanc
+        await getToken(); // valide la session
+        const { data: { user } } = await supabase.auth.getUser();
+        const emailSpan = document.getElementById('adminEmail');
+        if (emailSpan && user) emailSpan.innerText = user.email;
 
+        await loadDashboard();
+        document.body.classList.add('loaded');  // corrige l'écran blanc (CSS)
+
+        // Écouteurs
         const refreshBtn = document.getElementById('refreshAdminBtn');
         if (refreshBtn) refreshBtn.addEventListener('click', () => loadDashboard());
         const logoutBtn = document.getElementById('logoutAdminBtn');
-        if (logoutBtn) logoutBtn.addEventListener('click', async () => { await window.authManager?.signOut(); window.location.href = 'index.html'; });
+        if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+            if (window.authManager) await window.authManager.signOut();
+            window.location.href = 'index.html';
+        });
         const prevBtn = document.getElementById('monthSliderPrev');
-        const nextBtn = document.getElementById('monthSliderNext');
         if (prevBtn) prevBtn.addEventListener('click', () => { currentMonthOffset--; updateRevenueChart(); });
+        const nextBtn = document.getElementById('monthSliderNext');
         if (nextBtn) nextBtn.addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
-    } catch (err) { 
+    } catch (err) {
         console.error(err);
         alert('Erreur initialisation: ' + err.message);
     }
