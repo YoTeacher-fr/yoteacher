@@ -1,4 +1,4 @@
-// admin.js – final
+// admin.js – version stable avec vérifications
 console.log('admin.js chargé');
 
 let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
@@ -120,7 +120,8 @@ function updateRevenueChart() {
     }
     if (revenueChart) revenueChart.destroy();
     revenueChart = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label:'Revenus (EUR)', data, backgroundColor:'#3c84f6', borderRadius:8 }] }, options:{ responsive:true, maintainAspectRatio:true, plugins:{ tooltip:{ callbacks:{ label: ctx => `${ctx.raw.toFixed(2)} €` } } } } });
-    document.getElementById('monthRangeLabel').innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
+    const monthLabel = document.getElementById('monthRangeLabel');
+    if (monthLabel) monthLabel.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
 async function loadDashboard() {
@@ -137,13 +138,23 @@ async function loadDashboard() {
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         await waitForSupabase();
-        const token = await getToken();
-        // simple vérification que l'utilisateur est admin (sera validée par l'Edge Function)
-        document.getElementById('adminEmail').innerText = (await supabase.auth.getUser()).data.user?.email;
+        await getToken(); // vérifie la session
+        const userEmail = (await supabase.auth.getUser()).data.user?.email;
+        const adminEmailElem = document.getElementById('adminEmail');
+        if (adminEmailElem) adminEmailElem.innerText = userEmail;
         await loadDashboard();
-        document.getElementById('refreshAdminBtn').addEventListener('click', () => loadDashboard());
-        document.getElementById('logoutAdminBtn').addEventListener('click', async () => { await window.authManager?.signOut(); window.location.href = 'index.html'; });
-        document.getElementById('monthSliderPrev').addEventListener('click', () => { currentMonthOffset--; updateRevenueChart(); });
-        document.getElementById('monthSliderNext').addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
-    } catch (err) { alert('Erreur initialisation: ' + err.message); }
+
+        // Attachement sécurisé des événements
+        const refreshBtn = document.getElementById('refreshAdminBtn');
+        if (refreshBtn) refreshBtn.addEventListener('click', () => loadDashboard());
+        const logoutBtn = document.getElementById('logoutAdminBtn');
+        if (logoutBtn) logoutBtn.addEventListener('click', async () => { await window.authManager?.signOut(); window.location.href = 'index.html'; });
+        const prevBtn = document.getElementById('monthSliderPrev');
+        const nextBtn = document.getElementById('monthSliderNext');
+        if (prevBtn) prevBtn.addEventListener('click', () => { currentMonthOffset--; updateRevenueChart(); });
+        if (nextBtn) nextBtn.addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
+    } catch (err) { 
+        console.error(err);
+        alert('Erreur initialisation: ' + err.message);
+    }
 });
