@@ -1,4 +1,4 @@
-// admin.js – Dashboard administrateur avec logs complets
+// admin.js – Dashboard administrateur avec calculs des revenus corrigés
 console.log('🔵 [ADMIN.JS] Script chargé');
 
 let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
@@ -73,6 +73,7 @@ async function cancelBookingAdmin(bookingId) {
 
 function escapeHtml(str) { return (str || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
+// *** CORRECTION : affichage des prochains cours (inchangé) ***
 function displayUpcoming(lessons) {
     const container = document.getElementById('adminUpcomingLessons');
     if (!container) return;
@@ -105,21 +106,36 @@ function displayUpcoming(lessons) {
     });
 }
 
+// *** CORRECTION PRINCIPALE : affichage des étudiants avec total dépensé correct ***
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
+
     container.innerHTML = students.map(s => {
         let totalSpentEur = 0;
-        if (s.packages && window.currencyManager) {
-            for (const pkg of s.packages) {
+
+        // 1. Packages avec statut valide (exclut annulés, remboursés, etc.)
+        const validPackageStatuses = ['active', 'completed']; // ajustez si nécessaire
+        const validPackages = (s.packages || []).filter(p => validPackageStatuses.includes(p.status));
+        if (window.currencyManager) {
+            for (const pkg of validPackages) {
                 let amount = parseFloat(pkg.price_paid);
                 if (pkg.currency && pkg.currency !== 'EUR') {
                     amount = window.currencyManager.convert(amount, pkg.currency, 'EUR');
                 }
                 totalSpentEur += amount;
             }
+        } else {
+            // Fallback sans gestionnaire de devise (suppose EUR)
+            for (const pkg of validPackages) {
+                totalSpentEur += parseFloat(pkg.price_paid);
+            }
         }
+
+        // 2. Revenus des bookings unitaires (déjà en EUR depuis l'Edge)
+        totalSpentEur += (s.direct_revenue_eur || 0);
+
         return `
             <div class="student-row">
                 <div class="student-summary">
@@ -131,7 +147,7 @@ function displayStudents(students) {
                     <i class="fas fa-chevron-down toggle-icon"></i>
                 </div>
                 <div class="student-detail">
-                    <strong>Historique :</strong>
+                    <strong>Historique (cours passés) :</strong>
                     <div class="booking-history-list">
                         ${(s.bookings || []).map(b => `
                             <div class="booking-history-item">
@@ -143,6 +159,8 @@ function displayStudents(students) {
             </div>
         `;
     }).join('');
+
+    // Toggle détail (identique)
     document.querySelectorAll('.student-row').forEach(row => {
         const icon = row.querySelector('.toggle-icon');
         const detail = row.querySelector('.student-detail');
@@ -156,6 +174,7 @@ function displayStudents(students) {
     });
 }
 
+// *** AFFICHAGE DES FORFAITS ACTIFS (identique) ***
 function displayPackages(packages) {
     const container = document.getElementById('activePackagesList');
     if (!container) return;
@@ -169,30 +188,56 @@ function displayPackages(packages) {
     `).join('');
 }
 
+// *** GRAPHIQUE DE REVENUS (utilise monthlyRevenue déjà corrigé côté serveur) ***
 function updateRevenueChart() {
     const canvas = document.getElementById('revenueChart');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const months = Object.keys(allMonthlyRevenue).sort();
     if (months.length === 0) return;
+
     const startIndex = currentMonthOffset === 0 ? Math.max(0, months.length - 6) : Math.max(0, months.length - 12 + currentMonthOffset);
     const endIndex = currentMonthOffset === 0 ? months.length - 1 : Math.min(months.length - 1, startIndex + 11);
     const visible = months.slice(startIndex, endIndex + 1);
+
     const labels = visible.map(m => {
         const [y, mo] = m.split('-');
         return new Date(parseInt(y), parseInt(mo)-1, 1).toLocaleDateString('fr', { month:'short', year:'numeric' });
     });
     const data = visible.map(m => allMonthlyRevenue[m] || 0);
+
     if (revenueChart) revenueChart.destroy();
     revenueChart = new Chart(ctx, {
         type: 'bar',
-        data: { labels, datasets: [{ label: 'Revenus (EUR)', data, backgroundColor: '#3c84f6', borderRadius: 8 }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: ctx => `${ctx.raw.toFixed(2)} €` } } } }
+        data: {
+            labels,
+            datasets: [{
+                label: 'Revenus (EUR)',
+                data,
+                backgroundColor: '#3c84f6',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.raw.toFixed(2)} €`
+                    }
+                }
+            }
+        }
     });
+
     const labelElem = document.getElementById('monthRangeLabel');
-    if (labelElem) labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
+    if (labelElem) {
+        labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
+    }
 }
 
+// *** CHARGEMENT PRINCIPAL ***
 async function loadDashboard() {
     console.log('🔄 [ADMIN.JS] loadDashboard – début');
     try {
@@ -209,6 +254,7 @@ async function loadDashboard() {
     }
 }
 
+// *** INITIALISATION AU DOMContentLoaded ***
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🏁 [ADMIN.JS] DOMContentLoaded');
     try {
@@ -221,17 +267,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadDashboard();
         document.body.classList.add('loaded');
 
+        // Boutons de contrôle
         const refreshBtn = document.getElementById('refreshAdminBtn');
         if (refreshBtn) refreshBtn.addEventListener('click', () => loadDashboard());
+
         const logoutBtn = document.getElementById('logoutAdminBtn');
         if (logoutBtn) logoutBtn.addEventListener('click', async () => {
             if (window.authManager) await window.authManager.signOut();
             window.location.href = 'index.html';
         });
+
         const prevBtn = document.getElementById('monthSliderPrev');
         if (prevBtn) prevBtn.addEventListener('click', () => { currentMonthOffset--; updateRevenueChart(); });
+
         const nextBtn = document.getElementById('monthSliderNext');
         if (nextBtn) nextBtn.addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
+
         console.log('✅ [ADMIN.JS] Initialisation terminée');
     } catch (err) {
         console.error('❌ [ADMIN.JS] Erreur initialisation:', err);
