@@ -1,184 +1,149 @@
-// admin.js – Dashboard admin complet (v2)
-console.log('🔵 admin.js chargé – début');
+// admin.js – final
+console.log('admin.js chargé');
 
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🟢 DOMContentLoaded – attente Supabase...');
+let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
 
-    // Attendre Supabase
+async function waitForSupabase() {
     if (window.supabaseInitialized) await window.supabaseInitialized;
-    if (!window.supabase || !window.supabase.auth) {
-        console.error('❌ Supabase non disponible');
-        document.body.innerHTML = '<div style="color:red; padding:20px;">Erreur : Supabase non initialisé</div>';
-        return;
-    }
-    console.log('✅ Supabase prêt');
-
-    // Récupérer session
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) {
-        console.error('❌ Pas de session', error);
-        window.location.href = 'login.html';
-        return;
-    }
-    console.log('✅ Utilisateur connecté:', session.user.email);
-
-    // Vérifier admin (via l'appel à l'Edge Function, on verra ensuite)
-    const token = session.access_token;
-    console.log('🔑 Token récupéré');
-
-    // Appeler l’Edge Function
-    try {
-        const resp = await fetch('https://bsbhqathonubghytmbvm.supabase.co/functions/v1/admin-dashboard', {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-        if (data.error) throw new Error(data.error);
-        console.log('📦 Données reçues:', data);
-
-        // Afficher le contenu du dashboard
-        afficherDashboard(data);
-    } catch (err) {
-        console.error('❌ Erreur appel Edge Function:', err);
-        document.body.innerHTML = `<div style="color:red; padding:20px;">Erreur : ${err.message}</div>`;
-    }
-});
-
-function afficherDashboard(data) {
-    // Cacher l'écran de chargement (s'il existe)
-    const loading = document.querySelector('.loading');
-    if (loading) loading.style.display = 'none';
-
-    // Mettre à jour la section "Prochains cours"
-    const upcomingDiv = document.getElementById('adminUpcomingLessons');
-    if (upcomingDiv) {
-        if (!data.upcoming || data.upcoming.length === 0) {
-            upcomingDiv.innerHTML = '<div class="no-upcoming">Aucun cours à venir</div>';
-        } else {
-            let html = '<div class="upcoming-list">';
-            for (const lesson of data.upcoming) {
-                const studentName = lesson.profiles?.full_name || 'Étudiant';
-                const start = new Date(lesson.start_time);
-                html += `
-                    <div class="upcoming-lesson-card">
-                        <div><strong>${escapeHtml(studentName)}</strong> - ${lesson.course_type} - ${start.toLocaleString()}</div>
-                        <div>Durée: ${lesson.duration_minutes} min - ${lesson.platform || 'Zoom'}</div>
-                        <button class="btn-cancel-admin" data-id="${lesson.id}">Annuler le cours</button>
-                    </div>
-                `;
-            }
-            html += '</div>';
-            upcomingDiv.innerHTML = html;
-            // Attacher les événements d'annulation après affichage
-            document.querySelectorAll('.btn-cancel-admin').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const id = btn.dataset.id;
-                    if (confirm('Annuler ce cours ? Un crédit sera ajouté.')) {
-                        btn.disabled = true;
-                        btn.innerText = 'Annulation...';
-                        try {
-                            const token = (await supabase.auth.getSession()).data.session?.access_token;
-                            const resp = await fetch('https://bsbhqathonubghytmbvm.supabase.co/functions/v1/admin-cancel-booking', {
-                                method: 'POST',
-                                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ bookingId: id })
-                            });
-                            const result = await resp.json();
-                            if (result.success) {
-                                alert('Cours annulé');
-                                location.reload();
-                            } else {
-                                alert('Erreur: ' + (result.error || 'Inconnue'));
-                                btn.disabled = false;
-                                btn.innerText = 'Annuler le cours';
-                            }
-                        } catch (err) {
-                            alert('Erreur: ' + err.message);
-                            btn.disabled = false;
-                            btn.innerText = 'Annuler le cours';
-                        }
-                    }
-                });
-            });
-        }
-    }
-
-    // Liste des étudiants
-    const studentsDiv = document.getElementById('studentsList');
-    if (studentsDiv && data.students) {
-        let html = '<div class="students-accordion">';
-        for (const s of data.students) {
-            html += `
-                <div class="student-row">
-                    <div class="student-summary">
-                        <span class="student-name">${escapeHtml(s.full_name || 'Sans nom')}</span>
-                        <div class="student-stats">
-                            <span>📚 ${s.total_courses || 0} cours</span>
-                            <span>💰 ${(s.total_spent_eur || 0).toFixed(2)} €</span>
-                        </div>
-                        <i class="fas fa-chevron-down toggle-icon"></i>
-                    </div>
-                    <div class="student-detail">
-                        <strong>Historique :</strong>
-                        <div class="booking-history-list">
-                            ${(s.bookings || []).map(b => `
-                                <div class="booking-history-item">
-                                    ${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status})
-                                </div>
-                            `).join('') || 'Aucune réservation'}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        html += '</div>';
-        studentsDiv.innerHTML = html;
-        // Gestion clic pour ouvrir/fermer les détails
-        document.querySelectorAll('.student-row').forEach(row => {
-            const icon = row.querySelector('.toggle-icon');
-            const detail = row.querySelector('.student-detail');
-            row.addEventListener('click', (e) => {
-                if (e.target.tagName === 'BUTTON') return;
-                detail.classList.toggle('open');
-                icon.classList.toggle('fa-chevron-down');
-                icon.classList.toggle('fa-chevron-up');
-            });
-        });
-    }
-
-    // Forfaits actifs
-    const packagesDiv = document.getElementById('activePackagesList');
-    if (packagesDiv && data.activePackages) {
-        if (data.activePackages.length === 0) {
-            packagesDiv.innerHTML = '<div>Aucun forfait actif</div>';
-        } else {
-            let html = '<div class="active-packages-table">';
-            for (const pkg of data.activePackages) {
-                const name = pkg.profiles?.full_name || 'Étudiant';
-                html += `
-                    <div class="active-package-item">
-                        <span><strong>${escapeHtml(name)}</strong> - ${pkg.course_type} (${pkg.duration_minutes} min)</span>
-                        <span>${pkg.remaining_credits} crédit(s)</span>
-                        <span>Expire le ${new Date(pkg.expires_at).toLocaleDateString()}</span>
-                    </div>
-                `;
-            }
-            html += '</div>';
-            packagesDiv.innerHTML = html;
-        }
-    }
-
-    // Graphique des revenus (optionnel, vous pouvez le réactiver plus tard)
-    // Pour l'instant, on n'affiche pas le graphique pour simplifier le test.
-    console.log('✅ Dashboard affiché');
+    if (!window.supabase || !window.supabase.auth) throw new Error('Supabase non initialisé');
+    return window.supabase;
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
+async function getToken() {
+    const supabase = await waitForSupabase();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error('Non authentifié');
+    return session.access_token;
+}
+
+async function fetchAdminDashboard() {
+    const token = await getToken();
+    const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-dashboard`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+}
+
+async function cancelBooking(bookingId) {
+    const token = await getToken();
+    const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-cancel-booking`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+}
+
+function escapeHtml(str) { return (str || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+
+function displayUpcoming(lessons) {
+    const container = document.getElementById('adminUpcomingLessons');
+    if (!container) return;
+    if (!lessons?.length) { container.innerHTML = '<div>Aucun cours à venir</div>'; return; }
+    container.innerHTML = lessons.map(lesson => `
+        <div class="upcoming-lesson-card">
+            <div><strong>${escapeHtml(lesson.profiles?.full_name || 'Étudiant')}</strong> - ${lesson.course_type} - ${new Date(lesson.start_time).toLocaleString()}</div>
+            <div>Durée: ${lesson.duration_minutes} min - ${lesson.platform || 'Zoom'}</div>
+            <button class="btn-cancel-admin" data-id="${lesson.id}">Annuler le cours</button>
+        </div>
+    `).join('');
+    document.querySelectorAll('.btn-cancel-admin').forEach(btn => btn.addEventListener('click', async e => {
+        const id = btn.dataset.id;
+        if (!confirm('Annuler ce cours ? Un crédit sera ajouté.')) return;
+        btn.disabled = true; btn.innerText = 'Annulation...';
+        try { await cancelBooking(id); alert('Annulé'); location.reload(); } 
+        catch (err) { alert('Erreur: ' + err.message); btn.disabled = false; btn.innerText = 'Annuler le cours'; }
+    }));
+}
+
+function displayStudents(students) {
+    const container = document.getElementById('studentsList');
+    if (!container) return;
+    if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
+    container.innerHTML = students.map(s => `
+        <div class="student-row">
+            <div class="student-summary">
+                <span class="student-name">${escapeHtml(s.full_name || 'Sans nom')}</span>
+                <div class="student-stats">
+                    <span>📚 ${s.total_courses || 0} cours</span>
+                    <span>💰 ${(s.total_spent_eur || 0).toFixed(2)} €</span>
+                </div>
+                <i class="fas fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="student-detail">
+                <strong>Historique :</strong>
+                <div class="booking-history-list">
+                    ${(s.bookings || []).map(b => `
+                        <div class="booking-history-item">
+                            ${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status})
+                        </div>
+                    `).join('') || 'Aucune réservation'}
+                </div>
+            </div>
+        </div>
+    `).join('');
+    document.querySelectorAll('.student-row').forEach(row => {
+        const icon = row.querySelector('.toggle-icon');
+        const detail = row.querySelector('.student-detail');
+        row.addEventListener('click', (e) => { if (e.target.tagName !== 'BUTTON') { detail.classList.toggle('open'); icon.classList.toggle('fa-chevron-down'); icon.classList.toggle('fa-chevron-up'); } });
     });
 }
+
+function displayPackages(packages) {
+    const container = document.getElementById('activePackagesList');
+    if (!container) return;
+    if (!packages?.length) { container.innerHTML = '<div>Aucun forfait actif</div>'; return; }
+    container.innerHTML = packages.map(p => `
+        <div class="active-package-item">
+            <span><strong>${escapeHtml(p.profiles?.full_name || 'Étudiant')}</strong> - ${p.course_type} (${p.duration_minutes} min)</span>
+            <span>${p.remaining_credits} crédit(s)</span>
+            <span>Expire le ${new Date(p.expires_at).toLocaleDateString()}</span>
+        </div>
+    `).join('');
+}
+
+function updateRevenueChart() {
+    const canvas = document.getElementById('revenueChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const now = new Date();
+    let start = currentMonthOffset === 0 ? -5 : -11 + currentMonthOffset;
+    let end = currentMonthOffset === 0 ? 0 : start + 11;
+    let labels = [], data = [];
+    for (let i = start; i <= end; i++) {
+        let d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        let key = d.toISOString().slice(0,7);
+        labels.push(d.toLocaleDateString('fr', { month:'short', year:'numeric' }));
+        data.push(allMonthlyRevenue[key] || 0);
+    }
+    if (revenueChart) revenueChart.destroy();
+    revenueChart = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label:'Revenus (EUR)', data, backgroundColor:'#3c84f6', borderRadius:8 }] }, options:{ responsive:true, maintainAspectRatio:true, plugins:{ tooltip:{ callbacks:{ label: ctx => `${ctx.raw.toFixed(2)} €` } } } } });
+    document.getElementById('monthRangeLabel').innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
+}
+
+async function loadDashboard() {
+    try {
+        const data = await fetchAdminDashboard();
+        displayUpcoming(data.upcoming);
+        displayStudents(data.students);
+        displayPackages(data.activePackages);
+        allMonthlyRevenue = data.monthlyRevenue || {};
+        updateRevenueChart();
+    } catch (err) { console.error(err); alert('Erreur chargement: ' + err.message); }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await waitForSupabase();
+        const token = await getToken();
+        // simple vérification que l'utilisateur est admin (sera validée par l'Edge Function)
+        document.getElementById('adminEmail').innerText = (await supabase.auth.getUser()).data.user?.email;
+        await loadDashboard();
+        document.getElementById('refreshAdminBtn').addEventListener('click', () => loadDashboard());
+        document.getElementById('logoutAdminBtn').addEventListener('click', async () => { await window.authManager?.signOut(); window.location.href = 'index.html'; });
+        document.getElementById('monthSliderPrev').addEventListener('click', () => { currentMonthOffset--; updateRevenueChart(); });
+        document.getElementById('monthSliderNext').addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
+    } catch (err) { alert('Erreur initialisation: ' + err.message); }
+});
