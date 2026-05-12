@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="dashboard.css">
     <style>
-        /* styles admin supplémentaires */
+        /* Styles supplémentaires pour l'admin */
         .admin-dashboard .dashboard-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
         .admin-card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 30px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
         .admin-card .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 12px; }
@@ -27,7 +27,6 @@
         .btn-cancel-admin:hover { background: #c0392b; }
         .upcoming-lesson-card { background: #f8f9fa; border-radius: 12px; padding: 15px; margin-bottom: 12px; border-left: 4px solid #3c84f6; }
         .loading { text-align: center; padding: 40px; color: #666; }
-        .error-message { background: #fee; border: 1px solid #fcc; padding: 15px; border-radius: 8px; color: #c00; margin: 20px; text-align: center; }
         .revenue-section { margin-bottom: 30px; }
         .revenue-controls { display: flex; justify-content: center; gap: 15px; margin: 15px 0; }
         .slider-btn-small { background: #f0f0f0; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; }
@@ -52,7 +51,7 @@
                 <div class="dashboard-actions"><button id="refreshAdminBtn" class="dashboard-action-btn"><i class="fas fa-sync-alt"></i> Actualiser</button></div>
             </div>
 
-            <!-- Section Revenus (optionnelle, on laisse un placeholder) -->
+            <!-- Section Revenus -->
             <div class="revenue-section admin-card">
                 <div class="card-header"><i class="fas fa-chart-line"></i><h2>Revenus (EUR)</h2></div>
                 <div class="revenue-controls">
@@ -83,11 +82,13 @@
         </div>
     </div>
 
+    <!-- Scripts (ordre important) -->
     <script src="config.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
     <script src="auth.js"></script>
     <script src="currency.js"></script>
+    <script src="booking-cancel.js"></script>   <!-- Nécessaire pour window.bookingCancellation -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="admin.js"></script>
 </body>

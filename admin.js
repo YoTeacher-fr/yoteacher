@@ -1,11 +1,10 @@
 // admin.js – Dashboard administrateur final
+// Utilise la RPC `cancel_booking_safe_admin` (pas de délai 24h) et l'annulation Cal.com via booking-cancel.js
+
 console.log('admin.js chargé');
 
 let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
 
-// ----------------------------------------------------------------------
-// Utilitaires d'attente et token
-// ----------------------------------------------------------------------
 async function waitForSupabase() {
     if (window.supabaseInitialized) await window.supabaseInitialized;
     if (!window.supabase || !window.supabase.auth) throw new Error('Supabase non initialisé');
@@ -19,9 +18,6 @@ async function getToken() {
     return session.access_token;
 }
 
-// ----------------------------------------------------------------------
-// Appels aux Edge Functions
-// ----------------------------------------------------------------------
 async function fetchAdminDashboard() {
     const token = await getToken();
     const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-dashboard`, {
@@ -35,52 +31,23 @@ async function cancelBookingAdmin(bookingId) {
     const token = await getToken();
     const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-cancel-booking`, {
         method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ bookingId })
     });
     const result = await res.json();
     if (!res.ok) throw new Error(result.error || 'Erreur annulation');
 
-    // === ANNULATION CAL.COM (exactement comme dans booking-cancel.js) ===
-    if (result.calcomUid && window.YOTEACHER_CONFIG?.CALCOM_API_KEY) {
+    // Annulation Cal.com (exactement comme le dashboard étudiant)
+    if (result.calcomUid && window.bookingCancellation?.cancelCalcomBooking) {
         try {
-            const apiUrl = `https://api.cal.com/v2/bookings/${result.calcomUid}`;
-            // Vérifier si la réservation existe (optionnel)
-            const checkRes = await fetch(apiUrl, {
-                headers: {
-                    'Authorization': `Bearer ${window.YOTEACHER_CONFIG.CALCOM_API_KEY}`,
-                    'Cal-API-Version': 'v2'
-                }
-            });
-            if (checkRes.ok) {
-                const cancelRes = await fetch(`${apiUrl}/cancel`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${window.YOTEACHER_CONFIG.CALCOM_API_KEY}`,
-                        'Content-Type': 'application/json',
-                        'Cal-API-Version': 'v2'
-                    },
-                    body: JSON.stringify({ cancellationReason: 'Annulé par administrateur' })
-                });
-                if (!cancelRes.ok) console.warn('Échec annulation Cal.com');
-            } else if (checkRes.status === 404) {
-                // déjà annulée ou inexistante → rien à faire
-            }
+            await window.bookingCancellation.cancelCalcomBooking(result.calcomUid);
         } catch (err) {
-            console.warn('Erreur annulation Cal.com (non bloquante)', err);
+            console.warn('Erreur annulation Cal.com (non bloquante):', err);
         }
     }
-    // ================================================================
-
     return result;
 }
 
-// ----------------------------------------------------------------------
-// Affichage (HTML sécurisé)
-// ----------------------------------------------------------------------
 function escapeHtml(str) { return (str || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
 function displayUpcoming(lessons) {
@@ -101,8 +68,8 @@ function displayUpcoming(lessons) {
             if (!confirm('Annuler ce cours ? Un crédit sera ajouté.')) return;
             btn.disabled = true; btn.innerText = 'Annulation...';
             try {
-                await cancelBookingAdmin(id);
-                alert('Cours annulé (crédit rendu, Cal.com annulé)');
+                const result = await cancelBookingAdmin(id);
+                alert(result.creditRefunded ? 'Cours annulé (crédit ajouté, Cal.com annulé)' : 'Cours annulé (aucun crédit)');
                 location.reload();
             } catch (err) {
                 alert('Erreur: ' + err.message);
@@ -117,7 +84,6 @@ function displayStudents(students) {
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
     container.innerHTML = students.map(s => {
-        // Calcul du total dépensé en EUR via currencyManager
         let totalSpentEur = 0;
         if (s.packages && window.currencyManager) {
             for (const pkg of s.packages) {
@@ -152,7 +118,6 @@ function displayStudents(students) {
         `;
     }).join('');
 
-    // Gestion clic pour ouvrir/fermer les détails
     document.querySelectorAll('.student-row').forEach(row => {
         const icon = row.querySelector('.toggle-icon');
         const detail = row.querySelector('.student-detail');
@@ -220,19 +185,16 @@ async function loadDashboard() {
     }
 }
 
-// ----------------------------------------------------------------------
-// Initialisation
-// ----------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         await waitForSupabase();
-        await getToken(); // valide la session
+        await getToken(); // vérifie session
         const { data: { user } } = await supabase.auth.getUser();
         const emailSpan = document.getElementById('adminEmail');
         if (emailSpan && user) emailSpan.innerText = user.email;
 
         await loadDashboard();
-        document.body.classList.add('loaded');  // corrige l'écran blanc (CSS)
+        document.body.classList.add('loaded'); // corrige l'écran blanc
 
         // Écouteurs
         const refreshBtn = document.getElementById('refreshAdminBtn');
