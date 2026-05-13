@@ -1,4 +1,4 @@
-// admin.js – Dashboard administrateur (avec enregistrement manuel du plugin datalabels)
+// admin.js – Dashboard administrateur (avec carrousel étudiant et graphique mensuel)
 console.log('🔵 [ADMIN.JS] Script chargé – règle: confirmed + (passé ou completed_at dans le mois)');
 
 // Enregistrement manuel du plugin datalabels
@@ -408,7 +408,95 @@ function displayPackages(packages) {
     buildPackagesList();
 }
 
-// ========== ÉTUDIANTS ==========
+// ========== FONCTION POUR LES COURS PAR MOIS (ÉTUDIANT) ==========
+function computeMonthlyLessonsForStudent(bookings) {
+    const monthlyMap = new Map(); // clé "YYYY-MM" -> nombre de cours effectués
+    const now = new Date();
+
+    for (const booking of bookings) {
+        if (booking.status === 'cancelled') continue;
+        if (booking.status !== 'confirmed' && booking.status !== 'completed') continue;
+
+        const startTime = new Date(booking.start_time);
+        if (isNaN(startTime.getTime())) continue;
+
+        let isEffectue = false;
+        if (startTime < now) {
+            isEffectue = true;
+        } else if (booking.completed_at) {
+            const completedDate = new Date(booking.completed_at);
+            if (!isNaN(completedDate.getTime())) {
+                const completedYearMonth = booking.completed_at.substring(0, 7);
+                const startYearMonth = booking.start_time.substring(0, 7);
+                if (completedYearMonth === startYearMonth) {
+                    isEffectue = true;
+                }
+            }
+        }
+
+        if (!isEffectue) continue;
+
+        const monthKey = booking.start_time.substring(0, 7);
+        monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + 1);
+    }
+
+    // Trier les mois
+    const sortedMonths = Array.from(monthlyMap.keys()).sort();
+    const lessonsPerMonth = sortedMonths.map(m => monthlyMap.get(m));
+    return { months: sortedMonths, counts: lessonsPerMonth };
+}
+
+// ========== GRAPHIQUE POUR UN ÉTUDIANT ==========
+let studentCharts = {}; // stocker les instances de graphiques par ID étudiant
+
+function initStudentChart(studentId, months, counts) {
+    const canvasId = `student-chart-${studentId}`;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (studentCharts[studentId]) {
+        studentCharts[studentId].destroy();
+    }
+    // Formater les étiquettes des mois
+    const labels = months.map(m => {
+        const [y, mo] = m.split('-');
+        return new Date(parseInt(y), parseInt(mo)-1, 1).toLocaleDateString('fr', { month:'short', year:'numeric' });
+    });
+    studentCharts[studentId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Cours effectués',
+                data: counts,
+                backgroundColor: '#3c84f6',
+                borderRadius: 6,
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 4,
+                    color: '#333',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value) => value
+                }
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                tooltip: { callbacks: { label: ctx => `${ctx.raw} cours` } },
+                legend: { display: false },
+                datalabels: { /* hérité du dataset */ }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, title: { display: true, text: 'Nombre de cours' } }
+            }
+        }
+    });
+}
+
+// ========== ÉTUDIANTS (avec carrousel) ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
@@ -421,6 +509,11 @@ function displayStudents(students) {
         const totalCoursesWithExtra = s.total_courses + extraCourses;
         const totalAmountWithExtra = totalSpentEur + extraAmount;
         const bookingsHtml = (s.bookings || []).map(b => `<div class="booking-history-item">${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status || '?'})</div>`).join('') || 'Aucune réservation';
+        
+        // Préparer les données du graphique pour cet étudiant
+        const monthlyData = computeMonthlyLessonsForStudent(s.bookings || []);
+        const chartId = `student-chart-${s.id}`;
+        
         return `
             <div class="student-row" data-student-id="${s.id}">
                 <div class="student-summary">
@@ -430,25 +523,102 @@ function displayStudents(students) {
                     <i class="fas fa-chevron-down toggle-icon"></i>
                 </div>
                 <div class="student-detail">
-                    <div class="student-detail-grid">
-                        <div class="detail-col"><strong>Historique (cours passés) :</strong><div class="booking-history-list">${bookingsHtml}</div></div>
-                        <div class="detail-col detail-col-center"><strong>Nombre de cours</strong><div class="detail-value">${totalCoursesWithExtra}</div>${extraCourses ? `<div class="detail-note">(+${extraCourses} bonus)</div>` : ''}</div>
-                        <div class="detail-col detail-col-center"><strong>Total dépensé</strong><div class="detail-value">${totalAmountWithExtra.toFixed(2)} €</div>${extraAmount ? `<div class="detail-note">(+${extraAmount.toFixed(2)} € bonus)</div>` : ''}</div>
+                    <div class="student-detail-carousel" data-student="${s.id}">
+                        <!-- Slide 0 : Historique -->
+                        <div class="carousel-slide" data-slide="0">
+                            <div class="student-detail-grid">
+                                <div class="detail-col"><strong>Historique (cours passés) :</strong><div class="booking-history-list">${bookingsHtml}</div></div>
+                                <div class="detail-col detail-col-center"><strong>Nombre de cours</strong><div class="detail-value">${totalCoursesWithExtra}</div>${extraCourses ? `<div class="detail-note">(+${extraCourses} bonus)</div>` : ''}</div>
+                                <div class="detail-col detail-col-center"><strong>Total dépensé</strong><div class="detail-value">${totalAmountWithExtra.toFixed(2)} €</div>${extraAmount ? `<div class="detail-note">(+${extraAmount.toFixed(2)} € bonus)</div>` : ''}</div>
+                            </div>
+                        </div>
+                        <!-- Slide 1 : Graphique mensuel -->
+                        <div class="carousel-slide" data-slide="1">
+                            <canvas id="${chartId}" class="student-graph-canvas"></canvas>
+                        </div>
+                        <!-- Contrôles du carrousel -->
+                        <div class="carousel-controls">
+                            <button class="carousel-arrow prev-slide" data-student="${s.id}"><i class="fas fa-chevron-left"></i></button>
+                            <span class="carousel-indicator" data-student="${s.id}">1/2</span>
+                            <button class="carousel-arrow next-slide" data-student="${s.id}"><i class="fas fa-chevron-right"></i></button>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
     }).join('');
+
+    // Initialiser les carrousels et les graphiques
     document.querySelectorAll('.student-row').forEach(row => {
-        const icon = row.querySelector('.toggle-icon');
+        const studentId = row.dataset.studentId;
         const detail = row.querySelector('.student-detail');
+        const carousel = row.querySelector('.student-detail-carousel');
+        const slides = carousel.querySelectorAll('.carousel-slide');
+        const prevBtn = carousel.querySelector('.prev-slide');
+        const nextBtn = carousel.querySelector('.next-slide');
+        const indicator = carousel.querySelector('.carousel-indicator');
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+        
+        // Fonction pour afficher une slide
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                if (i === index) slide.classList.add('active');
+                else slide.classList.remove('active');
+            });
+            if (indicator) indicator.innerText = `${index+1}/${totalSlides}`;
+            // Si on affiche la slide du graphique (index 1) et que le graphique n'est pas encore initialisé
+            if (index === 1 && !studentCharts[studentId]) {
+                const studentData = sortedStudents.find(s => s.id === studentId);
+                if (studentData) {
+                    const monthlyData = computeMonthlyLessonsForStudent(studentData.bookings || []);
+                    if (monthlyData.months.length > 0) {
+                        initStudentChart(studentId, monthlyData.months, monthlyData.counts);
+                    } else {
+                        // Aucune donnée : afficher un message dans le canvas
+                        const canvas = document.getElementById(`student-chart-${studentId}`);
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d');
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx.font = '14px sans-serif';
+                            ctx.fillStyle = '#999';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('Aucun cours effectué', canvas.width/2, canvas.height/2);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Événements des flèches (empêcher la propagation pour ne pas fermer le détail)
+        prevBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            showSlide(currentSlide);
+        });
+        nextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentSlide = (currentSlide + 1) % totalSlides;
+            showSlide(currentSlide);
+        });
+        
+        // Ouvrir/fermer le détail
+        const icon = row.querySelector('.toggle-icon');
         row.addEventListener('click', (e) => {
-            if (e.target.tagName !== 'BUTTON' && !e.target.closest('.btn-cancel-admin')) {
+            if (e.target.tagName !== 'BUTTON' && !e.target.closest('.carousel-arrow')) {
                 detail.classList.toggle('open');
                 icon.classList.toggle('fa-chevron-down');
                 icon.classList.toggle('fa-chevron-up');
+                // Réinitialiser à la première slide quand on ouvre
+                if (detail.classList.contains('open')) {
+                    currentSlide = 0;
+                    showSlide(0);
+                }
             }
         });
+        
+        // Initialiser l'affichage (slide 0 active)
+        showSlide(0);
     });
 }
 
