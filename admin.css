@@ -57,6 +57,10 @@
     margin-bottom: 6px;
 }
 
+.upcoming-lesson-card div strong {
+    font-size: 1.1rem; /* nom plus grand */
+}
+
 .btn-cancel-admin {
     background: #e74c3c;
     color: white;
@@ -136,8 +140,11 @@
 }
 
 .student-package-name {
-    font-size: 1rem;
+    font-size: 1.2rem; /* nom plus grand */
     margin-bottom: 10px;
+}
+.student-package-name strong {
+    font-size: 1.2rem;
 }
 
 .package-filters {
@@ -207,18 +214,19 @@
 
 .package-credits-display {
     margin-top: 8px;
-    font-size: 0.95rem;
+    font-size: 1.1rem; /* agrandi */
     font-weight: 600;
     color: #2c3e50;
 }
 
 .package-credits-display strong {
     color: #3c84f6;
-    font-size: 1.1rem;
-    margin-left: 5px;
+    font-size: 1.2rem;
+    margin-left: 8px;
+    font-weight: 700;
 }
 
-/* ========== ÉTUDIANTS : trois colonnes distinctes ========== */
+/* ========== ÉTUDIANTS ========== */
 .student-row {
     border-bottom: 1px solid #eee;
     padding: 12px 0;
@@ -239,20 +247,20 @@
 
 .student-name {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.2rem; /* nom plus grand */
     text-align: left;
 }
 
 .student-courses {
     font-size: 0.9rem;
     color: #555;
-    text-align: left;
+    text-align: center; /* centré */
 }
 
 .student-revenue {
     font-size: 0.9rem;
     color: #555;
-    text-align: left;
+    text-align: center; /* centré */
 }
 
 .toggle-icon {
@@ -260,7 +268,7 @@
     cursor: pointer;
 }
 
-/* Nouvelle grille pour l'historique détaillé */
+/* Détail étudiant */
 .student-detail {
     margin-top: 10px;
     padding: 10px;
@@ -292,6 +300,20 @@
     margin-bottom: 8px;
     color: #2c3e50;
     font-size: 0.9rem;
+}
+
+/* Centrage des colonnes 2 et 3 dans le détail */
+.detail-col-center {
+    text-align: center;
+}
+.detail-col-center strong {
+    text-align: center;
+}
+.detail-col-center .detail-value {
+    text-align: center;
+}
+.detail-col-center .detail-note {
+    text-align: center;
 }
 
 .booking-history-list {

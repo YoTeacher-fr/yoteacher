@@ -113,6 +113,16 @@ function escapeHtml(str) {
 }
 
 // ========== PROCHAINS COURS (carrousel) ==========
+function formatDateWithDay(date) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+    const formatted = date.toLocaleDateString('fr-FR', options);
+    const parts = formatted.split(' ');
+    // Format typique: "lundi 17 mai 2026"
+    const day = parts[0];
+    const rest = parts.slice(1).join(' ');
+    return `<strong>${day}</strong> ${rest}`;
+}
+
 function renderUpcomingSlice() {
     const container = document.getElementById('adminUpcomingLessons');
     if (!container) return;
@@ -132,7 +142,7 @@ function renderUpcomingSlice() {
         const meetingLink = lesson.meeting_link || null;
         const hasMeeting = meetingLink && meetingLink.trim() !== '';
         const lessonDate = new Date(lesson.start_time);
-        const dateStr = lessonDate.toLocaleDateString();
+        const dateStr = formatDateWithDay(lessonDate);
         const timeStr = lessonDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const courseTypeFormatted = (lesson.course_type || '').charAt(0).toUpperCase() + (lesson.course_type || '').slice(1);
         
@@ -240,7 +250,6 @@ function getTotalCreditsForStudent(studentId) {
 }
 
 function getNearestExpiryForStudent(studentId) {
-    // Retourne la date d'expiration la plus proche (la plus petite) parmi tous les packages actifs de l'étudiant
     const studentPackages = activePackagesData.filter(pkg => 
         (pkg.profiles?.id || pkg.user_id) === studentId && pkg.remaining_credits > 0 && pkg.expires_at
     );
@@ -263,17 +272,15 @@ function findFirstAvailableCombination(studentId) {
             }
         }
     }
-    return { type: 'conversation', duration: 30 }; // fallback
+    return { type: 'conversation', duration: 30 };
 }
 
 function updateCreditsAndExpiry(studentId, type, duration, credits) {
-    // Mise à jour des crédits pour la sélection (ligne 2 colonne 3)
     const selectedCreditsSpan = document.getElementById(`student-${studentId}-selected-credits`);
     if (selectedCreditsSpan) {
         const value = credits[type]?.[duration] || 0;
         selectedCreditsSpan.innerText = value;
     }
-    // Mise à jour de la date d'expiration la plus proche pour ce type+duration (ligne 2 colonne 4)
     const expirySpan = document.getElementById(`student-${studentId}-expiry`);
     if (expirySpan) {
         const matchingPackages = activePackagesData.filter(pkg => 
@@ -303,7 +310,6 @@ function displayPackages(packages) {
         return;
     }
 
-    // Regrouper par étudiant
     const studentsMap = new Map();
     activePackagesData.forEach(pkg => {
         const studentId = pkg.profiles?.id || pkg.user_id;
@@ -317,7 +323,6 @@ function displayPackages(packages) {
         studentsMap.get(studentId).packages.push(pkg);
     });
 
-    // Transformer en tableau pour tri
     let studentEntries = Array.from(studentsMap.entries()).map(([id, data]) => ({
         id,
         name: data.name,
@@ -325,14 +330,11 @@ function displayPackages(packages) {
         nearestExpiry: getNearestExpiryForStudent(id)
     }));
 
-    // Trier : d'abord par date d'expiration la plus proche (null à la fin), puis les exclus à la fin absolue
     studentEntries.sort((a, b) => {
-        // Les exclus toujours après
         const aExcluded = EXCLUDED_STUDENT_IDS.includes(a.id);
         const bExcluded = EXCLUDED_STUDENT_IDS.includes(b.id);
         if (aExcluded && !bExcluded) return 1;
         if (!aExcluded && bExcluded) return -1;
-        // Si les deux sont exclus ou les deux non exclus, trier par date d'expiration
         if (!a.nearestExpiry && !b.nearestExpiry) return 0;
         if (!a.nearestExpiry) return 1;
         if (!b.nearestExpiry) return -1;
@@ -345,7 +347,6 @@ function displayPackages(packages) {
         const credits = getStudentCredits(studentId);
         const totalCredits = getTotalCreditsForStudent(studentId);
         
-        // Trouver la première combinaison avec crédits (ou défaut conversation 30)
         let defaultType = 'conversation';
         let defaultDuration = 30;
         let hasDefaultCredit = credits[defaultType]?.[defaultDuration] > 0;
@@ -355,7 +356,6 @@ function displayPackages(packages) {
             defaultDuration = firstAvailable.duration;
         }
         
-        // Déterminer la date d'expiration par défaut pour la sélection
         const defaultPackages = activePackagesData.filter(pkg => 
             (pkg.profiles?.id || pkg.user_id) === studentId &&
             pkg.course_type === defaultType &&
@@ -418,27 +418,23 @@ function displayPackages(packages) {
     }
     container.innerHTML = html;
 
-    // Attacher événements pour les bulles de types (seulement celles non désactivées)
     document.querySelectorAll('.package-type-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', () => {
             const studentId = btn.dataset.student;
             const type = btn.dataset.type;
             const parentRow = document.querySelector(`.student-package-row[data-student-id="${studentId}"]`);
-            // Désactiver les autres types
             parentRow.querySelectorAll('.package-type-btn').forEach(b => {
                 b.classList.remove('active');
             });
             btn.classList.add('active');
             
             const credits = getStudentCredits(studentId);
-            // Trouver la première durée disponible pour ce type
             let firstAvailableDuration = 30;
             if (credits[type][30] > 0) firstAvailableDuration = 30;
             else if (credits[type][45] > 0) firstAvailableDuration = 45;
             else if (credits[type][60] > 0) firstAvailableDuration = 60;
-            else firstAvailableDuration = 30; // fallback
+            else firstAvailableDuration = 30;
             
-            // Mettre à jour les bulles de durée
             const durationBubbles = parentRow.querySelectorAll('.package-duration-btn');
             let selectedDuration = null;
             durationBubbles.forEach(durBtn => {
@@ -466,7 +462,6 @@ function displayPackages(packages) {
         });
     });
 
-    // Attacher événements pour les bulles de durées
     document.querySelectorAll('.package-duration-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', () => {
             const studentId = btn.dataset.student;
@@ -485,7 +480,7 @@ function displayPackages(packages) {
     });
 }
 
-// ========== ÉTUDIANTS (triés par nombre de cours, avec historique enrichi) ==========
+// ========== ÉTUDIANTS ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
@@ -500,7 +495,6 @@ function displayStudents(students) {
         const totalCoursesWithExtra = s.total_courses + extraCourses;
         const totalAmountWithExtra = totalSpentEur + extraAmount;
 
-        // Génération de l'historique des cours
         const bookingsHtml = (s.bookings || []).map(b => `
             <div class="booking-history-item">
                 ${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status})
@@ -521,12 +515,12 @@ function displayStudents(students) {
                             <strong>Historique (cours passés) :</strong>
                             <div class="booking-history-list">${bookingsHtml}</div>
                         </div>
-                        <div class="detail-col">
+                        <div class="detail-col detail-col-center">
                             <strong>Nombre de cours</strong>
                             <div class="detail-value">${totalCoursesWithExtra}</div>
                             ${extraCourses ? `<div class="detail-note">(+${extraCourses} bonus)</div>` : ''}
                         </div>
-                        <div class="detail-col">
+                        <div class="detail-col detail-col-center">
                             <strong>Total dépensé</strong>
                             <div class="detail-value">${totalAmountWithExtra.toFixed(2)} €</div>
                             ${extraAmount ? `<div class="detail-note">(+${extraAmount.toFixed(2)} € bonus)</div>` : ''}
@@ -537,7 +531,6 @@ function displayStudents(students) {
         `;
     }).join('');
 
-    // Toggle detail
     document.querySelectorAll('.student-row').forEach(row => {
         const icon = row.querySelector('.toggle-icon');
         const detail = row.querySelector('.student-detail');
@@ -569,7 +562,6 @@ function updateRevenueChart() {
     });
     const data = visible.map(m => allMonthlyRevenue[m] || 0);
 
-    // Calcul du total général de tous les revenus (tous mois)
     const totalRevenue = Object.values(allMonthlyRevenue).reduce((sum, val) => sum + val, 0);
     const totalRevenueFormatted = totalRevenue.toFixed(2);
     const chartLabel = `Total revenus : ${totalRevenueFormatted} €`;
@@ -582,7 +574,12 @@ function updateRevenueChart() {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                tooltip: { callbacks: { label: ctx => `${ctx.raw.toFixed(2)} €` } }
+                tooltip: { callbacks: { label: ctx => `${ctx.raw.toFixed(2)} €` } },
+                legend: {
+                    labels: {
+                        font: { weight: 'bold' }
+                    }
+                }
             }
         }
     });
