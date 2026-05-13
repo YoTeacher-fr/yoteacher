@@ -151,21 +151,26 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
-    align-items: center;
+    align-items: center;        /* Centre verticalement chaque cellule */
     margin-bottom: 10px;
     width: 100%;
 }
 
+/* Chaque colonne de la grille devient un conteneur flex qui centre son contenu */
+.package-filters > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
+/* Conteneurs des bulles */
 .package-type-bubbles, .package-duration-bubbles {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
-    align-items: center;     /* centrage vertical */
+    align-items: center;
     justify-content: flex-start;
-}
-/* Pour que les bulles soient centrées verticalement dans leur colonne */
-.package-type-bubbles, .package-duration-bubbles {
-    align-self: center;
 }
 
 .package-selected-credits {
@@ -367,7 +372,6 @@
     }
     .package-type-bubbles, .package-duration-bubbles {
         justify-content: center;
-        align-self: center;
     }
     .package-selected-credits {
         text-align: center;
