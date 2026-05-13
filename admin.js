@@ -45,10 +45,10 @@ const EXTRA_AMOUNTS = {
     '2dbedd47-78bc-4e33-b877-e11ca99e59e8': 162
 };
 
-// NOUVEAU : Graphique Cours (leçons effectuées / étudiants par mois)
+// Graphique Cours (leçons effectuées / étudiants par mois)
 let lessonsStudentsChart = null;
 let currentLessonsMonthOffset = 0;
-let allMonthlyLessons = {};     // { "2025-01": { lessons: 5, students: 3 }, ... }
+let allMonthlyLessons = {};
 
 // ========== AUTH / SUPABASE ==========
 async function waitForSupabase() {
@@ -653,14 +653,14 @@ function updateRevenueChart() {
     if (labelElem) labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
-// ========== NOUVEAU : GRAPHIQUE COURS (leçons effectuées / étudiants par mois) ==========
+// ========== NOUVEAU : GRAPHIQUE COURS (leçons effectuées / étudiants par mois) - CORRIGÉ ==========
 function computeMonthlyLessonsAndStudents(studentsData) {
-    const monthlyMap = new Map(); // key "YYYY-MM": { lessons: Set(), students: Set() }
+    const monthlyMap = new Map(); // key "YYYY-MM": { lessons: 0, students: Set() }
     
     for (const student of studentsData) {
         if (!student.bookings) continue;
         for (const booking of student.bookings) {
-            // Une leçon est considérée comme effectuée si son statut est 'completed' OU sa date de début est passée
+            // Une leçon est effectuée si son statut est 'completed' ou si sa date de début est passée
             const isCompleted = booking.status === 'completed' || new Date(booking.start_time) < new Date();
             if (!isCompleted) continue;
             
@@ -668,10 +668,11 @@ function computeMonthlyLessonsAndStudents(studentsData) {
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             
             if (!monthlyMap.has(monthKey)) {
-                monthlyMap.set(monthKey, { lessons: new Set(), students: new Set() });
+                monthlyMap.set(monthKey, { lessons: 0, students: new Set() });
             }
             const monthData = monthlyMap.get(monthKey);
-            monthData.lessons.add(booking.id); // chaque réservation = une leçon
+            // Incrémentation simple : chaque booking = une leçon
+            monthData.lessons++;
             monthData.students.add(student.id);
         }
     }
@@ -679,9 +680,10 @@ function computeMonthlyLessonsAndStudents(studentsData) {
     const result = {};
     for (const [month, data] of monthlyMap.entries()) {
         result[month] = {
-            lessons: data.lessons.size,
+            lessons: data.lessons,
             students: data.students.size
         };
+        console.log(`[DEBUG] ${month} → ${data.lessons} leçons, ${data.students.size} étudiants`);
     }
     return result;
 }
