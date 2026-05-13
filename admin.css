@@ -132,7 +132,7 @@
     cursor: not-allowed;
 }
 
-/* ========== FORFAITS ACTIFS (CARROUSEL) – CORRECTION GRILLE ========== */
+/* ========== FORFAITS ACTIFS (CARROUSEL) – SOLUTION LARGEUR FIXE ========== */
 .package-card {
     background: #f8f9fa;
     border-radius: 12px;
@@ -185,20 +185,16 @@
     margin-left: 4px;
 }
 
-/* GRILLE FIXE : 3 colonnes identiques pour les bulles de types et durées */
-.package-type-bubbles {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+/* Conteneurs des bulles : centrage sans étirement */
+.package-type-bubbles, .package-duration-bubbles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;  /* alignement à gauche, pas d'étirement */
+    align-items: center;
 }
 
-.package-duration-bubbles {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-}
-
-/* Style commun pour tous les boutons (actifs ou désactivés) */
+/* Taille fixe pour tous les boutons – identique quel que soit le nombre */
 .package-type-btn, .package-duration-btn {
     background: #e9ecef;
     border: none;
@@ -208,10 +204,14 @@
     font-weight: 500;
     text-align: center;
     white-space: nowrap;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
     cursor: pointer;
     transition: all 0.2s;
+    width: 110px;          /* largeur fixe pour les types */
+    flex-shrink: 0;
+}
+
+.package-duration-btn {
+    width: 80px;           /* largeur fixe pour les durées */
 }
 
 .package-type-btn.active, .package-duration-btn.active {
@@ -233,7 +233,6 @@
     transform: scale(1.02);
 }
 
-/* Total crédits en bas */
 .package-total-credits {
     text-align: center;
     font-size: 1rem;
@@ -390,10 +389,14 @@
         text-align: left;
         width: 100%;
     }
-    /* Sur mobile, la grille reste mais on peut ajuster la police */
-    .package-type-btn, .package-duration-btn {
+    /* Sur mobile, on réduit un peu la largeur pour éviter le débordement */
+    .package-type-btn {
+        width: 95px;
         font-size: 0.7rem;
-        padding: 4px 0;
+    }
+    .package-duration-btn {
+        width: 70px;
+        font-size: 0.7rem;
     }
     .upcoming-lesson-card {
         min-width: 180px;
