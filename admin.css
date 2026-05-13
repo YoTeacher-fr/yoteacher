@@ -132,73 +132,59 @@
     cursor: not-allowed;
 }
 
-/* ========== FORFAITS ACTIFS (BULLES) ========== */
-.student-package-row {
-    border-bottom: 1px solid #eee;
-    padding: 15px 0;
-    margin-bottom: 10px;
-}
-
-.student-package-name {
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-}
-.student-package-name strong {
-    font-size: 1.2rem;
-}
-
-.package-filters {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    align-items: center;        /* Centre verticalement chaque cellule */
-    margin-bottom: 10px;
-    width: 100%;
-}
-
-/* Chaque colonne de la grille devient un conteneur flex qui centre son contenu */
-.package-filters > div {
+/* ========== FORFAITS ACTIFS (NOUVEAU CARROUSEL) ========== */
+.package-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    flex: 1;
+    min-width: 280px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    height: 100%;
 }
 
-/* Conteneurs des bulles */
+.package-card-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.package-card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.package-types-col, .package-durations-col, .package-expiry-col, .package-credits-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.package-types-label, .package-durations-label, .package-expiry-label, .package-credits-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .package-type-bubbles, .package-duration-bubbles {
     display: flex;
-    gap: 10px;
     flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-start;
-}
-
-.package-selected-credits {
-    font-size: 0.9rem;
-    color: #555;
-    font-weight: normal;
-    text-align: left;
-}
-
-.package-selected-credits strong {
-    color: #3c84f6;
-    font-size: 1rem;
-    margin-left: 5px;
-    font-weight: 600;
-}
-
-.package-expiry {
-    font-size: 0.9rem;
-    color: #555;
-    text-align: left;
+    gap: 8px;
 }
 
 .package-type-btn, .package-duration-btn {
-    background: #f0f0f0;
+    background: #e9ecef;
     border: none;
-    padding: 6px 14px;
+    padding: 6px 12px;
     border-radius: 30px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     cursor: pointer;
     transition: all 0.2s;
     font-weight: 500;
@@ -219,22 +205,30 @@
 
 .package-type-btn:hover:not(.active):not(:disabled),
 .package-duration-btn:hover:not(.active):not(:disabled) {
-    background: #e0e0e0;
+    background: #d4d8dd;
     transform: scale(1.02);
 }
 
-.package-credits-display {
-    margin-top: 8px;
-    font-size: 1.1rem;
+.package-expiry-value, .package-credits-value {
+    font-size: 1rem;
     font-weight: 600;
     color: #2c3e50;
 }
 
-.package-credits-display strong {
+.package-total-credits {
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    padding-top: 10px;
+    border-top: 1px solid #dee2e6;
+    margin-top: 5px;
+}
+
+.package-total-credits strong {
     color: #3c84f6;
     font-size: 1.2rem;
-    margin-left: 8px;
-    font-weight: 700;
+    margin-left: 5px;
 }
 
 /* ========== ÉTUDIANTS ========== */
@@ -366,17 +360,17 @@
         grid-template-columns: 1fr;
         gap: 10px;
     }
-    .package-filters {
+    .package-card-grid {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: 12px;
+    }
+    .package-card {
+        min-width: 220px;
     }
     .package-type-bubbles, .package-duration-bubbles {
         justify-content: center;
     }
-    .package-selected-credits {
-        text-align: center;
-    }
-    .package-expiry {
+    .package-expiry-value, .package-credits-value {
         text-align: center;
     }
     .upcoming-lesson-card {

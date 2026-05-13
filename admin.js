@@ -8,6 +8,11 @@ let adminUpcomingLessons = [];
 let adminCurrentStartIndex = 0;
 const LESSONS_PER_PAGE = 3;
 
+// --- Carrousel forfaits actifs ---
+let activePackagesList = [];         // tableau des étudiants (avec leurs données)
+let packagesCurrentStartIndex = 0;
+const PACKAGES_PER_PAGE = 3;
+
 // Stockage global pour les forfaits
 let activePackagesData = [];
 
@@ -114,14 +119,12 @@ function escapeHtml(str) {
 
 // ========== PROCHAINS COURS (carrousel) ==========
 function formatDateWithDay(date) {
-    // Format: "Lundi <strong>17 mai</strong> 2026"
     const jours = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
     const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
     const jourSemaine = jours[date.getDay()];
     const jour = date.getDate();
     const moisNom = mois[date.getMonth()];
     const annee = date.getFullYear();
-    // Mettre la première lettre du jour en majuscule
     const jourSemaineCapitalized = jourSemaine.charAt(0).toUpperCase() + jourSemaine.slice(1);
     return `${jourSemaineCapitalized} <strong>${jour} ${moisNom}</strong> ${annee}`;
 }
@@ -180,7 +183,6 @@ function renderUpcomingSlice() {
         </div>
     `;
 
-    // Annulation
     container.querySelectorAll('.btn-cancel-admin').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = btn.dataset.id;
@@ -200,7 +202,6 @@ function renderUpcomingSlice() {
         });
     });
 
-    // Navigation flèches
     const prevBtn = document.getElementById('adminPrevLessons');
     const nextBtn = document.getElementById('adminNextLessons');
     if (prevBtn) prevBtn.onclick = () => {
@@ -223,7 +224,7 @@ function displayUpcoming(lessons) {
     renderUpcomingSlice();
 }
 
-// ========== FORFAITS ACTIFS (bulles interactives) ==========
+// ========== FORFAITS ACTIFS (NOUVEAU CARROUSEL) ==========
 function getStudentCredits(studentId) {
     const studentPackages = activePackagesData.filter(pkg => (pkg.profiles?.id || pkg.user_id) === studentId);
     const credits = {
@@ -278,78 +279,52 @@ function findFirstAvailableCombination(studentId) {
     return { type: 'conversation', duration: 30 };
 }
 
-function updateCreditsAndExpiry(studentId, type, duration, credits) {
-    const selectedCreditsSpan = document.getElementById(`student-${studentId}-selected-credits`);
-    if (selectedCreditsSpan) {
-        const value = credits[type]?.[duration] || 0;
-        selectedCreditsSpan.innerText = value;
-    }
-    const expirySpan = document.getElementById(`student-${studentId}-expiry`);
-    if (expirySpan) {
-        const matchingPackages = activePackagesData.filter(pkg => 
-            (pkg.profiles?.id || pkg.user_id) === studentId &&
-            pkg.course_type === type &&
-            pkg.duration_minutes === duration &&
-            pkg.remaining_credits > 0
-        );
-        let nearestExpiry = null;
-        matchingPackages.forEach(pkg => {
-            if (pkg.expires_at) {
-                const d = new Date(pkg.expires_at);
-                if (!nearestExpiry || d < nearestExpiry) nearestExpiry = d;
-            }
-        });
-        const expiryText = nearestExpiry ? nearestExpiry.toLocaleDateString() : 'Aucun forfait actif';
-        expirySpan.innerText = `Expire le : ${expiryText}`;
-    }
+function updateSelectedCreditsAndExpiry(studentId, type, duration) {
+    const credits = getStudentCredits(studentId);
+    const value = credits[type]?.[duration] || 0;
+    const creditsSpan = document.getElementById(`package-${studentId}-credits`);
+    if (creditsSpan) creditsSpan.innerText = value;
+
+    // Mise à jour de l'expiration
+    const matchingPackages = activePackagesData.filter(pkg => 
+        (pkg.profiles?.id || pkg.user_id) === studentId &&
+        pkg.course_type === type &&
+        pkg.duration_minutes === duration &&
+        pkg.remaining_credits > 0
+    );
+    let nearestExpiry = null;
+    matchingPackages.forEach(pkg => {
+        if (pkg.expires_at) {
+            const d = new Date(pkg.expires_at);
+            if (!nearestExpiry || d < nearestExpiry) nearestExpiry = d;
+        }
+    });
+    const expiryText = nearestExpiry ? nearestExpiry.toLocaleDateString() : 'Aucun forfait actif';
+    const expirySpan = document.getElementById(`package-${studentId}-expiry`);
+    if (expirySpan) expirySpan.innerText = expiryText;
 }
 
-function displayPackages(packages) {
+function renderPackagesSlice() {
     const container = document.getElementById('activePackagesList');
     if (!container) return;
-    activePackagesData = packages || [];
-    if (!activePackagesData.length) {
+
+    const students = activePackagesList;
+    if (!students.length) {
         container.innerHTML = '<div>Aucun forfait actif</div>';
         return;
     }
 
-    const studentsMap = new Map();
-    activePackagesData.forEach(pkg => {
-        const studentId = pkg.profiles?.id || pkg.user_id;
-        if (!studentId) return;
-        if (!studentsMap.has(studentId)) {
-            studentsMap.set(studentId, {
-                name: pkg.profiles?.full_name || 'Étudiant',
-                packages: []
-            });
-        }
-        studentsMap.get(studentId).packages.push(pkg);
-    });
+    const total = students.length;
+    const start = packagesCurrentStartIndex;
+    const end = Math.min(start + PACKAGES_PER_PAGE, total);
+    const visibleStudents = students.slice(start, end);
 
-    let studentEntries = Array.from(studentsMap.entries()).map(([id, data]) => ({
-        id,
-        name: data.name,
-        packages: data.packages,
-        nearestExpiry: getNearestExpiryForStudent(id)
-    }));
-
-    studentEntries.sort((a, b) => {
-        const aExcluded = EXCLUDED_STUDENT_IDS.includes(a.id);
-        const bExcluded = EXCLUDED_STUDENT_IDS.includes(b.id);
-        if (aExcluded && !bExcluded) return 1;
-        if (!aExcluded && bExcluded) return -1;
-        if (!a.nearestExpiry && !b.nearestExpiry) return 0;
-        if (!a.nearestExpiry) return 1;
-        if (!b.nearestExpiry) return -1;
-        return a.nearestExpiry - b.nearestExpiry;
-    });
-
-    let html = '';
-    for (const student of studentEntries) {
+    const cardsHTML = visibleStudents.map(student => {
         const studentId = student.id;
         const credits = getStudentCredits(studentId);
         const totalCredits = getTotalCreditsForStudent(studentId);
         
+        // Combinaison par défaut
         let defaultType = 'conversation';
         let defaultDuration = 30;
         let hasDefaultCredit = credits[defaultType]?.[defaultDuration] > 0;
@@ -359,6 +334,7 @@ function displayPackages(packages) {
             defaultDuration = firstAvailable.duration;
         }
         
+        // Expiration par défaut
         const defaultPackages = activePackagesData.filter(pkg => 
             (pkg.profiles?.id || pkg.user_id) === studentId &&
             pkg.course_type === defaultType &&
@@ -373,82 +349,111 @@ function displayPackages(packages) {
             }
         });
         const defaultExpiryStr = defaultExpiry ? defaultExpiry.toLocaleDateString() : 'Aucun forfait actif';
+        const defaultCredits = credits[defaultType][defaultDuration] || 0;
 
-        html += `
-            <div class="student-package-row" data-student-id="${studentId}">
-                <div class="student-package-name"><strong>${escapeHtml(student.name)}</strong></div>
-                <div class="package-filters">
-                    <div class="package-type-bubbles">
-                        ${['conversation', 'curriculum', 'examen'].map(type => {
-                            const hasAnyCredit = Object.values(credits[type]).some(v => v > 0);
-                            const disabledClass = !hasAnyCredit ? 'disabled' : '';
-                            const activeClass = (type === defaultType) ? 'active' : '';
-                            return `
-                                <button class="package-type-btn ${activeClass} ${disabledClass}" 
-                                        data-type="${type}" data-student="${studentId}" 
-                                        ${!hasAnyCredit ? 'disabled' : ''}>
-                                    ${type === 'conversation' ? 'Conversation' : type === 'curriculum' ? 'Curriculum' : 'Examen'}
-                                </button>
-                            `;
-                        }).join('')}
+        // Génération des bulles types
+        const typesHtml = ['conversation', 'curriculum', 'examen'].map(type => {
+            const hasAnyCredit = Object.values(credits[type]).some(v => v > 0);
+            const disabledClass = !hasAnyCredit ? 'disabled' : '';
+            const activeClass = (type === defaultType) ? 'active' : '';
+            return `
+                <button class="package-type-btn ${activeClass} ${disabledClass}" 
+                        data-student="${studentId}" data-type="${type}"
+                        ${!hasAnyCredit ? 'disabled' : ''}>
+                    ${type === 'conversation' ? 'Conversation' : type === 'curriculum' ? 'Curriculum' : 'Examen'}
+                </button>
+            `;
+        }).join('');
+
+        // Génération des bulles durées
+        const durationsHtml = [30, 45, 60].map(dur => {
+            const hasCredit = credits[defaultType]?.[dur] > 0;
+            const disabledClass = !hasCredit ? 'disabled' : '';
+            const activeClass = (dur === defaultDuration) ? 'active' : '';
+            return `
+                <button class="package-duration-btn ${activeClass} ${disabledClass}" 
+                        data-student="${studentId}" data-duration="${dur}"
+                        ${!hasCredit ? 'disabled' : ''}>
+                    ${dur} min
+                </button>
+            `;
+        }).join('');
+
+        return `
+            <div class="package-card" data-student-id="${studentId}">
+                <div class="package-card-name"><strong>${escapeHtml(student.name)}</strong></div>
+                <div class="package-card-grid">
+                    <div class="package-types-col">
+                        <div class="package-types-label">Types de cours</div>
+                        <div class="package-type-bubbles">${typesHtml}</div>
                     </div>
-                    <div class="package-duration-bubbles">
-                        ${[30, 45, 60].map(dur => {
-                            const hasCredit = credits[defaultType]?.[dur] > 0;
-                            const disabledClass = !hasCredit ? 'disabled' : '';
-                            const activeClass = (dur === defaultDuration) ? 'active' : '';
-                            return `
-                                <button class="package-duration-btn ${activeClass} ${disabledClass}" 
-                                        data-duration="${dur}" data-student="${studentId}"
-                                        ${!hasCredit ? 'disabled' : ''}>
-                                    ${dur} min
-                                </button>
-                            `;
-                        }).join('')}
+                    <div class="package-durations-col">
+                        <div class="package-durations-label">Durées</div>
+                        <div class="package-duration-bubbles">${durationsHtml}</div>
                     </div>
-                    <div class="package-selected-credits">
-                        Crédits : <strong id="student-${studentId}-selected-credits">${credits[defaultType][defaultDuration] || 0}</strong>
+                    <div class="package-expiry-col">
+                        <div class="package-expiry-label">Expire le</div>
+                        <div class="package-expiry-value" id="package-${studentId}-expiry">${defaultExpiryStr}</div>
                     </div>
-                    <div class="package-expiry" id="student-${studentId}-expiry">
-                        Expire le : ${defaultExpiryStr}
+                    <div class="package-credits-col">
+                        <div class="package-credits-label">Crédits</div>
+                        <div class="package-credits-value" id="package-${studentId}-credits">${defaultCredits}</div>
                     </div>
                 </div>
-                <div class="package-credits-display" id="student-${studentId}-total-credits">
+                <div class="package-total-credits">
                     Total crédits : <strong>${totalCredits}</strong>
                 </div>
             </div>
         `;
-    }
-    container.innerHTML = html;
+    }).join('');
 
+    container.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <button id="packagesPrevBtn" class="nav-arrow" ${start === 0 ? 'disabled' : ''}>
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div style="display: flex; gap: 15px; flex: 1; overflow-x: auto; padding: 10px 0;">
+                ${cardsHTML}
+            </div>
+            <button id="packagesNextBtn" class="nav-arrow" ${end >= total ? 'disabled' : ''}>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        <div style="text-align: center; margin-top: 10px; font-size: 0.9rem; color: #666;">
+            ${start + 1}–${end} sur ${total}
+        </div>
+    `;
+
+    // Attacher événements pour les types
     document.querySelectorAll('.package-type-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', () => {
             const studentId = btn.dataset.student;
             const type = btn.dataset.type;
-            const parentRow = document.querySelector(`.student-package-row[data-student-id="${studentId}"]`);
-            parentRow.querySelectorAll('.package-type-btn').forEach(b => {
-                b.classList.remove('active');
-            });
+            const parentCard = document.querySelector(`.package-card[data-student-id="${studentId}"]`);
+            if (!parentCard) return;
+
+            // Mettre à jour l'état actif des types
+            parentCard.querySelectorAll('.package-type-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
+
             const credits = getStudentCredits(studentId);
+            // Trouver première durée disponible pour ce type
             let firstAvailableDuration = 30;
             if (credits[type][30] > 0) firstAvailableDuration = 30;
             else if (credits[type][45] > 0) firstAvailableDuration = 45;
             else if (credits[type][60] > 0) firstAvailableDuration = 60;
             else firstAvailableDuration = 30;
-            
-            const durationBubbles = parentRow.querySelectorAll('.package-duration-btn');
+
+            // Mettre à jour les durées : activer/désactiver
+            const durationBtns = parentCard.querySelectorAll('.package-duration-btn');
             let selectedDuration = null;
-            durationBubbles.forEach(durBtn => {
+            durationBtns.forEach(durBtn => {
                 const dur = parseInt(durBtn.dataset.duration);
                 const hasCredit = credits[type]?.[dur] > 0;
                 if (!hasCredit) {
                     durBtn.disabled = true;
                     durBtn.classList.add('disabled');
-                    if (durBtn.classList.contains('active')) {
-                        durBtn.classList.remove('active');
-                    }
+                    if (durBtn.classList.contains('active')) durBtn.classList.remove('active');
                 } else {
                     durBtn.disabled = false;
                     durBtn.classList.remove('disabled');
@@ -461,26 +466,94 @@ function displayPackages(packages) {
                 }
             });
             if (!selectedDuration) selectedDuration = firstAvailableDuration;
-            updateCreditsAndExpiry(studentId, type, selectedDuration, credits);
+            updateSelectedCreditsAndExpiry(studentId, type, selectedDuration);
         });
     });
 
+    // Attacher événements pour les durées
     document.querySelectorAll('.package-duration-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', () => {
             const studentId = btn.dataset.student;
             const duration = parseInt(btn.dataset.duration);
-            const parentRow = document.querySelector(`.student-package-row[data-student-id="${studentId}"]`);
-            const activeType = parentRow.querySelector('.package-type-btn.active')?.dataset.type || 'conversation';
+            const parentCard = document.querySelector(`.package-card[data-student-id="${studentId}"]`);
+            if (!parentCard) return;
+
+            const activeType = parentCard.querySelector('.package-type-btn.active')?.dataset.type || 'conversation';
             const credits = getStudentCredits(studentId);
             if (!credits[activeType]?.[duration]) {
                 alert(`Aucun crédit disponible pour ${activeType} ${duration} min`);
                 return;
             }
-            parentRow.querySelectorAll('.package-duration-btn').forEach(b => b.classList.remove('active'));
+            parentCard.querySelectorAll('.package-duration-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            updateCreditsAndExpiry(studentId, activeType, duration, credits);
+            updateSelectedCreditsAndExpiry(studentId, activeType, duration);
         });
     });
+
+    // Navigation
+    const prevBtn = document.getElementById('packagesPrevBtn');
+    const nextBtn = document.getElementById('packagesNextBtn');
+    if (prevBtn) prevBtn.onclick = () => {
+        if (packagesCurrentStartIndex > 0) {
+            packagesCurrentStartIndex = Math.max(0, packagesCurrentStartIndex - PACKAGES_PER_PAGE);
+            renderPackagesSlice();
+        }
+    };
+    if (nextBtn) nextBtn.onclick = () => {
+        if (packagesCurrentStartIndex + PACKAGES_PER_PAGE < activePackagesList.length) {
+            packagesCurrentStartIndex += PACKAGES_PER_PAGE;
+            renderPackagesSlice();
+        }
+    };
+}
+
+function buildPackagesList() {
+    if (!activePackagesData.length) {
+        activePackagesList = [];
+        renderPackagesSlice();
+        return;
+    }
+
+    const studentsMap = new Map();
+    activePackagesData.forEach(pkg => {
+        const studentId = pkg.profiles?.id || pkg.user_id;
+        if (!studentId) return;
+        if (!studentsMap.has(studentId)) {
+            studentsMap.set(studentId, {
+                id: studentId,
+                name: pkg.profiles?.full_name || 'Étudiant',
+                packages: []
+            });
+        }
+        studentsMap.get(studentId).packages.push(pkg);
+    });
+
+    let studentEntries = Array.from(studentsMap.values()).map(student => ({
+        id: student.id,
+        name: student.name,
+        nearestExpiry: getNearestExpiryForStudent(student.id)
+    }));
+
+    // Tri : par date d'expiration (plus proche d'abord), exclus à la fin
+    studentEntries.sort((a, b) => {
+        const aExcluded = EXCLUDED_STUDENT_IDS.includes(a.id);
+        const bExcluded = EXCLUDED_STUDENT_IDS.includes(b.id);
+        if (aExcluded && !bExcluded) return 1;
+        if (!aExcluded && bExcluded) return -1;
+        if (!a.nearestExpiry && !b.nearestExpiry) return 0;
+        if (!a.nearestExpiry) return 1;
+        if (!b.nearestExpiry) return -1;
+        return a.nearestExpiry - b.nearestExpiry;
+    });
+
+    activePackagesList = studentEntries;
+    packagesCurrentStartIndex = 0;
+    renderPackagesSlice();
+}
+
+function displayPackages(packages) {
+    activePackagesData = packages || [];
+    buildPackagesList();
 }
 
 // ========== ÉTUDIANTS ==========
