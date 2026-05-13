@@ -132,7 +132,7 @@
     cursor: not-allowed;
 }
 
-/* ========== FORFAITS ACTIFS (NOUVEAU CARROUSEL) ========== */
+/* ========== FORFAITS ACTIFS (CARROUSEL) ========== */
 .package-card {
     background: #f8f9fa;
     border-radius: 12px;
@@ -185,25 +185,28 @@
     margin-left: 4px;
 }
 
+/* Conteneurs des bulles : pas de retour à la ligne sur desktop */
 .package-type-bubbles, .package-duration-bubbles {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-wrap: nowrap;
+    gap: 8px;
+    justify-content: flex-start;
 }
 
-/* Les bulles ont une largeur fixe (min-width) pour rester compactes */
+/* Style des bulles : taille fixe, pas d'étirement */
 .package-type-btn, .package-duration-btn {
     background: #e9ecef;
     border: none;
-    padding: 6px 14px;
+    padding: 5px 10px;
     border-radius: 30px;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.2s;
     font-weight: 500;
     flex: 0 0 auto;
-    min-width: 100px;
+    min-width: 70px;
     text-align: center;
+    white-space: nowrap;
 }
 
 .package-type-btn.active, .package-duration-btn.active {
@@ -381,8 +384,14 @@
         text-align: left;
         width: 100%;
     }
+    /* Sur mobile, les bulles peuvent passer à la ligne */
+    .package-type-bubbles, .package-duration-bubbles {
+        flex-wrap: wrap;
+    }
     .package-type-btn, .package-duration-btn {
-        min-width: 80px;
+        min-width: 60px;
+        padding: 4px 8px;
+        font-size: 0.7rem;
     }
     .upcoming-lesson-card {
         min-width: 180px;
