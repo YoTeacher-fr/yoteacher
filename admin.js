@@ -1,4 +1,4 @@
-// admin.js – Dashboard administrateur (version finale)
+// admin.js – Dashboard administrateur (version finale avec datalabels sur graphiques)
 console.log('🔵 [ADMIN.JS] Script chargé – règle: confirmed + (passé ou completed_at dans le mois)');
 
 let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
@@ -444,34 +444,53 @@ function displayStudents(students) {
     });
 }
 
-// ========== GRAPHIQUE REVENUS ==========
+// ========== GRAPHIQUE REVENUS (avec datalabels) ==========
 function updateRevenueChart() {
     const canvas = document.getElementById('revenueChart');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const months = Object.keys(allMonthlyRevenue).sort();
     if (months.length === 0) return;
+
     const startIndex = currentMonthOffset === 0 ? Math.max(0, months.length - 6) : Math.max(0, months.length - 12 + currentMonthOffset);
     const endIndex = currentMonthOffset === 0 ? months.length - 1 : Math.min(months.length - 1, startIndex + 11);
     const visible = months.slice(startIndex, endIndex + 1);
+
     const labels = visible.map(m => {
         const [y, mo] = m.split('-');
         return new Date(parseInt(y), parseInt(mo)-1, 1).toLocaleDateString('fr', { month:'short', year:'numeric' });
     });
     const data = visible.map(m => allMonthlyRevenue[m] || 0);
+
     const totalRevenue = Object.values(allMonthlyRevenue).reduce((sum, val) => sum + val, 0);
     const chartLabel = `Total revenus : ${totalRevenue.toFixed(2)} €`;
+
     if (revenueChart) revenueChart.destroy();
     revenueChart = new Chart(ctx, {
         type: 'bar',
         data: { labels, datasets: [{ label: chartLabel, data, backgroundColor: '#3c84f6', borderRadius: 8 }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: ctx => `${ctx.raw.toFixed(2)} €` } } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                tooltip: { callbacks: { label: ctx => `${ctx.raw.toFixed(2)} €` } },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 4,
+                    color: '#333',
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value) => value.toFixed(2) + ' €'
+                }
+            }
+        }
     });
+
     const labelElem = document.getElementById('monthRangeLabel');
     if (labelElem) labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
-// ========== GRAPHIQUE COURS (règle : confirmed + passé ou completed_at dans le mois) ==========
+// ========== GRAPHIQUE COURS (avec datalabels) ==========
 function computeMonthlyLessonsAndStudents(studentsData) {
     const monthlyMap = new Map(); // key "YYYY-MM": { lessons: 0, students: Set() }
     const now = new Date();
@@ -479,22 +498,16 @@ function computeMonthlyLessonsAndStudents(studentsData) {
     for (const student of studentsData) {
         if (!student.bookings) continue;
         for (const booking of student.bookings) {
-            // 1. Ignorer les annulés
             if (booking.status === 'cancelled') continue;
-            // 2. On ne garde que les confirmed (ou completed)
             if (booking.status !== 'confirmed' && booking.status !== 'completed') continue;
 
             const startTime = new Date(booking.start_time);
             if (isNaN(startTime.getTime())) continue;
 
             let isEffectue = false;
-
-            // Condition A : date de début strictement passée
             if (startTime < now) {
                 isEffectue = true;
-            }
-            // Condition B : completed_at existe et est dans le même mois que start_time
-            else if (booking.completed_at) {
+            } else if (booking.completed_at) {
                 const completedDate = new Date(booking.completed_at);
                 if (!isNaN(completedDate.getTime())) {
                     const completedYearMonth = booking.completed_at.substring(0, 7);
@@ -507,7 +520,6 @@ function computeMonthlyLessonsAndStudents(studentsData) {
 
             if (!isEffectue) continue;
 
-            // Mois basé sur start_time (UTC via substring)
             const monthKey = booking.start_time.substring(0, 7);
             if (!monthlyMap.has(monthKey)) {
                 monthlyMap.set(monthKey, { lessons: 0, students: new Set() });
@@ -579,15 +591,36 @@ function updateLessonsStudentsChart() {
         data: {
             labels: labels,
             datasets: [
-                { label: 'Leçons effectuées', data: lessonsData, borderColor: '#3c84f6', backgroundColor: 'rgba(60,132,246,0.1)', tension: 0.3, fill: true },
-                { label: 'Étudiants uniques', data: studentsData, borderColor: '#ff9800', backgroundColor: 'rgba(255,152,0,0.1)', tension: 0.3, fill: true }
+                { 
+                    label: 'Leçons effectuées', 
+                    data: lessonsData, 
+                    borderColor: '#3c84f6', 
+                    backgroundColor: 'rgba(60,132,246,0.1)', 
+                    tension: 0.3, 
+                    fill: true,
+                    datalabels: { align: 'top', offset: 6, color: '#3c84f6' }
+                },
+                { 
+                    label: 'Étudiants uniques', 
+                    data: studentsData, 
+                    borderColor: '#ff9800', 
+                    backgroundColor: 'rgba(255,152,0,0.1)', 
+                    tension: 0.3, 
+                    fill: true,
+                    datalabels: { align: 'top', offset: 6, color: '#ff9800' }
+                }
             ]
         },
         options: {
-            responsive: true, maintainAspectRatio: true,
+            responsive: true,
+            maintainAspectRatio: true,
             plugins: {
                 tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}` } },
-                legend: { position: 'top' }
+                legend: { position: 'top' },
+                datalabels: {
+                    font: { weight: 'bold', size: 11 },
+                    formatter: (value) => value
+                }
             },
             scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, title: { display: true, text: 'Nombre' } } }
         }
