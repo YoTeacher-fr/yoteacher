@@ -319,11 +319,12 @@
     display: block;
 }
 
+/* Correction : centrer verticalement les trois colonnes */
 .student-detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 20px;
-    align-items: start;
+    align-items: center;  /* ← au lieu de 'start' */
 }
 
 .detail-col {
@@ -331,6 +332,10 @@
     padding: 12px;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .detail-col strong {
@@ -392,6 +397,7 @@
     .student-detail-grid {
         grid-template-columns: 1fr;
         gap: 10px;
+        align-items: stretch;
     }
     .upcoming-lesson-card,
     .package-card {
