@@ -225,12 +225,13 @@ function findFirstAvailableCombination(studentId) {
 }
 
 function updateCreditsAndExpiry(studentId, type, duration, credits) {
-    const creditsSpan = document.getElementById(`student-${studentId}-credits`);
-    if (creditsSpan) {
+    // Mise à jour des crédits pour la sélection (ligne 2 colonne 3)
+    const selectedCreditsSpan = document.getElementById(`student-${studentId}-selected-credits`);
+    if (selectedCreditsSpan) {
         const value = credits[type]?.[duration] || 0;
-        creditsSpan.querySelector('.credits-value').innerText = value;
+        selectedCreditsSpan.innerText = value;
     }
-    // Mettre à jour la date d'expiration la plus proche pour ce type+duration
+    // Mise à jour de la date d'expiration la plus proche pour ce type+duration (ligne 2 colonne 4)
     const expirySpan = document.getElementById(`student-${studentId}-expiry`);
     if (expirySpan) {
         const matchingPackages = activePackagesData.filter(pkg => 
@@ -247,7 +248,7 @@ function updateCreditsAndExpiry(studentId, type, duration, credits) {
             }
         });
         const expiryText = nearestExpiry ? nearestExpiry.toLocaleDateString() : 'Aucun forfait actif';
-        expirySpan.querySelector('.expiry-value').innerText = expiryText;
+        expirySpan.innerText = `Expire le : ${expiryText}`;
     }
 }
 
@@ -289,7 +290,7 @@ function displayPackages(packages) {
             defaultDuration = firstAvailable.duration;
         }
         
-        // Déterminer la date d'expiration par défaut
+        // Déterminer la date d'expiration par défaut pour la sélection
         const defaultPackages = activePackagesData.filter(pkg => 
             (pkg.profiles?.id || pkg.user_id) === studentId &&
             pkg.course_type === defaultType &&
@@ -337,15 +338,15 @@ function displayPackages(packages) {
                             `;
                         }).join('')}
                     </div>
-                    <div class="package-expiry" id="student-${studentId}-expiry">
-                        Expire le : <span class="expiry-value">${defaultExpiryStr}</span>
+                    <div class="package-selected-credits">
+                        Crédits sélection : <strong id="student-${studentId}-selected-credits">${credits[defaultType][defaultDuration] || 0}</strong>
                     </div>
-                    <div class="package-total-credits">
-                        Total crédits : <strong>${totalCredits}</strong>
+                    <div class="package-expiry" id="student-${studentId}-expiry">
+                        Expire le : ${defaultExpiryStr}
                     </div>
                 </div>
-                <div class="package-credits-display" id="student-${studentId}-credits">
-                    Crédits : <span class="credits-value">${credits[defaultType][defaultDuration] || 0}</span>
+                <div class="package-credits-display" id="student-${studentId}-total-credits">
+                    Total crédits : <strong>${totalCredits}</strong>
                 </div>
             </div>
         `;
@@ -397,7 +398,6 @@ function displayPackages(packages) {
             });
             if (!selectedDuration) selectedDuration = firstAvailableDuration;
             updateCreditsAndExpiry(studentId, type, selectedDuration, credits);
-            // Mettre à jour le total crédits (ne change pas)
         });
     });
 
