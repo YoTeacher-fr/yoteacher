@@ -133,15 +133,20 @@
 }
 
 /* ========== FORFAITS ACTIFS (CARROUSEL) ========== */
-/* Correction : largeur fixe pour toutes les cartes, pas d'étirement */
+/* 
+   Correction : largeur identique à celle d’une carte lorsque 3 sont affichées.
+   Utilisation d’un pourcentage basé sur le parent (33.333% - marges)
+   + min-width pour éviter qu’elles deviennent trop petites.
+*/
 .package-card {
     background: #f8f9fa;
     border-radius: 12px;
     padding: 16px;
     margin: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    flex: 0 0 auto;      /* Empêche l'étirement */
-    width: 300px;        /* Largeur fixe identique pour toutes les cartes */
+    flex: 0 0 auto;                 /* pas d’étirement */
+    width: calc(33.333% - 30px);    /* largeur = 1/3 du conteneur moins les marges */
+    min-width: 260px;               /* taille plancher pour rester lisible */
     display: flex;
     flex-direction: column;
 }
@@ -374,9 +379,10 @@
         grid-template-columns: 1fr;
         gap: 10px;
     }
-    /* Correction cartes forfaits sur mobile : largeur réduite mais toujours fixe */
+    /* Sur mobile, largeur adaptée mais toujours basée sur le parent */
     .package-card {
-        width: 280px;
+        width: calc(50% - 20px);   /* 2 cartes par ligne si possible */
+        min-width: 220px;
     }
     .package-card-row {
         flex-direction: column;
@@ -397,5 +403,12 @@
     }
     .upcoming-lesson-card {
         min-width: 180px;
+    }
+}
+
+/* Pour les très petits écrans : une seule carte par ligne */
+@media (max-width: 560px) {
+    .package-card {
+        width: calc(100% - 20px);
     }
 }
