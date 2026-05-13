@@ -114,13 +114,16 @@ function escapeHtml(str) {
 
 // ========== PROCHAINS COURS (carrousel) ==========
 function formatDateWithDay(date) {
-    const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-    const formatted = date.toLocaleDateString('fr-FR', options);
-    const parts = formatted.split(' ');
-    // Format typique: "lundi 17 mai 2026"
-    const day = parts[0];
-    const rest = parts.slice(1).join(' ');
-    return `<strong>${day}</strong> ${rest}`;
+    // Format: "Lundi <strong>17 mai</strong> 2026"
+    const jours = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+    const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    const jourSemaine = jours[date.getDay()];
+    const jour = date.getDate();
+    const moisNom = mois[date.getMonth()];
+    const annee = date.getFullYear();
+    // Mettre la première lettre du jour en majuscule
+    const jourSemaineCapitalized = jourSemaine.charAt(0).toUpperCase() + jourSemaine.slice(1);
+    return `${jourSemaineCapitalized} <strong>${jour} ${moisNom}</strong> ${annee}`;
 }
 
 function renderUpcomingSlice() {

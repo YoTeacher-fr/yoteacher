@@ -58,7 +58,7 @@
 }
 
 .upcoming-lesson-card div strong {
-    font-size: 1.1rem; /* nom plus grand */
+    font-size: 1.1rem;
 }
 
 .btn-cancel-admin {
@@ -140,7 +140,7 @@
 }
 
 .student-package-name {
-    font-size: 1.2rem; /* nom plus grand */
+    font-size: 1.2rem;
     margin-bottom: 10px;
 }
 .student-package-name strong {
@@ -160,6 +160,12 @@
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    align-items: center;     /* centrage vertical */
+    justify-content: flex-start;
+}
+/* Pour que les bulles soient centrées verticalement dans leur colonne */
+.package-type-bubbles, .package-duration-bubbles {
+    align-self: center;
 }
 
 .package-selected-credits {
@@ -214,7 +220,7 @@
 
 .package-credits-display {
     margin-top: 8px;
-    font-size: 1.1rem; /* agrandi */
+    font-size: 1.1rem;
     font-weight: 600;
     color: #2c3e50;
 }
@@ -247,20 +253,20 @@
 
 .student-name {
     font-weight: 700;
-    font-size: 1.2rem; /* nom plus grand */
+    font-size: 1.2rem;
     text-align: left;
 }
 
 .student-courses {
     font-size: 0.9rem;
     color: #555;
-    text-align: center; /* centré */
+    text-align: center;
 }
 
 .student-revenue {
     font-size: 0.9rem;
     color: #555;
-    text-align: center; /* centré */
+    text-align: center;
 }
 
 .toggle-icon {
@@ -302,7 +308,6 @@
     font-size: 0.9rem;
 }
 
-/* Centrage des colonnes 2 et 3 dans le détail */
 .detail-col-center {
     text-align: center;
 }
@@ -362,6 +367,7 @@
     }
     .package-type-bubbles, .package-duration-bubbles {
         justify-content: center;
+        align-self: center;
     }
     .package-selected-credits {
         text-align: center;
