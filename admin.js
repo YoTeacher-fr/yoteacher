@@ -199,6 +199,31 @@ function getStudentCredits(studentId) {
     return credits;
 }
 
+function getTotalCreditsForStudent(studentId) {
+    const credits = getStudentCredits(studentId);
+    let total = 0;
+    for (const type of ['conversation', 'curriculum', 'examen']) {
+        for (const dur of [30, 45, 60]) {
+            total += credits[type][dur];
+        }
+    }
+    return total;
+}
+
+function findFirstAvailableCombination(studentId) {
+    const credits = getStudentCredits(studentId);
+    const types = ['conversation', 'curriculum', 'examen'];
+    const durations = [30, 45, 60];
+    for (const type of types) {
+        for (const dur of durations) {
+            if (credits[type][dur] > 0) {
+                return { type, duration: dur };
+            }
+        }
+    }
+    return { type: 'conversation', duration: 30 }; // fallback
+}
+
 function updateCreditsAndExpiry(studentId, type, duration, credits) {
     const creditsSpan = document.getElementById(`student-${studentId}-credits`);
     if (creditsSpan) {
@@ -252,12 +277,23 @@ function displayPackages(packages) {
     let html = '';
     for (const [studentId, student] of studentsMap) {
         const credits = getStudentCredits(studentId);
+        const totalCredits = getTotalCreditsForStudent(studentId);
         
-        // Déterminer la date d'expiration par défaut (conversation/30min)
+        // Trouver la première combinaison avec crédits (ou défaut conversation 30)
+        let defaultType = 'conversation';
+        let defaultDuration = 30;
+        let hasDefaultCredit = credits[defaultType]?.[defaultDuration] > 0;
+        if (!hasDefaultCredit) {
+            const firstAvailable = findFirstAvailableCombination(studentId);
+            defaultType = firstAvailable.type;
+            defaultDuration = firstAvailable.duration;
+        }
+        
+        // Déterminer la date d'expiration par défaut
         const defaultPackages = activePackagesData.filter(pkg => 
             (pkg.profiles?.id || pkg.user_id) === studentId &&
-            pkg.course_type === 'conversation' &&
-            pkg.duration_minutes === 30 &&
+            pkg.course_type === defaultType &&
+            pkg.duration_minutes === defaultDuration &&
             pkg.remaining_credits > 0
         );
         let defaultExpiry = null;
@@ -277,8 +313,9 @@ function displayPackages(packages) {
                         ${['conversation', 'curriculum', 'examen'].map(type => {
                             const hasAnyCredit = Object.values(credits[type]).some(v => v > 0);
                             const disabledClass = !hasAnyCredit ? 'disabled' : '';
+                            const activeClass = (type === defaultType) ? 'active' : '';
                             return `
-                                <button class="package-type-btn ${type === 'conversation' ? 'active' : ''} ${disabledClass}" 
+                                <button class="package-type-btn ${activeClass} ${disabledClass}" 
                                         data-type="${type}" data-student="${studentId}" 
                                         ${!hasAnyCredit ? 'disabled' : ''}>
                                     ${type === 'conversation' ? 'Conversation' : type === 'curriculum' ? 'Curriculum' : 'Examen'}
@@ -288,12 +325,11 @@ function displayPackages(packages) {
                     </div>
                     <div class="package-duration-bubbles">
                         ${[30, 45, 60].map(dur => {
-                            // Vérifier si des crédits existent pour le type actif (conversation par défaut)
-                            const activeType = 'conversation';
-                            const hasCredit = credits[activeType]?.[dur] > 0;
+                            const hasCredit = credits[defaultType]?.[dur] > 0;
                             const disabledClass = !hasCredit ? 'disabled' : '';
+                            const activeClass = (dur === defaultDuration) ? 'active' : '';
                             return `
-                                <button class="package-duration-btn ${dur === 30 ? 'active' : ''} ${disabledClass}" 
+                                <button class="package-duration-btn ${activeClass} ${disabledClass}" 
                                         data-duration="${dur}" data-student="${studentId}"
                                         ${!hasCredit ? 'disabled' : ''}>
                                     ${dur} min
@@ -306,7 +342,8 @@ function displayPackages(packages) {
                     </div>
                 </div>
                 <div class="package-credits-display" id="student-${studentId}-credits">
-                    Crédits : <span class="credits-value">${credits.conversation[30] || 0}</span>
+                    <span>Crédits : <span class="credits-value">${credits[defaultType][defaultDuration] || 0}</span></span>
+                    <span class="total-credits">Total crédits : <strong>${totalCredits}</strong></span>
                 </div>
             </div>
         `;
@@ -324,24 +361,18 @@ function displayPackages(packages) {
                 b.classList.remove('active');
             });
             btn.classList.add('active');
-            // Récupérer la durée active
-            const activeDurationBtn = parentRow.querySelector('.package-duration-btn.active');
-            let activeDuration = 30;
-            if (activeDurationBtn && !activeDurationBtn.disabled) {
-                activeDuration = parseInt(activeDurationBtn.dataset.duration);
-            } else {
-                // Si la durée active est désactivée, prendre la première durée disponible
-                const firstAvailable = parentRow.querySelector('.package-duration-btn:not(.disabled)');
-                if (firstAvailable) {
-                    activeDuration = parseInt(firstAvailable.dataset.duration);
-                    parentRow.querySelectorAll('.package-duration-btn').forEach(b => b.classList.remove('active'));
-                    firstAvailable.classList.add('active');
-                }
-            }
+            
             const credits = getStudentCredits(studentId);
-            updateCreditsAndExpiry(studentId, type, activeDuration, credits);
-            // Mettre à jour les bulles de durée (activer/désactiver selon le nouveau type)
+            // Trouver la première durée disponible pour ce type
+            let firstAvailableDuration = 30;
+            if (credits[type][30] > 0) firstAvailableDuration = 30;
+            else if (credits[type][45] > 0) firstAvailableDuration = 45;
+            else if (credits[type][60] > 0) firstAvailableDuration = 60;
+            else firstAvailableDuration = 30; // fallback
+            
+            // Mettre à jour les bulles de durée
             const durationBubbles = parentRow.querySelectorAll('.package-duration-btn');
+            let selectedDuration = null;
             durationBubbles.forEach(durBtn => {
                 const dur = parseInt(durBtn.dataset.duration);
                 const hasCredit = credits[type]?.[dur] > 0;
@@ -350,19 +381,21 @@ function displayPackages(packages) {
                     durBtn.classList.add('disabled');
                     if (durBtn.classList.contains('active')) {
                         durBtn.classList.remove('active');
-                        // Sélectionner la première durée disponible
-                        const firstAvailable = parentRow.querySelector('.package-duration-btn:not(.disabled)');
-                        if (firstAvailable) {
-                            firstAvailable.classList.add('active');
-                            const newDuration = parseInt(firstAvailable.dataset.duration);
-                            updateCreditsAndExpiry(studentId, type, newDuration, credits);
-                        }
                     }
                 } else {
                     durBtn.disabled = false;
                     durBtn.classList.remove('disabled');
+                    if (dur === firstAvailableDuration && !selectedDuration) {
+                        durBtn.classList.add('active');
+                        selectedDuration = dur;
+                    } else {
+                        durBtn.classList.remove('active');
+                    }
                 }
             });
+            if (!selectedDuration) selectedDuration = firstAvailableDuration;
+            updateCreditsAndExpiry(studentId, type, selectedDuration, credits);
+            // Mettre à jour le total crédits (ne change pas)
         });
     });
 
@@ -385,7 +418,7 @@ function displayPackages(packages) {
     });
 }
 
-// ========== ÉTUDIANTS (triés par nombre de cours décroissant) ==========
+// ========== ÉTUDIANTS (triés par nombre de cours, deux colonnes séparées) ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
@@ -399,10 +432,8 @@ function displayStudents(students) {
             <div class="student-row">
                 <div class="student-summary">
                     <span class="student-name">${escapeHtml(s.full_name || 'Sans nom')}</span>
-                    <div class="student-stats">
-                        <span>📚 ${s.total_courses || 0} cours</span>
-                        <span>💰 ${totalSpentEur.toFixed(2)} €</span>
-                    </div>
+                    <span class="student-courses">📚 ${s.total_courses || 0} cours</span>
+                    <span class="student-revenue">💰 ${totalSpentEur.toFixed(2)} €</span>
                     <i class="fas fa-chevron-down toggle-icon"></i>
                 </div>
                 <div class="student-detail">
