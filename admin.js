@@ -1,5 +1,13 @@
-// admin.js – Dashboard administrateur (version finale avec datalabels sur graphiques)
+// admin.js – Dashboard administrateur (avec enregistrement manuel du plugin datalabels)
 console.log('🔵 [ADMIN.JS] Script chargé – règle: confirmed + (passé ou completed_at dans le mois)');
+
+// Enregistrement manuel du plugin datalabels
+if (typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+    console.log('✅ Plugin datalabels enregistré');
+} else {
+    console.warn('⚠️ Plugin datalabels non trouvé');
+}
 
 let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
 
