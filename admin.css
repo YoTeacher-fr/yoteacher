@@ -96,11 +96,22 @@
     justify-content: space-between;
 }
 
+/* Styles pour les cartes de cours à venir */
+.upcoming-lesson-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    flex: 1;
+    min-width: 220px;
+}
+
 .btn-cancel-admin {
     background: #e74c3c;
     color: white;
     border: none;
-    padding: 4px 12px;
+    padding: 6px 12px;
     border-radius: 20px;
     font-size: 0.8rem;
     cursor: pointer;
@@ -109,6 +120,52 @@
 
 .btn-cancel-admin:hover {
     background: #c0392b;
+}
+
+.btn-join-admin {
+    background: #4CAF50;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-join-admin:hover {
+    background: #45a049;
+}
+
+.btn-join-admin-disabled {
+    background: #ccc;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    border: none;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.nav-arrow {
+    background: #f0f0f0;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.nav-arrow:hover:not(:disabled) {
+    background: #3c84f6;
+    color: white;
+}
+
+.nav-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
 }
 
 @media (max-width: 768px) {

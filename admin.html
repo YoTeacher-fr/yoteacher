@@ -8,29 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="dashboard.css">
-    <style>
-        /* Styles supplémentaires pour l'admin */
-        .admin-dashboard .dashboard-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        .admin-card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 30px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
-        .admin-card .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 12px; }
-        .admin-card .card-header i { font-size: 1.5rem; color: #3c84f6; }
-        .admin-card .card-header h2 { margin: 0; font-size: 1.3rem; }
-        .student-row { border-bottom: 1px solid #eee; padding: 12px 0; cursor: pointer; }
-        .student-summary { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .student-name { font-weight: 700; }
-        .student-stats { display: flex; gap: 20px; font-size: 0.9rem; color: #555; }
-        .student-detail { display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 8px; }
-        .student-detail.open { display: block; }
-        .booking-history-item { font-size: 0.85rem; padding: 6px 0; border-bottom: 1px solid #ddd; }
-        .active-package-item { padding: 8px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; flex-wrap: wrap; }
-        .btn-cancel-admin { background: #e74c3c; color: white; border: none; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; margin-top: 8px; }
-        .btn-cancel-admin:hover { background: #c0392b; }
-        .upcoming-lesson-card { background: #f8f9fa; border-radius: 12px; padding: 15px; margin-bottom: 12px; border-left: 4px solid #3c84f6; }
-        .loading { text-align: center; padding: 40px; color: #666; }
-        .revenue-section { margin-bottom: 30px; }
-        .revenue-controls { display: flex; justify-content: center; gap: 15px; margin: 15px 0; }
-        .slider-btn-small { background: #f0f0f0; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; }
-    </style>
+    <link rel="stylesheet" href="admin.css">
 </head>
 <body>
     <header class="main-header scrolled">
@@ -51,7 +29,19 @@
                 <div class="dashboard-actions"><button id="refreshAdminBtn" class="dashboard-action-btn"><i class="fas fa-sync-alt"></i> Actualiser</button></div>
             </div>
 
-            <!-- Section Revenus -->
+            <!-- 1. Prochains cours -->
+            <div class="admin-card">
+                <div class="card-header"><i class="fas fa-calendar-alt"></i><h2>Prochains cours</h2></div>
+                <div id="adminUpcomingLessons"><div class="loading">Chargement...</div></div>
+            </div>
+
+            <!-- 2. Forfaits actifs -->
+            <div class="admin-card">
+                <div class="card-header"><i class="fas fa-boxes"></i><h2>Forfaits actifs</h2></div>
+                <div id="activePackagesList"><div class="loading">Chargement...</div></div>
+            </div>
+
+            <!-- 3. Revenus (EUR) -->
             <div class="revenue-section admin-card">
                 <div class="card-header"><i class="fas fa-chart-line"></i><h2>Revenus (EUR)</h2></div>
                 <div class="revenue-controls">
@@ -62,33 +52,21 @@
                 <canvas id="revenueChart" width="800" height="300" style="max-width:100%; height:auto;"></canvas>
             </div>
 
-            <!-- Prochains cours -->
-            <div class="admin-card">
-                <div class="card-header"><i class="fas fa-calendar-alt"></i><h2>Prochains cours</h2></div>
-                <div id="adminUpcomingLessons"><div class="loading">Chargement...</div></div>
-            </div>
-
-            <!-- Étudiants -->
+            <!-- 4. Étudiants -->
             <div class="admin-card">
                 <div class="card-header"><i class="fas fa-users"></i><h2>Étudiants</h2></div>
                 <div id="studentsList"><div class="loading">Chargement...</div></div>
             </div>
-
-            <!-- Forfaits actifs -->
-            <div class="admin-card">
-                <div class="card-header"><i class="fas fa-boxes"></i><h2>Forfaits actifs</h2></div>
-                <div id="activePackagesList"><div class="loading">Chargement...</div></div>
-            </div>
         </div>
     </div>
 
-    <!-- Scripts (ordre important) -->
+    <!-- Scripts -->
     <script src="config.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
     <script src="auth.js"></script>
     <script src="currency.js"></script>
-    <script src="booking-cancel.js"></script>   <!-- Nécessaire pour window.bookingCancellation -->
+    <script src="booking-cancel.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="admin.js"></script>
 </body>

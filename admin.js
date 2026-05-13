@@ -97,21 +97,30 @@ function renderUpcomingSlice() {
     const end = Math.min(start + LESSONS_PER_PAGE, total);
     const visibleLessons = lessons.slice(start, end);
 
-    const cardsHTML = visibleLessons.map(lesson => `
-        <div class="upcoming-lesson-card" style="flex: 1; min-width: 200px;">
-            <div><strong>${escapeHtml(lesson.profiles?.full_name || 'Étudiant')}</strong></div>
-            <div>${lesson.course_type} - ${new Date(lesson.start_time).toLocaleString()}</div>
-            <div>Durée: ${lesson.duration_minutes} min - ${lesson.platform || 'Zoom'}</div>
-            <button class="btn-cancel-admin" data-id="${lesson.id}">Annuler le cours</button>
-        </div>
-    `).join('');
+    const cardsHTML = visibleLessons.map(lesson => {
+        const meetingLink = lesson.meeting_link || null;
+        const hasMeeting = meetingLink && meetingLink.trim() !== '';
+        const formattedDate = new Date(lesson.start_time).toLocaleString();
+        
+        return `
+            <div class="upcoming-lesson-card">
+                <div><strong>${escapeHtml(lesson.profiles?.full_name || 'Étudiant')}</strong></div>
+                <div>${escapeHtml(lesson.course_type)}</div>
+                <div>📅 ${formattedDate}</div>
+                <div style="display: flex; gap: 10px; margin-top: 12px;">
+                    ${hasMeeting ? `<a href="${escapeHtml(meetingLink)}" target="_blank" class="btn-join-admin"><i class="fas fa-video"></i> Rejoindre</a>` : '<button class="btn-join-admin-disabled" disabled title="Lien non disponible">Rejoindre</button>'}
+                    <button class="btn-cancel-admin" data-id="${lesson.id}">Annuler</button>
+                </div>
+            </div>
+        `;
+    }).join('');
 
     container.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <button id="adminPrevLessons" class="nav-arrow" ${start === 0 ? 'disabled' : ''}>
                 <i class="fas fa-chevron-left"></i>
             </button>
-            <div style="display: flex; gap: 15px; flex: 1; overflow: hidden;">
+            <div style="display: flex; gap: 15px; flex: 1; overflow-x: auto; padding: 10px 0;">
                 ${cardsHTML}
             </div>
             <button id="adminNextLessons" class="nav-arrow" ${end >= total ? 'disabled' : ''}>
@@ -123,40 +132,45 @@ function renderUpcomingSlice() {
         </div>
     `;
 
-    // Boutons d'annulation
+    // Attacher événements annulation
     container.querySelectorAll('.btn-cancel-admin').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = btn.dataset.id;
-            console.log(`🖱️ [ADMIN.JS] Clic annulation pour bookingId=${id}`);
             if (!confirm('Annuler ce cours ? Un crédit sera ajouté.')) return;
             btn.disabled = true;
             btn.innerText = 'Annulation...';
             try {
                 const result = await cancelBookingAdmin(id);
-                alert(result.creditRefunded ? 'Cours annulé (crédit ajouté, Cal.com annulé)' : 'Cours annulé (aucun crédit)');
+                alert(result.creditRefunded ? 'Cours annulé (crédit ajouté)' : 'Cours annulé');
                 location.reload();
             } catch (err) {
-                console.error('❌ [ADMIN.JS] Erreur lors de l\'annulation:', err);
+                console.error('Erreur annulation:', err);
                 alert('Erreur: ' + err.message);
                 btn.disabled = false;
-                btn.innerText = 'Annuler le cours';
+                btn.innerText = 'Annuler';
             }
         });
     });
 
-    // Flèches
-    document.getElementById('adminPrevLessons')?.addEventListener('click', () => {
-        if (adminCurrentStartIndex > 0) {
-            adminCurrentStartIndex = Math.max(0, adminCurrentStartIndex - LESSONS_PER_PAGE);
-            renderUpcomingSlice();
-        }
-    });
-    document.getElementById('adminNextLessons')?.addEventListener('click', () => {
-        if (adminCurrentStartIndex + LESSONS_PER_PAGE < adminUpcomingLessons.length) {
-            adminCurrentStartIndex += LESSONS_PER_PAGE;
-            renderUpcomingSlice();
-        }
-    });
+    // Navigation flèches
+    const prevBtn = document.getElementById('adminPrevLessons');
+    const nextBtn = document.getElementById('adminNextLessons');
+    if (prevBtn) {
+        prevBtn.onclick = () => {
+            if (adminCurrentStartIndex > 0) {
+                adminCurrentStartIndex = Math.max(0, adminCurrentStartIndex - LESSONS_PER_PAGE);
+                renderUpcomingSlice();
+            }
+        };
+    }
+    if (nextBtn) {
+        nextBtn.onclick = () => {
+            if (adminCurrentStartIndex + LESSONS_PER_PAGE < adminUpcomingLessons.length) {
+                adminCurrentStartIndex += LESSONS_PER_PAGE;
+                renderUpcomingSlice();
+            }
+        };
+    }
 }
 
 function displayUpcoming(lessons) {
@@ -172,9 +186,7 @@ function displayStudents(students) {
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
 
     container.innerHTML = students.map(s => {
-        // Le total dépensé est directement fourni par l'Edge (en EUR)
         const totalSpentEur = s.direct_revenue_eur || 0;
-
         return `
             <div class="student-row">
                 <div class="student-summary">
@@ -199,7 +211,6 @@ function displayStudents(students) {
         `;
     }).join('');
 
-    // Toggle détail
     document.querySelectorAll('.student-row').forEach(row => {
         const icon = row.querySelector('.toggle-icon');
         const detail = row.querySelector('.student-detail');
@@ -213,7 +224,7 @@ function displayStudents(students) {
     });
 }
 
-// ========== FORFAITS ACTIFS (INCHANGÉ MAIS SÉPARÉ DES REVENUS) ==========
+// ========== FORFAITS ACTIFS ==========
 function displayPackages(packages) {
     const container = document.getElementById('activePackagesList');
     if (!container) return;
@@ -227,7 +238,7 @@ function displayPackages(packages) {
     `).join('');
 }
 
-// ========== GRAPHIQUE DES REVENUS (BOOKINGS UNIQUEMENT) ==========
+// ========== GRAPHIQUE DES REVENUS ==========
 function updateRevenueChart() {
     const canvas = document.getElementById('revenueChart');
     if (!canvas) return;
@@ -292,16 +303,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadDashboard();
         document.body.classList.add('loaded');
 
-        // Refresh
         document.getElementById('refreshAdminBtn')?.addEventListener('click', () => loadDashboard());
-
-        // Logout
         document.getElementById('logoutAdminBtn')?.addEventListener('click', async () => {
             if (window.authManager) await window.authManager.signOut();
             window.location.href = 'index.html';
         });
-
-        // Slider mois
         document.getElementById('monthSliderPrev')?.addEventListener('click', () => { currentMonthOffset--; updateRevenueChart(); });
         document.getElementById('monthSliderNext')?.addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
 
