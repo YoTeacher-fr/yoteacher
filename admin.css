@@ -185,7 +185,7 @@
     margin-left: 4px;
 }
 
-/* Conteneurs des bulles : pas de retour à la ligne sur desktop */
+/* Conteneurs des bulles : alignement horizontal sans retour à la ligne */
 .package-type-bubbles, .package-duration-bubbles {
     display: flex;
     flex-wrap: nowrap;
@@ -193,20 +193,25 @@
     justify-content: flex-start;
 }
 
-/* Style des bulles : taille fixe, pas d'étirement */
+/* Style des bulles : largeur fixe, pas d'étirement */
 .package-type-btn, .package-duration-btn {
     background: #e9ecef;
     border: none;
-    padding: 5px 10px;
+    padding: 5px 0;
     border-radius: 30px;
     font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.2s;
     font-weight: 500;
-    flex: 0 0 auto;
-    min-width: 70px;
+    width: 95px;          /* Largeur fixe pour les types */
     text-align: center;
     white-space: nowrap;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.package-duration-btn {
+    width: 70px;          /* Largeur fixe pour les durées */
 }
 
 .package-type-btn.active, .package-duration-btn.active {
@@ -384,14 +389,14 @@
         text-align: left;
         width: 100%;
     }
-    /* Sur mobile, les bulles peuvent passer à la ligne */
+    /* Sur mobile, on autorise le retour à la ligne et une largeur dynamique */
     .package-type-bubbles, .package-duration-bubbles {
         flex-wrap: wrap;
     }
     .package-type-btn, .package-duration-btn {
-        min-width: 60px;
-        padding: 4px 8px;
-        font-size: 0.7rem;
+        width: auto;
+        min-width: 70px;
+        padding: 5px 10px;
     }
     .upcoming-lesson-card {
         min-width: 180px;
