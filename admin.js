@@ -1,9 +1,9 @@
-// admin.js – Dashboard administrateur (carrousel 3 prochains cours + calculs revenus corrigés)
+// admin.js – Dashboard administrateur (revenus 100% bookings unitaires)
 console.log('🔵 [ADMIN.JS] Script chargé');
 
 let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
 
-// --- Variables pour le carrousel des prochains cours ---
+// --- Carrousel prochains cours ---
 let adminUpcomingLessons = [];
 let adminCurrentStartIndex = 0;
 const LESSONS_PER_PAGE = 3;
@@ -81,7 +81,7 @@ function escapeHtml(str) {
     return (str || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
 }
 
-// ========== SECTION PROCHAINS COURS (CARROUSEL 3 BULLES) ==========
+// ========== CARROUSEL PROCHAINS COURS (3 BULLES) ==========
 function renderUpcomingSlice() {
     const container = document.getElementById('adminUpcomingLessons');
     if (!container) return;
@@ -97,7 +97,6 @@ function renderUpcomingSlice() {
     const end = Math.min(start + LESSONS_PER_PAGE, total);
     const visibleLessons = lessons.slice(start, end);
 
-    // Construction des cartes
     const cardsHTML = visibleLessons.map(lesson => `
         <div class="upcoming-lesson-card" style="flex: 1; min-width: 200px;">
             <div><strong>${escapeHtml(lesson.profiles?.full_name || 'Étudiant')}</strong></div>
@@ -107,7 +106,6 @@ function renderUpcomingSlice() {
         </div>
     `).join('');
 
-    // Structure complète avec flèches et compteur
     container.innerHTML = `
         <div style="display: flex; align-items: center; gap: 10px;">
             <button id="adminPrevLessons" class="nav-arrow" ${start === 0 ? 'disabled' : ''}>
@@ -125,7 +123,7 @@ function renderUpcomingSlice() {
         </div>
     `;
 
-    // Réattacher les événements des boutons d'annulation
+    // Boutons d'annulation
     container.querySelectorAll('.btn-cancel-admin').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = btn.dataset.id;
@@ -146,7 +144,7 @@ function renderUpcomingSlice() {
         });
     });
 
-    // Événements des flèches
+    // Flèches
     document.getElementById('adminPrevLessons')?.addEventListener('click', () => {
         if (adminCurrentStartIndex > 0) {
             adminCurrentStartIndex = Math.max(0, adminCurrentStartIndex - LESSONS_PER_PAGE);
@@ -167,35 +165,15 @@ function displayUpcoming(lessons) {
     renderUpcomingSlice();
 }
 
-// ========== SECTION ÉTUDIANTS (AVEC REVENUS CORRIGÉS) ==========
+// ========== ÉTUDIANTS (REVENUS BASÉS UNIQUEMENT SUR BOOKINGS PAYANTS) ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
 
     container.innerHTML = students.map(s => {
-        let totalSpentEur = 0;
-
-        // Packages valides (exclut annulés/remboursés)
-        const validPackageStatuses = ['active', 'completed'];
-        const validPackages = (s.packages || []).filter(p => validPackageStatuses.includes(p.status));
-        if (window.currencyManager) {
-            for (const pkg of validPackages) {
-                let amount = parseFloat(pkg.price_paid);
-                if (pkg.currency && pkg.currency !== 'EUR') {
-                    amount = window.currencyManager.convert(amount, pkg.currency, 'EUR');
-                }
-                totalSpentEur += amount;
-            }
-        } else {
-            // Fallback sans gestionnaire de devise (suppose EUR)
-            for (const pkg of validPackages) {
-                totalSpentEur += parseFloat(pkg.price_paid);
-            }
-        }
-
-        // Ajout des revenus directs (bookings unitaires)
-        totalSpentEur += (s.direct_revenue_eur || 0);
+        // Le total dépensé est directement fourni par l'Edge (en EUR)
+        const totalSpentEur = s.direct_revenue_eur || 0;
 
         return `
             <div class="student-row">
@@ -235,7 +213,7 @@ function displayStudents(students) {
     });
 }
 
-// ========== SECTION FORFAITS ACTIFS ==========
+// ========== FORFAITS ACTIFS (INCHANGÉ MAIS SÉPARÉ DES REVENUS) ==========
 function displayPackages(packages) {
     const container = document.getElementById('activePackagesList');
     if (!container) return;
@@ -249,7 +227,7 @@ function displayPackages(packages) {
     `).join('');
 }
 
-// ========== GRAPHIQUE DES REVENUS ==========
+// ========== GRAPHIQUE DES REVENUS (BOOKINGS UNIQUEMENT) ==========
 function updateRevenueChart() {
     const canvas = document.getElementById('revenueChart');
     if (!canvas) return;
@@ -314,10 +292,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadDashboard();
         document.body.classList.add('loaded');
 
-        // Rafraîchir
+        // Refresh
         document.getElementById('refreshAdminBtn')?.addEventListener('click', () => loadDashboard());
 
-        // Déconnexion
+        // Logout
         document.getElementById('logoutAdminBtn')?.addEventListener('click', async () => {
             if (window.authManager) await window.authManager.signOut();
             window.location.href = 'index.html';
