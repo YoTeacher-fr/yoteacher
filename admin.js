@@ -181,7 +181,7 @@ function displayUpcoming(lessons) {
     renderUpcomingSlice();
 }
 
-// ========== FORFAITS ACTIFS (bulles interactives) ==========
+// ========== FORFAITS ACTIFS (version restaurée) ==========
 function getStudentCredits(studentId) {
     const studentPackages = activePackagesData.filter(pkg => (pkg.profiles?.id || pkg.user_id) === studentId);
     const credits = {
@@ -225,18 +225,18 @@ function findFirstAvailableCombination(studentId) {
 }
 
 function updateCreditsAndExpiry(studentId, type, duration, credits, totalCredits) {
-    // Mettre à jour l'affichage des crédits sélectionnés
+    // Crédits sélectionnés
     const selectedCreditsSpan = document.getElementById(`student-${studentId}-selected-credits`);
     if (selectedCreditsSpan) {
         const value = credits[type]?.[duration] || 0;
         selectedCreditsSpan.innerText = value;
     }
-    // Mettre à jour le total crédits
+    // Total crédits
     const totalCreditsSpan = document.getElementById(`student-${studentId}-total-credits`);
     if (totalCreditsSpan) {
         totalCreditsSpan.innerText = totalCredits;
     }
-    // Mettre à jour la date d'expiration la plus proche pour ce type+duration
+    // Date d'expiration
     const expirySpan = document.getElementById(`student-${studentId}-expiry`);
     if (expirySpan) {
         const matchingPackages = activePackagesData.filter(pkg => 
@@ -430,7 +430,7 @@ function displayPackages(packages) {
     });
 }
 
-// ========== ÉTUDIANTS (triés par nombre de cours, exclusion des IDs indésirables) ==========
+// ========== ÉTUDIANTS (exclusion des IDs indésirables) ==========
 const EXCLUDED_STUDENT_IDS = [
     '88698eb2-904f-410b-88e1-a93c1397e0d1',
     'ddb62c55-b9f0-4852-8aa4-a53ea219ca83'
@@ -440,7 +440,6 @@ function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
     
-    // Filtrer les étudiants exclus
     const filteredStudents = (students || []).filter(s => !EXCLUDED_STUDENT_IDS.includes(s.id));
     
     if (!filteredStudents.length) {
@@ -488,7 +487,7 @@ function displayStudents(students) {
     });
 }
 
-// ========== GRAPHIQUE REVENUS (sans légende, avec total général) ==========
+// ========== GRAPHIQUE REVENUS ==========
 function updateRevenueChart() {
     const canvas = document.getElementById('revenueChart');
     if (!canvas) return;
@@ -506,12 +505,10 @@ function updateRevenueChart() {
     });
     const data = visible.map(m => allMonthlyRevenue[m] || 0);
 
-    // Calcul du total sur toute la période (tous les mois disponibles)
+    // Total général
     const totalRevenue = Object.values(allMonthlyRevenue).reduce((sum, val) => sum + val, 0);
     const totalDisplay = document.getElementById('totalRevenueDisplay');
-    if (totalDisplay) {
-        totalDisplay.innerHTML = `Total : ${totalRevenue.toFixed(2)} €`;
-    }
+    if (totalDisplay) totalDisplay.innerHTML = `Total : ${totalRevenue.toFixed(2)} €`;
 
     if (revenueChart) revenueChart.destroy();
     revenueChart = new Chart(ctx, {
@@ -519,7 +516,7 @@ function updateRevenueChart() {
         data: { 
             labels, 
             datasets: [{ 
-                label: '',  // Pas de légende
+                label: '', 
                 data, 
                 backgroundColor: '#3c84f6', 
                 borderRadius: 8 
@@ -529,7 +526,7 @@ function updateRevenueChart() {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                legend: { display: false },  // Désactiver la légende
+                legend: { display: false },
                 tooltip: { callbacks: { label: ctx => `${ctx.raw.toFixed(2)} €` } }
             }
         }

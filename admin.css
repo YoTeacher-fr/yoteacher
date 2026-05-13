@@ -136,7 +136,7 @@
     cursor: not-allowed;
 }
 
-/* ========== FORFAITS ACTIFS (BULLES) ========== */
+/* ========== FORFAITS ACTIFS (version restaurée) ========== */
 .student-package-row {
     border-bottom: 1px solid #eee;
     padding: 15px 0;
@@ -166,8 +166,7 @@
 .package-expiry-credits {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
+    gap: 8px;
 }
 
 .package-expiry {
@@ -226,7 +225,7 @@
     transform: scale(1.02);
 }
 
-/* ========== ÉTUDIANTS (3 colonnes distinctes) ========== */
+/* ========== ÉTUDIANTS ========== */
 .student-row {
     border-bottom: 1px solid #eee;
     padding: 12px 0;
@@ -307,6 +306,10 @@
     }
     .package-expiry-credits {
         align-items: center;
+        text-align: center;
+    }
+    .package-total-credits {
+        text-align: center;
     }
     .upcoming-lesson-card {
         min-width: 180px;
