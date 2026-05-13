@@ -8,6 +8,9 @@ let adminUpcomingLessons = [];
 let adminCurrentStartIndex = 0;
 const LESSONS_PER_PAGE = 3;
 
+// Stockage global pour les forfaits
+let activePackagesData = [];
+
 // ========== AUTH / SUPABASE ==========
 async function waitForSupabase() {
     console.log('⏳ [ADMIN.JS] waitForSupabase – début');
@@ -61,7 +64,6 @@ async function cancelBookingAdmin(bookingId) {
     if (!res.ok) throw new Error(result.error || 'Erreur annulation');
     console.log(`✅ [ADMIN.JS] Annulation DB réussie, creditRefunded=${result.creditRefunded}, calcomUid=${result.calcomUid}`);
 
-    // Annulation Cal.com
     if (result.calcomUid && window.bookingCancellation?.cancelCalcomBooking) {
         console.log(`📞 [ADMIN.JS] Appel à bookingCancellation.cancelCalcomBooking pour UID ${result.calcomUid}`);
         try {
@@ -179,45 +181,208 @@ function displayUpcoming(lessons) {
     renderUpcomingSlice();
 }
 
-// ========== FORFAITS ACTIFS (cartes) ==========
+// ========== FORFAITS ACTIFS (bulles interactives) ==========
+function getStudentCredits(studentId) {
+    const studentPackages = activePackagesData.filter(pkg => (pkg.profiles?.id || pkg.user_id) === studentId);
+    const credits = {
+        conversation: { 30: 0, 45: 0, 60: 0 },
+        curriculum: { 30: 0, 45: 0, 60: 0 },
+        examen: { 30: 0, 45: 0, 60: 0 }
+    };
+    studentPackages.forEach(pkg => {
+        const type = pkg.course_type;
+        const duration = pkg.duration_minutes;
+        if (credits[type] && credits[type][duration] !== undefined) {
+            credits[type][duration] += pkg.remaining_credits;
+        }
+    });
+    return credits;
+}
+
+function updateCreditsAndExpiry(studentId, type, duration, credits) {
+    const creditsSpan = document.getElementById(`student-${studentId}-credits`);
+    if (creditsSpan) {
+        const value = credits[type]?.[duration] || 0;
+        creditsSpan.querySelector('.credits-value').innerText = value;
+    }
+    // Mettre à jour la date d'expiration la plus proche pour ce type+duration
+    const expirySpan = document.getElementById(`student-${studentId}-expiry`);
+    if (expirySpan) {
+        const matchingPackages = activePackagesData.filter(pkg => 
+            (pkg.profiles?.id || pkg.user_id) === studentId &&
+            pkg.course_type === type &&
+            pkg.duration_minutes === duration &&
+            pkg.remaining_credits > 0
+        );
+        let nearestExpiry = null;
+        matchingPackages.forEach(pkg => {
+            if (pkg.expires_at) {
+                const d = new Date(pkg.expires_at);
+                if (!nearestExpiry || d < nearestExpiry) nearestExpiry = d;
+            }
+        });
+        const expiryText = nearestExpiry ? nearestExpiry.toLocaleDateString() : 'Aucun forfait actif';
+        expirySpan.querySelector('.expiry-value').innerText = expiryText;
+    }
+}
+
 function displayPackages(packages) {
     const container = document.getElementById('activePackagesList');
     if (!container) return;
-    
-    if (!packages?.length) {
+    activePackagesData = packages || [];
+    if (!activePackagesData.length) {
         container.innerHTML = '<div>Aucun forfait actif</div>';
         return;
     }
 
-    // Trier par nom d'étudiant, puis par date d'expiration
-    const sortedPackages = [...packages].sort((a, b) => {
-        const nameA = (a.profiles?.full_name || '').toLowerCase();
-        const nameB = (b.profiles?.full_name || '').toLowerCase();
-        if (nameA !== nameB) return nameA.localeCompare(nameB);
-        return new Date(a.expires_at) - new Date(b.expires_at);
+    // Regrouper par étudiant
+    const studentsMap = new Map();
+    activePackagesData.forEach(pkg => {
+        const studentId = pkg.profiles?.id || pkg.user_id;
+        if (!studentId) return;
+        if (!studentsMap.has(studentId)) {
+            studentsMap.set(studentId, {
+                name: pkg.profiles?.full_name || 'Étudiant',
+                packages: []
+            });
+        }
+        studentsMap.get(studentId).packages.push(pkg);
     });
 
-    const html = sortedPackages.map(pkg => {
-        const studentName = pkg.profiles?.full_name || 'Étudiant inconnu';
-        const courseType = pkg.course_type?.charAt(0).toUpperCase() + pkg.course_type?.slice(1) || 'Cours';
-        const duration = pkg.duration_minutes || 60;
-        const expiryDate = new Date(pkg.expires_at).toLocaleDateString();
-        const remainingCredits = pkg.remaining_credits || 0;
+    let html = '';
+    for (const [studentId, student] of studentsMap) {
+        const credits = getStudentCredits(studentId);
         
-        return `
-            <div class="package-card">
-                <div class="package-card-name">${escapeHtml(studentName)}</div>
-                <div class="package-card-details">
-                    ${escapeHtml(courseType)} · ${duration} min · Expire le ${expiryDate}
+        // Déterminer la date d'expiration par défaut (conversation/30min)
+        const defaultPackages = activePackagesData.filter(pkg => 
+            (pkg.profiles?.id || pkg.user_id) === studentId &&
+            pkg.course_type === 'conversation' &&
+            pkg.duration_minutes === 30 &&
+            pkg.remaining_credits > 0
+        );
+        let defaultExpiry = null;
+        defaultPackages.forEach(pkg => {
+            if (pkg.expires_at) {
+                const d = new Date(pkg.expires_at);
+                if (!defaultExpiry || d < defaultExpiry) defaultExpiry = d;
+            }
+        });
+        const defaultExpiryStr = defaultExpiry ? defaultExpiry.toLocaleDateString() : 'Aucun forfait actif';
+
+        html += `
+            <div class="student-package-row" data-student-id="${studentId}">
+                <div class="student-package-name"><strong>${escapeHtml(student.name)}</strong></div>
+                <div class="package-filters">
+                    <div class="package-type-bubbles">
+                        ${['conversation', 'curriculum', 'examen'].map(type => {
+                            const hasAnyCredit = Object.values(credits[type]).some(v => v > 0);
+                            const disabledClass = !hasAnyCredit ? 'disabled' : '';
+                            return `
+                                <button class="package-type-btn ${type === 'conversation' ? 'active' : ''} ${disabledClass}" 
+                                        data-type="${type}" data-student="${studentId}" 
+                                        ${!hasAnyCredit ? 'disabled' : ''}>
+                                    ${type === 'conversation' ? 'Conversation' : type === 'curriculum' ? 'Curriculum' : 'Examen'}
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div class="package-duration-bubbles">
+                        ${[30, 45, 60].map(dur => {
+                            // Vérifier si des crédits existent pour le type actif (conversation par défaut)
+                            const activeType = 'conversation';
+                            const hasCredit = credits[activeType]?.[dur] > 0;
+                            const disabledClass = !hasCredit ? 'disabled' : '';
+                            return `
+                                <button class="package-duration-btn ${dur === 30 ? 'active' : ''} ${disabledClass}" 
+                                        data-duration="${dur}" data-student="${studentId}"
+                                        ${!hasCredit ? 'disabled' : ''}>
+                                    ${dur} min
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div class="package-expiry" id="student-${studentId}-expiry">
+                        Expire le : <span class="expiry-value">${defaultExpiryStr}</span>
+                    </div>
                 </div>
-                <div class="package-card-credits">
-                    Crédits restants : <strong>${remainingCredits}</strong>
+                <div class="package-credits-display" id="student-${studentId}-credits">
+                    Crédits : <span class="credits-value">${credits.conversation[30] || 0}</span>
                 </div>
             </div>
         `;
-    }).join('');
-
+    }
     container.innerHTML = html;
+
+    // Attacher événements pour les bulles de types (seulement celles non désactivées)
+    document.querySelectorAll('.package-type-btn:not(.disabled)').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const studentId = btn.dataset.student;
+            const type = btn.dataset.type;
+            const parentRow = document.querySelector(`.student-package-row[data-student-id="${studentId}"]`);
+            // Désactiver les autres types
+            parentRow.querySelectorAll('.package-type-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            btn.classList.add('active');
+            // Récupérer la durée active
+            const activeDurationBtn = parentRow.querySelector('.package-duration-btn.active');
+            let activeDuration = 30;
+            if (activeDurationBtn && !activeDurationBtn.disabled) {
+                activeDuration = parseInt(activeDurationBtn.dataset.duration);
+            } else {
+                // Si la durée active est désactivée, prendre la première durée disponible
+                const firstAvailable = parentRow.querySelector('.package-duration-btn:not(.disabled)');
+                if (firstAvailable) {
+                    activeDuration = parseInt(firstAvailable.dataset.duration);
+                    parentRow.querySelectorAll('.package-duration-btn').forEach(b => b.classList.remove('active'));
+                    firstAvailable.classList.add('active');
+                }
+            }
+            const credits = getStudentCredits(studentId);
+            updateCreditsAndExpiry(studentId, type, activeDuration, credits);
+            // Mettre à jour les bulles de durée (activer/désactiver selon le nouveau type)
+            const durationBubbles = parentRow.querySelectorAll('.package-duration-btn');
+            durationBubbles.forEach(durBtn => {
+                const dur = parseInt(durBtn.dataset.duration);
+                const hasCredit = credits[type]?.[dur] > 0;
+                if (!hasCredit) {
+                    durBtn.disabled = true;
+                    durBtn.classList.add('disabled');
+                    if (durBtn.classList.contains('active')) {
+                        durBtn.classList.remove('active');
+                        // Sélectionner la première durée disponible
+                        const firstAvailable = parentRow.querySelector('.package-duration-btn:not(.disabled)');
+                        if (firstAvailable) {
+                            firstAvailable.classList.add('active');
+                            const newDuration = parseInt(firstAvailable.dataset.duration);
+                            updateCreditsAndExpiry(studentId, type, newDuration, credits);
+                        }
+                    }
+                } else {
+                    durBtn.disabled = false;
+                    durBtn.classList.remove('disabled');
+                }
+            });
+        });
+    });
+
+    // Attacher événements pour les bulles de durées
+    document.querySelectorAll('.package-duration-btn:not(.disabled)').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const studentId = btn.dataset.student;
+            const duration = parseInt(btn.dataset.duration);
+            const parentRow = document.querySelector(`.student-package-row[data-student-id="${studentId}"]`);
+            const activeType = parentRow.querySelector('.package-type-btn.active')?.dataset.type || 'conversation';
+            const credits = getStudentCredits(studentId);
+            if (!credits[activeType]?.[duration]) {
+                alert(`Aucun crédit disponible pour ${activeType} ${duration} min`);
+                return;
+            }
+            parentRow.querySelectorAll('.package-duration-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateCreditsAndExpiry(studentId, activeType, duration, credits);
+        });
+    });
 }
 
 // ========== ÉTUDIANTS (triés par nombre de cours décroissant) ==========
