@@ -181,7 +181,7 @@ function displayUpcoming(lessons) {
     renderUpcomingSlice();
 }
 
-// ========== FORFAITS ACTIFS (version restaurée) ==========
+// ========== FORFAITS ACTIFS (bulles interactives) ==========
 function getStudentCredits(studentId) {
     const studentPackages = activePackagesData.filter(pkg => (pkg.profiles?.id || pkg.user_id) === studentId);
     const credits = {
@@ -224,19 +224,13 @@ function findFirstAvailableCombination(studentId) {
     return { type: 'conversation', duration: 30 }; // fallback
 }
 
-function updateCreditsAndExpiry(studentId, type, duration, credits, totalCredits) {
-    // Crédits sélectionnés
-    const selectedCreditsSpan = document.getElementById(`student-${studentId}-selected-credits`);
-    if (selectedCreditsSpan) {
+function updateCreditsAndExpiry(studentId, type, duration, credits) {
+    const creditsSpan = document.getElementById(`student-${studentId}-credits`);
+    if (creditsSpan) {
         const value = credits[type]?.[duration] || 0;
-        selectedCreditsSpan.innerText = value;
+        creditsSpan.querySelector('.credits-value').innerText = value;
     }
-    // Total crédits
-    const totalCreditsSpan = document.getElementById(`student-${studentId}-total-credits`);
-    if (totalCreditsSpan) {
-        totalCreditsSpan.innerText = totalCredits;
-    }
-    // Date d'expiration
+    // Mettre à jour la date d'expiration la plus proche pour ce type+duration
     const expirySpan = document.getElementById(`student-${studentId}-expiry`);
     if (expirySpan) {
         const matchingPackages = activePackagesData.filter(pkg => 
@@ -253,7 +247,7 @@ function updateCreditsAndExpiry(studentId, type, duration, credits, totalCredits
             }
         });
         const expiryText = nearestExpiry ? nearestExpiry.toLocaleDateString() : 'Aucun forfait actif';
-        expirySpan.innerText = expiryText;
+        expirySpan.querySelector('.expiry-value').innerText = expiryText;
     }
 }
 
@@ -310,7 +304,6 @@ function displayPackages(packages) {
             }
         });
         const defaultExpiryStr = defaultExpiry ? defaultExpiry.toLocaleDateString() : 'Aucun forfait actif';
-        const defaultSelectedCredits = credits[defaultType][defaultDuration] || 0;
 
         html += `
             <div class="student-package-row" data-student-id="${studentId}">
@@ -344,17 +337,13 @@ function displayPackages(packages) {
                             `;
                         }).join('')}
                     </div>
-                    <div class="package-expiry-credits">
-                        <div class="package-expiry">
-                            Expire le : <span id="student-${studentId}-expiry">${defaultExpiryStr}</span>
-                        </div>
-                        <div class="package-selected-credits">
-                            Crédits : <strong id="student-${studentId}-selected-credits">${defaultSelectedCredits}</strong>
-                        </div>
+                    <div class="package-expiry" id="student-${studentId}-expiry">
+                        Expire le : <span class="expiry-value">${defaultExpiryStr}</span>
                     </div>
                 </div>
-                <div class="package-total-credits">
-                    Total crédits : <strong id="student-${studentId}-total-credits">${totalCredits}</strong>
+                <div class="package-credits-display" id="student-${studentId}-credits">
+                    <span>Crédits : <span class="credits-value">${credits[defaultType][defaultDuration] || 0}</span></span>
+                    <span class="total-credits">Total crédits : <strong>${totalCredits}</strong></span>
                 </div>
             </div>
         `;
@@ -374,7 +363,6 @@ function displayPackages(packages) {
             btn.classList.add('active');
             
             const credits = getStudentCredits(studentId);
-            const totalCredits = getTotalCreditsForStudent(studentId);
             // Trouver la première durée disponible pour ce type
             let firstAvailableDuration = 30;
             if (credits[type][30] > 0) firstAvailableDuration = 30;
@@ -406,7 +394,8 @@ function displayPackages(packages) {
                 }
             });
             if (!selectedDuration) selectedDuration = firstAvailableDuration;
-            updateCreditsAndExpiry(studentId, type, selectedDuration, credits, totalCredits);
+            updateCreditsAndExpiry(studentId, type, selectedDuration, credits);
+            // Mettre à jour le total crédits (ne change pas)
         });
     });
 
@@ -418,36 +407,24 @@ function displayPackages(packages) {
             const parentRow = document.querySelector(`.student-package-row[data-student-id="${studentId}"]`);
             const activeType = parentRow.querySelector('.package-type-btn.active')?.dataset.type || 'conversation';
             const credits = getStudentCredits(studentId);
-            const totalCredits = getTotalCreditsForStudent(studentId);
             if (!credits[activeType]?.[duration]) {
                 alert(`Aucun crédit disponible pour ${activeType} ${duration} min`);
                 return;
             }
             parentRow.querySelectorAll('.package-duration-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            updateCreditsAndExpiry(studentId, activeType, duration, credits, totalCredits);
+            updateCreditsAndExpiry(studentId, activeType, duration, credits);
         });
     });
 }
 
-// ========== ÉTUDIANTS (exclusion des IDs indésirables) ==========
-const EXCLUDED_STUDENT_IDS = [
-    '88698eb2-904f-410b-88e1-a93c1397e0d1',
-    'ddb62c55-b9f0-4852-8aa4-a53ea219ca83'
-];
-
+// ========== ÉTUDIANTS (triés par nombre de cours, deux colonnes séparées) ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
-    
-    const filteredStudents = (students || []).filter(s => !EXCLUDED_STUDENT_IDS.includes(s.id));
-    
-    if (!filteredStudents.length) {
-        container.innerHTML = '<div>Aucun étudiant</div>';
-        return;
-    }
+    if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
 
-    const sortedStudents = [...filteredStudents].sort((a, b) => (b.total_courses || 0) - (a.total_courses || 0));
+    const sortedStudents = [...students].sort((a, b) => (b.total_courses || 0) - (a.total_courses || 0));
 
     container.innerHTML = sortedStudents.map(s => {
         const totalSpentEur = s.direct_revenue_eur || 0;
@@ -505,28 +482,14 @@ function updateRevenueChart() {
     });
     const data = visible.map(m => allMonthlyRevenue[m] || 0);
 
-    // Total général
-    const totalRevenue = Object.values(allMonthlyRevenue).reduce((sum, val) => sum + val, 0);
-    const totalDisplay = document.getElementById('totalRevenueDisplay');
-    if (totalDisplay) totalDisplay.innerHTML = `Total : ${totalRevenue.toFixed(2)} €`;
-
     if (revenueChart) revenueChart.destroy();
     revenueChart = new Chart(ctx, {
         type: 'bar',
-        data: { 
-            labels, 
-            datasets: [{ 
-                label: '', 
-                data, 
-                backgroundColor: '#3c84f6', 
-                borderRadius: 8 
-            }] 
-        },
+        data: { labels, datasets: [{ label: 'Revenus (EUR)', data, backgroundColor: '#3c84f6', borderRadius: 8 }] },
         options: {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                legend: { display: false },
                 tooltip: { callbacks: { label: ctx => `${ctx.raw.toFixed(2)} €` } }
             }
         }

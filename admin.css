@@ -36,14 +36,6 @@
     text-align: center;
 }
 
-.total-revenue {
-    text-align: center;
-    margin-top: 15px;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #2c3e50;
-}
-
 .admin-card {
     margin-bottom: 30px;
 }
@@ -136,7 +128,7 @@
     cursor: not-allowed;
 }
 
-/* ========== FORFAITS ACTIFS (version restaurée) ========== */
+/* ========== FORFAITS ACTIFS (BULLES) ========== */
 .student-package-row {
     border-bottom: 1px solid #eee;
     padding: 15px 0;
@@ -163,36 +155,10 @@
     flex-wrap: wrap;
 }
 
-.package-expiry-credits {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
 .package-expiry {
     font-size: 0.9rem;
     color: #555;
-}
-
-.package-selected-credits {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #2c3e50;
-}
-
-.package-selected-credits strong {
-    color: #3c84f6;
-}
-
-.package-total-credits {
-    margin-top: 8px;
-    font-size: 0.9rem;
-    color: #666;
-    text-align: right;
-}
-
-.package-total-credits strong {
-    color: #2c3e50;
+    text-align: left;
 }
 
 .package-type-btn, .package-duration-btn {
@@ -225,7 +191,36 @@
     transform: scale(1.02);
 }
 
-/* ========== ÉTUDIANTS ========== */
+.package-credits-display {
+    margin-top: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #2c3e50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.credits-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #3c84f6;
+    margin-left: 5px;
+}
+
+.total-credits {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.total-credits strong {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+/* ========== ÉTUDIANTS : trois colonnes distinctes ========== */
 .student-row {
     border-bottom: 1px solid #eee;
     padding: 12px 0;
@@ -304,14 +299,14 @@
     .package-type-bubbles, .package-duration-bubbles {
         justify-content: center;
     }
-    .package-expiry-credits {
-        align-items: center;
-        text-align: center;
-    }
-    .package-total-credits {
+    .package-expiry {
         text-align: center;
     }
     .upcoming-lesson-card {
         min-width: 180px;
+    }
+    .package-credits-display {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
