@@ -152,42 +152,58 @@
     text-align: center;
 }
 
-.package-card-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-    margin-bottom: 15px;
-}
-
-.package-types-col, .package-durations-col, .package-expiry-col, .package-credits-col {
+.package-card-row {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 15px;
 }
 
-.package-types-label, .package-durations-label, .package-expiry-label, .package-credits-label {
-    font-size: 0.8rem;
+.package-types-col, .package-durations-col {
+    flex: 2;
+}
+
+.package-expiry-col, .package-credits-col {
+    flex: 1;
+    text-align: right;
+}
+
+.package-expiry-value {
+    font-size: 1rem;
     font-weight: 600;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: #2c3e50;
+}
+
+.package-credits-label {
+    font-size: 0.9rem;
+    color: #555;
+}
+.package-credits-label strong {
+    color: #3c84f6;
+    font-size: 1.1rem;
+    margin-left: 4px;
 }
 
 .package-type-bubbles, .package-duration-bubbles {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
 }
 
+/* Les bulles ont une largeur fixe (min-width) pour rester compactes */
 .package-type-btn, .package-duration-btn {
     background: #e9ecef;
     border: none;
-    padding: 6px 12px;
+    padding: 6px 14px;
     border-radius: 30px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: all 0.2s;
     font-weight: 500;
+    flex: 0 0 auto;
+    min-width: 100px;
+    text-align: center;
 }
 
 .package-type-btn.active, .package-duration-btn.active {
@@ -207,12 +223,6 @@
 .package-duration-btn:hover:not(.active):not(:disabled) {
     background: #d4d8dd;
     transform: scale(1.02);
-}
-
-.package-expiry-value, .package-credits-value {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #2c3e50;
 }
 
 .package-total-credits {
@@ -360,18 +370,19 @@
         grid-template-columns: 1fr;
         gap: 10px;
     }
-    .package-card-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
     .package-card {
         min-width: 220px;
     }
-    .package-type-bubbles, .package-duration-bubbles {
-        justify-content: center;
+    .package-card-row {
+        flex-direction: column;
+        align-items: flex-start;
     }
-    .package-expiry-value, .package-credits-value {
-        text-align: center;
+    .package-expiry-col, .package-credits-col {
+        text-align: left;
+        width: 100%;
+    }
+    .package-type-btn, .package-duration-btn {
+        min-width: 80px;
     }
     .upcoming-lesson-card {
         min-width: 180px;

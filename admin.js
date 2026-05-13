@@ -285,7 +285,6 @@ function updateSelectedCreditsAndExpiry(studentId, type, duration) {
     const creditsSpan = document.getElementById(`package-${studentId}-credits`);
     if (creditsSpan) creditsSpan.innerText = value;
 
-    // Mise à jour de l'expiration
     const matchingPackages = activePackagesData.filter(pkg => 
         (pkg.profiles?.id || pkg.user_id) === studentId &&
         pkg.course_type === type &&
@@ -324,7 +323,6 @@ function renderPackagesSlice() {
         const credits = getStudentCredits(studentId);
         const totalCredits = getTotalCreditsForStudent(studentId);
         
-        // Combinaison par défaut
         let defaultType = 'conversation';
         let defaultDuration = 30;
         let hasDefaultCredit = credits[defaultType]?.[defaultDuration] > 0;
@@ -334,7 +332,6 @@ function renderPackagesSlice() {
             defaultDuration = firstAvailable.duration;
         }
         
-        // Expiration par défaut
         const defaultPackages = activePackagesData.filter(pkg => 
             (pkg.profiles?.id || pkg.user_id) === studentId &&
             pkg.course_type === defaultType &&
@@ -351,7 +348,6 @@ function renderPackagesSlice() {
         const defaultExpiryStr = defaultExpiry ? defaultExpiry.toLocaleDateString() : 'Aucun forfait actif';
         const defaultCredits = credits[defaultType][defaultDuration] || 0;
 
-        // Génération des bulles types
         const typesHtml = ['conversation', 'curriculum', 'examen'].map(type => {
             const hasAnyCredit = Object.values(credits[type]).some(v => v > 0);
             const disabledClass = !hasAnyCredit ? 'disabled' : '';
@@ -365,7 +361,6 @@ function renderPackagesSlice() {
             `;
         }).join('');
 
-        // Génération des bulles durées
         const durationsHtml = [30, 45, 60].map(dur => {
             const hasCredit = credits[defaultType]?.[dur] > 0;
             const disabledClass = !hasCredit ? 'disabled' : '';
@@ -382,22 +377,20 @@ function renderPackagesSlice() {
         return `
             <div class="package-card" data-student-id="${studentId}">
                 <div class="package-card-name"><strong>${escapeHtml(student.name)}</strong></div>
-                <div class="package-card-grid">
+                <div class="package-card-row">
                     <div class="package-types-col">
-                        <div class="package-types-label">Types de cours</div>
                         <div class="package-type-bubbles">${typesHtml}</div>
                     </div>
-                    <div class="package-durations-col">
-                        <div class="package-durations-label">Durées</div>
-                        <div class="package-duration-bubbles">${durationsHtml}</div>
-                    </div>
                     <div class="package-expiry-col">
-                        <div class="package-expiry-label">Expire le</div>
                         <div class="package-expiry-value" id="package-${studentId}-expiry">${defaultExpiryStr}</div>
                     </div>
+                </div>
+                <div class="package-card-row">
+                    <div class="package-durations-col">
+                        <div class="package-duration-bubbles">${durationsHtml}</div>
+                    </div>
                     <div class="package-credits-col">
-                        <div class="package-credits-label">Crédits</div>
-                        <div class="package-credits-value" id="package-${studentId}-credits">${defaultCredits}</div>
+                        <div class="package-credits-label">Crédits : <strong id="package-${studentId}-credits">${defaultCredits}</strong></div>
                     </div>
                 </div>
                 <div class="package-total-credits">
@@ -424,27 +417,23 @@ function renderPackagesSlice() {
         </div>
     `;
 
-    // Attacher événements pour les types
+    // Événements pour les types
     document.querySelectorAll('.package-type-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', () => {
             const studentId = btn.dataset.student;
             const type = btn.dataset.type;
             const parentCard = document.querySelector(`.package-card[data-student-id="${studentId}"]`);
             if (!parentCard) return;
-
-            // Mettre à jour l'état actif des types
             parentCard.querySelectorAll('.package-type-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
             const credits = getStudentCredits(studentId);
-            // Trouver première durée disponible pour ce type
             let firstAvailableDuration = 30;
             if (credits[type][30] > 0) firstAvailableDuration = 30;
             else if (credits[type][45] > 0) firstAvailableDuration = 45;
             else if (credits[type][60] > 0) firstAvailableDuration = 60;
             else firstAvailableDuration = 30;
 
-            // Mettre à jour les durées : activer/désactiver
             const durationBtns = parentCard.querySelectorAll('.package-duration-btn');
             let selectedDuration = null;
             durationBtns.forEach(durBtn => {
@@ -470,14 +459,13 @@ function renderPackagesSlice() {
         });
     });
 
-    // Attacher événements pour les durées
+    // Événements pour les durées
     document.querySelectorAll('.package-duration-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', () => {
             const studentId = btn.dataset.student;
             const duration = parseInt(btn.dataset.duration);
             const parentCard = document.querySelector(`.package-card[data-student-id="${studentId}"]`);
             if (!parentCard) return;
-
             const activeType = parentCard.querySelector('.package-type-btn.active')?.dataset.type || 'conversation';
             const credits = getStudentCredits(studentId);
             if (!credits[activeType]?.[duration]) {
@@ -490,7 +478,6 @@ function renderPackagesSlice() {
         });
     });
 
-    // Navigation
     const prevBtn = document.getElementById('packagesPrevBtn');
     const nextBtn = document.getElementById('packagesNextBtn');
     if (prevBtn) prevBtn.onclick = () => {
@@ -534,7 +521,6 @@ function buildPackagesList() {
         nearestExpiry: getNearestExpiryForStudent(student.id)
     }));
 
-    // Tri : par date d'expiration (plus proche d'abord), exclus à la fin
     studentEntries.sort((a, b) => {
         const aExcluded = EXCLUDED_STUDENT_IDS.includes(a.id);
         const bExcluded = EXCLUDED_STUDENT_IDS.includes(b.id);
