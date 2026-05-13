@@ -133,14 +133,15 @@
 }
 
 /* ========== FORFAITS ACTIFS (CARROUSEL) ========== */
+/* Correction : largeur fixe pour toutes les cartes, pas d'étirement */
 .package-card {
     background: #f8f9fa;
     border-radius: 12px;
     padding: 16px;
     margin: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    flex: 1;
-    min-width: 280px;
+    flex: 0 0 auto;      /* Empêche l'étirement */
+    width: 300px;        /* Largeur fixe identique pour toutes les cartes */
     display: flex;
     flex-direction: column;
 }
@@ -373,8 +374,9 @@
         grid-template-columns: 1fr;
         gap: 10px;
     }
+    /* Correction cartes forfaits sur mobile : largeur réduite mais toujours fixe */
     .package-card {
-        min-width: 220px;
+        width: 280px;
     }
     .package-card-row {
         flex-direction: column;
