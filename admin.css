@@ -41,14 +41,16 @@
 }
 
 /* ========== PROCHAINS COURS ========== */
+/* Correction : largeur identique à celle d’une carte lorsque 3 sont affichées */
 .upcoming-lesson-card {
     background: #f8f9fa;
     border-radius: 12px;
     padding: 16px;
     margin: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    flex: 1;
-    min-width: 220px;
+    flex: 0 0 auto;                 /* pas d’étirement */
+    width: calc(33.333% - 30px);    /* largeur = 1/3 du conteneur moins les marges */
+    min-width: 220px;               /* taille plancher pour rester lisible */
     display: flex;
     flex-direction: column;
 }
@@ -380,8 +382,14 @@
         gap: 10px;
     }
     /* Sur mobile, largeur adaptée mais toujours basée sur le parent */
+    .upcoming-lesson-card,
     .package-card {
         width: calc(50% - 20px);   /* 2 cartes par ligne si possible */
+    }
+    .upcoming-lesson-card {
+        min-width: 180px;
+    }
+    .package-card {
         min-width: 220px;
     }
     .package-card-row {
@@ -401,13 +409,11 @@
         padding: 4px 8px;
         font-size: 0.7rem;
     }
-    .upcoming-lesson-card {
-        min-width: 180px;
-    }
 }
 
 /* Pour les très petits écrans : une seule carte par ligne */
 @media (max-width: 560px) {
+    .upcoming-lesson-card,
     .package-card {
         width: calc(100% - 20px);
     }
