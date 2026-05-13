@@ -1,8 +1,14 @@
-// admin.js – Dashboard administrateur avec calculs des revenus corrigés
+// admin.js – Dashboard administrateur (carrousel 3 prochains cours + calculs revenus corrigés)
 console.log('🔵 [ADMIN.JS] Script chargé');
 
 let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
 
+// --- Variables pour le carrousel des prochains cours ---
+let adminUpcomingLessons = [];
+let adminCurrentStartIndex = 0;
+const LESSONS_PER_PAGE = 3;
+
+// ========== AUTH / SUPABASE ==========
 async function waitForSupabase() {
     console.log('⏳ [ADMIN.JS] waitForSupabase – début');
     if (window.supabaseInitialized) await window.supabaseInitialized;
@@ -71,22 +77,57 @@ async function cancelBookingAdmin(bookingId) {
     return result;
 }
 
-function escapeHtml(str) { return (str || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+function escapeHtml(str) {
+    return (str || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+}
 
-// *** CORRECTION : affichage des prochains cours (inchangé) ***
-function displayUpcoming(lessons) {
+// ========== SECTION PROCHAINS COURS (CARROUSEL 3 BULLES) ==========
+function renderUpcomingSlice() {
     const container = document.getElementById('adminUpcomingLessons');
     if (!container) return;
-    if (!lessons?.length) { container.innerHTML = '<div>Aucun cours à venir</div>'; return; }
-    container.innerHTML = lessons.map(lesson => `
-        <div class="upcoming-lesson-card">
-            <div><strong>${escapeHtml(lesson.profiles?.full_name || 'Étudiant')}</strong> - ${lesson.course_type} - ${new Date(lesson.start_time).toLocaleString()}</div>
+
+    const lessons = adminUpcomingLessons;
+    if (!lessons.length) {
+        container.innerHTML = '<div>Aucun cours à venir</div>';
+        return;
+    }
+
+    const total = lessons.length;
+    const start = adminCurrentStartIndex;
+    const end = Math.min(start + LESSONS_PER_PAGE, total);
+    const visibleLessons = lessons.slice(start, end);
+
+    // Construction des cartes
+    const cardsHTML = visibleLessons.map(lesson => `
+        <div class="upcoming-lesson-card" style="flex: 1; min-width: 200px;">
+            <div><strong>${escapeHtml(lesson.profiles?.full_name || 'Étudiant')}</strong></div>
+            <div>${lesson.course_type} - ${new Date(lesson.start_time).toLocaleString()}</div>
             <div>Durée: ${lesson.duration_minutes} min - ${lesson.platform || 'Zoom'}</div>
             <button class="btn-cancel-admin" data-id="${lesson.id}">Annuler le cours</button>
         </div>
     `).join('');
-    document.querySelectorAll('.btn-cancel-admin').forEach(btn => {
-        btn.addEventListener('click', async e => {
+
+    // Structure complète avec flèches et compteur
+    container.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button id="adminPrevLessons" class="nav-arrow" ${start === 0 ? 'disabled' : ''}>
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div style="display: flex; gap: 15px; flex: 1; overflow: hidden;">
+                ${cardsHTML}
+            </div>
+            <button id="adminNextLessons" class="nav-arrow" ${end >= total ? 'disabled' : ''}>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        <div style="text-align: center; margin-top: 10px; font-size: 0.9rem; color: #666;">
+            ${start + 1}–${end} sur ${total}
+        </div>
+    `;
+
+    // Réattacher les événements des boutons d'annulation
+    container.querySelectorAll('.btn-cancel-admin').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
             const id = btn.dataset.id;
             console.log(`🖱️ [ADMIN.JS] Clic annulation pour bookingId=${id}`);
             if (!confirm('Annuler ce cours ? Un crédit sera ajouté.')) return;
@@ -104,9 +145,29 @@ function displayUpcoming(lessons) {
             }
         });
     });
+
+    // Événements des flèches
+    document.getElementById('adminPrevLessons')?.addEventListener('click', () => {
+        if (adminCurrentStartIndex > 0) {
+            adminCurrentStartIndex = Math.max(0, adminCurrentStartIndex - LESSONS_PER_PAGE);
+            renderUpcomingSlice();
+        }
+    });
+    document.getElementById('adminNextLessons')?.addEventListener('click', () => {
+        if (adminCurrentStartIndex + LESSONS_PER_PAGE < adminUpcomingLessons.length) {
+            adminCurrentStartIndex += LESSONS_PER_PAGE;
+            renderUpcomingSlice();
+        }
+    });
 }
 
-// *** CORRECTION PRINCIPALE : affichage des étudiants avec total dépensé correct ***
+function displayUpcoming(lessons) {
+    adminUpcomingLessons = lessons || [];
+    adminCurrentStartIndex = 0;
+    renderUpcomingSlice();
+}
+
+// ========== SECTION ÉTUDIANTS (AVEC REVENUS CORRIGÉS) ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
@@ -115,8 +176,8 @@ function displayStudents(students) {
     container.innerHTML = students.map(s => {
         let totalSpentEur = 0;
 
-        // 1. Packages avec statut valide (exclut annulés, remboursés, etc.)
-        const validPackageStatuses = ['active', 'completed']; // ajustez si nécessaire
+        // Packages valides (exclut annulés/remboursés)
+        const validPackageStatuses = ['active', 'completed'];
         const validPackages = (s.packages || []).filter(p => validPackageStatuses.includes(p.status));
         if (window.currencyManager) {
             for (const pkg of validPackages) {
@@ -133,7 +194,7 @@ function displayStudents(students) {
             }
         }
 
-        // 2. Revenus des bookings unitaires (déjà en EUR depuis l'Edge)
+        // Ajout des revenus directs (bookings unitaires)
         totalSpentEur += (s.direct_revenue_eur || 0);
 
         return `
@@ -160,7 +221,7 @@ function displayStudents(students) {
         `;
     }).join('');
 
-    // Toggle détail (identique)
+    // Toggle détail
     document.querySelectorAll('.student-row').forEach(row => {
         const icon = row.querySelector('.toggle-icon');
         const detail = row.querySelector('.student-detail');
@@ -174,7 +235,7 @@ function displayStudents(students) {
     });
 }
 
-// *** AFFICHAGE DES FORFAITS ACTIFS (identique) ***
+// ========== SECTION FORFAITS ACTIFS ==========
 function displayPackages(packages) {
     const container = document.getElementById('activePackagesList');
     if (!container) return;
@@ -188,7 +249,7 @@ function displayPackages(packages) {
     `).join('');
 }
 
-// *** GRAPHIQUE DE REVENUS (utilise monthlyRevenue déjà corrigé côté serveur) ***
+// ========== GRAPHIQUE DES REVENUS ==========
 function updateRevenueChart() {
     const canvas = document.getElementById('revenueChart');
     if (!canvas) return;
@@ -209,35 +270,21 @@ function updateRevenueChart() {
     if (revenueChart) revenueChart.destroy();
     revenueChart = new Chart(ctx, {
         type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Revenus (EUR)',
-                data,
-                backgroundColor: '#3c84f6',
-                borderRadius: 8
-            }]
-        },
+        data: { labels, datasets: [{ label: 'Revenus (EUR)', data, backgroundColor: '#3c84f6', borderRadius: 8 }] },
         options: {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: ctx => `${ctx.raw.toFixed(2)} €`
-                    }
-                }
+                tooltip: { callbacks: { label: ctx => `${ctx.raw.toFixed(2)} €` } }
             }
         }
     });
 
     const labelElem = document.getElementById('monthRangeLabel');
-    if (labelElem) {
-        labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
-    }
+    if (labelElem) labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
-// *** CHARGEMENT PRINCIPAL ***
+// ========== CHARGEMENT PRINCIPAL ==========
 async function loadDashboard() {
     console.log('🔄 [ADMIN.JS] loadDashboard – début');
     try {
@@ -254,7 +301,7 @@ async function loadDashboard() {
     }
 }
 
-// *** INITIALISATION AU DOMContentLoaded ***
+// ========== INITIALISATION ==========
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🏁 [ADMIN.JS] DOMContentLoaded');
     try {
@@ -267,21 +314,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadDashboard();
         document.body.classList.add('loaded');
 
-        // Boutons de contrôle
-        const refreshBtn = document.getElementById('refreshAdminBtn');
-        if (refreshBtn) refreshBtn.addEventListener('click', () => loadDashboard());
+        // Rafraîchir
+        document.getElementById('refreshAdminBtn')?.addEventListener('click', () => loadDashboard());
 
-        const logoutBtn = document.getElementById('logoutAdminBtn');
-        if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+        // Déconnexion
+        document.getElementById('logoutAdminBtn')?.addEventListener('click', async () => {
             if (window.authManager) await window.authManager.signOut();
             window.location.href = 'index.html';
         });
 
-        const prevBtn = document.getElementById('monthSliderPrev');
-        if (prevBtn) prevBtn.addEventListener('click', () => { currentMonthOffset--; updateRevenueChart(); });
-
-        const nextBtn = document.getElementById('monthSliderNext');
-        if (nextBtn) nextBtn.addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
+        // Slider mois
+        document.getElementById('monthSliderPrev')?.addEventListener('click', () => { currentMonthOffset--; updateRevenueChart(); });
+        document.getElementById('monthSliderNext')?.addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
 
         console.log('✅ [ADMIN.JS] Initialisation terminée');
     } catch (err) {
