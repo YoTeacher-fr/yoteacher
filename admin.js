@@ -340,10 +340,12 @@ function displayPackages(packages) {
                     <div class="package-expiry" id="student-${studentId}-expiry">
                         Expire le : <span class="expiry-value">${defaultExpiryStr}</span>
                     </div>
+                    <div class="package-total-credits">
+                        Total crédits : <strong>${totalCredits}</strong>
+                    </div>
                 </div>
                 <div class="package-credits-display" id="student-${studentId}-credits">
-                    <span>Crédits : <span class="credits-value">${credits[defaultType][defaultDuration] || 0}</span></span>
-                    <span class="total-credits">Total crédits : <strong>${totalCredits}</strong></span>
+                    Crédits : <span class="credits-value">${credits[defaultType][defaultDuration] || 0}</span>
                 </div>
             </div>
         `;

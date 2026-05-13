@@ -142,7 +142,7 @@
 
 .package-filters {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     align-items: center;
     margin-bottom: 10px;
@@ -159,6 +159,20 @@
     font-size: 0.9rem;
     color: #555;
     text-align: left;
+}
+
+.package-total-credits {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2c3e50;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.package-total-credits strong {
+    color: #3c84f6;
+    font-size: 1.1rem;
+    margin-left: 5px;
 }
 
 .package-type-btn, .package-duration-btn {
@@ -196,11 +210,6 @@
     font-size: 0.95rem;
     font-weight: 500;
     color: #2c3e50;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
 }
 
 .credits-value {
@@ -208,16 +217,6 @@
     font-weight: 700;
     color: #3c84f6;
     margin-left: 5px;
-}
-
-.total-credits {
-    font-size: 0.9rem;
-    color: #666;
-}
-
-.total-credits strong {
-    color: #2c3e50;
-    font-weight: 700;
 }
 
 /* ========== ÉTUDIANTS : trois colonnes distinctes ========== */
@@ -301,6 +300,10 @@
     }
     .package-expiry {
         text-align: center;
+    }
+    .package-total-credits {
+        text-align: left;
+        white-space: normal;
     }
     .upcoming-lesson-card {
         min-width: 180px;
