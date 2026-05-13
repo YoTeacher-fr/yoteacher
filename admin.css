@@ -260,6 +260,7 @@
     cursor: pointer;
 }
 
+/* Nouvelle grille pour l'historique détaillé */
 .student-detail {
     margin-top: 10px;
     padding: 10px;
@@ -272,10 +273,49 @@
     display: block;
 }
 
+.student-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.detail-col {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.detail-col strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #2c3e50;
+    font-size: 0.9rem;
+}
+
+.booking-history-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
 .booking-history-item {
     font-size: 0.85rem;
     padding: 6px 0;
     border-bottom: 1px solid #ddd;
+}
+
+.detail-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #3c84f6;
+    margin: 5px 0;
+}
+
+.detail-note {
+    font-size: 0.75rem;
+    color: #27ae60;
+    margin-top: 4px;
 }
 
 /* Responsive */
@@ -289,6 +329,10 @@
     }
     .toggle-icon {
         justify-self: start;
+    }
+    .student-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
     }
     .package-filters {
         grid-template-columns: 1fr;

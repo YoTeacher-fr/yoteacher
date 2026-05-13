@@ -17,6 +17,29 @@ const EXCLUDED_STUDENT_IDS = [
     'ddb62c55-b9f0-4852-8aa4-a53ea219ca83'
 ];
 
+// Données supplémentaires pour l'historique (X et Y)
+const EXTRA_COURSES = {
+    'd35cafae-a634-418d-96cb-403fcc48bf2a': 152,
+    '56caf5e7-f54e-487f-9c14-edae4248ae59': 106,
+    '82bc81cf-5d78-4e9d-8db9-23c21873c397': 100,
+    '9e932799-fdd6-4a1c-8bbf-5aa7c03e83ac': 90,
+    '3945e698-3d3f-4b78-870e-c7f04f6e784e': 83,
+    '1eec17f7-ccad-4d78-8c89-93ade89f2143': 67,
+    '76633fd7-e78f-43d7-b438-f5a8955401d3': 61,
+    '2dbedd47-78bc-4e33-b877-e11ca99e59e8': 18
+};
+
+const EXTRA_AMOUNTS = {
+    'd35cafae-a634-418d-96cb-403fcc48bf2a': 1560,
+    '56caf5e7-f54e-487f-9c14-edae4248ae59': 1090,
+    '82bc81cf-5d78-4e9d-8db9-23c21873c397': 685,
+    '9e932799-fdd6-4a1c-8bbf-5aa7c03e83ac': 620,
+    '3945e698-3d3f-4b78-870e-c7f04f6e784e': 1100,
+    '1eec17f7-ccad-4d78-8c89-93ade89f2143': 575,
+    '76633fd7-e78f-43d7-b438-f5a8955401d3': 420,
+    '2dbedd47-78bc-4e33-b877-e11ca99e59e8': 162
+};
+
 // ========== AUTH / SUPABASE ==========
 async function waitForSupabase() {
     console.log('⏳ [ADMIN.JS] waitForSupabase – début');
@@ -462,7 +485,7 @@ function displayPackages(packages) {
     });
 }
 
-// ========== ÉTUDIANTS (triés par nombre de cours, deux colonnes séparées) ==========
+// ========== ÉTUDIANTS (triés par nombre de cours, avec historique enrichi) ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
@@ -472,8 +495,20 @@ function displayStudents(students) {
 
     container.innerHTML = sortedStudents.map(s => {
         const totalSpentEur = s.direct_revenue_eur || 0;
+        const extraCourses = EXTRA_COURSES[s.id] || 0;
+        const extraAmount = EXTRA_AMOUNTS[s.id] || 0;
+        const totalCoursesWithExtra = s.total_courses + extraCourses;
+        const totalAmountWithExtra = totalSpentEur + extraAmount;
+
+        // Génération de l'historique des cours
+        const bookingsHtml = (s.bookings || []).map(b => `
+            <div class="booking-history-item">
+                ${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status})
+            </div>
+        `).join('') || 'Aucune réservation';
+
         return `
-            <div class="student-row">
+            <div class="student-row" data-student-id="${s.id}">
                 <div class="student-summary">
                     <span class="student-name">${escapeHtml(s.full_name || 'Sans nom')}</span>
                     <span class="student-courses">📚 ${s.total_courses || 0} cours</span>
@@ -481,13 +516,21 @@ function displayStudents(students) {
                     <i class="fas fa-chevron-down toggle-icon"></i>
                 </div>
                 <div class="student-detail">
-                    <strong>Historique (cours passés) :</strong>
-                    <div class="booking-history-list">
-                        ${(s.bookings || []).map(b => `
-                            <div class="booking-history-item">
-                                ${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status})
-                            </div>
-                        `).join('') || 'Aucune réservation'}
+                    <div class="student-detail-grid">
+                        <div class="detail-col">
+                            <strong>Historique (cours passés) :</strong>
+                            <div class="booking-history-list">${bookingsHtml}</div>
+                        </div>
+                        <div class="detail-col">
+                            <strong>Nombre de cours</strong>
+                            <div class="detail-value">${totalCoursesWithExtra}</div>
+                            ${extraCourses ? `<div class="detail-note">(+${extraCourses} bonus)</div>` : ''}
+                        </div>
+                        <div class="detail-col">
+                            <strong>Total dépensé</strong>
+                            <div class="detail-value">${totalAmountWithExtra.toFixed(2)} €</div>
+                            ${extraAmount ? `<div class="detail-note">(+${extraAmount.toFixed(2)} € bonus)</div>` : ''}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -499,7 +542,7 @@ function displayStudents(students) {
         const icon = row.querySelector('.toggle-icon');
         const detail = row.querySelector('.student-detail');
         row.addEventListener('click', (e) => {
-            if (e.target.tagName !== 'BUTTON') {
+            if (e.target.tagName !== 'BUTTON' && !e.target.closest('.btn-cancel-admin')) {
                 detail.classList.toggle('open');
                 icon.classList.toggle('fa-chevron-down');
                 icon.classList.toggle('fa-chevron-up');
