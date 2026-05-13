@@ -61,7 +61,6 @@ async function cancelBookingAdmin(bookingId) {
     if (!res.ok) throw new Error(result.error || 'Erreur annulation');
     console.log(`✅ [ADMIN.JS] Annulation DB réussie, creditRefunded=${result.creditRefunded}, calcomUid=${result.calcomUid}`);
 
-    // Annulation Cal.com
     if (result.calcomUid && window.bookingCancellation?.cancelCalcomBooking) {
         console.log(`📞 [ADMIN.JS] Appel à bookingCancellation.cancelCalcomBooking pour UID ${result.calcomUid}`);
         try {
@@ -100,16 +99,20 @@ function renderUpcomingSlice() {
     const cardsHTML = visibleLessons.map(lesson => {
         const meetingLink = lesson.meeting_link || null;
         const hasMeeting = meetingLink && meetingLink.trim() !== '';
-        const formattedDate = new Date(lesson.start_time).toLocaleString();
+        const lessonDate = new Date(lesson.start_time);
+        const dateStr = lessonDate.toLocaleDateString();
+        const timeStr = lessonDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const courseTypeFormatted = (lesson.course_type || '').charAt(0).toUpperCase() + (lesson.course_type || '').slice(1);
         
         return `
             <div class="upcoming-lesson-card">
                 <div><strong>${escapeHtml(lesson.profiles?.full_name || 'Étudiant')}</strong></div>
-                <div>${escapeHtml(lesson.course_type)}</div>
-                <div>📅 ${formattedDate}</div>
-                <div style="display: flex; gap: 10px; margin-top: 12px;">
-                    ${hasMeeting ? `<a href="${escapeHtml(meetingLink)}" target="_blank" class="btn-join-admin"><i class="fas fa-video"></i> Rejoindre</a>` : '<button class="btn-join-admin-disabled" disabled title="Lien non disponible">Rejoindre</button>'}
-                    <button class="btn-cancel-admin" data-id="${lesson.id}">Annuler</button>
+                <div>${escapeHtml(courseTypeFormatted)}</div>
+                <div>📅 ${dateStr}</div>
+                <div>⏰ <strong>${timeStr}</strong></div>
+                <div style="display: flex; gap: 10px; margin-top: 12px; width: 100%;">
+                    ${hasMeeting ? `<a href="${escapeHtml(meetingLink)}" target="_blank" class="btn-join-admin" style="flex:1; text-align:center;"><i class="fas fa-video"></i> Rejoindre</a>` : '<button class="btn-join-admin-disabled" disabled style="flex:1; text-align:center;">Rejoindre</button>'}
+                    <button class="btn-cancel-admin" data-id="${lesson.id}" style="flex:1; text-align:center;">Annuler</button>
                 </div>
             </div>
         `;
@@ -179,13 +182,147 @@ function displayUpcoming(lessons) {
     renderUpcomingSlice();
 }
 
-// ========== ÉTUDIANTS (REVENUS BASÉS UNIQUEMENT SUR BOOKINGS PAYANTS) ==========
+// ========== FORFAITS ACTIFS (avec bulles interactives) ==========
+let activePackagesData = []; // stockage global pour les forfaits
+
+function displayPackages(packages) {
+    const container = document.getElementById('activePackagesList');
+    if (!container) return;
+    activePackagesData = packages || [];
+    if (!activePackagesData.length) {
+        container.innerHTML = '<div>Aucun forfait actif</div>';
+        return;
+    }
+
+    // Regrouper par étudiant
+    const studentsMap = new Map();
+    activePackagesData.forEach(pkg => {
+        const studentId = pkg.profiles?.id || pkg.user_id;
+        if (!studentId) return;
+        if (!studentsMap.has(studentId)) {
+            studentsMap.set(studentId, {
+                name: pkg.profiles?.full_name || 'Étudiant',
+                packages: []
+            });
+        }
+        studentsMap.get(studentId).packages.push(pkg);
+    });
+
+    // Pour chaque étudiant, construire l'affichage avec bulles interactives
+    let html = '';
+    for (const [studentId, student] of studentsMap) {
+        // Extraire les crédits disponibles par type et durée
+        const credits = {
+            conversation: { 30: 0, 45: 0, 60: 0 },
+            curriculum: { 30: 0, 45: 0, 60: 0 },
+            examen: { 30: 0, 45: 0, 60: 0 }
+        };
+        student.packages.forEach(pkg => {
+            const type = pkg.course_type;
+            const duration = pkg.duration_minutes;
+            if (credits[type] && credits[type][duration] !== undefined) {
+                credits[type][duration] += pkg.remaining_credits;
+            }
+        });
+
+        // Générer un identifiant unique pour cet étudiant
+        const uniqueId = `student-${studentId}`;
+        
+        html += `
+            <div class="student-package-row" data-student-id="${studentId}">
+                <div class="student-package-name"><strong>${escapeHtml(student.name)}</strong></div>
+                <div class="package-type-bubbles">
+                    ${['conversation', 'curriculum', 'examen'].map(type => `
+                        <button class="package-type-btn ${type === 'conversation' ? 'active' : ''}" data-type="${type}" data-student="${studentId}">
+                            ${type === 'conversation' ? 'Conversation' : type === 'curriculum' ? 'Curriculum' : 'Examen'}
+                        </button>
+                    `).join('')}
+                </div>
+                <div class="package-duration-bubbles">
+                    ${[30, 45, 60].map(dur => `
+                        <button class="package-duration-btn ${dur === 30 ? 'active' : ''}" data-duration="${dur}" data-student="${studentId}">
+                            ${dur} min
+                        </button>
+                    `).join('')}
+                </div>
+                <div class="package-credits-display" id="${uniqueId}-credits">
+                    Crédits : <span class="credits-value">0</span>
+                </div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+
+    // Initialiser l'affichage des crédits pour chaque étudiant (défaut conversation + 30min)
+    for (const [studentId, student] of studentsMap) {
+        updateCreditsDisplay(studentId, 'conversation', 30, getStudentCredits(studentId));
+    }
+
+    // Attacher les événements pour les bulles de types
+    document.querySelectorAll('.package-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const studentId = btn.dataset.student;
+            const type = btn.dataset.type;
+            // Mettre à jour l'état actif pour ce groupe d'étudiant
+            const parentRow = document.querySelector(`.student-package-row[data-student-id="${studentId}"]`);
+            parentRow.querySelectorAll('.package-type-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            // Récupérer la durée actuellement active pour cet étudiant
+            const activeDuration = parentRow.querySelector('.package-duration-btn.active')?.dataset.duration || '30';
+            updateCreditsDisplay(studentId, type, parseInt(activeDuration), getStudentCredits(studentId));
+        });
+    });
+
+    // Attacher les événements pour les bulles de durées
+    document.querySelectorAll('.package-duration-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const studentId = btn.dataset.student;
+            const duration = parseInt(btn.dataset.duration);
+            const parentRow = document.querySelector(`.student-package-row[data-student-id="${studentId}"]`);
+            parentRow.querySelectorAll('.package-duration-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const activeType = parentRow.querySelector('.package-type-btn.active')?.dataset.type || 'conversation';
+            updateCreditsDisplay(studentId, activeType, duration, getStudentCredits(studentId));
+        });
+    });
+}
+
+function getStudentCredits(studentId) {
+    // Retourne l'objet credits pour l'étudiant
+    const studentPackages = activePackagesData.filter(pkg => (pkg.profiles?.id || pkg.user_id) === studentId);
+    const credits = {
+        conversation: { 30: 0, 45: 0, 60: 0 },
+        curriculum: { 30: 0, 45: 0, 60: 0 },
+        examen: { 30: 0, 45: 0, 60: 0 }
+    };
+    studentPackages.forEach(pkg => {
+        const type = pkg.course_type;
+        const duration = pkg.duration_minutes;
+        if (credits[type] && credits[type][duration] !== undefined) {
+            credits[type][duration] += pkg.remaining_credits;
+        }
+    });
+    return credits;
+}
+
+function updateCreditsDisplay(studentId, type, duration, credits) {
+    const displaySpan = document.getElementById(`student-${studentId}-credits`);
+    if (displaySpan) {
+        const value = credits[type]?.[duration] || 0;
+        displaySpan.querySelector('.credits-value').innerText = value;
+    }
+}
+
+// ========== ÉTUDIANTS (triés par nombre de cours décroissant) ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
 
-    container.innerHTML = students.map(s => {
+    // Trier par total_courses décroissant
+    const sortedStudents = [...students].sort((a, b) => (b.total_courses || 0) - (a.total_courses || 0));
+
+    container.innerHTML = sortedStudents.map(s => {
         const totalSpentEur = s.direct_revenue_eur || 0;
         return `
             <div class="student-row">
@@ -222,20 +359,6 @@ function displayStudents(students) {
             }
         });
     });
-}
-
-// ========== FORFAITS ACTIFS ==========
-function displayPackages(packages) {
-    const container = document.getElementById('activePackagesList');
-    if (!container) return;
-    if (!packages?.length) { container.innerHTML = '<div>Aucun forfait actif</div>'; return; }
-    container.innerHTML = packages.map(p => `
-        <div class="active-package-item">
-            <span><strong>${escapeHtml(p.profiles?.full_name || 'Étudiant')}</strong> - ${p.course_type} (${p.duration_minutes} min)</span>
-            <span>${p.remaining_credits} crédit(s)</span>
-            <span>Expire le ${new Date(p.expires_at).toLocaleDateString()}</span>
-        </div>
-    `).join('');
 }
 
 // ========== GRAPHIQUE DES REVENUS ==========

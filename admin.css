@@ -40,6 +40,7 @@
     margin-bottom: 30px;
 }
 
+/* Étudiants */
 .student-row {
     border-bottom: 1px solid #eee;
     padding: 12px 0;
@@ -89,14 +90,61 @@
     border-bottom: 1px solid #ddd;
 }
 
-.active-package-item {
-    padding: 8px;
+/* Forfaits actifs - nouvelle mise en page avec bulles */
+.student-package-row {
     border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
+    padding: 15px 0;
+    margin-bottom: 10px;
 }
 
-/* Styles pour les cartes de cours à venir */
+.student-package-name {
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+.package-type-bubbles, .package-duration-bubbles {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+    flex-wrap: wrap;
+}
+
+.package-type-btn, .package-duration-btn {
+    background: #f0f0f0;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.package-type-btn.active, .package-duration-btn.active {
+    background: #3c84f6;
+    color: white;
+}
+
+.package-type-btn:hover:not(.active), .package-duration-btn:hover:not(.active) {
+    background: #e0e0e0;
+    transform: scale(1.02);
+}
+
+.package-credits-display {
+    margin-top: 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.credits-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #3c84f6;
+    margin-left: 5px;
+}
+
+/* Prochains cours */
 .upcoming-lesson-card {
     background: #f8f9fa;
     border-radius: 12px;
@@ -105,17 +153,24 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     flex: 1;
     min-width: 220px;
+    display: flex;
+    flex-direction: column;
+}
+
+.upcoming-lesson-card div {
+    margin-bottom: 6px;
 }
 
 .btn-cancel-admin {
     background: #e74c3c;
     color: white;
     border: none;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
+    padding: 8px 12px;
+    border-radius: 30px;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: 0.2s;
+    font-weight: 500;
 }
 
 .btn-cancel-admin:hover {
@@ -125,13 +180,15 @@
 .btn-join-admin {
     background: #4CAF50;
     color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
+    padding: 8px 12px;
+    border-radius: 30px;
     text-decoration: none;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
+    font-weight: 500;
 }
 
 .btn-join-admin:hover {
@@ -140,12 +197,13 @@
 
 .btn-join-admin-disabled {
     background: #ccc;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
+    padding: 8px 12px;
+    border-radius: 30px;
+    font-size: 0.85rem;
     border: none;
     color: #666;
     cursor: not-allowed;
+    font-weight: 500;
 }
 
 .nav-arrow {
@@ -175,5 +233,12 @@
     }
     .student-stats {
         flex-wrap: wrap;
+    }
+    .package-type-bubbles, .package-duration-bubbles {
+        gap: 5px;
+    }
+    .package-type-btn, .package-duration-btn {
+        padding: 4px 10px;
+        font-size: 0.75rem;
     }
 }
