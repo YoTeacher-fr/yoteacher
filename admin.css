@@ -7,7 +7,8 @@
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
-.revenue-controls {
+.revenue-controls,
+.lessons-controls {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -30,7 +31,8 @@
     color: white;
 }
 
-#monthRangeLabel {
+#monthRangeLabel,
+#lessonsMonthRangeLabel {
     font-weight: 600;
     min-width: 120px;
     text-align: center;
@@ -40,7 +42,7 @@
     margin-bottom: 30px;
 }
 
-/* ========== EN-TÊTES : icône + titre centrés ensemble ========== */
+/* ========== EN-TÊTES : icône + titre centrés ========== */
 .card-header {
     display: flex;
     align-items: center;
@@ -319,12 +321,11 @@
     display: block;
 }
 
-/* Correction : centrer verticalement les trois colonnes */
 .student-detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 20px;
-    align-items: center;  /* ← au lieu de 'start' */
+    align-items: center;
 }
 
 .detail-col {

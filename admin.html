@@ -52,7 +52,18 @@
                 <canvas id="revenueChart" width="800" height="300" style="max-width:100%; height:auto;"></canvas>
             </div>
 
-            <!-- 4. Étudiants -->
+            <!-- 4. Cours (leçons effectuées + étudiants par mois) -->
+            <div class="admin-card">
+                <div class="card-header"><i class="fas fa-chalkboard-user"></i><h2>Cours</h2></div>
+                <div class="lessons-controls">
+                    <button id="lessonsMonthSliderPrev" class="slider-btn-small"><i class="fas fa-chevron-left"></i></button>
+                    <span id="lessonsMonthRangeLabel">6 derniers mois</span>
+                    <button id="lessonsMonthSliderNext" class="slider-btn-small"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <canvas id="lessonsStudentsChart" width="800" height="300" style="max-width:100%; height:auto;"></canvas>
+            </div>
+
+            <!-- 5. Étudiants -->
             <div class="admin-card">
                 <div class="card-header"><i class="fas fa-users"></i><h2>Étudiants</h2></div>
                 <div id="studentsList"><div class="loading">Chargement...</div></div>

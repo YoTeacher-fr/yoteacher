@@ -9,7 +9,7 @@ let adminCurrentStartIndex = 0;
 const LESSONS_PER_PAGE = 3;
 
 // --- Carrousel forfaits actifs ---
-let activePackagesList = [];         // tableau des étudiants (avec leurs données)
+let activePackagesList = [];
 let packagesCurrentStartIndex = 0;
 const PACKAGES_PER_PAGE = 3;
 
@@ -44,6 +44,11 @@ const EXTRA_AMOUNTS = {
     '76633fd7-e78f-43d7-b438-f5a8955401d3': 420,
     '2dbedd47-78bc-4e33-b877-e11ca99e59e8': 162
 };
+
+// NOUVEAU : Graphique Cours (leçons effectuées / étudiants par mois)
+let lessonsStudentsChart = null;
+let currentLessonsMonthOffset = 0;
+let allMonthlyLessons = {};     // { "2025-01": { lessons: 5, students: 3 }, ... }
 
 // ========== AUTH / SUPABASE ==========
 async function waitForSupabase() {
@@ -190,8 +195,8 @@ function renderUpcomingSlice() {
             btn.disabled = true;
             btn.innerText = 'Annulation...';
             try {
-                const result = await cancelBookingAdmin(id);
-                alert(result.creditRefunded ? 'Cours annulé (crédit ajouté)' : 'Cours annulé');
+                await cancelBookingAdmin(id);
+                alert('Cours annulé (crédit ajouté)');
                 location.reload();
             } catch (err) {
                 console.error('Erreur annulation:', err);
@@ -224,7 +229,7 @@ function displayUpcoming(lessons) {
     renderUpcomingSlice();
 }
 
-// ========== FORFAITS ACTIFS (NOUVEAU CARROUSEL) ==========
+// ========== FORFAITS ACTIFS ==========
 function getStudentCredits(studentId) {
     const studentPackages = activePackagesData.filter(pkg => (pkg.profiles?.id || pkg.user_id) === studentId);
     const credits = {
@@ -417,7 +422,6 @@ function renderPackagesSlice() {
         </div>
     `;
 
-    // Événements pour les types
     document.querySelectorAll('.package-type-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', () => {
             const studentId = btn.dataset.student;
@@ -459,7 +463,6 @@ function renderPackagesSlice() {
         });
     });
 
-    // Événements pour les durées
     document.querySelectorAll('.package-duration-btn:not(.disabled)').forEach(btn => {
         btn.addEventListener('click', () => {
             const studentId = btn.dataset.student;
@@ -650,6 +653,139 @@ function updateRevenueChart() {
     if (labelElem) labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
+// ========== NOUVEAU : GRAPHIQUE COURS (leçons effectuées / étudiants par mois) ==========
+function computeMonthlyLessonsAndStudents(studentsData) {
+    const monthlyMap = new Map(); // key "YYYY-MM": { lessons: Set(), students: Set() }
+    
+    for (const student of studentsData) {
+        if (!student.bookings) continue;
+        for (const booking of student.bookings) {
+            // Une leçon est considérée comme effectuée si son statut est 'completed' OU sa date de début est passée
+            const isCompleted = booking.status === 'completed' || new Date(booking.start_time) < new Date();
+            if (!isCompleted) continue;
+            
+            const date = new Date(booking.start_time);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (!monthlyMap.has(monthKey)) {
+                monthlyMap.set(monthKey, { lessons: new Set(), students: new Set() });
+            }
+            const monthData = monthlyMap.get(monthKey);
+            monthData.lessons.add(booking.id); // chaque réservation = une leçon
+            monthData.students.add(student.id);
+        }
+    }
+    
+    const result = {};
+    for (const [month, data] of monthlyMap.entries()) {
+        result[month] = {
+            lessons: data.lessons.size,
+            students: data.students.size
+        };
+    }
+    return result;
+}
+
+function updateLessonsStudentsChart() {
+    const canvas = document.getElementById('lessonsStudentsChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const months = Object.keys(allMonthlyLessons).sort();
+    
+    // Afficher un message si aucune donnée
+    if (months.length === 0) {
+        if (lessonsStudentsChart) lessonsStudentsChart.destroy();
+        canvas.style.display = 'none';
+        const parent = canvas.parentElement;
+        let msg = parent.querySelector('.no-data-msg');
+        if (!msg) {
+            msg = document.createElement('div');
+            msg.className = 'no-data-msg';
+            msg.innerText = 'Aucune leçon effectuée pour le moment.';
+            msg.style.textAlign = 'center';
+            msg.style.padding = '50px';
+            parent.appendChild(msg);
+        }
+        const labelElem = document.getElementById('lessonsMonthRangeLabel');
+        if (labelElem) labelElem.innerText = '6 derniers mois';
+        return;
+    }
+    canvas.style.display = 'block';
+    const existingMsg = canvas.parentElement.querySelector('.no-data-msg');
+    if (existingMsg) existingMsg.remove();
+
+    let startIndex = 0;
+    let endIndex = months.length - 1;
+    if (currentLessonsMonthOffset === 0) {
+        startIndex = Math.max(0, months.length - 6);
+        endIndex = months.length - 1;
+    } else {
+        startIndex = Math.max(0, months.length - 12 + currentLessonsMonthOffset);
+        endIndex = Math.min(months.length - 1, startIndex + 11);
+        if (startIndex >= months.length) {
+            startIndex = Math.max(0, months.length - 6);
+            endIndex = months.length - 1;
+            currentLessonsMonthOffset = 0;
+        }
+    }
+    const visibleMonths = months.slice(startIndex, endIndex + 1);
+    const labels = visibleMonths.map(m => {
+        const [y, mo] = m.split('-');
+        return new Date(parseInt(y), parseInt(mo)-1, 1).toLocaleDateString('fr', { month:'short', year:'numeric' });
+    });
+    const lessonsData = visibleMonths.map(m => allMonthlyLessons[m]?.lessons || 0);
+    const studentsData = visibleMonths.map(m => allMonthlyLessons[m]?.students || 0);
+
+    if (lessonsStudentsChart) lessonsStudentsChart.destroy();
+    lessonsStudentsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Leçons effectuées',
+                    data: lessonsData,
+                    borderColor: '#3c84f6',
+                    backgroundColor: 'rgba(60, 132, 246, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Étudiants uniques',
+                    data: studentsData,
+                    borderColor: '#ff9800',
+                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}` } },
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, precision: 0 },
+                    title: { display: true, text: 'Nombre' }
+                }
+            }
+        }
+    });
+
+    const labelElem = document.getElementById('lessonsMonthRangeLabel');
+    if (labelElem) {
+        if (currentLessonsMonthOffset === 0) labelElem.innerText = '6 derniers mois';
+        else labelElem.innerText = `${labels[0]} - ${labels[labels.length-1]}`;
+    }
+}
+
 // ========== CHARGEMENT PRINCIPAL ==========
 async function loadDashboard() {
     console.log('🔄 [ADMIN.JS] loadDashboard – début');
@@ -660,6 +796,12 @@ async function loadDashboard() {
         displayPackages(data.activePackages);
         allMonthlyRevenue = data.monthlyRevenue || {};
         updateRevenueChart();
+        
+        // Nouveau : calculer les statistiques mensuelles des leçons et étudiants
+        const monthlyStats = computeMonthlyLessonsAndStudents(data.students);
+        allMonthlyLessons = monthlyStats;
+        updateLessonsStudentsChart();
+        
         console.log('✅ [ADMIN.JS] Dashboard chargé');
     } catch (err) {
         console.error('❌ [ADMIN.JS] Erreur chargement dashboard:', err);
@@ -687,6 +829,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         document.getElementById('monthSliderPrev')?.addEventListener('click', () => { currentMonthOffset--; updateRevenueChart(); });
         document.getElementById('monthSliderNext')?.addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
+        
+        // Nouveaux écouteurs pour le graphique "Cours"
+        document.getElementById('lessonsMonthSliderPrev')?.addEventListener('click', () => {
+            currentLessonsMonthOffset--;
+            updateLessonsStudentsChart();
+        });
+        document.getElementById('lessonsMonthSliderNext')?.addEventListener('click', () => {
+            currentLessonsMonthOffset++;
+            updateLessonsStudentsChart();
+        });
 
         console.log('✅ [ADMIN.JS] Initialisation terminée');
     } catch (err) {
