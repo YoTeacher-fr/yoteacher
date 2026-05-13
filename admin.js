@@ -11,6 +11,12 @@ const LESSONS_PER_PAGE = 3;
 // Stockage global pour les forfaits
 let activePackagesData = [];
 
+// IDs des étudiants à exclure (placés en dernier)
+const EXCLUDED_STUDENT_IDS = [
+    '88698eb2-904f-410b-88e1-a93c1397e0d1',
+    'ddb62c55-b9f0-4852-8aa4-a53ea219ca83'
+];
+
 // ========== AUTH / SUPABASE ==========
 async function waitForSupabase() {
     console.log('⏳ [ADMIN.JS] waitForSupabase – début');
@@ -210,6 +216,19 @@ function getTotalCreditsForStudent(studentId) {
     return total;
 }
 
+function getNearestExpiryForStudent(studentId) {
+    // Retourne la date d'expiration la plus proche (la plus petite) parmi tous les packages actifs de l'étudiant
+    const studentPackages = activePackagesData.filter(pkg => 
+        (pkg.profiles?.id || pkg.user_id) === studentId && pkg.remaining_credits > 0 && pkg.expires_at
+    );
+    let nearest = null;
+    studentPackages.forEach(pkg => {
+        const expiryDate = new Date(pkg.expires_at);
+        if (!nearest || expiryDate < nearest) nearest = expiryDate;
+    });
+    return nearest;
+}
+
 function findFirstAvailableCombination(studentId) {
     const credits = getStudentCredits(studentId);
     const types = ['conversation', 'curriculum', 'examen'];
@@ -275,8 +294,31 @@ function displayPackages(packages) {
         studentsMap.get(studentId).packages.push(pkg);
     });
 
+    // Transformer en tableau pour tri
+    let studentEntries = Array.from(studentsMap.entries()).map(([id, data]) => ({
+        id,
+        name: data.name,
+        packages: data.packages,
+        nearestExpiry: getNearestExpiryForStudent(id)
+    }));
+
+    // Trier : d'abord par date d'expiration la plus proche (null à la fin), puis les exclus à la fin absolue
+    studentEntries.sort((a, b) => {
+        // Les exclus toujours après
+        const aExcluded = EXCLUDED_STUDENT_IDS.includes(a.id);
+        const bExcluded = EXCLUDED_STUDENT_IDS.includes(b.id);
+        if (aExcluded && !bExcluded) return 1;
+        if (!aExcluded && bExcluded) return -1;
+        // Si les deux sont exclus ou les deux non exclus, trier par date d'expiration
+        if (!a.nearestExpiry && !b.nearestExpiry) return 0;
+        if (!a.nearestExpiry) return 1;
+        if (!b.nearestExpiry) return -1;
+        return a.nearestExpiry - b.nearestExpiry;
+    });
+
     let html = '';
-    for (const [studentId, student] of studentsMap) {
+    for (const student of studentEntries) {
+        const studentId = student.id;
         const credits = getStudentCredits(studentId);
         const totalCredits = getTotalCreditsForStudent(studentId);
         
@@ -339,7 +381,7 @@ function displayPackages(packages) {
                         }).join('')}
                     </div>
                     <div class="package-selected-credits">
-                        Crédits sélection : <strong id="student-${studentId}-selected-credits">${credits[defaultType][defaultDuration] || 0}</strong>
+                        Crédits : <strong id="student-${studentId}-selected-credits">${credits[defaultType][defaultDuration] || 0}</strong>
                     </div>
                     <div class="package-expiry" id="student-${studentId}-expiry">
                         Expire le : ${defaultExpiryStr}
@@ -484,10 +526,15 @@ function updateRevenueChart() {
     });
     const data = visible.map(m => allMonthlyRevenue[m] || 0);
 
+    // Calcul du total général de tous les revenus (tous mois)
+    const totalRevenue = Object.values(allMonthlyRevenue).reduce((sum, val) => sum + val, 0);
+    const totalRevenueFormatted = totalRevenue.toFixed(2);
+    const chartLabel = `Total revenus : ${totalRevenueFormatted} €`;
+
     if (revenueChart) revenueChart.destroy();
     revenueChart = new Chart(ctx, {
         type: 'bar',
-        data: { labels, datasets: [{ label: 'Revenus (EUR)', data, backgroundColor: '#3c84f6', borderRadius: 8 }] },
+        data: { labels, datasets: [{ label: chartLabel, data, backgroundColor: '#3c84f6', borderRadius: 8 }] },
         options: {
             responsive: true,
             maintainAspectRatio: true,
