@@ -764,18 +764,18 @@ function updateLessonsStudentsChart() {
             datasets: [
                 {
                     label: 'Étudiants uniques',
-                    data: studentsData,
-                    type: 'bar',
-                    backgroundColor: '#ff9800',
-                    borderRadius: 6,
-                    yAxisID: 'y',
-                    datalabels: {
-                        anchor: 'end',
-                        align: 'top',
-                        offset: 4,
-                        color: '#b45f06',
-                        font: { weight: 'bold', size: 10 },
-                        formatter: (value) => value
+    data: studentsData,
+    type: 'bar',
+    backgroundColor: '#d4a373',  // couleur terracotta douce
+    borderRadius: 6,
+    yAxisID: 'y',
+    datalabels: {
+        anchor: 'end',
+        align: 'top',
+        offset: 4,
+        color: '#8b5a2b',        // texte assorti
+        font: { weight: 'bold', size: 10 },
+        formatter: (value) => value
                     }
                 },
                 {
