@@ -1,5 +1,5 @@
-// admin.js – Dashboard administrateur (carrousel étudiant, graphiques barres + Pareto)
-console.log('🔵 [ADMIN.JS] Script chargé – règle: confirmed + (passé ou completed_at dans le mois)');
+// admin.js – version optimisée (chargement rapide, calcul à la demande)
+console.log('🔵 [ADMIN.JS] Script chargé – version optimisée');
 
 if (typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
@@ -406,7 +406,7 @@ function displayPackages(packages) {
     buildPackagesList();
 }
 
-// ========== FONCTION POUR LES COURS PAR MOIS (ÉTUDIANT) ==========
+// ========== FONCTION POUR LES COURS PAR MOIS (ÉTUDIANT) – calcul différé ==========
 function computeMonthlyLessonsForStudent(bookings) {
     const monthlyMap = new Map();
     const now = new Date();
@@ -443,15 +443,27 @@ function computeMonthlyLessonsForStudent(bookings) {
     return { months: sortedMonths, counts };
 }
 
-// ========== GRAPHIQUE POUR UN ÉTUDIANT (BARRES) ==========
+// ========== GRAPHIQUE POUR UN ÉTUDIANT (BARRES) – création à la demande ==========
 let studentCharts = {};
 
-function initStudentChart(studentId, months, counts) {
+function initStudentChart(studentId, bookings) {
     const canvasId = `student-chart-${studentId}`;
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
+    // Si le graphique existe déjà, ne pas recréer
+    if (studentCharts[studentId]) return;
+
+    const { months, counts } = computeMonthlyLessonsForStudent(bookings);
     const ctx = canvas.getContext('2d');
-    if (studentCharts[studentId]) studentCharts[studentId].destroy();
+
+    if (months.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '14px sans-serif';
+        ctx.fillStyle = '#999';
+        ctx.textAlign = 'center';
+        ctx.fillText('Aucun cours effectué', canvas.width/2, canvas.height/2);
+        return;
+    }
 
     const labels = months.map(m => {
         const [y, mo] = m.split('-');
@@ -500,12 +512,13 @@ function initStudentChart(studentId, months, counts) {
     });
 }
 
-// ========== ÉTUDIANTS (carrousel avec flèches latérales, sans 1/2) ==========
+// ========== AFFICHAGE ÉTUDIANTS – sans calcul préalable des graphiques ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
     const sortedStudents = [...students].sort((a, b) => (b.total_courses || 0) - (a.total_courses || 0));
+    
     container.innerHTML = sortedStudents.map(s => {
         const totalSpentEur = s.direct_revenue_eur || 0;
         const extraCourses = EXTRA_COURSES[s.id] || 0;
@@ -514,11 +527,12 @@ function displayStudents(students) {
         const totalAmountWithExtra = totalSpentEur + extraAmount;
         const bookingsHtml = (s.bookings || []).map(b => `<div class="booking-history-item">${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status || '?'})</div>`).join('') || 'Aucune réservation';
         
-        const monthlyData = computeMonthlyLessonsForStudent(s.bookings || []);
-        const chartId = `student-chart-${s.id}`;
+        // On stocke les bookings dans un attribut data pour usage ultérieur
+        const bookingsJson = escapeHtml(JSON.stringify(s.bookings || [])); // simple échappement pour le HTML
+        // Note : on ne calcule pas computeMonthlyLessonsForStudent ici
         
         return `
-            <div class="student-row" data-student-id="${s.id}">
+            <div class="student-row" data-student-id="${s.id}" data-bookings='${bookingsJson}'>
                 <div class="student-summary">
                     <span class="student-name">${escapeHtml(s.full_name || 'Sans nom')}</span>
                     <span class="student-courses">📚 ${s.total_courses || 0} cours</span>
@@ -527,7 +541,6 @@ function displayStudents(students) {
                 </div>
                 <div class="student-detail">
                     <div class="student-detail-carousel" data-student="${s.id}">
-                        <!-- Slide 0 : Historique -->
                         <div class="carousel-slide" data-slide="0">
                             <div class="student-detail-grid">
                                 <div class="detail-col"><strong>Historique (cours passés) :</strong><div class="booking-history-list">${bookingsHtml}</div></div>
@@ -535,11 +548,9 @@ function displayStudents(students) {
                                 <div class="detail-col detail-col-center"><strong>Total dépensé</strong><div class="detail-value">${totalAmountWithExtra.toFixed(2)} €</div>${extraAmount ? `<div class="detail-note">(+${extraAmount.toFixed(2)} € bonus)</div>` : ''}</div>
                             </div>
                         </div>
-                        <!-- Slide 1 : Graphique mensuel (barres) -->
                         <div class="carousel-slide" data-slide="1">
-                            <canvas id="${chartId}" class="student-graph-canvas"></canvas>
+                            <canvas id="student-chart-${s.id}" class="student-graph-canvas"></canvas>
                         </div>
-                        <!-- Flèches latérales -->
                         <button class="carousel-arrow prev-slide" data-student="${s.id}"><i class="fas fa-chevron-left"></i></button>
                         <button class="carousel-arrow next-slide" data-student="${s.id}"><i class="fas fa-chevron-right"></i></button>
                     </div>
@@ -548,9 +559,14 @@ function displayStudents(students) {
         `;
     }).join('');
 
-    // Initialisation des carrousels et graphiques
+    // Initialisation des carrousels et gestion du graphique à la demande
     document.querySelectorAll('.student-row').forEach(row => {
         const studentId = row.dataset.studentId;
+        let bookings = [];
+        try {
+            bookings = JSON.parse(row.dataset.bookings || '[]');
+        } catch(e) { console.warn(e); }
+        
         const detail = row.querySelector('.student-detail');
         const carousel = row.querySelector('.student-detail-carousel');
         const slides = carousel.querySelectorAll('.carousel-slide');
@@ -564,24 +580,9 @@ function displayStudents(students) {
                 if (i === index) slide.classList.add('active');
                 else slide.classList.remove('active');
             });
+            // Si on affiche la slide du graphique (index 1) et que le graphique n'existe pas encore
             if (index === 1 && !studentCharts[studentId]) {
-                const studentData = sortedStudents.find(s => s.id === studentId);
-                if (studentData) {
-                    const monthlyData = computeMonthlyLessonsForStudent(studentData.bookings || []);
-                    if (monthlyData.months.length > 0) {
-                        initStudentChart(studentId, monthlyData.months, monthlyData.counts);
-                    } else {
-                        const canvas = document.getElementById(`student-chart-${studentId}`);
-                        if (canvas) {
-                            const ctx = canvas.getContext('2d');
-                            ctx.clearRect(0, 0, canvas.width, canvas.height);
-                            ctx.font = '14px sans-serif';
-                            ctx.fillStyle = '#999';
-                            ctx.textAlign = 'center';
-                            ctx.fillText('Aucun cours effectué', canvas.width/2, canvas.height/2);
-                        }
-                    }
-                }
+                initStudentChart(studentId, bookings);
             }
         }
         
@@ -609,6 +610,7 @@ function displayStudents(students) {
             }
         });
         
+        // Initialisation : slide 0 active
         showSlide(0);
     });
 }
@@ -659,7 +661,7 @@ function updateRevenueChart() {
     if (labelElem) labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
-// ========== GRAPHIQUE COURS (PARETO : barres étudiants + ligne leçons) ==========
+// ========== GRAPHIQUE COURS (PARETO) ==========
 function computeMonthlyLessonsAndStudents(studentsData) {
     const monthlyMap = new Map();
     const now = new Date();
@@ -702,7 +704,6 @@ function computeMonthlyLessonsAndStudents(studentsData) {
     const result = {};
     for (const [month, data] of monthlyMap.entries()) {
         result[month] = { lessons: data.lessons, students: data.students.size };
-        console.log(`[DEBUG] ${month} → ${data.lessons} leçons, ${data.students.size} étudiants`);
     }
     return result;
 }
@@ -756,7 +757,6 @@ function updateLessonsStudentsChart() {
 
     if (lessonsStudentsChart) lessonsStudentsChart.destroy();
 
-    // Graphique combiné : barres pour étudiants, ligne pour leçons
     lessonsStudentsChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -764,18 +764,18 @@ function updateLessonsStudentsChart() {
             datasets: [
                 {
                     label: 'Étudiants uniques',
-    data: studentsData,
-    type: 'bar',
-    backgroundColor: '#d4a373',  // couleur terracotta douce
-    borderRadius: 6,
-    yAxisID: 'y',
-    datalabels: {
-        anchor: 'end',
-        align: 'top',
-        offset: 4,
-        color: '#8b5a2b',        // texte assorti
-        font: { weight: 'bold', size: 10 },
-        formatter: (value) => value
+                    data: studentsData,
+                    type: 'bar',
+                    backgroundColor: '#d4a373',  // couleur douce
+                    borderRadius: 6,
+                    yAxisID: 'y',
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 4,
+                        color: '#8b5a2b',
+                        font: { weight: 'bold', size: 10 },
+                        formatter: (value) => value
                     }
                 },
                 {
@@ -828,9 +828,14 @@ function updateLessonsStudentsChart() {
     if (labelElem) labelElem.innerText = currentLessonsMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
-// ========== CHARGEMENT PRINCIPAL ==========
+// ========== CHARGEMENT PRINCIPAL AVEC SQUELETTE ==========
 async function loadDashboard() {
     console.log('🔄 [ADMIN.JS] loadDashboard – début');
+    // Afficher un état de chargement dans chaque bloc
+    document.getElementById('adminUpcomingLessons').innerHTML = '<div class="loading-spinner">⏳ Chargement des cours...</div>';
+    document.getElementById('activePackagesList').innerHTML = '<div class="loading-spinner">⏳ Chargement des forfaits...</div>';
+    document.getElementById('studentsList').innerHTML = '<div class="loading-spinner">⏳ Chargement des étudiants...</div>';
+    
     try {
         const data = await fetchAdminDashboard();
         displayUpcoming(data.upcoming);
