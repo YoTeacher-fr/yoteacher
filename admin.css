@@ -321,9 +321,10 @@
     display: block;
 }
 
-/* Carrousel étudiant */
+/* ========== CARROUSEL ÉTUDIANT (FLÈCHES LATÉRALES, SANS INDICATEUR) ========== */
 .student-detail-carousel {
     position: relative;
+    padding: 0 40px; /* espace pour les flèches */
 }
 
 .carousel-slide {
@@ -340,36 +341,37 @@
     to { opacity: 1; transform: translateX(0); }
 }
 
-.carousel-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    margin-top: 20px;
-}
-
+/* Flèches latérales */
 .carousel-arrow {
-    background: #f0f0f0;
-    border: none;
-    width: 32px;
-    height: 32px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.9);
+    border: 1px solid #ddd;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .carousel-arrow:hover {
     background: #3c84f6;
     color: white;
+    border-color: #3c84f6;
 }
 
-.carousel-indicator {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #555;
+.prev-slide {
+    left: 0;
+}
+
+.next-slide {
+    right: 0;
 }
 
 .student-graph-canvas {
@@ -482,6 +484,14 @@
         min-width: 60px;
         padding: 4px 8px;
         font-size: 0.7rem;
+    }
+    /* Réduction de l'espace des flèches sur mobile */
+    .student-detail-carousel {
+        padding: 0 30px;
+    }
+    .carousel-arrow {
+        width: 30px;
+        height: 30px;
     }
 }
 

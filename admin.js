@@ -1,7 +1,6 @@
-// admin.js – Dashboard administrateur (avec carrousel étudiant et graphique mensuel)
+// admin.js – Dashboard administrateur (carrousel étudiant avec graphique courbe, flèches latérales)
 console.log('🔵 [ADMIN.JS] Script chargé – règle: confirmed + (passé ou completed_at dans le mois)');
 
-// Enregistrement manuel du plugin datalabels
 if (typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
     console.log('✅ Plugin datalabels enregistré');
@@ -11,16 +10,15 @@ if (typeof ChartDataLabels !== 'undefined') {
 
 let revenueChart = null, currentMonthOffset = 0, allMonthlyRevenue = {};
 
-// --- Carrousel prochains cours ---
+// Carrousel prochains cours
 let adminUpcomingLessons = [];
 let adminCurrentStartIndex = 0;
 const LESSONS_PER_PAGE = 3;
 
-// --- Carrousel forfaits actifs ---
+// Carrousel forfaits actifs
 let activePackagesList = [];
 let packagesCurrentStartIndex = 0;
 const PACKAGES_PER_PAGE = 3;
-
 let activePackagesData = [];
 
 const EXCLUDED_STUDENT_IDS = [
@@ -410,7 +408,7 @@ function displayPackages(packages) {
 
 // ========== FONCTION POUR LES COURS PAR MOIS (ÉTUDIANT) ==========
 function computeMonthlyLessonsForStudent(bookings) {
-    const monthlyMap = new Map(); // clé "YYYY-MM" -> nombre de cours effectués
+    const monthlyMap = new Map();
     const now = new Date();
 
     for (const booking of bookings) {
@@ -440,14 +438,13 @@ function computeMonthlyLessonsForStudent(bookings) {
         monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + 1);
     }
 
-    // Trier les mois
     const sortedMonths = Array.from(monthlyMap.keys()).sort();
-    const lessonsPerMonth = sortedMonths.map(m => monthlyMap.get(m));
-    return { months: sortedMonths, counts: lessonsPerMonth };
+    const counts = sortedMonths.map(m => monthlyMap.get(m));
+    return { months: sortedMonths, counts };
 }
 
-// ========== GRAPHIQUE POUR UN ÉTUDIANT ==========
-let studentCharts = {}; // stocker les instances de graphiques par ID étudiant
+// ========== GRAPHIQUE POUR UN ÉTUDIANT (COURBE) ==========
+let studentCharts = {};
 
 function initStudentChart(studentId, months, counts) {
     const canvasId = `student-chart-${studentId}`;
@@ -457,25 +454,30 @@ function initStudentChart(studentId, months, counts) {
     if (studentCharts[studentId]) {
         studentCharts[studentId].destroy();
     }
-    // Formater les étiquettes des mois
     const labels = months.map(m => {
         const [y, mo] = m.split('-');
         return new Date(parseInt(y), parseInt(mo)-1, 1).toLocaleDateString('fr', { month:'short', year:'numeric' });
     });
     studentCharts[studentId] = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: labels,
             datasets: [{
                 label: 'Cours effectués',
                 data: counts,
-                backgroundColor: '#3c84f6',
-                borderRadius: 6,
+                borderColor: '#3c84f6',
+                backgroundColor: 'rgba(60,132,246,0.1)',
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: '#3c84f6',
+                pointBorderColor: '#fff',
+                pointRadius: 4,
+                pointHoverRadius: 6,
                 datalabels: {
                     anchor: 'end',
                     align: 'top',
-                    offset: 4,
-                    color: '#333',
+                    offset: 6,
+                    color: '#3c84f6',
                     font: { weight: 'bold', size: 11 },
                     formatter: (value) => value
                 }
@@ -487,7 +489,7 @@ function initStudentChart(studentId, months, counts) {
             plugins: {
                 tooltip: { callbacks: { label: ctx => `${ctx.raw} cours` } },
                 legend: { display: false },
-                datalabels: { /* hérité du dataset */ }
+                datalabels: {}
             },
             scales: {
                 y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, title: { display: true, text: 'Nombre de cours' } }
@@ -496,7 +498,7 @@ function initStudentChart(studentId, months, counts) {
     });
 }
 
-// ========== ÉTUDIANTS (avec carrousel) ==========
+// ========== ÉTUDIANTS (carrousel avec flèches latérales, sans 1/2) ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
@@ -510,7 +512,6 @@ function displayStudents(students) {
         const totalAmountWithExtra = totalSpentEur + extraAmount;
         const bookingsHtml = (s.bookings || []).map(b => `<div class="booking-history-item">${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status || '?'})</div>`).join('') || 'Aucune réservation';
         
-        // Préparer les données du graphique pour cet étudiant
         const monthlyData = computeMonthlyLessonsForStudent(s.bookings || []);
         const chartId = `student-chart-${s.id}`;
         
@@ -532,23 +533,20 @@ function displayStudents(students) {
                                 <div class="detail-col detail-col-center"><strong>Total dépensé</strong><div class="detail-value">${totalAmountWithExtra.toFixed(2)} €</div>${extraAmount ? `<div class="detail-note">(+${extraAmount.toFixed(2)} € bonus)</div>` : ''}</div>
                             </div>
                         </div>
-                        <!-- Slide 1 : Graphique mensuel -->
+                        <!-- Slide 1 : Graphique mensuel (courbe) -->
                         <div class="carousel-slide" data-slide="1">
                             <canvas id="${chartId}" class="student-graph-canvas"></canvas>
                         </div>
-                        <!-- Contrôles du carrousel -->
-                        <div class="carousel-controls">
-                            <button class="carousel-arrow prev-slide" data-student="${s.id}"><i class="fas fa-chevron-left"></i></button>
-                            <span class="carousel-indicator" data-student="${s.id}">1/2</span>
-                            <button class="carousel-arrow next-slide" data-student="${s.id}"><i class="fas fa-chevron-right"></i></button>
-                        </div>
+                        <!-- Flèches latérales -->
+                        <button class="carousel-arrow prev-slide" data-student="${s.id}"><i class="fas fa-chevron-left"></i></button>
+                        <button class="carousel-arrow next-slide" data-student="${s.id}"><i class="fas fa-chevron-right"></i></button>
                     </div>
                 </div>
             </div>
         `;
     }).join('');
 
-    // Initialiser les carrousels et les graphiques
+    // Initialisation des carrousels et graphiques
     document.querySelectorAll('.student-row').forEach(row => {
         const studentId = row.dataset.studentId;
         const detail = row.querySelector('.student-detail');
@@ -556,18 +554,14 @@ function displayStudents(students) {
         const slides = carousel.querySelectorAll('.carousel-slide');
         const prevBtn = carousel.querySelector('.prev-slide');
         const nextBtn = carousel.querySelector('.next-slide');
-        const indicator = carousel.querySelector('.carousel-indicator');
         let currentSlide = 0;
         const totalSlides = slides.length;
         
-        // Fonction pour afficher une slide
         function showSlide(index) {
             slides.forEach((slide, i) => {
                 if (i === index) slide.classList.add('active');
                 else slide.classList.remove('active');
             });
-            if (indicator) indicator.innerText = `${index+1}/${totalSlides}`;
-            // Si on affiche la slide du graphique (index 1) et que le graphique n'est pas encore initialisé
             if (index === 1 && !studentCharts[studentId]) {
                 const studentData = sortedStudents.find(s => s.id === studentId);
                 if (studentData) {
@@ -575,7 +569,6 @@ function displayStudents(students) {
                     if (monthlyData.months.length > 0) {
                         initStudentChart(studentId, monthlyData.months, monthlyData.counts);
                     } else {
-                        // Aucune donnée : afficher un message dans le canvas
                         const canvas = document.getElementById(`student-chart-${studentId}`);
                         if (canvas) {
                             const ctx = canvas.getContext('2d');
@@ -590,7 +583,6 @@ function displayStudents(students) {
             }
         }
         
-        // Événements des flèches (empêcher la propagation pour ne pas fermer le détail)
         prevBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
@@ -602,14 +594,12 @@ function displayStudents(students) {
             showSlide(currentSlide);
         });
         
-        // Ouvrir/fermer le détail
         const icon = row.querySelector('.toggle-icon');
         row.addEventListener('click', (e) => {
             if (e.target.tagName !== 'BUTTON' && !e.target.closest('.carousel-arrow')) {
                 detail.classList.toggle('open');
                 icon.classList.toggle('fa-chevron-down');
                 icon.classList.toggle('fa-chevron-up');
-                // Réinitialiser à la première slide quand on ouvre
                 if (detail.classList.contains('open')) {
                     currentSlide = 0;
                     showSlide(0);
@@ -617,12 +607,11 @@ function displayStudents(students) {
             }
         });
         
-        // Initialiser l'affichage (slide 0 active)
         showSlide(0);
     });
 }
 
-// ========== GRAPHIQUE REVENUS (avec datalabels) ==========
+// ========== GRAPHIQUE REVENUS ==========
 function updateRevenueChart() {
     const canvas = document.getElementById('revenueChart');
     if (!canvas) return;
@@ -668,9 +657,9 @@ function updateRevenueChart() {
     if (labelElem) labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
-// ========== GRAPHIQUE COURS (avec datalabels) ==========
+// ========== GRAPHIQUE COURS ==========
 function computeMonthlyLessonsAndStudents(studentsData) {
-    const monthlyMap = new Map(); // key "YYYY-MM": { lessons: 0, students: Set() }
+    const monthlyMap = new Map();
     const now = new Date();
 
     for (const student of studentsData) {
