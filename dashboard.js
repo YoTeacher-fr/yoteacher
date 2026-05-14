@@ -880,7 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span><i class="fas fa-chalkboard-user"></i> ${courseTypeLabel}</span>
                         <span><i class="far fa-clock"></i> ${booking.duration_minutes || 60} min</span>
                         <span><i class="fas fa-tag"></i> ${booking.booking_number || '#' + booking.id.substring(0,8)}</span>
-                        ${booking.payment_method === 'credit' ? '<span><i class="fas fa-coins"></i> ' + (isFrench ? 'Crédit' : 'Credit') + '</span>' : ''}
+
                     </div>
                 </div>
             `;
