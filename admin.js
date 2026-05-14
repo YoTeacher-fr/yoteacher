@@ -1,68 +1,39 @@
-// admin.js – version finale avec spinners garantis et logs
+// admin.js – version avec overlay de chargement global immédiat
 console.log('🔵 [ADMIN.JS] Script chargé – début');
 
-// 1. Style temporaire ultra-visible pour les spinners
-const style = document.createElement('style');
-style.textContent = `
-    .admin-spinner {
-        display: block !important;
-        text-align: center !important;
-        padding: 40px 20px !important;
-        margin: 20px 0 !important;
-        font-size: 1.2rem !important;
-        color: #3c84f6 !important;
-        background: #f0f7ff !important;
-        border-radius: 12px !important;
-        border: 1px solid #cce4ff !important;
-        font-family: Arial, sans-serif !important;
-        animation: pulse 1.5s infinite !important;
-    }
-    @keyframes pulse {
-        0% { opacity: 0.6; }
-        50% { opacity: 1; }
-        100% { opacity: 0.6; }
-    }
-    .admin-error {
-        display: block !important;
-        text-align: center !important;
-        padding: 40px !important;
-        color: #e74c3c !important;
-        background: #ffeaea !important;
-        border-radius: 12px !important;
-    }
+// 1. Créer un overlay de chargement qui couvre tout l'écran
+const loadingOverlay = document.createElement('div');
+loadingOverlay.id = 'global-loading-overlay';
+loadingOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.98);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    font-family: Arial, sans-serif;
+    flex-direction: column;
+    gap: 20px;
 `;
-document.head.appendChild(style);
+loadingOverlay.innerHTML = `
+    <div style="font-size: 2rem;">⏳</div>
+    <div style="font-size: 1.2rem; color: #3c84f6;">Chargement du tableau de bord...</div>
+    <div style="width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #3c84f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+`;
+document.body.appendChild(loadingOverlay);
+console.log('✅ Overlay de chargement ajouté');
 
-// 2. Fonction pour forcer l'affichage des spinners immédiatement
-function forceSpinners() {
-    const upcoming = document.getElementById('adminUpcomingLessons');
-    const packages = document.getElementById('activePackagesList');
-    const students = document.getElementById('studentsList');
-    
-    if (upcoming) {
-        upcoming.innerHTML = '<div class="admin-spinner">⏳ Chargement des cours...</div>';
-        console.log('✅ Spinner cours ajouté');
-    } else console.warn('❌ adminUpcomingLessons introuvable');
-    
-    if (packages) {
-        packages.innerHTML = '<div class="admin-spinner">⏳ Chargement des forfaits...</div>';
-        console.log('✅ Spinner forfaits ajouté');
-    } else console.warn('❌ activePackagesList introuvable');
-    
-    if (students) {
-        students.innerHTML = '<div class="admin-spinner">⏳ Chargement des étudiants...</div>';
-        console.log('✅ Spinner étudiants ajouté');
-    } else console.warn('❌ studentsList introuvable');
-}
-
-// Exécution immédiate (si DOM déjà prêt) ou dès que possible
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', forceSpinners);
-} else {
-    forceSpinners();
-}
-
-// --- Plugin datalabels ---
+// 2. Plugin datalabels
 if (typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
     console.log('✅ Plugin datalabels enregistré');
@@ -773,16 +744,15 @@ async function loadDashboard() {
     } catch (err) {
         console.error('❌ Erreur chargement dashboard:', err);
         alert('Erreur chargement: ' + err.message);
-        const upcoming = document.getElementById('adminUpcomingLessons');
-        if (upcoming) upcoming.innerHTML = '<div class="admin-error">Erreur de chargement</div>';
-        const packages = document.getElementById('activePackagesList');
-        if (packages) packages.innerHTML = '<div class="admin-error">Erreur de chargement</div>';
-        const students = document.getElementById('studentsList');
-        if (students) students.innerHTML = '<div class="admin-error">Erreur de chargement</div>';
+    } finally {
+        // Supprimer l'overlay de chargement
+        const overlay = document.getElementById('global-loading-overlay');
+        if (overlay) overlay.remove();
+        console.log('✅ Overlay supprimé');
     }
 }
 
-// Lancement après chargement du DOM (les spinners sont déjà affichés)
+// Lancement après chargement du DOM
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🏁 DOMContentLoaded – démarrage asynchrone');
     try {
@@ -806,5 +776,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         console.error('❌ Erreur initialisation:', err);
         alert('Erreur initialisation: ' + err.message);
+        const overlay = document.getElementById('global-loading-overlay');
+        if (overlay) overlay.remove();
     }
 });
