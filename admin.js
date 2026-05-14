@@ -1,4 +1,4 @@
-// admin.js – Dashboard administrateur (carrousel étudiant avec graphique courbe, flèches latérales)
+// admin.js – Dashboard administrateur (carrousel étudiant, graphiques barres + Pareto)
 console.log('🔵 [ADMIN.JS] Script chargé – règle: confirmed + (passé ou completed_at dans le mois)');
 
 if (typeof ChartDataLabels !== 'undefined') {
@@ -443,7 +443,7 @@ function computeMonthlyLessonsForStudent(bookings) {
     return { months: sortedMonths, counts };
 }
 
-// ========== GRAPHIQUE POUR UN ÉTUDIANT (COURBE) ==========
+// ========== GRAPHIQUE POUR UN ÉTUDIANT (BARRES) ==========
 let studentCharts = {};
 
 function initStudentChart(studentId, months, counts) {
@@ -451,33 +451,27 @@ function initStudentChart(studentId, months, counts) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    if (studentCharts[studentId]) {
-        studentCharts[studentId].destroy();
-    }
+    if (studentCharts[studentId]) studentCharts[studentId].destroy();
+
     const labels = months.map(m => {
         const [y, mo] = m.split('-');
         return new Date(parseInt(y), parseInt(mo)-1, 1).toLocaleDateString('fr', { month:'short', year:'numeric' });
     });
+
     studentCharts[studentId] = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: labels,
             datasets: [{
                 label: 'Cours effectués',
                 data: counts,
-                borderColor: '#3c84f6',
-                backgroundColor: 'rgba(60,132,246,0.1)',
-                tension: 0.3,
-                fill: true,
-                pointBackgroundColor: '#3c84f6',
-                pointBorderColor: '#fff',
-                pointRadius: 4,
-                pointHoverRadius: 6,
+                backgroundColor: '#3c84f6',
+                borderRadius: 6,
                 datalabels: {
                     anchor: 'end',
                     align: 'top',
-                    offset: 6,
-                    color: '#3c84f6',
+                    offset: 8,
+                    color: '#1e4663',
                     font: { weight: 'bold', size: 11 },
                     formatter: (value) => value
                 }
@@ -492,7 +486,15 @@ function initStudentChart(studentId, months, counts) {
                 datalabels: {}
             },
             scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, title: { display: true, text: 'Nombre de cours' } }
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, precision: 0 },
+                    title: { display: true, text: 'Nombre de cours' },
+                    grace: '10%'
+                }
+            },
+            layout: {
+                padding: { top: 20 }
             }
         }
     });
@@ -533,7 +535,7 @@ function displayStudents(students) {
                                 <div class="detail-col detail-col-center"><strong>Total dépensé</strong><div class="detail-value">${totalAmountWithExtra.toFixed(2)} €</div>${extraAmount ? `<div class="detail-note">(+${extraAmount.toFixed(2)} € bonus)</div>` : ''}</div>
                             </div>
                         </div>
-                        <!-- Slide 1 : Graphique mensuel (courbe) -->
+                        <!-- Slide 1 : Graphique mensuel (barres) -->
                         <div class="carousel-slide" data-slide="1">
                             <canvas id="${chartId}" class="student-graph-canvas"></canvas>
                         </div>
@@ -657,7 +659,7 @@ function updateRevenueChart() {
     if (labelElem) labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
-// ========== GRAPHIQUE COURS ==========
+// ========== GRAPHIQUE COURS (PARETO : barres étudiants + ligne leçons) ==========
 function computeMonthlyLessonsAndStudents(studentsData) {
     const monthlyMap = new Map();
     const now = new Date();
@@ -753,28 +755,50 @@ function updateLessonsStudentsChart() {
     const studentsData = visibleMonths.map(m => allMonthlyLessons[m]?.students || 0);
 
     if (lessonsStudentsChart) lessonsStudentsChart.destroy();
+
+    // Graphique combiné : barres pour étudiants, ligne pour leçons
     lessonsStudentsChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: labels,
             datasets: [
-                { 
-                    label: 'Leçons effectuées', 
-                    data: lessonsData, 
-                    borderColor: '#3c84f6', 
-                    backgroundColor: 'rgba(60,132,246,0.1)', 
-                    tension: 0.3, 
-                    fill: true,
-                    datalabels: { align: 'top', offset: 6, color: '#3c84f6' }
+                {
+                    label: 'Étudiants uniques',
+                    data: studentsData,
+                    type: 'bar',
+                    backgroundColor: '#ff9800',
+                    borderRadius: 6,
+                    yAxisID: 'y',
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 4,
+                        color: '#b45f06',
+                        font: { weight: 'bold', size: 10 },
+                        formatter: (value) => value
+                    }
                 },
-                { 
-                    label: 'Étudiants uniques', 
-                    data: studentsData, 
-                    borderColor: '#ff9800', 
-                    backgroundColor: 'rgba(255,152,0,0.1)', 
-                    tension: 0.3, 
+                {
+                    label: 'Leçons effectuées',
+                    data: lessonsData,
+                    type: 'line',
+                    borderColor: '#3c84f6',
+                    backgroundColor: 'rgba(60,132,246,0.1)',
+                    tension: 0.3,
                     fill: true,
-                    datalabels: { align: 'top', offset: 6, color: '#ff9800' }
+                    pointBackgroundColor: '#3c84f6',
+                    pointBorderColor: '#fff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    yAxisID: 'y',
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 8,
+                        color: '#1e4663',
+                        font: { weight: 'bold', size: 11 },
+                        formatter: (value) => value
+                    }
                 }
             ]
         },
@@ -784,12 +808,19 @@ function updateLessonsStudentsChart() {
             plugins: {
                 tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}` } },
                 legend: { position: 'top' },
-                datalabels: {
-                    font: { weight: 'bold', size: 11 },
-                    formatter: (value) => value
+                datalabels: {}
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, precision: 0 },
+                    title: { display: true, text: 'Nombre' },
+                    grace: '10%'
                 }
             },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, title: { display: true, text: 'Nombre' } } }
+            layout: {
+                padding: { top: 20 }
+            }
         }
     });
 
