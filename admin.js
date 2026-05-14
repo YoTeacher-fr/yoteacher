@@ -1,5 +1,5 @@
-// admin.js – version optimisée (chargement rapide, calcul à la demande)
-console.log('🔵 [ADMIN.JS] Script chargé – version optimisée');
+// admin.js – version optimisée (chargement rapide avec spinners immédiats)
+console.log('🔵 [ADMIN.JS] Script chargé – version avec squelette');
 
 if (typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
@@ -450,7 +450,6 @@ function initStudentChart(studentId, bookings) {
     const canvasId = `student-chart-${studentId}`;
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
-    // Si le graphique existe déjà, ne pas recréer
     if (studentCharts[studentId]) return;
 
     const { months, counts } = computeMonthlyLessonsForStudent(bookings);
@@ -512,7 +511,7 @@ function initStudentChart(studentId, bookings) {
     });
 }
 
-// ========== AFFICHAGE ÉTUDIANTS – sans calcul préalable des graphiques ==========
+// ========== AFFICHAGE ÉTUDIANTS – sans calcul préalable ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
@@ -527,9 +526,7 @@ function displayStudents(students) {
         const totalAmountWithExtra = totalSpentEur + extraAmount;
         const bookingsHtml = (s.bookings || []).map(b => `<div class="booking-history-item">${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status || '?'})</div>`).join('') || 'Aucune réservation';
         
-        // On stocke les bookings dans un attribut data pour usage ultérieur
-        const bookingsJson = escapeHtml(JSON.stringify(s.bookings || [])); // simple échappement pour le HTML
-        // Note : on ne calcule pas computeMonthlyLessonsForStudent ici
+        const bookingsJson = escapeHtml(JSON.stringify(s.bookings || []));
         
         return `
             <div class="student-row" data-student-id="${s.id}" data-bookings='${bookingsJson}'>
@@ -559,7 +556,6 @@ function displayStudents(students) {
         `;
     }).join('');
 
-    // Initialisation des carrousels et gestion du graphique à la demande
     document.querySelectorAll('.student-row').forEach(row => {
         const studentId = row.dataset.studentId;
         let bookings = [];
@@ -580,7 +576,6 @@ function displayStudents(students) {
                 if (i === index) slide.classList.add('active');
                 else slide.classList.remove('active');
             });
-            // Si on affiche la slide du graphique (index 1) et que le graphique n'existe pas encore
             if (index === 1 && !studentCharts[studentId]) {
                 initStudentChart(studentId, bookings);
             }
@@ -610,7 +605,6 @@ function displayStudents(students) {
             }
         });
         
-        // Initialisation : slide 0 active
         showSlide(0);
     });
 }
@@ -766,7 +760,7 @@ function updateLessonsStudentsChart() {
                     label: 'Étudiants uniques',
                     data: studentsData,
                     type: 'bar',
-                    backgroundColor: '#d4a373',  // couleur douce
+                    backgroundColor: '#d4a373',
                     borderRadius: 6,
                     yAxisID: 'y',
                     datalabels: {
@@ -828,14 +822,9 @@ function updateLessonsStudentsChart() {
     if (labelElem) labelElem.innerText = currentLessonsMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
-// ========== CHARGEMENT PRINCIPAL AVEC SQUELETTE ==========
+// ========== CHARGEMENT PRINCIPAL AVEC SQUELETTE IMMÉDIAT ==========
 async function loadDashboard() {
     console.log('🔄 [ADMIN.JS] loadDashboard – début');
-    // Afficher un état de chargement dans chaque bloc
-    document.getElementById('adminUpcomingLessons').innerHTML = '<div class="loading-spinner">⏳ Chargement des cours...</div>';
-    document.getElementById('activePackagesList').innerHTML = '<div class="loading-spinner">⏳ Chargement des forfaits...</div>';
-    document.getElementById('studentsList').innerHTML = '<div class="loading-spinner">⏳ Chargement des étudiants...</div>';
-    
     try {
         const data = await fetchAdminDashboard();
         displayUpcoming(data.upcoming);
@@ -850,19 +839,38 @@ async function loadDashboard() {
     } catch (err) {
         console.error('❌ [ADMIN.JS] Erreur chargement dashboard:', err);
         alert('Erreur chargement: ' + err.message);
+        // Afficher une erreur dans les conteneurs
+        const upcoming = document.getElementById('adminUpcomingLessons');
+        if (upcoming) upcoming.innerHTML = '<div class="error">Erreur de chargement</div>';
+        const packages = document.getElementById('activePackagesList');
+        if (packages) packages.innerHTML = '<div class="error">Erreur de chargement</div>';
+        const students = document.getElementById('studentsList');
+        if (students) students.innerHTML = '<div class="error">Erreur de chargement</div>';
     }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🏁 [ADMIN.JS] DOMContentLoaded');
+    
+    // === AFFICHAGE IMMÉDIAT DES SPINNERS ===
+    const upcomingContainer = document.getElementById('adminUpcomingLessons');
+    const packagesContainer = document.getElementById('activePackagesList');
+    const studentsContainer = document.getElementById('studentsList');
+    if (upcomingContainer) upcomingContainer.innerHTML = '<div class="loading-spinner">⏳ Chargement des cours...</div>';
+    if (packagesContainer) packagesContainer.innerHTML = '<div class="loading-spinner">⏳ Chargement des forfaits...</div>';
+    if (studentsContainer) studentsContainer.innerHTML = '<div class="loading-spinner">⏳ Chargement des étudiants...</div>';
+    
     try {
         await waitForSupabase();
         await getToken();
+        
         const { data: { user } } = await supabase.auth.getUser();
         const emailSpan = document.getElementById('adminEmail');
         if (emailSpan && user) emailSpan.innerText = user.email;
+        
         await loadDashboard();
         document.body.classList.add('loaded');
+        
         document.getElementById('refreshAdminBtn')?.addEventListener('click', () => loadDashboard());
         document.getElementById('logoutAdminBtn')?.addEventListener('click', async () => {
             if (window.authManager) await window.authManager.signOut();
@@ -872,9 +880,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('monthSliderNext')?.addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
         document.getElementById('lessonsMonthSliderPrev')?.addEventListener('click', () => { currentLessonsMonthOffset--; updateLessonsStudentsChart(); });
         document.getElementById('lessonsMonthSliderNext')?.addEventListener('click', () => { currentLessonsMonthOffset++; updateLessonsStudentsChart(); });
+        
         console.log('✅ [ADMIN.JS] Initialisation terminée');
     } catch (err) {
         console.error('❌ [ADMIN.JS] Erreur initialisation:', err);
         alert('Erreur initialisation: ' + err.message);
+        if (upcomingContainer) upcomingContainer.innerHTML = '<div class="error">Erreur de chargement</div>';
+        if (packagesContainer) packagesContainer.innerHTML = '<div class="error">Erreur de chargement</div>';
+        if (studentsContainer) studentsContainer.innerHTML = '<div class="error">Erreur de chargement</div>';
     }
 });
