@@ -71,14 +71,12 @@
     background-color: #f5f5f5;
 }
 
-/* CORRECTION DU PADDING DU BODY - AUGMENTÉ */
 body {
     padding-top: 80px !important;
     margin: 0;
     height: 100%;
 }
 
-/* DASHBOARD COMPLET */
 body {
     opacity: 0;
     visibility: hidden;
@@ -176,14 +174,12 @@ body.loaded {
     transform: translateY(-2px);
 }
 
-/* Grille principale */
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
     gap: 25px;
 }
 
-/* Carte cours à venir (4 colonnes) */
 .card-upcoming {
     grid-column: span 4;
     background: white;
@@ -196,7 +192,6 @@ body.loaded {
     flex-direction: column;
 }
 
-/* Carte forfaits (4 colonnes) */
 .card-packages {
     grid-column: span 4;
     background: white;
@@ -210,7 +205,6 @@ body.loaded {
     min-height: 400px;
 }
 
-/* Carte profil (4 colonnes) */
 .card-profile {
     grid-column: span 4;
     background: white;
@@ -262,7 +256,6 @@ body.loaded {
     margin: 0;
 }
 
-/* Navigation des cours */
 .lesson-nav {
     display: flex;
     gap: 8px;
@@ -301,7 +294,6 @@ body.loaded {
     text-align: center;
 }
 
-/* Section Cours à venir */
 .upcoming-lesson-card {
     background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
     border: 2px solid #4caf50;
@@ -347,7 +339,6 @@ body.loaded {
     font-weight: 600;
 }
 
-/* Boutons de cours EN DEHORS de la carte */
 .lesson-external-actions {
     display: flex;
     gap: 10px;
@@ -393,7 +384,6 @@ body.loaded {
     border-color: #45a049;
 }
 
-/* Section Forfaits */
 .packages-container {
     flex-grow: 1;
     display: flex;
@@ -446,7 +436,6 @@ body.loaded {
     flex-grow: 1;
 }
 
-/* Flèches de navigation DANS la carte */
 .package-nav-internal {
     display: flex;
     gap: 8px;
@@ -511,7 +500,6 @@ body.loaded {
     color: #3c84f6;
 }
 
-/* Nouveau style pour l'affichage de la date d'expiration avec compteur de jours */
 .package-expiry-container {
     margin-top: 15px;
     padding-top: 10px;
@@ -557,7 +545,6 @@ body.loaded {
     color: #e91e63;
 }
 
-/* Avertissement expiration proche */
 .expiry-warning {
     background-color: #fff3cd;
     border: 1px solid #ffeaa7;
@@ -578,7 +565,6 @@ body.loaded {
     100% { opacity: 1; }
 }
 
-/* Section Profil */
 .profile-info {
     flex-grow: 1;
     display: flex;
@@ -612,7 +598,7 @@ body.loaded {
 }
 
 .btn-profile {
-    padding: 10px 20px; /* Réduire le padding horizontal */
+    padding: 10px 20px;
     background: #3c84f6;
     color: white;
     border: none;
@@ -621,14 +607,14 @@ body.loaded {
     font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.3s;
-    display: inline-flex; /* Changer de flex à inline-flex */
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     text-decoration: none;
-    margin-top: 15px; /* Ajouter un peu d'espace au-dessus */
-    width: auto; /* Remplacer width: 100% par auto */
-    min-width: fit-content; /* S'assurer qu'il s'adapte au contenu */
+    margin-top: 15px;
+    width: auto;
+    min-width: fit-content;
 }
 
 .btn-profile:hover {
@@ -637,7 +623,6 @@ body.loaded {
     box-shadow: 0 8px 20px rgba(60, 132, 246, 0.3);
 }
 
-/* Section Réserver un cours */
 .course-buttons-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -690,7 +675,6 @@ body.loaded {
     opacity: 0.9;
 }
 
-/* Messages d'erreur/attention */
 .lesson-warning {
     background-color: #fff3cd;
     border: 1px solid #ffeaa7;
@@ -704,7 +688,6 @@ body.loaded {
     gap: 8px;
 }
 
-/* Messages vides */
 .no-upcoming, .no-packages {
     text-align: center;
     padding: 40px 20px;
@@ -734,13 +717,116 @@ body.loaded {
     color: #3c84f6;
 }
 
+/* ========== HISTORIQUE DES COURS ========== */
+.history-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+.history-item {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid #3c84f6;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.history-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background: #ffffff;
+}
+
+.history-item-cancelled {
+    border-left-color: #e74c3c;
+    opacity: 0.8;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.history-date {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #2c3e50;
+}
+
+.history-badge {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 30px;
+    font-weight: 600;
+}
+
+.badge-confirmed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-completed {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.badge-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.history-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.history-details span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.history-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.history-pagination button {
+    background: #f0f0f0;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.history-pagination button:hover:not(:disabled) {
+    background: #3c84f6;
+    color: white;
+}
+
+.history-pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
     .course-buttons-row {
         grid-template-columns: repeat(2, 1fr);
         gap: 15px;
     }
-    
     .card-upcoming, .card-packages, .card-profile {
         grid-column: span 6;
     }
@@ -751,25 +837,20 @@ body.loaded {
         grid-template-columns: repeat(6, 1fr);
         gap: 20px;
     }
-    
     .card-upcoming, .card-packages, .card-profile {
         grid-column: span 6;
     }
-    
     .dashboard-header {
         flex-direction: column;
         text-align: center;
         padding: 20px;
     }
-    
     .dashboard-actions {
         justify-content: center;
     }
-    
     .welcome-message {
         min-width: 100%;
     }
-    
     .card-packages {
         min-height: auto;
     }
@@ -779,53 +860,42 @@ body.loaded {
     .dashboard {
         padding: 15px 15px 30px;
     }
-    
     .card-upcoming, .card-packages, .card-profile {
         grid-column: span 12;
     }
-    
     .course-buttons-row {
         grid-template-columns: 1fr;
         gap: 12px;
     }
-    
     .dashboard-header {
         padding: 18px 15px;
     }
-    
     .welcome-message h1 {
         font-size: 1.4rem;
     }
-    
     .dashboard-action-btn {
         padding: 7px 14px;
         font-size: 0.8rem;
     }
-    
     .card-header {
         flex-direction: column;
         text-align: center;
         gap: 8px;
     }
-    
     .card-header-left {
         flex-direction: column;
         gap: 8px;
     }
-    
     .card-header i {
         width: 40px;
         height: 40px;
     }
-    
     .card-header h2 {
         font-size: 1.1rem;
     }
-    
     .lesson-external-actions {
         flex-direction: column;
     }
-    
     .mobile-login-btn-header {
         display: block !important;
         background-color: #4f9ad1;
@@ -838,7 +908,6 @@ body.loaded {
         margin-left: auto;
         z-index: 1001;
     }
-    
     .logo-section {
         position: absolute;
         left: 50%;
@@ -847,51 +916,48 @@ body.loaded {
         align-items: center;
         gap: 5px;
     }
-    
     .logo {
         font-size: 1.5rem !important;
     }
-    
     .flag {
         font-size: 1.1rem;
     }
-    
     .header-right-group {
         display: none !important;
     }
-    
     .main-header {
         min-height: 50px !important;
     }
-    
     body {
         padding-top: 60px !important;
     }
-    
     .dashboard {
         min-height: calc(100vh - 60px);
     }
-    
     .course-button {
         height: 80px;
     }
-    
     .course-button-content {
         padding: 15px 12px;
     }
-    
     .course-button-title {
         font-size: 1.1rem;
     }
-    
     .package-internal-header {
         flex-direction: column;
         gap: 10px;
     }
-    
     .package-nav-internal {
         width: 100%;
         justify-content: center;
+    }
+    .history-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .history-details {
+        flex-direction: column;
+        gap: 8px;
     }
 }
 
@@ -900,87 +966,69 @@ body.loaded {
         flex-direction: column;
         width: 100%;
     }
-    
     .dashboard-action-btn {
         width: 100%;
         justify-content: center;
     }
-    
     .course-button {
         height: 75px;
     }
-    
     .course-button-title {
         font-size: 1rem;
     }
-    
     .course-button-subtitle {
         font-size: 0.8rem;
     }
-    
     .card-upcoming, .card-packages, .card-profile {
         padding: 15px;
     }
-    
     .lesson-nav {
         justify-content: center;
         width: 100%;
     }
-    
     .package-nav-arrow-internal {
         width: 28px;
         height: 28px;
         font-size: 0.8rem;
     }
-    
     .package-internal-card {
         padding: 15px;
     }
-    
     .package-internal-icon {
         width: 40px;
         height: 40px;
         font-size: 1.1rem;
     }
-    
     .package-internal-title {
         font-size: 1rem;
     }
-    
     .duration-row {
         padding: 10px 12px;
         font-size: 0.9rem;
     }
-    
     .duration-label {
         font-size: 0.9rem;
     }
-    
     .duration-credits {
         font-size: 1.1rem;
     }
-    
     .expiry-date {
         font-size: 0.8rem;
     }
-    
     .expiry-days {
         font-size: 0.75rem;
     }
 }
 
-/* Cacher le bouton mobile sur desktop */
 @media (min-width: 769px) {
     .mobile-login-btn-header {
         display: none !important;
     }
-    
     .header-right-group {
         display: flex !important;
     }
 }
 
-/* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -990,7 +1038,6 @@ body.loaded {
     animation: fadeIn 0.5s ease forwards;
 }
 
-/* Style pour le bouton d'annulation désactivé */
 .btn-cancel-external:disabled {
     opacity: 0.5;
     cursor: not-allowed;

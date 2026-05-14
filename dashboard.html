@@ -12,44 +12,32 @@
     <script src="dashboard.js" defer></script>
 </head>
 <body>
-    <!-- Header identique à login -->
     <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
-                <!-- Logo à gauche -->
                 <div class="logo-section">
                     <a href="index.html" class="logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
                 </div>
-                
-                <!-- Bouton Déconnexion Mobile -->
                 <a href="#" id="mobileLogoutBtn" class="mobile-login-btn-header" data-i18n="dashboard.logout_mobile">Déconnexion</a>
-                
-                <!-- Groupe des boutons de droite -->
                 <div class="header-right-group">
-                    <!-- Sélecteur de langue -->
                     <div class="language-switcher" id="languageSwitcherDesktop">
                         <span class="flag">🌐</span>
                         <span>EN</span>
                     </div>
-                    
-                    <!-- Bouton Déconnexion Desktop -->
                     <a href="#" id="logoutBtn" class="login-btn" data-i18n="dashboard.logout_desktop">Déconnexion</a>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Dashboard complet -->
     <section class="dashboard">
         <div class="dashboard-container">
-            <!-- En-tête du dashboard -->
             <div class="dashboard-header" id="welcomeMessage">
                 <div class="welcome-message">
                     <h1 data-i18n="dashboard.welcome_loading">Chargement...</h1>
                     <p data-i18n="dashboard.welcome_loading_message">Veuillez patienter pendant le chargement de votre dashboard.</p>
                 </div>
-                
                 <div class="dashboard-actions" id="dashboardActions" style="display: none;">
                     <a href="booking.html?type=essai" class="dashboard-action-btn">
                         <i class="fas fa-plus-circle"></i>
@@ -66,15 +54,12 @@
                 </div>
             </div>
 
-            <!-- Section de chargement -->
             <div class="loading" id="loadingSection">
                 <i class="fas fa-spinner fa-spin"></i>
                 <p data-i18n="dashboard.loading_data">Chargement de vos données...</p>
             </div>
 
-            <!-- Contenu principal du dashboard -->
             <div id="dashboardContent" style="display: none;">
-                <!-- Grille principale - 3 cartes en ligne -->
                 <div class="dashboard-grid">
                     <!-- Carte 1 : Cours à venir -->
                     <div class="card-upcoming fade-in">
@@ -84,25 +69,16 @@
                                 <h2 data-i18n="dashboard.upcoming_lessons_title">Cours à venir</h2>
                             </div>
                             <div class="lesson-nav" id="lessonNav" style="display: none;">
-                                <button class="nav-arrow" id="prevLessonBtn" disabled>
-                                    <i class="fas fa-chevron-left"></i>
-                                </button>
+                                <button class="nav-arrow" id="prevLessonBtn" disabled><i class="fas fa-chevron-left"></i></button>
                                 <span class="lesson-counter" id="lessonCounter">1/1</span>
-                                <button class="nav-arrow" id="nextLessonBtn" disabled>
-                                    <i class="fas fa-chevron-right"></i>
-                                </button>
+                                <button class="nav-arrow" id="nextLessonBtn" disabled><i class="fas fa-chevron-right"></i></button>
                             </div>
                         </div>
-                        <div id="nextLessonContent">
-                            <!-- Le contenu sera chargé dynamiquement -->
-                        </div>
-                        <!-- Boutons EN DEHORS de la carte -->
-                        <div class="lesson-external-actions" id="lessonExternalActions" style="display: none;">
-                            <!-- Boutons seront ajoutés dynamiquement -->
-                        </div>
+                        <div id="nextLessonContent"></div>
+                        <div class="lesson-external-actions" id="lessonExternalActions" style="display: none;"></div>
                     </div>
 
-                    <!-- Carte 2 : Mes forfaits (compacte avec navigation) -->
+                    <!-- Carte 2 : Mes forfaits -->
                     <div class="card-packages fade-in">
                         <div class="card-header">
                             <div class="card-header-left">
@@ -110,10 +86,7 @@
                                 <h2 data-i18n="dashboard.packages_title">Mes forfaits</h2>
                             </div>
                         </div>
-                        <!-- Conteneur des cartes de forfaits (une seule visible) -->
-                        <div class="packages-container" id="packagesContainer">
-                            <!-- Le contenu sera chargé dynamiquement avec la carte Conversation visible par défaut -->
-                        </div>
+                        <div class="packages-container" id="packagesContainer"></div>
                     </div>
 
                     <!-- Carte 3 : Mon profil -->
@@ -124,9 +97,7 @@
                                 <h2 data-i18n="dashboard.profile_title">Mon Profil</h2>
                             </div>
                         </div>
-                        <div class="profile-info" id="profileInfo">
-                            <!-- Le contenu sera chargé dynamiquement -->
-                        </div>
+                        <div class="profile-info" id="profileInfo"></div>
                         <a href="profile.html" class="btn-profile">
                             <i class="fas fa-edit"></i>
                             <span data-i18n="dashboard.edit_profile_btn">Modifier mon profil</span>
@@ -143,26 +114,39 @@
                         </div>
                     </div>
                     <div class="course-buttons-row">
-                        <!-- Conversation -->
                         <a href="booking.html?type=conversation" class="course-button">
                             <div class="course-button-content" style="background: linear-gradient(135deg, #2d8de2, #2d8de2);">
                                 <div class="course-button-title" data-i18n="dashboard.conversation_btn">Conversation</div>
                             </div>
                         </a>
-
-                        <!-- Curriculum -->
                         <a href="booking.html?type=curriculum" class="course-button">
                             <div class="course-button-content" style="background: linear-gradient(135deg, #636dcd, #636dcd);">
                                 <div class="course-button-title" data-i18n="dashboard.curriculum_btn">Curriculum</div>
                             </div>
                         </a>
-
-                        <!-- Examen -->
                         <a href="booking.html?type=examen" class="course-button">
                             <div class="course-button-content" style="background: linear-gradient(135deg, #135cb7, #135cb7);">
                                 <div class="course-button-title" data-i18n="dashboard.exam_btn">Préparation d'examen</div>
                             </div>
                         </a>
+                    </div>
+                </div>
+
+                <!-- Section : Historique des cours (NOUVEAU) -->
+                <div class="card-upcoming fade-in" style="margin-top: 25px; grid-column: span 12;">
+                    <div class="card-header">
+                        <div class="card-header-left">
+                            <i class="fas fa-history"></i>
+                            <h2 data-i18n="dashboard.history_title">Historique des cours</h2>
+                        </div>
+                        <div class="lesson-nav" id="historyNav" style="display: none;">
+                            <button class="nav-arrow" id="prevHistoryBtn" disabled><i class="fas fa-chevron-left"></i></button>
+                            <span class="lesson-counter" id="historyCounter">1/1</span>
+                            <button class="nav-arrow" id="nextHistoryBtn" disabled><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div id="historyContent">
+                        <div class="loading">Chargement de l'historique...</div>
                     </div>
                 </div>
             </div>
