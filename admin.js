@@ -22,8 +22,7 @@ const PACKAGES_PER_PAGE = 3;
 let activePackagesData = [];
 
 const EXCLUDED_STUDENT_IDS = [
-    '88698eb2-904f-410b-88e1-a93c1397e0d1',
-    'ddb62c55-b9f0-4852-8aa4-a53ea219ca83'
+    '88698eb2-904f-410b-88e1-a93c1397e0d1'
 ];
 
 const EXTRA_COURSES = {
