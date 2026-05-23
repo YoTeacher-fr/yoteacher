@@ -1,3 +1,6 @@
+// dashboard.js – version corrigée (écran blanc résolu)
+console.log("📊 dashboard.js chargé");
+
 // Fonction pour forcer la synchronisation de l'utilisateur
 window.forceUserSync = function() {
     const storedUser = localStorage.getItem('yoteacher_user');
@@ -24,7 +27,15 @@ window.forceUserSync = function() {
 let isLoadingDashboard = false;
 let dashboardLoaded = false;
 
+// Fonction pour forcer l'affichage du body
+function forceShowBody() {
+    document.body.classList.add('loaded');
+    document.body.style.opacity = '1';
+    document.body.style.visibility = 'visible';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Masquer le body au départ (pour l'effet de chargement)
     document.body.style.opacity = '0';
     document.body.style.visibility = 'hidden';
     
@@ -34,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('auth:login', function() {
         console.log('✅ Événement auth:login reçu, dashboard prêt');
+        forceShowBody(); // Afficher immédiatement
         if (window.loadDashboard) {
             window.loadDashboard();
         }
@@ -62,9 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (!window.authManager.user) {
                     window.authManager.user = userData;
                 }
-                document.body.classList.add('loaded');
-                document.body.style.opacity = '1';
-                document.body.style.visibility = 'visible';
+                forceShowBody(); // Afficher immédiatement
                 setTimeout(() => {
                     if (window.loadDashboard) {
                         console.log('📊 Chargement du dashboard...');
@@ -84,9 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.authManager && typeof window.authManager.isAuthenticated === 'function') {
                 if (window.authManager.isAuthenticated()) {
                     console.log('✅ Utilisateur authentifié via authManager');
-                    document.body.classList.add('loaded');
-                    document.body.style.opacity = '1';
-                    document.body.style.visibility = 'visible';
+                    forceShowBody(); // Afficher immédiatement
                     setTimeout(() => {
                         if (window.loadDashboard) {
                             window.loadDashboard();
@@ -109,8 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentUrl = encodeURIComponent(window.location.href);
             window.location.replace(`login.html?redirect=${currentUrl}`);
         }
-        setTimeout(checkAuthentication, 200);
+        setTimeout(checkAuthManager, 200);
     }
+    
+    setTimeout(checkAuthentication, 200);
 
     // Variables pour la navigation des cours
     let upcomingLessons = [];
