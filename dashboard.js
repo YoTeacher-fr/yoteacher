@@ -109,10 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentUrl = encodeURIComponent(window.location.href);
             window.location.replace(`login.html?redirect=${currentUrl}`);
         }
-        setTimeout(checkAuthManager, 200);
+        setTimeout(checkAuthentication, 200);
     }
-    
-    setTimeout(checkAuthentication, 200);
 
     // Variables pour la navigation des cours
     let upcomingLessons = [];
@@ -807,7 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nextBtn) nextBtn.disabled = currentLessonIndex === upcomingLessons.length - 1;
     }
     
-    // ========== HISTORIQUE DES COURS ==========
+    // ========== HISTORIQUE DES COURS AVEC DOCUMENTS ==========
     async function loadLessonHistory(userId) {
         const container = document.getElementById('historyContent');
         if (!container) return;
@@ -821,7 +819,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 .lt('start_time', now)
                 .order('start_time', { ascending: false });
             if (error) throw error;
-            lessonHistory = data || [];
+            
+            const bookingsWithDocs = await Promise.all((data || []).map(async (booking) => {
+                const { data: docs } = await supabase
+                    .from('booking_documents')
+                    .select('*')
+                    .eq('booking_id', booking.id);
+                return { ...booking, documents: docs || [] };
+            }));
+            
+            lessonHistory = bookingsWithDocs;
             if (lessonHistory.length === 0) {
                 container.innerHTML = `<div class="no-upcoming"><i class="far fa-calendar-alt"></i><p>${window.translationManager?.getTranslation('dashboard.no_history') || 'Aucun cours passé'}</p></div>`;
                 const historyNav = document.getElementById('historyNav');
@@ -850,26 +857,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const end = start + HISTORY_PER_PAGE;
         const pageItems = lessonHistory.slice(start, end);
         const totalPages = Math.ceil(lessonHistory.length / HISTORY_PER_PAGE);
-        if (counterSpan) {
-            counterSpan.textContent = `${currentHistoryPage + 1}/${totalPages}`;
-        }
+        if (counterSpan) counterSpan.textContent = `${currentHistoryPage + 1}/${totalPages}`;
+        
         const isFrench = window.translationManager?.getCurrentLanguage() === 'fr';
         const itemsHtml = pageItems.map(booking => {
             const lessonDate = new Date(booking.start_time);
             const formattedDate = lessonDate.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
             });
-            let statusText = '';
-            let statusClass = '';
+            let statusText = '', statusClass = '';
             switch (booking.status) {
                 case 'confirmed': statusText = isFrench ? 'Confirmé' : 'Confirmed'; statusClass = 'badge-confirmed'; break;
                 case 'completed': statusText = isFrench ? 'Terminé' : 'Completed'; statusClass = 'badge-completed'; break;
                 case 'cancelled': statusText = isFrench ? 'Annulé' : 'Cancelled'; statusClass = 'badge-cancelled'; break;
                 default: statusText = booking.status || '—'; statusClass = '';
             }
-            const courseTypeLabel = booking.course_type 
-                ? (booking.course_type.charAt(0).toUpperCase() + booking.course_type.slice(1))
-                : (isFrench ? 'Cours' : 'Lesson');
+            const courseTypeLabel = booking.course_type ? booking.course_type.charAt(0).toUpperCase() + booking.course_type.slice(1) : (isFrench ? 'Cours' : 'Lesson');
+            
+            const docs = booking.documents || [];
+            const iconsHtml = docs.map(doc => {
+                let iconClass = 'fa-file';
+                if (doc.document_type === 'pdf') iconClass = 'fa-file-pdf';
+                else if (doc.document_type === 'image') iconClass = 'fa-file-image';
+                else if (doc.document_type === 'text') iconClass = 'fa-paperclip';
+                else if (doc.document_type === 'link') iconClass = 'fa-globe';
+                return `<button class="btn-view-doc" data-doc='${JSON.stringify(doc)}' title="${escapeHtml(doc.document_name)}"><i class="fas ${iconClass}"></i></button>`;
+            }).join('');
+            
             return `
                 <div class="history-item ${booking.status === 'cancelled' ? 'history-item-cancelled' : ''}">
                     <div class="history-header">
@@ -880,11 +894,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span><i class="fas fa-chalkboard-user"></i> ${courseTypeLabel}</span>
                         <span><i class="far fa-clock"></i> ${booking.duration_minutes || 60} min</span>
                         <span><i class="fas fa-tag"></i> ${booking.booking_number || '#' + booking.id.substring(0,8)}</span>
-
+                        ${iconsHtml ? `<span class="document-icons">${iconsHtml}</span>` : ''}
                     </div>
                 </div>
             `;
         }).join('');
+        
         container.innerHTML = `
             <div class="history-list">${itemsHtml}</div>
             ${totalPages > 1 ? `
@@ -894,10 +909,54 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             ` : ''}
         `;
-        const prevBtn = document.getElementById('historyPrevPageBtn');
-        const nextBtn = document.getElementById('historyNextPageBtn');
-        if (prevBtn) prevBtn.addEventListener('click', () => { if (currentHistoryPage > 0) { currentHistoryPage--; renderHistoryPage(); } });
-        if (nextBtn) nextBtn.addEventListener('click', () => { if (currentHistoryPage < totalPages - 1) { currentHistoryPage++; renderHistoryPage(); } });
+        
+        document.getElementById('historyPrevPageBtn')?.addEventListener('click', () => { if (currentHistoryPage > 0) { currentHistoryPage--; renderHistoryPage(); } });
+        document.getElementById('historyNextPageBtn')?.addEventListener('click', () => { if (currentHistoryPage < totalPages - 1) { currentHistoryPage++; renderHistoryPage(); } });
+        
+        container.querySelectorAll('.btn-view-doc').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const doc = JSON.parse(btn.dataset.doc);
+                openDocument(doc);
+            });
+        });
+    }
+    
+    function escapeHtml(str) {
+        return (str || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+    }
+    
+    function openDocument(doc) {
+        let url = doc.document_url;
+        const type = doc.document_type;
+        const name = doc.document_name;
+
+        if (url.includes('drive.google.com')) {
+            const match = url.match(/\/d\/(.+?)\//);
+            if (match) url = `https://drive.google.com/file/d/${match[1]}/preview`;
+        }
+
+        if (type === 'image') {
+            createModal(`<img src="${url}" alt="${name}" style="max-width:100%; max-height:80vh;">`);
+        } else if (type === 'pdf' || url.includes('drive.google.com') || url.match(/\.pdf$/i)) {
+            createModal(`<iframe src="${url}" style="width:100%; height:100%; border:none;"></iframe>`, '90vw', '90vh');
+        } else {
+            window.open(doc.document_url, '_blank');
+        }
+    }
+    
+    function createModal(contentHtml, width = '80vw', height = '80vh') {
+        const modal = document.createElement('div');
+        modal.className = 'doc-preview-modal';
+        modal.innerHTML = `
+            <div class="modal-content" style="width:${width}; height:${height};">
+                <span class="close">&times;</span>
+                ${contentHtml}
+            </div>`;
+        document.body.appendChild(modal);
+        modal.querySelector('.close').onclick = () => modal.remove();
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+        return modal;
     }
     
     // Gestion de la déconnexion, refresh, navigation

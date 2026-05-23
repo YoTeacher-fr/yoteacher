@@ -501,3 +501,18 @@
         width: calc(100% - 20px);
     }
 }
+/* Bouton d'ajout de document (admin) */
+.btn-add-document {
+    background: #3c84f6;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 4px 8px;
+    margin-left: 10px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-add-document:hover {
+    background: #2c74e6;
+}

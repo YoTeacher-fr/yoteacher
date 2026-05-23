@@ -450,7 +450,6 @@ function initStudentChart(studentId, bookings) {
     const canvasId = `student-chart-${studentId}`;
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
-    // Si le graphique existe déjà, ne pas recréer
     if (studentCharts[studentId]) return;
 
     const { months, counts } = computeMonthlyLessonsForStudent(bookings);
@@ -512,7 +511,7 @@ function initStudentChart(studentId, bookings) {
     });
 }
 
-// ========== AFFICHAGE ÉTUDIANTS – sans calcul préalable des graphiques ==========
+// ========== AFFICHAGE ÉTUDIANTS – avec boutons d'ajout de document ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
@@ -525,11 +524,16 @@ function displayStudents(students) {
         const extraAmount = EXTRA_AMOUNTS[s.id] || 0;
         const totalCoursesWithExtra = s.total_courses + extraCourses;
         const totalAmountWithExtra = totalSpentEur + extraAmount;
-        const bookingsHtml = (s.bookings || []).map(b => `<div class="booking-history-item">${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status || '?'})</div>`).join('') || 'Aucune réservation';
+        const bookingsHtml = (s.bookings || []).map(b => `
+            <div class="booking-history-item" data-booking-id="${b.id}">
+                ${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status || '?'})
+                <button class="btn-add-document" data-booking-id="${b.id}" data-booking-number="${b.booking_number}">
+                    <i class="fas fa-plus"></i> Doc
+                </button>
+            </div>
+        `).join('') || 'Aucune réservation';
         
-        // On stocke les bookings dans un attribut data pour usage ultérieur
-        const bookingsJson = escapeHtml(JSON.stringify(s.bookings || [])); // simple échappement pour le HTML
-        // Note : on ne calcule pas computeMonthlyLessonsForStudent ici
+        const bookingsJson = escapeHtml(JSON.stringify(s.bookings || []));
         
         return `
             <div class="student-row" data-student-id="${s.id}" data-bookings='${bookingsJson}'>
@@ -559,7 +563,6 @@ function displayStudents(students) {
         `;
     }).join('');
 
-    // Initialisation des carrousels et gestion du graphique à la demande
     document.querySelectorAll('.student-row').forEach(row => {
         const studentId = row.dataset.studentId;
         let bookings = [];
@@ -580,7 +583,6 @@ function displayStudents(students) {
                 if (i === index) slide.classList.add('active');
                 else slide.classList.remove('active');
             });
-            // Si on affiche la slide du graphique (index 1) et que le graphique n'existe pas encore
             if (index === 1 && !studentCharts[studentId]) {
                 initStudentChart(studentId, bookings);
             }
@@ -610,9 +612,68 @@ function displayStudents(students) {
             }
         });
         
-        // Initialisation : slide 0 active
         showSlide(0);
     });
+
+    // Attacher les écouteurs pour les boutons d'ajout de document
+    attachDocumentButtonListeners();
+}
+
+// ========== GESTION DES DOCUMENTS (ADMIN) – appel à l'edge function ==========
+async function attachDocumentButtonListeners() {
+    document.querySelectorAll('.btn-add-document').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const bookingId = btn.dataset.bookingId;
+            const bookingNumber = btn.dataset.bookingNumber;
+            await showAddDocumentModal(bookingId, bookingNumber);
+        });
+    });
+}
+
+async function showAddDocumentModal(bookingId, bookingNumber) {
+    const typeChoice = prompt(
+        "Type de document :\n1 = PDF\n2 = Image\n3 = Texte (lien .txt ou Google Doc)\n4 = Lien externe (site)",
+        "4"
+    );
+    let docType = 'link';
+    if (typeChoice === '1') docType = 'pdf';
+    else if (typeChoice === '2') docType = 'image';
+    else if (typeChoice === '3') docType = 'text';
+    else if (typeChoice !== '4') {
+        alert("Choix invalide");
+        return;
+    }
+
+    const documentUrl = prompt("Collez le lien (Google Drive, URL directe, etc.) :");
+    if (!documentUrl) return;
+
+    const documentName = prompt("Nom du document (affiché au survol) :");
+    if (!documentName) return;
+
+    try {
+        const token = await getToken();
+        const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-add-document`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                bookingId: bookingId,
+                documentName: documentName,
+                documentUrl: documentUrl,
+                documentType: docType
+            })
+        });
+        if (!res.ok) {
+            const err = await res.text();
+            throw new Error(err);
+        }
+        alert("Document ajouté !");
+    } catch (err) {
+        alert("Erreur : " + err.message);
+    }
 }
 
 // ========== GRAPHIQUE REVENUS ==========
@@ -766,7 +827,7 @@ function updateLessonsStudentsChart() {
                     label: 'Étudiants uniques',
                     data: studentsData,
                     type: 'bar',
-                    backgroundColor: '#d4a373',  // couleur douce
+                    backgroundColor: '#d4a373',
                     borderRadius: 6,
                     yAxisID: 'y',
                     datalabels: {
@@ -831,7 +892,6 @@ function updateLessonsStudentsChart() {
 // ========== CHARGEMENT PRINCIPAL AVEC SQUELETTE ==========
 async function loadDashboard() {
     console.log('🔄 [ADMIN.JS] loadDashboard – début');
-    // Afficher un état de chargement dans chaque bloc
     document.getElementById('adminUpcomingLessons').innerHTML = '<div class="loading-spinner">⏳ Chargement des cours...</div>';
     document.getElementById('activePackagesList').innerHTML = '<div class="loading-spinner">⏳ Chargement des forfaits...</div>';
     document.getElementById('studentsList').innerHTML = '<div class="loading-spinner">⏳ Chargement des étudiants...</div>';
