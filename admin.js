@@ -1,4 +1,4 @@
-// admin.js – version optimisée (chargement rapide, calcul à la demande)
+// admin.js – version optimisée avec rechargement partiel après ajout de document
 console.log('🔵 [ADMIN.JS] Script chargé – version optimisée');
 
 if (typeof ChartDataLabels !== 'undefined') {
@@ -21,9 +21,7 @@ let packagesCurrentStartIndex = 0;
 const PACKAGES_PER_PAGE = 3;
 let activePackagesData = [];
 
-const EXCLUDED_STUDENT_IDS = [
-    '88698eb2-904f-410b-88e1-a93c1397e0d1'
-];
+const EXCLUDED_STUDENT_IDS = []; // plus d'exclusion
 
 const EXTRA_COURSES = {
     'd35cafae-a634-418d-96cb-403fcc48bf2a': 152,
@@ -405,7 +403,7 @@ function displayPackages(packages) {
     buildPackagesList();
 }
 
-// ========== FONCTION POUR LES COURS PAR MOIS (ÉTUDIANT) – calcul différé ==========
+// ========== FONCTION POUR LES COURS PAR MOIS (ÉTUDIANT) ==========
 function computeMonthlyLessonsForStudent(bookings) {
     const monthlyMap = new Map();
     const now = new Date();
@@ -442,7 +440,7 @@ function computeMonthlyLessonsForStudent(bookings) {
     return { months: sortedMonths, counts };
 }
 
-// ========== GRAPHIQUE POUR UN ÉTUDIANT (BARRES) – création à la demande ==========
+// ========== GRAPHIQUE POUR UN ÉTUDIANT ==========
 let studentCharts = {};
 
 function initStudentChart(studentId, bookings) {
@@ -510,8 +508,11 @@ function initStudentChart(studentId, bookings) {
     });
 }
 
-// ========== AFFICHAGE ÉTUDIANTS – avec boutons d'ajout de document ==========
+// ========== AFFICHAGE ÉTUDIANTS ==========
+let currentStudentsData = null; // stocke les données pour rechargement partiel
+
 function displayStudents(students) {
+    currentStudentsData = students;
     const container = document.getElementById('studentsList');
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
@@ -621,12 +622,16 @@ function displayStudents(students) {
 // ========== GESTION DES DOCUMENTS (ADMIN) – appel à l'edge function ==========
 async function attachDocumentButtonListeners() {
     document.querySelectorAll('.btn-add-document').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        // Supprimer les anciens écouteurs pour éviter les doublons
+        btn.removeEventListener('click', btn._listener);
+        const listener = async (e) => {
             e.stopPropagation();
             const bookingId = btn.dataset.bookingId;
             const bookingNumber = btn.dataset.bookingNumber;
             await showAddDocumentModal(bookingId, bookingNumber);
-        });
+        };
+        btn.addEventListener('click', listener);
+        btn._listener = listener;
     });
 }
 
@@ -670,8 +675,21 @@ async function showAddDocumentModal(bookingId, bookingNumber) {
             throw new Error(err);
         }
         alert("Document ajouté !");
+        // Recharger uniquement les étudiants pour rafraîchir la liste (sans recharger toute la page)
+        await refreshStudentsList();
     } catch (err) {
+        console.error("Erreur ajout document:", err);
         alert("Erreur : " + err.message);
+    }
+}
+
+async function refreshStudentsList() {
+    try {
+        const data = await fetchAdminDashboard();
+        displayStudents(data.students);
+        // Ne pas recharger les autres parties (revenus, graphiques, etc.)
+    } catch (err) {
+        console.error("Erreur rafraîchissement étudiants:", err);
     }
 }
 
@@ -721,7 +739,7 @@ function updateRevenueChart() {
     if (labelElem) labelElem.innerText = currentMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
-// ========== GRAPHIQUE COURS (PARETO) ==========
+// ========== GRAPHIQUE COURS ==========
 function computeMonthlyLessonsAndStudents(studentsData) {
     const monthlyMap = new Map();
     const now = new Date();
@@ -888,7 +906,7 @@ function updateLessonsStudentsChart() {
     if (labelElem) labelElem.innerText = currentLessonsMonthOffset === 0 ? '6 derniers mois' : `${labels[0]} - ${labels[labels.length-1]}`;
 }
 
-// ========== CHARGEMENT PRINCIPAL AVEC SQUELETTE ==========
+// ========== CHARGEMENT PRINCIPAL ==========
 async function loadDashboard() {
     console.log('🔄 [ADMIN.JS] loadDashboard – début');
     document.getElementById('adminUpcomingLessons').innerHTML = '<div class="loading-spinner">⏳ Chargement des cours...</div>';
