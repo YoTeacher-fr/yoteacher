@@ -1,4 +1,4 @@
-// admin.js – version optimisée avec rechargement partiel après ajout de document
+// admin.js – version avec délégation d'événements pour l'ajout multiple de documents
 console.log('🔵 [ADMIN.JS] Script chargé – version optimisée');
 
 if (typeof ChartDataLabels !== 'undefined') {
@@ -21,7 +21,7 @@ let packagesCurrentStartIndex = 0;
 const PACKAGES_PER_PAGE = 3;
 let activePackagesData = [];
 
-const EXCLUDED_STUDENT_IDS = []; // plus d'exclusion
+const EXCLUDED_STUDENT_IDS = [];
 
 const EXTRA_COURSES = {
     'd35cafae-a634-418d-96cb-403fcc48bf2a': 152,
@@ -508,11 +508,8 @@ function initStudentChart(studentId, bookings) {
     });
 }
 
-// ========== AFFICHAGE ÉTUDIANTS ==========
-let currentStudentsData = null; // stocke les données pour rechargement partiel
-
+// ========== AFFICHAGE ÉTUDIANTS AVEC DÉLÉGATION D'ÉVÉNEMENTS ==========
 function displayStudents(students) {
-    currentStudentsData = students;
     const container = document.getElementById('studentsList');
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
@@ -615,24 +612,39 @@ function displayStudents(students) {
         showSlide(0);
     });
 
-    // Attacher les écouteurs pour les boutons d'ajout de document
-    attachDocumentButtonListeners();
+    // Mettre en place la délégation d'événements pour les boutons "+ Doc" (une seule fois)
+    setupDocumentButtonsDelegation();
 }
 
-// ========== GESTION DES DOCUMENTS (ADMIN) – appel à l'edge function ==========
-async function attachDocumentButtonListeners() {
-    document.querySelectorAll('.btn-add-document').forEach(btn => {
-        // Supprimer les anciens écouteurs pour éviter les doublons
-        btn.removeEventListener('click', btn._listener);
-        const listener = async (e) => {
-            e.stopPropagation();
-            const bookingId = btn.dataset.bookingId;
-            const bookingNumber = btn.dataset.bookingNumber;
-            await showAddDocumentModal(bookingId, bookingNumber);
-        };
-        btn.addEventListener('click', listener);
-        btn._listener = listener;
-    });
+// ========== GESTION DES DOCUMENTS (ADMIN) – Délégation d'événements ==========
+let delegationActive = false;
+
+function setupDocumentButtonsDelegation() {
+    const container = document.getElementById('studentsList');
+    if (!container) return;
+    
+    // Supprimer l'ancien écouteur pour éviter les doublons
+    if (container._docListener) {
+        container.removeEventListener('click', container._docListener);
+    }
+    
+    const clickHandler = async (e) => {
+        const btn = e.target.closest('.btn-add-document');
+        if (!btn) return;
+        e.stopPropagation();
+        const bookingId = btn.dataset.bookingId;
+        const bookingNumber = btn.dataset.bookingNumber;
+        if (!bookingId) {
+            console.error('ID de réservation manquant');
+            alert('Erreur : ID de réservation manquant');
+            return;
+        }
+        await showAddDocumentModal(bookingId, bookingNumber);
+    };
+    
+    container.addEventListener('click', clickHandler);
+    container._docListener = clickHandler;
+    delegationActive = true;
 }
 
 async function showAddDocumentModal(bookingId, bookingNumber) {
@@ -674,22 +686,11 @@ async function showAddDocumentModal(bookingId, bookingNumber) {
             const err = await res.text();
             throw new Error(err);
         }
-        alert("Document ajouté !");
-        // Recharger uniquement les étudiants pour rafraîchir la liste (sans recharger toute la page)
-        await refreshStudentsList();
+        alert("Document ajouté avec succès !");
+        // Pas de rechargement : l'utilisateur peut ajouter d'autres documents immédiatement
     } catch (err) {
         console.error("Erreur ajout document:", err);
         alert("Erreur : " + err.message);
-    }
-}
-
-async function refreshStudentsList() {
-    try {
-        const data = await fetchAdminDashboard();
-        displayStudents(data.students);
-        // Ne pas recharger les autres parties (revenus, graphiques, etc.)
-    } catch (err) {
-        console.error("Erreur rafraîchissement étudiants:", err);
     }
 }
 
