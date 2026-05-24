@@ -1,5 +1,5 @@
-// admin.js – version stable avec ajout multiple de documents
-console.log('🔵 [ADMIN.JS] Script chargé – version stable');
+// admin.js – version avec délégation d'événements (plus robuste)
+console.log('🔵 [ADMIN.JS] Script chargé – version délégation');
 
 if (typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
@@ -508,7 +508,7 @@ function initStudentChart(studentId, bookings) {
     });
 }
 
-// ========== AFFICHAGE ÉTUDIANTS ==========
+// ========== AFFICHAGE ÉTUDIANTS – DÉLÉGATION GLOBALE ==========
 function displayStudents(students) {
     const container = document.getElementById('studentsList');
     if (!container) return;
@@ -611,25 +611,30 @@ function displayStudents(students) {
         
         showSlide(0);
     });
-
-    // Attacher les écouteurs pour les boutons d'ajout de document
-    attachDocumentButtonListeners();
 }
 
-// ========== GESTION DES DOCUMENTS (ADMIN) ==========
-function attachDocumentButtonListeners() {
-    document.querySelectorAll('.btn-add-document').forEach(btn => {
-        // Supprimer l'ancien écouteur pour éviter les doublons
-        btn.removeEventListener('click', btn._listener);
-        const listener = async (e) => {
-            e.stopPropagation();
-            const bookingId = btn.dataset.bookingId;
-            const bookingNumber = btn.dataset.bookingNumber;
-            await showAddDocumentModal(bookingId, bookingNumber);
-        };
-        btn.addEventListener('click', listener);
-        btn._listener = listener;
-    });
+// ========== GESTION DES DOCUMENTS – UN SEUL ÉCOUTEUR SUR LE CONTENEUR ==========
+function setupDocumentDelegation() {
+    const container = document.getElementById('studentsList');
+    if (!container) return;
+    // Supprimer l'ancien écouteur s'il existe
+    if (container._docListener) {
+        container.removeEventListener('click', container._docListener);
+    }
+    const clickHandler = async (e) => {
+        const btn = e.target.closest('.btn-add-document');
+        if (!btn) return;
+        e.stopPropagation();
+        const bookingId = btn.dataset.bookingId;
+        const bookingNumber = btn.dataset.bookingNumber;
+        if (!bookingId) {
+            alert('Erreur: ID réservation manquant');
+            return;
+        }
+        await showAddDocumentModal(bookingId, bookingNumber);
+    };
+    container.addEventListener('click', clickHandler);
+    container._docListener = clickHandler;
 }
 
 async function showAddDocumentModal(bookingId, bookingNumber) {
@@ -684,6 +689,7 @@ async function refreshStudentsList() {
     try {
         const data = await fetchAdminDashboard();
         displayStudents(data.students);
+        // La délégation est déjà active, pas besoin de réattacher
     } catch (err) {
         console.error("Erreur rafraîchissement étudiants:", err);
     }
@@ -919,6 +925,8 @@ async function loadDashboard() {
         const monthlyStats = computeMonthlyLessonsAndStudents(data.students);
         allMonthlyLessons = monthlyStats;
         updateLessonsStudentsChart();
+        // Mettre en place la délégation une seule fois
+        setupDocumentDelegation();
         console.log('✅ [ADMIN.JS] Dashboard chargé');
     } catch (err) {
         console.error('❌ [ADMIN.JS] Erreur chargement dashboard:', err);
