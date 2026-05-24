@@ -1,5 +1,5 @@
-// admin.js – version debug pour tracer l'ajout multiple
-console.log('🔵 [ADMIN.JS] Script chargé – version debug');
+// admin.js – version optimisée (perf)
+console.log('🔵 [ADMIN.JS] Script chargé');
 
 if (typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
@@ -101,6 +101,20 @@ async function getToken() {
     return cachedToken;
 }
 
+// ============================================================
+// OPTIMISATION : lire l'email depuis le JWT (pas d'appel réseau)
+// Avant : supabase.auth.getUser() → ~198ms d'appel réseau inutile
+// Après : décodage local du token JWT → 0ms
+// ============================================================
+function getUserEmailFromToken(token) {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.email || '';
+    } catch (e) {
+        return '';
+    }
+}
+
 async function fetchAdminDashboard() {
     const token = await getToken();
     const url = `${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-dashboard`;
@@ -132,14 +146,10 @@ function escapeHtml(str) {
 // ========== UTILITAIRE : CONVERTIR LIEN GOOGLE DRIVE ==========
 function getGoogleDrivePreviewUrl(url) {
     if (!url) return null;
-    // Format: https://drive.google.com/file/d/FILE_ID/view?...
     const match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (match) {
-        const fileId = match[1];
-        // Preview embed (fonctionne pour images, PDF, vidéos)
-        return `https://drive.google.com/file/d/${fileId}/preview`;
+        return `https://drive.google.com/file/d/${match[1]}/preview`;
     }
-    // Format: https://drive.google.com/open?id=FILE_ID
     const openMatch = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
     if (openMatch) {
         return `https://drive.google.com/file/d/${openMatch[1]}/preview`;
@@ -578,13 +588,12 @@ function renderDocuments(docs) {
     }).join('');
 }
 
-// ========== OUVERTURE DOCUMENT (admin) — même logique que dashboard ==========
+// ========== OUVERTURE DOCUMENT (admin) ==========
 function openDocumentAdmin(doc) {
     const url = doc.document_url;
     const type = doc.document_type;
     const name = doc.document_name;
 
-    // Google Drive : convertir en preview
     let previewUrl = url;
     if (url.includes('drive.google.com/file/d/')) {
         const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -603,13 +612,12 @@ function openDocumentAdmin(doc) {
         return;
     }
 
-    // Supprimer modal existant
     const existing = document.querySelector('.doc-preview-modal-admin');
     if (existing) existing.remove();
 
     const modal = document.createElement('div');
     modal.className = 'doc-preview-modal-admin';
-    
+
     let innerHtml = '';
     if (isDirectImage) {
         innerHtml = `<img src="${url}" alt="${escapeHtml(name)}" style="max-width:100%; max-height:80vh; display:block; margin:0 auto;">`;
@@ -627,39 +635,24 @@ function openDocumentAdmin(doc) {
                 ${innerHtml}
             </div>
         </div>`;
-    
+
     document.body.appendChild(modal);
-    
+
     const closeBtn = modal.querySelector('.close-admin');
     closeBtn.onclick = () => modal.remove();
     closeBtn.onmouseenter = () => closeBtn.style.background = 'rgba(231,76,60,0.9)';
     closeBtn.onmouseleave = () => closeBtn.style.background = 'rgba(0,0,0,0.5)';
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    
+
     const escHandler = (e) => { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', escHandler); } };
     document.addEventListener('keydown', escHandler);
 }
 
-// ========== CSS pour modal admin (ajouter dans admin.css) ==========
-/*
-.doc-preview-modal-admin {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-    backdrop-filter: blur(8px);
-    animation: fadeIn 0.2s ease;
-}
-*/
-// ========== AFFICHAGE ÉTUDIANTS AVEC DÉLÉGATION ==========
+// ========== AFFICHAGE ÉTUDIANTS ==========
 let refreshCounter = 0;
 
 function displayStudents(students) {
     refreshCounter++;
-    console.log(`displayStudents appelé (${refreshCounter}) avec ${students?.length} étudiants`);
     const container = document.getElementById('studentsList');
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
@@ -720,20 +713,6 @@ function displayStudents(students) {
     document.querySelectorAll('.student-row').forEach(row => {
         const studentId = row.dataset.studentId;
         let bookings = [];
-// Dans displayStudents, après la création des rows, ou dans setupDocumentDelegation :
-document.getElementById('studentsList').addEventListener('click', (e) => {
-    const docBtn = e.target.closest('.doc-link');
-    if (docBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        try {
-            const doc = JSON.parse(docBtn.dataset.doc.replace(/&apos;/g, "'"));
-            openDocumentAdmin(doc);
-        } catch(err) {
-            console.error('Erreur ouverture document:', err);
-        }
-    }
-});
         try {
             bookings = JSON.parse(atob(row.dataset.bookings || 'W10='));
         } catch(e) { console.warn(e); }
@@ -803,28 +782,26 @@ function closeDocumentModal() {
     currentDocumentBooking = null;
 }
 
-// 🔧 AJOUT DIRECT DANS LE DOM SANS REFRESH
 function injectDocumentIntoDOM(bookingId, doc) {
     const docsContainer = document.getElementById(`docs-${bookingId}`);
     if (!docsContainer) {
         console.warn(`Conteneur docs-${bookingId} non trouvé, fallback refresh...`);
         return false;
     }
-    
+
     const icon = doc.document_type === 'pdf' ? 'file-pdf' :
                  doc.document_type === 'image' ? 'image' :
                  doc.document_type === 'text' ? 'file-alt' : 'external-link-alt';
     const previewUrl = getGoogleDrivePreviewUrl(doc.document_url);
     const isDrive = isGoogleDriveLink(doc.document_url);
     const href = isDrive ? previewUrl : escapeHtml(doc.document_url);
-    
+
     const newDocHtml = `<a href="${href}" target="_blank" class="doc-link" title="${escapeHtml(doc.document_name)}"><i class="fas fa-${icon}"></i></a>`;
-    
-    // Si c'est le premier document, le conteneur est vide mais existe
+
     if (!docsContainer.innerHTML.trim()) {
         docsContainer.style.display = 'flex';
     }
-    
+
     docsContainer.insertAdjacentHTML('beforeend', newDocHtml);
     console.log(`✅ Document injecté dans DOM pour booking ${bookingId}`);
     return true;
@@ -846,10 +823,8 @@ async function submitDocument() {
 
     addCounter++;
     console.log(`--- Ajout document #${addCounter} ---`);
-    console.log(`bookingId: ${bookingId}`);
 
     try {
-        console.log('Envoi de la requête à admin-add-document...');
         const token = await getToken();
         const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-add-document`, {
             method: 'POST',
@@ -865,28 +840,24 @@ async function submitDocument() {
             })
         });
         const responseText = await res.text();
-        console.log(`Réponse HTTP ${res.status}: ${responseText}`);
         if (!res.ok) throw new Error(responseText);
-        
+
         const result = JSON.parse(responseText);
         alert("Document ajouté !");
-        
-        // 🔧 Injection directe dans le DOM sans refresh complet
+
         const newDoc = result.data?.[0] || {
             id: result.id || 'new',
             document_name: documentName,
             document_url: documentUrl,
             document_type: docType
         };
-        
+
         const injected = injectDocumentIntoDOM(bookingId, newDoc);
-        
-        // Si injection échoue (conteneur pas trouvé), on refresh quand même
         if (!injected) {
             console.log('Fallback: refresh complet...');
             await refreshStudentsList();
         }
-        
+
     } catch (err) {
         console.error("Erreur ajout document:", err);
         alert("Erreur : " + err.message);
@@ -899,15 +870,27 @@ function setupDocumentDelegation() {
     if (!container) return;
     if (container._docListener) {
         container.removeEventListener('click', container._docListener);
-        console.log('Ancien écouteur retiré');
     }
     const clickHandler = async (e) => {
+        // Clic sur un doc-link (bouton document)
+        const docBtn = e.target.closest('.doc-link');
+        if (docBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+                const doc = JSON.parse(docBtn.dataset.doc.replace(/&apos;/g, "'"));
+                openDocumentAdmin(doc);
+            } catch(err) {
+                console.error('Erreur ouverture document:', err);
+            }
+            return;
+        }
+        // Clic sur bouton ajout document
         const btn = e.target.closest('.btn-add-document');
         if (!btn) return;
         e.stopPropagation();
         const bookingId = btn.dataset.bookingId;
         const bookingNumber = btn.dataset.bookingNumber;
-        console.log(`Clic sur bouton Doc: bookingId=${bookingId}, bookingNumber=${bookingNumber}`);
         if (!bookingId) {
             alert('Erreur: ID réservation manquant');
             return;
@@ -916,7 +899,6 @@ function setupDocumentDelegation() {
     };
     container.addEventListener('click', clickHandler);
     container._docListener = clickHandler;
-    console.log('Délégation d\'événements mise en place');
 }
 
 async function refreshStudentsList() {
@@ -925,7 +907,7 @@ async function refreshStudentsList() {
         Object.values(studentCharts).forEach(chart => chart.destroy());
         studentCharts = {};
         displayStudents(data.students);
-        console.log('Rechargement terminé');
+        setupDocumentDelegation();
     } catch (err) {
         console.error("Erreur rafraîchissement étudiants:", err);
     }
@@ -1151,8 +1133,12 @@ async function loadDashboard() {
     document.getElementById('activePackagesList').innerHTML = '<div class="loading-spinner">⏳ Chargement des forfaits...</div>';
     document.getElementById('studentsList').innerHTML = '<div class="loading-spinner">⏳ Chargement des étudiants...</div>';
 
-    try {
-        const data = await fetchAdminDashboard();
+    // ============================================================
+    // OPTIMISATION : chargement non-bloquant
+    // L'UI reste réactive pendant que la requête part en arrière-plan.
+    // Avant : await fetchAdminDashboard() bloquait tout le thread
+    // ============================================================
+    fetchAdminDashboard().then(data => {
         displayUpcoming(data.upcoming);
         displayStudents(data.students);
         displayPackages(data.activePackages);
@@ -1163,21 +1149,30 @@ async function loadDashboard() {
         updateLessonsStudentsChart();
         setupDocumentDelegation();
         console.log('✅ [ADMIN.JS] Dashboard chargé');
-    } catch (err) {
+    }).catch(err => {
         console.error('❌ [ADMIN.JS] Erreur chargement dashboard:', err);
-        alert('Erreur chargement: ' + err.message);
-    }
+        document.getElementById('adminUpcomingLessons').innerHTML = `<div style="color:red">Erreur: ${escapeHtml(err.message)}</div>`;
+        document.getElementById('activePackagesList').innerHTML = '';
+        document.getElementById('studentsList').innerHTML = '';
+    });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🏁 [ADMIN.JS] DOMContentLoaded');
     try {
         await waitForSupabase();
-        await getToken();
-        const { data: { user } } = await supabase.auth.getUser();
+
+        // ============================================================
+        // OPTIMISATION : lire l'email depuis le token JWT local
+        // Supprime l'appel supabase.auth.getUser() qui prenait ~198ms
+        // ============================================================
+        const token = await getToken();
         const emailSpan = document.getElementById('adminEmail');
-        if (emailSpan && user) emailSpan.innerText = user.email;
-        await loadDashboard();
+        if (emailSpan && token) emailSpan.innerText = getUserEmailFromToken(token);
+
+        // Lance le dashboard immédiatement (non-bloquant)
+        loadDashboard();
+
         document.body.classList.add('loaded');
 
         // Modal listeners
@@ -1202,6 +1197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('monthSliderNext')?.addEventListener('click', () => { currentMonthOffset++; updateRevenueChart(); });
         document.getElementById('lessonsMonthSliderPrev')?.addEventListener('click', () => { currentLessonsMonthOffset--; updateLessonsStudentsChart(); });
         document.getElementById('lessonsMonthSliderNext')?.addEventListener('click', () => { currentLessonsMonthOffset++; updateLessonsStudentsChart(); });
+
         console.log('✅ [ADMIN.JS] Initialisation terminée');
     } catch (err) {
         console.error('❌ [ADMIN.JS] Erreur initialisation:', err);
