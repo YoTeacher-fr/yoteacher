@@ -56,38 +56,57 @@ async function waitForSupabase() {
     return window.supabase;
 }
 
-// Cache token pour éviter les blocages répétés de getSession
+// ========== TOKEN : lecture directe localStorage (jamais bloquant) ==========
+function getTokenFromStorage() {
+    try {
+        const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+        if (!key) return null;
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        // Vérifier que le token n'est pas expiré (marge de 60 sec)
+        if (data.expires_at && Date.now() > (data.expires_at - 60) * 1000) return null;
+        return data?.access_token || null;
+    } catch (e) {
+        return null;
+    }
+}
+
 let cachedToken = null;
 let cachedTokenExpiry = 0;
 
 async function getToken() {
     const now = Date.now();
-    // Cache pendant 55 secondes (token JWT dure ~1h)
-    if (cachedToken && (cachedTokenExpiry - now) > 5000) {
+
+    // 1. Cache mémoire rapide (10 secondes)
+    if (cachedToken && (cachedTokenExpiry - now) > 2000) {
         return cachedToken;
     }
 
-    const supabase = await waitForSupabase();
+    // 2. LocalStorage (instantané, jamais bloquant)
+    const lsToken = getTokenFromStorage();
+    if (lsToken) {
+        cachedToken = lsToken;
+        cachedTokenExpiry = now + 10000; // 10 sec
+        return lsToken;
+    }
 
-    // Timeout de 5 secondes pour éviter le blocage infini
+    // 3. Fallback getSession avec timeout agressif
+    console.warn('⚠️ Token non trouvé dans localStorage, fallback getSession...');
+    const supabase = await waitForSupabase();
     const sessionPromise = supabase.auth.getSession();
     const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout: getSession bloquée')), 5000)
+        setTimeout(() => reject(new Error('Timeout: getSession bloquée')), 3000)
     );
 
     const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]);
-
-    if (error) {
+    if (error || !session?.access_token) {
         cachedToken = null;
-        throw new Error(error.message);
-    }
-    if (!session?.access_token) {
-        cachedToken = null;
-        throw new Error('Non authentifié');
+        throw new Error(error?.message || 'Non authentifié');
     }
 
     cachedToken = session.access_token;
-    cachedTokenExpiry = now + 60000; // 1 minute
+    cachedTokenExpiry = now + 10000;
     return cachedToken;
 }
 
@@ -553,7 +572,7 @@ function displayStudents(students) {
         const totalCoursesWithExtra = s.total_courses + extraCourses;
         const totalAmountWithExtra = totalSpentEur + extraAmount;
 
-        // 🔧 Affichage des documents attachés à chaque booking
+        // Affichage des documents attachés à chaque booking
         const bookingsHtml = (s.bookings || []).map(b => {
             const docs = b.documents || [];
             const docsHtml = docs.map(d => {
@@ -576,7 +595,7 @@ function displayStudents(students) {
             `;
         }).join('') || 'Aucune réservation';
 
-        // 🔧 Base64 pour éviter tout problème d'apostrophe / quote dans le HTML
+        // Base64 pour éviter tout problème d'apostrophe / quote dans le HTML
         const bookingsJson = btoa(JSON.stringify(s.bookings || []));
 
         return `
@@ -645,7 +664,6 @@ function displayStudents(students) {
 
         const icon = row.querySelector('.toggle-icon');
         row.addEventListener('click', (e) => {
-            // 🔧 closest('button') pour capturer les clics sur <i> à l'intérieur des boutons
             if (!e.target.closest('button') && !e.target.closest('.carousel-arrow')) {
                 detail.classList.toggle('open');
                 icon.classList.toggle('fa-chevron-down');
