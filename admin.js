@@ -1,4 +1,4 @@
-// admin.js – version corrigée pour éliminer les erreurs non gérées
+// admin.js – version stable avec ajout multiple de documents
 console.log('🔵 [ADMIN.JS] Script chargé – version stable');
 
 if (typeof ChartDataLabels !== 'undefined') {
@@ -49,10 +49,6 @@ let lessonsStudentsChart = null;
 let currentLessonsMonthOffset = 0;
 let allMonthlyLessons = {};
 
-// Flag pour éviter les rechargements multiples
-let isRefreshing = false;
-let abortController = null;
-
 // ========== AUTH / SUPABASE ==========
 async function waitForSupabase() {
     if (window.supabaseInitialized) await window.supabaseInitialized;
@@ -69,16 +65,9 @@ async function getToken() {
 }
 
 async function fetchAdminDashboard() {
-    // Annuler la requête précédente si elle existe
-    if (abortController) abortController.abort();
-    abortController = new AbortController();
-    
     const token = await getToken();
     const url = `${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-dashboard`;
-    const res = await fetch(url, { 
-        headers: { Authorization: `Bearer ${token}` },
-        signal: abortController.signal
-    });
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error(await res.text());
     return await res.json();
 }
@@ -519,19 +508,8 @@ function initStudentChart(studentId, bookings) {
     });
 }
 
-// ========== AFFICHAGE ÉTUDIANTS AVEC DÉLÉGATION ET NETTOYAGE ==========
-function cleanupEventListeners() {
-    const container = document.getElementById('studentsList');
-    if (container && container._docListener) {
-        container.removeEventListener('click', container._docListener);
-        delete container._docListener;
-    }
-    // Supprimer également les écouteurs des carrousels ? 
-    // Non nécessaire car ils sont recréés à chaque render.
-}
-
+// ========== AFFICHAGE ÉTUDIANTS ==========
 function displayStudents(students) {
-    cleanupEventListeners(); // Évite les doublons et les erreurs
     const container = document.getElementById('studentsList');
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
@@ -607,27 +585,19 @@ function displayStudents(students) {
             }
         }
         
-        // Éviter les doublons d'écouteurs sur les flèches
-        const newPrevBtn = prevBtn.cloneNode(true);
-        const newNextBtn = nextBtn.cloneNode(true);
-        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-        
-        newPrevBtn.addEventListener('click', (e) => {
+        prevBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
             showSlide(currentSlide);
         });
-        newNextBtn.addEventListener('click', (e) => {
+        nextBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             currentSlide = (currentSlide + 1) % totalSlides;
             showSlide(currentSlide);
         });
         
         const icon = row.querySelector('.toggle-icon');
-        // Nettoyer l'ancien écouteur si existant
-        row.removeEventListener('click', row._rowClickListener);
-        const rowClickHandler = (e) => {
+        row.addEventListener('click', (e) => {
             if (e.target.tagName !== 'BUTTON' && !e.target.closest('.carousel-arrow')) {
                 detail.classList.toggle('open');
                 icon.classList.toggle('fa-chevron-down');
@@ -637,56 +607,32 @@ function displayStudents(students) {
                     showSlide(0);
                 }
             }
-        };
-        row.addEventListener('click', rowClickHandler);
-        row._rowClickListener = rowClickHandler;
+        });
         
         showSlide(0);
     });
 
-    // Mettre en place la délégation pour les boutons "+ Doc"
-    setupDocumentButtonsDelegation();
+    // Attacher les écouteurs pour les boutons d'ajout de document
+    attachDocumentButtonListeners();
 }
 
 // ========== GESTION DES DOCUMENTS (ADMIN) ==========
-function setupDocumentButtonsDelegation() {
-    const container = document.getElementById('studentsList');
-    if (!container) return;
-    
-    // Supprimer l'ancien écouteur pour éviter les doublons
-    if (container._docListener) {
-        container.removeEventListener('click', container._docListener);
-    }
-    
-    const clickHandler = async (e) => {
-        if (isRefreshing) return; // Ignorer les clics pendant le rechargement
-        const btn = e.target.closest('.btn-add-document');
-        if (!btn) return;
-        e.stopPropagation();
-        const bookingId = btn.dataset.bookingId;
-        const bookingNumber = btn.dataset.bookingNumber;
-        if (!bookingId) {
-            console.error('ID de réservation manquant');
-            alert('Erreur : ID de réservation manquant');
-            return;
-        }
-        try {
+function attachDocumentButtonListeners() {
+    document.querySelectorAll('.btn-add-document').forEach(btn => {
+        // Supprimer l'ancien écouteur pour éviter les doublons
+        btn.removeEventListener('click', btn._listener);
+        const listener = async (e) => {
+            e.stopPropagation();
+            const bookingId = btn.dataset.bookingId;
+            const bookingNumber = btn.dataset.bookingNumber;
             await showAddDocumentModal(bookingId, bookingNumber);
-        } catch (err) {
-            console.error('Erreur dans showAddDocumentModal:', err);
-        }
-    };
-    
-    container.addEventListener('click', clickHandler);
-    container._docListener = clickHandler;
+        };
+        btn.addEventListener('click', listener);
+        btn._listener = listener;
+    });
 }
 
 async function showAddDocumentModal(bookingId, bookingNumber) {
-    if (isRefreshing) {
-        alert('Chargement en cours, veuillez patienter');
-        return;
-    }
-    
     const typeChoice = prompt(
         "Type de document :\n1 = PDF\n2 = Image\n3 = Texte (lien .txt ou Google Doc)\n4 = Lien externe (site)",
         "4"
@@ -725,7 +671,8 @@ async function showAddDocumentModal(bookingId, bookingNumber) {
             const err = await res.text();
             throw new Error(err);
         }
-        alert("Document ajouté avec succès !");
+        alert("Document ajouté !");
+        // Recharger la liste des étudiants pour voir le nouveau document
         await refreshStudentsList();
     } catch (err) {
         console.error("Erreur ajout document:", err);
@@ -734,17 +681,11 @@ async function showAddDocumentModal(bookingId, bookingNumber) {
 }
 
 async function refreshStudentsList() {
-    if (isRefreshing) return;
-    isRefreshing = true;
     try {
         const data = await fetchAdminDashboard();
         displayStudents(data.students);
     } catch (err) {
-        if (err.name !== 'AbortError') {
-            console.error("Erreur rafraîchissement étudiants:", err);
-        }
-    } finally {
-        isRefreshing = false;
+        console.error("Erreur rafraîchissement étudiants:", err);
     }
 }
 
@@ -980,10 +921,8 @@ async function loadDashboard() {
         updateLessonsStudentsChart();
         console.log('✅ [ADMIN.JS] Dashboard chargé');
     } catch (err) {
-        if (err.name !== 'AbortError') {
-            console.error('❌ [ADMIN.JS] Erreur chargement dashboard:', err);
-            alert('Erreur chargement: ' + err.message);
-        }
+        console.error('❌ [ADMIN.JS] Erreur chargement dashboard:', err);
+        alert('Erreur chargement: ' + err.message);
     }
 }
 
