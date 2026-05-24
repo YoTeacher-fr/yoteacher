@@ -71,6 +71,30 @@
         </div>
     </div>
 
+    <!-- MODAL AJOUT DOCUMENT -->
+    <div id="addDocumentModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3><i class="fas fa-file-circle-plus"></i> Ajouter un document</h3>
+            <div class="modal-body">
+                <label>Type de document</label>
+                <select id="docTypeSelect">
+                    <option value="link">🔗 Lien externe (site, vidéo)</option>
+                    <option value="pdf">📄 PDF</option>
+                    <option value="image">🖼️ Image</option>
+                    <option value="text">📝 Texte / Google Doc</option>
+                </select>
+                <label>URL du document</label>
+                <input type="url" id="docUrlInput" placeholder="https://...">
+                <label>Nom du document</label>
+                <input type="text" id="docNameInput" placeholder="Nom affiché au survol">
+            </div>
+            <div class="modal-footer">
+                <button id="docCancelBtn" class="modal-btn modal-btn-secondary">Annuler</button>
+                <button id="docConfirmBtn" class="modal-btn modal-btn-primary">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="config.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>

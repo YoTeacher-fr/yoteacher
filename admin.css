@@ -321,10 +321,10 @@
     display: block;
 }
 
-/* ========== CARROUSEL ÉTUDIANT (FLÈCHES LATÉRALES, SANS INDICATEUR) ========== */
+/* ========== CARROUSEL ÉTUDIANT ========== */
 .student-detail-carousel {
     position: relative;
-    padding: 0 40px; /* espace pour les flèches */
+    padding: 0 40px;
 }
 
 .carousel-slide {
@@ -341,7 +341,6 @@
     to { opacity: 1; transform: translateX(0); }
 }
 
-/* Flèches latérales */
 .carousel-arrow {
     position: absolute;
     top: 50%;
@@ -379,7 +378,6 @@
     width: 100%;
 }
 
-/* Anciennes colonnes du détail */
 .student-detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -425,8 +423,43 @@
 
 .booking-history-item {
     font-size: 0.85rem;
-    padding: 6px 0;
+    padding: 8px 0;
     border-bottom: 1px solid #ddd;
+}
+
+.booking-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.booking-documents {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.doc-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e3f2fd;
+    color: #3c84f6;
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: 0.2s;
+}
+
+.doc-link:hover {
+    background: #3c84f6;
+    color: white;
+    transform: scale(1.1);
 }
 
 .detail-value {
@@ -440,6 +473,129 @@
     font-size: 0.75rem;
     color: #27ae60;
     margin-top: 4px;
+}
+
+/* ========== BOUTON AJOUT DOCUMENT ========== */
+.btn-add-document {
+    background: #3c84f6;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 4px 10px;
+    margin-left: 10px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-add-document:hover {
+    background: #2c74e6;
+}
+
+/* ========== MODAL AJOUT DOCUMENT ========== */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    padding: 28px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: modalPop 0.3s ease;
+}
+
+@keyframes modalPop {
+    from { opacity: 0; transform: scale(0.9) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-content h3 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.modal-body label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.modal-body input,
+.modal-body select {
+    padding: 10px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: 0.2s;
+    font-family: inherit;
+}
+
+.modal-body input:focus,
+.modal-body select:focus {
+    outline: none;
+    border-color: #3c84f6;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: 500;
+}
+
+.modal-btn-primary {
+    background: #3c84f6;
+    color: white;
+}
+
+.modal-btn-primary:hover {
+    background: #2c74e6;
+}
+
+.modal-btn-secondary {
+    background: #f0f0f0;
+    color: #555;
+}
+
+.modal-btn-secondary:hover {
+    background: #e0e0e0;
 }
 
 /* Responsive */
@@ -485,13 +641,16 @@
         padding: 4px 8px;
         font-size: 0.7rem;
     }
-    /* Réduction de l'espace des flèches sur mobile */
     .student-detail-carousel {
         padding: 0 30px;
     }
     .carousel-arrow {
         width: 30px;
         height: 30px;
+    }
+    .booking-main {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
 
@@ -500,19 +659,4 @@
     .package-card {
         width: calc(100% - 20px);
     }
-}
-/* Bouton d'ajout de document (admin) */
-.btn-add-document {
-    background: #3c84f6;
-    color: white;
-    border: none;
-    border-radius: 30px;
-    padding: 4px 8px;
-    margin-left: 10px;
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: 0.2s;
-}
-.btn-add-document:hover {
-    background: #2c74e6;
 }
