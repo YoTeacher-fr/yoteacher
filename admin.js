@@ -534,10 +534,11 @@ function displayStudents(students) {
             </div>
         `).join('') || 'Aucune réservation';
         
-        const bookingsJson = escapeHtml(JSON.stringify(s.bookings || []));
+        // 🔧 CORRECTION BUG 2 : échapper les guillemets doubles pour data-bookings
+        const bookingsJson = JSON.stringify(s.bookings || []).replace(/"/g, '&quot;');
         
         return `
-            <div class="student-row" data-student-id="${s.id}" data-bookings='${bookingsJson}'>
+            <div class="student-row" data-student-id="${s.id}" data-bookings="${bookingsJson}">
                 <div class="student-summary">
                     <span class="student-name">${escapeHtml(s.full_name || 'Sans nom')}</span>
                     <span class="student-courses">📚 ${s.total_courses || 0} cours</span>
@@ -602,7 +603,8 @@ function displayStudents(students) {
         
         const icon = row.querySelector('.toggle-icon');
         row.addEventListener('click', (e) => {
-            if (e.target.tagName !== 'BUTTON' && !e.target.closest('.carousel-arrow')) {
+            // 🔧 CORRECTION BUG 1 : closest('button') pour capturer les clics sur <i> à l'intérieur des boutons
+            if (!e.target.closest('button') && !e.target.closest('.carousel-arrow')) {
                 detail.classList.toggle('open');
                 icon.classList.toggle('fa-chevron-down');
                 icon.classList.toggle('fa-chevron-up');
@@ -702,6 +704,9 @@ async function showAddDocumentModal(bookingId, bookingNumber) {
 async function refreshStudentsList() {
     try {
         const data = await fetchAdminDashboard();
+        // 🔧 CORRECTION BUG 3 : nettoyer les anciens charts avant de réafficher
+        Object.values(studentCharts).forEach(chart => chart.destroy());
+        studentCharts = {};
         displayStudents(data.students);
         // La délégation est toujours active, pas besoin de la réinitialiser
     } catch (err) {
