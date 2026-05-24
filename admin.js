@@ -1,5 +1,5 @@
-// admin.js – version avec délégation d'événements pour l'ajout multiple de documents
-console.log('🔵 [ADMIN.JS] Script chargé – version optimisée');
+// admin.js – version avec logs détaillés pour déboguer l'ajout multiple
+console.log('🔵 [ADMIN.JS] Script chargé – version debug');
 
 if (typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
@@ -510,6 +510,7 @@ function initStudentChart(studentId, bookings) {
 
 // ========== AFFICHAGE ÉTUDIANTS AVEC DÉLÉGATION D'ÉVÉNEMENTS ==========
 function displayStudents(students) {
+    console.log('displayStudents appelé, nombre étudiants:', students?.length);
     const container = document.getElementById('studentsList');
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
@@ -612,20 +613,24 @@ function displayStudents(students) {
         showSlide(0);
     });
 
-    // Mettre en place la délégation d'événements pour les boutons "+ Doc" (une seule fois)
+    // Mettre en place la délégation d'événements
     setupDocumentButtonsDelegation();
 }
 
-// ========== GESTION DES DOCUMENTS (ADMIN) – Délégation d'événements ==========
+// ========== GESTION DES DOCUMENTS (ADMIN) – Délégation avec logs ==========
 let delegationActive = false;
 
 function setupDocumentButtonsDelegation() {
     const container = document.getElementById('studentsList');
-    if (!container) return;
+    if (!container) {
+        console.warn('studentsList non trouvé pour la délégation');
+        return;
+    }
     
     // Supprimer l'ancien écouteur pour éviter les doublons
     if (container._docListener) {
         container.removeEventListener('click', container._docListener);
+        console.log('Ancien écouteur supprimé');
     }
     
     const clickHandler = async (e) => {
@@ -634,8 +639,9 @@ function setupDocumentButtonsDelegation() {
         e.stopPropagation();
         const bookingId = btn.dataset.bookingId;
         const bookingNumber = btn.dataset.bookingNumber;
+        console.log('Clic sur bouton Doc', { bookingId, bookingNumber, btn });
         if (!bookingId) {
-            console.error('ID de réservation manquant');
+            console.error('ID de réservation manquant', btn);
             alert('Erreur : ID de réservation manquant');
             return;
         }
@@ -644,10 +650,12 @@ function setupDocumentButtonsDelegation() {
     
     container.addEventListener('click', clickHandler);
     container._docListener = clickHandler;
+    console.log('Délégation d\'événements mise en place');
     delegationActive = true;
 }
 
 async function showAddDocumentModal(bookingId, bookingNumber) {
+    console.log('showAddDocumentModal appelé avec', { bookingId, bookingNumber });
     const typeChoice = prompt(
         "Type de document :\n1 = PDF\n2 = Image\n3 = Texte (lien .txt ou Google Doc)\n4 = Lien externe (site)",
         "4"
@@ -669,6 +677,7 @@ async function showAddDocumentModal(bookingId, bookingNumber) {
 
     try {
         const token = await getToken();
+        console.log('Token récupéré, envoi requête...');
         const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-add-document`, {
             method: 'POST',
             headers: {
@@ -682,12 +691,13 @@ async function showAddDocumentModal(bookingId, bookingNumber) {
                 documentType: docType
             })
         });
+        const responseText = await res.text();
+        console.log('Réponse brute:', responseText);
         if (!res.ok) {
-            const err = await res.text();
-            throw new Error(err);
+            throw new Error(responseText);
         }
         alert("Document ajouté avec succès !");
-        // Pas de rechargement : l'utilisateur peut ajouter d'autres documents immédiatement
+        // Pas de rechargement pour permettre d'ajouter d'autres documents
     } catch (err) {
         console.error("Erreur ajout document:", err);
         alert("Erreur : " + err.message);
