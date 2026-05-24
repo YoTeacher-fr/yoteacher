@@ -183,7 +183,6 @@ class CurrencyManager {
             
             // Essayer les API en parallèle
             const apiSources = [
-                'https://api.frankfurter.app/latest?from=EUR',
                 'https://api.exchangerate-api.com/v4/latest/EUR',
                 'https://open.er-api.com/v6/latest/EUR'
             ];
