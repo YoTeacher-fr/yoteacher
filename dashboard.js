@@ -937,37 +937,86 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function openDocument(doc) {
-        let url = doc.document_url;
-        const type = doc.document_type;
-        const name = doc.document_name;
+    const url = doc.document_url;
+    const type = doc.document_type;
+    const name = doc.document_name;
 
-        if (url.includes('drive.google.com')) {
-            const match = url.match(/\/d\/(.+?)\//);
-            if (match) url = `https://drive.google.com/file/d/${match[1]}/preview`;
-        }
-
-        if (type === 'image') {
-            createModal(`<img src="${url}" alt="${name}" style="max-width:100%; max-height:80vh;">`);
-        } else if (type === 'pdf' || url.includes('drive.google.com') || url.match(/\.pdf$/i)) {
-            createModal(`<iframe src="${url}" style="width:100%; height:100%; border:none;"></iframe>`, '90vw', '90vh');
-        } else {
-            window.open(doc.document_url, '_blank');
-        }
+    // 🔧 GOOGLE DRIVE : convertir en preview si c'est un lien /view ou /open
+    let previewUrl = url;
+    if (url.includes('drive.google.com/file/d/')) {
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (match) previewUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+    } else if (url.includes('drive.google.com/open?id=')) {
+        const match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (match) previewUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
     }
-    
-    function createModal(contentHtml, width = '80vw', height = '80vh') {
-        const modal = document.createElement('div');
-        modal.className = 'doc-preview-modal';
-        modal.innerHTML = `
-            <div class="modal-content" style="width:${width}; height:${height};">
-                <span class="close">&times;</span>
+
+    // 🔧 Décision : modal (même onglet) vs nouvel onglet
+    const isExternalLink = type === 'link' && !url.includes('drive.google.com');
+    const isDirectImage = type === 'image' && !url.includes('drive.google.com');
+    const isGoogleDrive = url.includes('drive.google.com');
+
+    if (isExternalLink) {
+        // 🔗 Lien externe (YouTube, HuggingFace, etc.) → nouvel onglet
+        window.open(url, '_blank');
+        return;
+    }
+
+    if (isDirectImage) {
+        // 🖼️ Image directe (URL se terminant par .jpg, .png, etc.) → modal image
+        createModal(`<<img src="${url}" alt="${escapeHtml(name)}" style="max-width:100%; max-height:80vh; display:block; margin:0 auto;">`);
+        return;
+    }
+
+    if (isGoogleDrive) {
+        // 📁 Google Drive (image, PDF, texte, tout) → iframe preview
+        createModal(`<<iframe src="${previewUrl}" style="width:100%; height:100%; border:none;" allow="autoplay; encrypted-media"></iframe>`, '90vw', '90vh');
+        return;
+    }
+
+    if (type === 'pdf' || url.match(/\.pdf$/i)) {
+        // 📄 PDF direct → iframe
+        createModal(`<<iframe src="${url}" style="width:100%; height:100%; border:none;"></iframe>`, '90vw', '90vh');
+        return;
+    }
+
+    if (type === 'text' || url.match(/\.txt$/i)) {
+        // 📝 Texte → iframe (Google Doc preview ou lien direct)
+        createModal(`<<iframe src="${previewUrl}" style="width:100%; height:100%; border:none;"></iframe>`, '90vw', '90vh');
+        return;
+    }
+
+    // Fallback : lien externe par défaut
+    window.open(url, '_blank');
+}
+
+function createModal(contentHtml, width = '80vw', height = '80vh') {
+    // Supprimer un modal existant
+    const existing = document.querySelector('.doc-preview-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'doc-preview-modal';
+    modal.innerHTML = `
+        <div class="modal-content" style="width:${width}; height:${height}; position:relative;">
+            <span class="close" style="position:absolute; top:12px; right:16px; font-size:28px; font-weight:bold; cursor:pointer; color:white; background:rgba(0,0,0,0.5); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; z-index:10;">&times;</span>
+            <div style="width:100%; height:100%; padding-top:50px; box-sizing:border-box;">
                 ${contentHtml}
-            </div>`;
-        document.body.appendChild(modal);
-        modal.querySelector('.close').onclick = () => modal.remove();
-        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-        return modal;
-    }
+            </div>
+        </div>`;
+    
+    document.body.appendChild(modal);
+    
+    // Fermeture
+    modal.querySelector('.close').onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    // Escape key
+    const escHandler = (e) => { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', escHandler); } };
+    document.addEventListener('keydown', escHandler);
+    
+    return modal;
+}
     
     // Gestion de la déconnexion, refresh, navigation
     const logoutBtn = document.getElementById('logoutBtn');

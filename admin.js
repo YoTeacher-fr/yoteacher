@@ -567,24 +567,93 @@ function initStudentChart(studentId, bookings) {
     });
 }
 
-// ========== RENDU DOCUMENTS ==========
+// ========== RENDU DOCUMENTS (admin) ==========
 function renderDocuments(docs) {
     if (!docs || !docs.length) return '';
     return docs.map(d => {
         const icon = d.document_type === 'pdf' ? 'file-pdf' :
                      d.document_type === 'image' ? 'image' :
                      d.document_type === 'text' ? 'file-alt' : 'external-link-alt';
-        const previewUrl = getGoogleDrivePreviewUrl(d.document_url);
-        const isDrive = isGoogleDriveLink(d.document_url);
-        
-        // Pour Google Drive : ouvrir en preview, sinon lien direct
-        const href = isDrive ? previewUrl : escapeHtml(d.document_url);
-        const target = isDrive ? '_blank' : '_blank';
-        
-        return `<a href="${href}" target="${target}" class="doc-link" title="${escapeHtml(d.document_name)}"><i class="fas fa-${icon}"></i></a>`;
+        return `<button class="doc-link" data-doc='${JSON.stringify(d).replace(/'/g, '&apos;')}' title="${escapeHtml(d.document_name)}"><i class="fas fa-${icon}"></i></button>`;
     }).join('');
 }
 
+// ========== OUVERTURE DOCUMENT (admin) — même logique que dashboard ==========
+function openDocumentAdmin(doc) {
+    const url = doc.document_url;
+    const type = doc.document_type;
+    const name = doc.document_name;
+
+    // Google Drive : convertir en preview
+    let previewUrl = url;
+    if (url.includes('drive.google.com/file/d/')) {
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (match) previewUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+    } else if (url.includes('drive.google.com/open?id=')) {
+        const match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (match) previewUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+    }
+
+    const isExternalLink = type === 'link' && !url.includes('drive.google.com');
+    const isDirectImage = type === 'image' && !url.includes('drive.google.com');
+    const isGoogleDrive = url.includes('drive.google.com');
+
+    if (isExternalLink) {
+        window.open(url, '_blank');
+        return;
+    }
+
+    // Supprimer modal existant
+    const existing = document.querySelector('.doc-preview-modal-admin');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'doc-preview-modal-admin';
+    
+    let innerHtml = '';
+    if (isDirectImage) {
+        innerHtml = `<img src="${url}" alt="${escapeHtml(name)}" style="max-width:100%; max-height:80vh; display:block; margin:0 auto;">`;
+    } else if (isGoogleDrive || type === 'pdf' || type === 'text') {
+        innerHtml = `<iframe src="${previewUrl}" style="width:100%; height:100%; border:none;" allow="autoplay; encrypted-media"></iframe>`;
+    } else {
+        window.open(url, '_blank');
+        return;
+    }
+
+    modal.innerHTML = `
+        <div class="modal-content-admin" style="width:90vw; height:90vh; position:relative; background:white; border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <span class="close-admin" style="position:absolute; top:12px; right:16px; font-size:28px; font-weight:bold; cursor:pointer; color:white; background:rgba(0,0,0,0.5); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; z-index:10; transition:0.2s;">&times;</span>
+            <div style="width:100%; height:100%; padding-top:50px; box-sizing:border-box;">
+                ${innerHtml}
+            </div>
+        </div>`;
+    
+    document.body.appendChild(modal);
+    
+    const closeBtn = modal.querySelector('.close-admin');
+    closeBtn.onclick = () => modal.remove();
+    closeBtn.onmouseenter = () => closeBtn.style.background = 'rgba(231,76,60,0.9)';
+    closeBtn.onmouseleave = () => closeBtn.style.background = 'rgba(0,0,0,0.5)';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    const escHandler = (e) => { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', escHandler); } };
+    document.addEventListener('keydown', escHandler);
+}
+
+// ========== CSS pour modal admin (ajouter dans admin.css) ==========
+/*
+.doc-preview-modal-admin {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.2s ease;
+}
+*/
 // ========== AFFICHAGE ÉTUDIANTS AVEC DÉLÉGATION ==========
 let refreshCounter = 0;
 
@@ -651,6 +720,20 @@ function displayStudents(students) {
     document.querySelectorAll('.student-row').forEach(row => {
         const studentId = row.dataset.studentId;
         let bookings = [];
+// Dans displayStudents, après la création des rows, ou dans setupDocumentDelegation :
+document.getElementById('studentsList').addEventListener('click', (e) => {
+    const docBtn = e.target.closest('.doc-link');
+    if (docBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+            const doc = JSON.parse(docBtn.dataset.doc.replace(/&apos;/g, "'"));
+            openDocumentAdmin(doc);
+        } catch(err) {
+            console.error('Erreur ouverture document:', err);
+        }
+    }
+});
         try {
             bookings = JSON.parse(atob(row.dataset.bookings || 'W10='));
         } catch(e) { console.warn(e); }
