@@ -56,12 +56,39 @@ async function waitForSupabase() {
     return window.supabase;
 }
 
+// Cache token pour éviter les blocages répétés de getSession
+let cachedToken = null;
+let cachedTokenExpiry = 0;
+
 async function getToken() {
+    const now = Date.now();
+    // Cache pendant 55 secondes (token JWT dure ~1h)
+    if (cachedToken && (cachedTokenExpiry - now) > 5000) {
+        return cachedToken;
+    }
+
     const supabase = await waitForSupabase();
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) throw new Error(error.message);
-    if (!session?.access_token) throw new Error('Non authentifié');
-    return session.access_token;
+
+    // Timeout de 5 secondes pour éviter le blocage infini
+    const sessionPromise = supabase.auth.getSession();
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout: getSession bloquée')), 5000)
+    );
+
+    const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]);
+
+    if (error) {
+        cachedToken = null;
+        throw new Error(error.message);
+    }
+    if (!session?.access_token) {
+        cachedToken = null;
+        throw new Error('Non authentifié');
+    }
+
+    cachedToken = session.access_token;
+    cachedTokenExpiry = now + 60000; // 1 minute
+    return cachedToken;
 }
 
 async function fetchAdminDashboard() {
@@ -509,7 +536,7 @@ function initStudentChart(studentId, bookings) {
 }
 
 // ========== AFFICHAGE ÉTUDIANTS AVEC DÉLÉGATION ==========
-let refreshCounter = 0; // compteur de rechargements
+let refreshCounter = 0;
 
 function displayStudents(students) {
     refreshCounter++;
@@ -518,25 +545,40 @@ function displayStudents(students) {
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
     const sortedStudents = [...students].sort((a, b) => (b.total_courses || 0) - (a.total_courses || 0));
-    
+
     container.innerHTML = sortedStudents.map(s => {
         const totalSpentEur = s.direct_revenue_eur || 0;
         const extraCourses = EXTRA_COURSES[s.id] || 0;
         const extraAmount = EXTRA_AMOUNTS[s.id] || 0;
         const totalCoursesWithExtra = s.total_courses + extraCourses;
         const totalAmountWithExtra = totalSpentEur + extraAmount;
-        const bookingsHtml = (s.bookings || []).map(b => `
-            <div class="booking-history-item" data-booking-id="${b.id}">
-                ${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status || '?'})
-                <button class="btn-add-document" data-booking-id="${b.id}" data-booking-number="${b.booking_number}">
-                    <i class="fas fa-plus"></i> Doc
-                </button>
-            </div>
-        `).join('') || 'Aucune réservation';
-        
-        // 🔧 CORRECTION BUG 2 : échapper les guillemets doubles pour data-bookings
-        const bookingsJson = JSON.stringify(s.bookings || []).replace(/"/g, '&quot;');
-        
+
+        // 🔧 Affichage des documents attachés à chaque booking
+        const bookingsHtml = (s.bookings || []).map(b => {
+            const docs = b.documents || [];
+            const docsHtml = docs.map(d => {
+                const icon = d.document_type === 'pdf' ? 'file-pdf' :
+                             d.document_type === 'image' ? 'image' :
+                             d.document_type === 'text' ? 'file-alt' : 'external-link-alt';
+                return `<a href="${escapeHtml(d.document_url)}" target="_blank" class="doc-link" title="${escapeHtml(d.document_name)}"><i class="fas fa-${icon}"></i></a>`;
+            }).join('');
+
+            return `
+                <div class="booking-history-item" data-booking-id="${b.id}">
+                    <div class="booking-main">
+                        ${new Date(b.start_time).toLocaleDateString()} - ${b.duration_minutes} min - ${b.booking_number} (${b.status || '?'})
+                        <button class="btn-add-document" data-booking-id="${b.id}" data-booking-number="${b.booking_number}">
+                            <i class="fas fa-plus"></i> Doc
+                        </button>
+                    </div>
+                    ${docsHtml ? `<div class="booking-documents">${docsHtml}</div>` : ''}
+                </div>
+            `;
+        }).join('') || 'Aucune réservation';
+
+        // 🔧 Base64 pour éviter tout problème d'apostrophe / quote dans le HTML
+        const bookingsJson = btoa(JSON.stringify(s.bookings || []));
+
         return `
             <div class="student-row" data-student-id="${s.id}" data-bookings="${bookingsJson}">
                 <div class="student-summary">
@@ -569,9 +611,9 @@ function displayStudents(students) {
         const studentId = row.dataset.studentId;
         let bookings = [];
         try {
-            bookings = JSON.parse(row.dataset.bookings || '[]');
+            bookings = JSON.parse(atob(row.dataset.bookings || 'W10='));
         } catch(e) { console.warn(e); }
-        
+
         const detail = row.querySelector('.student-detail');
         const carousel = row.querySelector('.student-detail-carousel');
         const slides = carousel.querySelectorAll('.carousel-slide');
@@ -579,7 +621,7 @@ function displayStudents(students) {
         const nextBtn = carousel.querySelector('.next-slide');
         let currentSlide = 0;
         const totalSlides = slides.length;
-        
+
         function showSlide(index) {
             slides.forEach((slide, i) => {
                 if (i === index) slide.classList.add('active');
@@ -589,7 +631,7 @@ function displayStudents(students) {
                 initStudentChart(studentId, bookings);
             }
         }
-        
+
         prevBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
@@ -600,10 +642,10 @@ function displayStudents(students) {
             currentSlide = (currentSlide + 1) % totalSlides;
             showSlide(currentSlide);
         });
-        
+
         const icon = row.querySelector('.toggle-icon');
         row.addEventListener('click', (e) => {
-            // 🔧 CORRECTION BUG 1 : closest('button') pour capturer les clics sur <i> à l'intérieur des boutons
+            // 🔧 closest('button') pour capturer les clics sur <i> à l'intérieur des boutons
             if (!e.target.closest('button') && !e.target.closest('.carousel-arrow')) {
                 detail.classList.toggle('open');
                 icon.classList.toggle('fa-chevron-down');
@@ -614,62 +656,47 @@ function displayStudents(students) {
                 }
             }
         });
-        
+
         showSlide(0);
     });
 }
 
-// ========== GESTION DES DOCUMENTS – AVEC LOGS ==========
-function setupDocumentDelegation() {
-    const container = document.getElementById('studentsList');
-    if (!container) return;
-    if (container._docListener) {
-        container.removeEventListener('click', container._docListener);
-        console.log('Ancien écouteur retiré');
-    }
-    const clickHandler = async (e) => {
-        const btn = e.target.closest('.btn-add-document');
-        if (!btn) return;
-        e.stopPropagation();
-        const bookingId = btn.dataset.bookingId;
-        const bookingNumber = btn.dataset.bookingNumber;
-        console.log(`Clic sur bouton Doc: bookingId=${bookingId}, bookingNumber=${bookingNumber}`);
-        if (!bookingId) {
-            alert('Erreur: ID réservation manquant');
-            return;
-        }
-        await showAddDocumentModal(bookingId, bookingNumber);
-    };
-    container.addEventListener('click', clickHandler);
-    container._docListener = clickHandler;
-    console.log('Délégation d\'événements mise en place');
-}
-
+// ========== MODAL AJOUT DOCUMENT ==========
+let currentDocumentBooking = null;
 let addCounter = 0;
 
-async function showAddDocumentModal(bookingId, bookingNumber) {
-    addCounter++;
-    console.log(`--- Ajout document #${addCounter} ---`);
-    console.log(`bookingId: ${bookingId}`);
-    
-    const typeChoice = prompt(
-        "Type de document :\n1 = PDF\n2 = Image\n3 = Texte (lien .txt ou Google Doc)\n4 = Lien externe (site)",
-        "4"
-    );
-    let docType = 'link';
-    if (typeChoice === '1') docType = 'pdf';
-    else if (typeChoice === '2') docType = 'image';
-    else if (typeChoice === '3') docType = 'text';
-    else if (typeChoice !== '4') {
-        alert("Choix invalide");
+function openDocumentModal(bookingId, bookingNumber) {
+    currentDocumentBooking = { bookingId, bookingNumber };
+    const modal = document.getElementById('addDocumentModal');
+    document.getElementById('docUrlInput').value = '';
+    document.getElementById('docNameInput').value = '';
+    document.getElementById('docTypeSelect').value = 'link';
+    modal.classList.add('active');
+    setTimeout(() => document.getElementById('docUrlInput').focus(), 50);
+}
+
+function closeDocumentModal() {
+    document.getElementById('addDocumentModal').classList.remove('active');
+    currentDocumentBooking = null;
+}
+
+async function submitDocument() {
+    if (!currentDocumentBooking) return;
+    const { bookingId } = currentDocumentBooking;
+    const docType = document.getElementById('docTypeSelect').value;
+    const documentUrl = document.getElementById('docUrlInput').value.trim();
+    const documentName = document.getElementById('docNameInput').value.trim();
+
+    if (!documentUrl || !documentName) {
+        alert("Veuillez remplir tous les champs");
         return;
     }
 
-    const documentUrl = prompt("Collez le lien (Google Drive, URL directe, etc.) :");
-    if (!documentUrl) return;
+    closeDocumentModal();
 
-    const documentName = prompt("Nom du document (affiché au survol) :");
-    if (!documentName) return;
+    addCounter++;
+    console.log(`--- Ajout document #${addCounter} ---`);
+    console.log(`bookingId: ${bookingId}`);
 
     try {
         console.log('Envoi de la requête à admin-add-document...');
@@ -691,24 +718,47 @@ async function showAddDocumentModal(bookingId, bookingNumber) {
         console.log(`Réponse HTTP ${res.status}: ${responseText}`);
         if (!res.ok) throw new Error(responseText);
         alert("Document ajouté !");
-        // Recharger la liste des étudiants pour voir le nouveau document
-        console.log('Rechargement de la liste des étudiants...');
         await refreshStudentsList();
-        console.log('Rechargement terminé');
     } catch (err) {
         console.error("Erreur ajout document:", err);
         alert("Erreur : " + err.message);
     }
 }
 
+// ========== GESTION DES DOCUMENTS – DÉLÉGATION ==========
+function setupDocumentDelegation() {
+    const container = document.getElementById('studentsList');
+    if (!container) return;
+    if (container._docListener) {
+        container.removeEventListener('click', container._docListener);
+        console.log('Ancien écouteur retiré');
+    }
+    const clickHandler = async (e) => {
+        const btn = e.target.closest('.btn-add-document');
+        if (!btn) return;
+        e.stopPropagation();
+        const bookingId = btn.dataset.bookingId;
+        const bookingNumber = btn.dataset.bookingNumber;
+        console.log(`Clic sur bouton Doc: bookingId=${bookingId}, bookingNumber=${bookingNumber}`);
+        if (!bookingId) {
+            alert('Erreur: ID réservation manquant');
+            return;
+        }
+        openDocumentModal(bookingId, bookingNumber);
+    };
+    container.addEventListener('click', clickHandler);
+    container._docListener = clickHandler;
+    console.log('Délégation d\'événements mise en place');
+}
+
 async function refreshStudentsList() {
     try {
         const data = await fetchAdminDashboard();
-        // 🔧 CORRECTION BUG 3 : nettoyer les anciens charts avant de réafficher
+        // Nettoyer les anciens charts avant de réafficher
         Object.values(studentCharts).forEach(chart => chart.destroy());
         studentCharts = {};
         displayStudents(data.students);
-        // La délégation est toujours active, pas besoin de la réinitialiser
+        console.log('Rechargement terminé');
     } catch (err) {
         console.error("Erreur rafraîchissement étudiants:", err);
     }
@@ -933,7 +983,7 @@ async function loadDashboard() {
     document.getElementById('adminUpcomingLessons').innerHTML = '<div class="loading-spinner">⏳ Chargement des cours...</div>';
     document.getElementById('activePackagesList').innerHTML = '<div class="loading-spinner">⏳ Chargement des forfaits...</div>';
     document.getElementById('studentsList').innerHTML = '<div class="loading-spinner">⏳ Chargement des étudiants...</div>';
-    
+
     try {
         const data = await fetchAdminDashboard();
         displayUpcoming(data.upcoming);
@@ -944,7 +994,7 @@ async function loadDashboard() {
         const monthlyStats = computeMonthlyLessonsAndStudents(data.students);
         allMonthlyLessons = monthlyStats;
         updateLessonsStudentsChart();
-        setupDocumentDelegation(); // une seule fois après le premier affichage
+        setupDocumentDelegation();
         console.log('✅ [ADMIN.JS] Dashboard chargé');
     } catch (err) {
         console.error('❌ [ADMIN.JS] Erreur chargement dashboard:', err);
@@ -962,6 +1012,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (emailSpan && user) emailSpan.innerText = user.email;
         await loadDashboard();
         document.body.classList.add('loaded');
+
+        // Modal listeners
+        document.getElementById('docCancelBtn')?.addEventListener('click', closeDocumentModal);
+        document.getElementById('docConfirmBtn')?.addEventListener('click', submitDocument);
+        document.getElementById('addDocumentModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'addDocumentModal') closeDocumentModal();
+        });
+        document.getElementById('docUrlInput')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('docNameInput').focus();
+        });
+        document.getElementById('docNameInput')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitDocument();
+        });
+
         document.getElementById('refreshAdminBtn')?.addEventListener('click', () => loadDashboard());
         document.getElementById('logoutAdminBtn')?.addEventListener('click', async () => {
             if (window.authManager) await window.authManager.signOut();
