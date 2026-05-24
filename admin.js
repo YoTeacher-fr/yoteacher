@@ -64,7 +64,6 @@ function getTokenFromStorage() {
         const raw = localStorage.getItem(key);
         if (!raw) return null;
         const data = JSON.parse(raw);
-        // Vérifier que le token n'est pas expiré (marge de 60 sec)
         if (data.expires_at && Date.now() > (data.expires_at - 60) * 1000) return null;
         return data?.access_token || null;
     } catch (e) {
@@ -77,34 +76,26 @@ let cachedTokenExpiry = 0;
 
 async function getToken() {
     const now = Date.now();
-
-    // 1. Cache mémoire rapide (10 secondes)
     if (cachedToken && (cachedTokenExpiry - now) > 2000) {
         return cachedToken;
     }
-
-    // 2. LocalStorage (instantané, jamais bloquant)
     const lsToken = getTokenFromStorage();
     if (lsToken) {
         cachedToken = lsToken;
-        cachedTokenExpiry = now + 10000; // 10 sec
+        cachedTokenExpiry = now + 10000;
         return lsToken;
     }
-
-    // 3. Fallback getSession avec timeout agressif
     console.warn('⚠️ Token non trouvé dans localStorage, fallback getSession...');
     const supabase = await waitForSupabase();
     const sessionPromise = supabase.auth.getSession();
     const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout: getSession bloquée')), 3000)
     );
-
     const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]);
     if (error || !session?.access_token) {
         cachedToken = null;
         throw new Error(error?.message || 'Non authentifié');
     }
-
     cachedToken = session.access_token;
     cachedTokenExpiry = now + 10000;
     return cachedToken;
@@ -136,6 +127,28 @@ async function cancelBookingAdmin(bookingId) {
 
 function escapeHtml(str) {
     return (str || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+}
+
+// ========== UTILITAIRE : CONVERTIR LIEN GOOGLE DRIVE ==========
+function getGoogleDrivePreviewUrl(url) {
+    if (!url) return null;
+    // Format: https://drive.google.com/file/d/FILE_ID/view?...
+    const match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) {
+        const fileId = match[1];
+        // Preview embed (fonctionne pour images, PDF, vidéos)
+        return `https://drive.google.com/file/d/${fileId}/preview`;
+    }
+    // Format: https://drive.google.com/open?id=FILE_ID
+    const openMatch = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+    if (openMatch) {
+        return `https://drive.google.com/file/d/${openMatch[1]}/preview`;
+    }
+    return url;
+}
+
+function isGoogleDriveLink(url) {
+    return url && url.includes('drive.google.com');
 }
 
 // ========== PROCHAINS COURS ==========
@@ -554,6 +567,24 @@ function initStudentChart(studentId, bookings) {
     });
 }
 
+// ========== RENDU DOCUMENTS ==========
+function renderDocuments(docs) {
+    if (!docs || !docs.length) return '';
+    return docs.map(d => {
+        const icon = d.document_type === 'pdf' ? 'file-pdf' :
+                     d.document_type === 'image' ? 'image' :
+                     d.document_type === 'text' ? 'file-alt' : 'external-link-alt';
+        const previewUrl = getGoogleDrivePreviewUrl(d.document_url);
+        const isDrive = isGoogleDriveLink(d.document_url);
+        
+        // Pour Google Drive : ouvrir en preview, sinon lien direct
+        const href = isDrive ? previewUrl : escapeHtml(d.document_url);
+        const target = isDrive ? '_blank' : '_blank';
+        
+        return `<a href="${href}" target="${target}" class="doc-link" title="${escapeHtml(d.document_name)}"><i class="fas fa-${icon}"></i></a>`;
+    }).join('');
+}
+
 // ========== AFFICHAGE ÉTUDIANTS AVEC DÉLÉGATION ==========
 let refreshCounter = 0;
 
@@ -572,16 +603,8 @@ function displayStudents(students) {
         const totalCoursesWithExtra = s.total_courses + extraCourses;
         const totalAmountWithExtra = totalSpentEur + extraAmount;
 
-        // Affichage des documents attachés à chaque booking
         const bookingsHtml = (s.bookings || []).map(b => {
-            const docs = b.documents || [];
-            const docsHtml = docs.map(d => {
-                const icon = d.document_type === 'pdf' ? 'file-pdf' :
-                             d.document_type === 'image' ? 'image' :
-                             d.document_type === 'text' ? 'file-alt' : 'external-link-alt';
-                return `<a href="${escapeHtml(d.document_url)}" target="_blank" class="doc-link" title="${escapeHtml(d.document_name)}"><i class="fas fa-${icon}"></i></a>`;
-            }).join('');
-
+            const docsHtml = renderDocuments(b.documents || []);
             return `
                 <div class="booking-history-item" data-booking-id="${b.id}">
                     <div class="booking-main">
@@ -590,12 +613,11 @@ function displayStudents(students) {
                             <i class="fas fa-plus"></i> Doc
                         </button>
                     </div>
-                    ${docsHtml ? `<div class="booking-documents">${docsHtml}</div>` : ''}
+                    ${docsHtml ? `<div class="booking-documents" id="docs-${b.id}">${docsHtml}</div>` : `<div class="booking-documents" id="docs-${b.id}"></div>`}
                 </div>
             `;
         }).join('') || 'Aucune réservation';
 
-        // Base64 pour éviter tout problème d'apostrophe / quote dans le HTML
         const bookingsJson = btoa(JSON.stringify(s.bookings || []));
 
         return `
@@ -679,7 +701,7 @@ function displayStudents(students) {
     });
 }
 
-// ========== MODAL AJOUT DOCUMENT ==========
+// ========== AJOUT DOCUMENT SANS REFRESH ==========
 let currentDocumentBooking = null;
 let addCounter = 0;
 
@@ -696,6 +718,33 @@ function openDocumentModal(bookingId, bookingNumber) {
 function closeDocumentModal() {
     document.getElementById('addDocumentModal').classList.remove('active');
     currentDocumentBooking = null;
+}
+
+// 🔧 AJOUT DIRECT DANS LE DOM SANS REFRESH
+function injectDocumentIntoDOM(bookingId, doc) {
+    const docsContainer = document.getElementById(`docs-${bookingId}`);
+    if (!docsContainer) {
+        console.warn(`Conteneur docs-${bookingId} non trouvé, fallback refresh...`);
+        return false;
+    }
+    
+    const icon = doc.document_type === 'pdf' ? 'file-pdf' :
+                 doc.document_type === 'image' ? 'image' :
+                 doc.document_type === 'text' ? 'file-alt' : 'external-link-alt';
+    const previewUrl = getGoogleDrivePreviewUrl(doc.document_url);
+    const isDrive = isGoogleDriveLink(doc.document_url);
+    const href = isDrive ? previewUrl : escapeHtml(doc.document_url);
+    
+    const newDocHtml = `<a href="${href}" target="_blank" class="doc-link" title="${escapeHtml(doc.document_name)}"><i class="fas fa-${icon}"></i></a>`;
+    
+    // Si c'est le premier document, le conteneur est vide mais existe
+    if (!docsContainer.innerHTML.trim()) {
+        docsContainer.style.display = 'flex';
+    }
+    
+    docsContainer.insertAdjacentHTML('beforeend', newDocHtml);
+    console.log(`✅ Document injecté dans DOM pour booking ${bookingId}`);
+    return true;
 }
 
 async function submitDocument() {
@@ -735,8 +784,26 @@ async function submitDocument() {
         const responseText = await res.text();
         console.log(`Réponse HTTP ${res.status}: ${responseText}`);
         if (!res.ok) throw new Error(responseText);
+        
+        const result = JSON.parse(responseText);
         alert("Document ajouté !");
-        await refreshStudentsList();
+        
+        // 🔧 Injection directe dans le DOM sans refresh complet
+        const newDoc = result.data?.[0] || {
+            id: result.id || 'new',
+            document_name: documentName,
+            document_url: documentUrl,
+            document_type: docType
+        };
+        
+        const injected = injectDocumentIntoDOM(bookingId, newDoc);
+        
+        // Si injection échoue (conteneur pas trouvé), on refresh quand même
+        if (!injected) {
+            console.log('Fallback: refresh complet...');
+            await refreshStudentsList();
+        }
+        
     } catch (err) {
         console.error("Erreur ajout document:", err);
         alert("Erreur : " + err.message);
@@ -772,7 +839,6 @@ function setupDocumentDelegation() {
 async function refreshStudentsList() {
     try {
         const data = await fetchAdminDashboard();
-        // Nettoyer les anciens charts avant de réafficher
         Object.values(studentCharts).forEach(chart => chart.destroy());
         studentCharts = {};
         displayStudents(data.students);
