@@ -1,5 +1,5 @@
-// admin.js – version avec délégation d'événements (plus robuste)
-console.log('🔵 [ADMIN.JS] Script chargé – version délégation');
+// admin.js – version debug pour tracer l'ajout multiple
+console.log('🔵 [ADMIN.JS] Script chargé – version debug');
 
 if (typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
@@ -508,8 +508,12 @@ function initStudentChart(studentId, bookings) {
     });
 }
 
-// ========== AFFICHAGE ÉTUDIANTS – DÉLÉGATION GLOBALE ==========
+// ========== AFFICHAGE ÉTUDIANTS AVEC DÉLÉGATION ==========
+let refreshCounter = 0; // compteur de rechargements
+
 function displayStudents(students) {
+    refreshCounter++;
+    console.log(`displayStudents appelé (${refreshCounter}) avec ${students?.length} étudiants`);
     const container = document.getElementById('studentsList');
     if (!container) return;
     if (!students?.length) { container.innerHTML = '<div>Aucun étudiant</div>'; return; }
@@ -613,13 +617,13 @@ function displayStudents(students) {
     });
 }
 
-// ========== GESTION DES DOCUMENTS – UN SEUL ÉCOUTEUR SUR LE CONTENEUR ==========
+// ========== GESTION DES DOCUMENTS – AVEC LOGS ==========
 function setupDocumentDelegation() {
     const container = document.getElementById('studentsList');
     if (!container) return;
-    // Supprimer l'ancien écouteur s'il existe
     if (container._docListener) {
         container.removeEventListener('click', container._docListener);
+        console.log('Ancien écouteur retiré');
     }
     const clickHandler = async (e) => {
         const btn = e.target.closest('.btn-add-document');
@@ -627,6 +631,7 @@ function setupDocumentDelegation() {
         e.stopPropagation();
         const bookingId = btn.dataset.bookingId;
         const bookingNumber = btn.dataset.bookingNumber;
+        console.log(`Clic sur bouton Doc: bookingId=${bookingId}, bookingNumber=${bookingNumber}`);
         if (!bookingId) {
             alert('Erreur: ID réservation manquant');
             return;
@@ -635,9 +640,16 @@ function setupDocumentDelegation() {
     };
     container.addEventListener('click', clickHandler);
     container._docListener = clickHandler;
+    console.log('Délégation d\'événements mise en place');
 }
 
+let addCounter = 0;
+
 async function showAddDocumentModal(bookingId, bookingNumber) {
+    addCounter++;
+    console.log(`--- Ajout document #${addCounter} ---`);
+    console.log(`bookingId: ${bookingId}`);
+    
     const typeChoice = prompt(
         "Type de document :\n1 = PDF\n2 = Image\n3 = Texte (lien .txt ou Google Doc)\n4 = Lien externe (site)",
         "4"
@@ -658,6 +670,7 @@ async function showAddDocumentModal(bookingId, bookingNumber) {
     if (!documentName) return;
 
     try {
+        console.log('Envoi de la requête à admin-add-document...');
         const token = await getToken();
         const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-add-document`, {
             method: 'POST',
@@ -672,13 +685,14 @@ async function showAddDocumentModal(bookingId, bookingNumber) {
                 documentType: docType
             })
         });
-        if (!res.ok) {
-            const err = await res.text();
-            throw new Error(err);
-        }
+        const responseText = await res.text();
+        console.log(`Réponse HTTP ${res.status}: ${responseText}`);
+        if (!res.ok) throw new Error(responseText);
         alert("Document ajouté !");
         // Recharger la liste des étudiants pour voir le nouveau document
+        console.log('Rechargement de la liste des étudiants...');
         await refreshStudentsList();
+        console.log('Rechargement terminé');
     } catch (err) {
         console.error("Erreur ajout document:", err);
         alert("Erreur : " + err.message);
@@ -689,7 +703,7 @@ async function refreshStudentsList() {
     try {
         const data = await fetchAdminDashboard();
         displayStudents(data.students);
-        // La délégation est déjà active, pas besoin de réattacher
+        // La délégation est toujours active, pas besoin de la réinitialiser
     } catch (err) {
         console.error("Erreur rafraîchissement étudiants:", err);
     }
@@ -925,8 +939,7 @@ async function loadDashboard() {
         const monthlyStats = computeMonthlyLessonsAndStudents(data.students);
         allMonthlyLessons = monthlyStats;
         updateLessonsStudentsChart();
-        // Mettre en place la délégation une seule fois
-        setupDocumentDelegation();
+        setupDocumentDelegation(); // une seule fois après le premier affichage
         console.log('✅ [ADMIN.JS] Dashboard chargé');
     } catch (err) {
         console.error('❌ [ADMIN.JS] Erreur chargement dashboard:', err);
