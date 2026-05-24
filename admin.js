@@ -584,76 +584,46 @@ function openDocumentAdmin(doc) {
     const type = doc.document_type;
     const name = doc.document_name;
 
-    // Google Drive : convertir en preview
+    const isGoogleDrive = url.includes('drive.google.com');
+
+    // Liens externes non-Drive → même onglet (pas _blank)
+    if (type === 'link' && !isGoogleDrive) {
+        window.location.href = url;
+        return;
+    }
+
+    // Images directes → modal avec <img>
+    if (type === 'image' && !isGoogleDrive) {
+        const existing = document.querySelector('.doc-preview-modal-admin');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.className = 'doc-preview-modal-admin';
+        modal.innerHTML = `
+            <div class="modal-content-admin" style="width:90vw;max-height:90vh;position:relative;background:white;border-radius:12px;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);padding:50px 20px 20px;">
+                <span class="close-admin" style="position:absolute;top:12px;right:16px;font-size:28px;cursor:pointer;color:white;background:rgba(0,0,0,0.5);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:10;">&times;</span>
+                <img src="${url}" alt="${escapeHtml(name)}" style="max-width:100%;display:block;margin:0 auto;">
+            </div>`;
+        document.body.appendChild(modal);
+        modal.querySelector('.close-admin').onclick = () => modal.remove();
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+        const esc = (e) => { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', esc); } };
+        document.addEventListener('keydown', esc);
+        return;
+    }
+
+    // Google Drive et PDF → REDIRECTION dans le même onglet (évite CSP iframe)
     let previewUrl = url;
     if (url.includes('drive.google.com/file/d/')) {
         const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-        if (match) previewUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+        if (match) previewUrl = `https://drive.google.com/file/d/${match[1]}/view`; // /view et non /preview
     } else if (url.includes('drive.google.com/open?id=')) {
         const match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-        if (match) previewUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+        if (match) previewUrl = `https://drive.google.com/file/d/${match[1]}/view`;
     }
 
-    const isExternalLink = type === 'link' && !url.includes('drive.google.com');
-    const isDirectImage = type === 'image' && !url.includes('drive.google.com');
-    const isGoogleDrive = url.includes('drive.google.com');
-
-    if (isExternalLink) {
-        window.open(url, '_blank');
-        return;
-    }
-
-    // Supprimer modal existant
-    const existing = document.querySelector('.doc-preview-modal-admin');
-    if (existing) existing.remove();
-
-    const modal = document.createElement('div');
-    modal.className = 'doc-preview-modal-admin';
-    
-    let innerHtml = '';
-    if (isDirectImage) {
-        innerHtml = `<img src="${url}" alt="${escapeHtml(name)}" style="max-width:100%; max-height:80vh; display:block; margin:0 auto;">`;
-    } else if (isGoogleDrive || type === 'pdf' || type === 'text') {
-        innerHtml = `<iframe src="${previewUrl}" style="width:100%; height:100%; border:none;" allow="autoplay; encrypted-media"></iframe>`;
-    } else {
-        window.open(url, '_blank');
-        return;
-    }
-
-    modal.innerHTML = `
-        <div class="modal-content-admin" style="width:90vw; height:90vh; position:relative; background:white; border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-            <span class="close-admin" style="position:absolute; top:12px; right:16px; font-size:28px; font-weight:bold; cursor:pointer; color:white; background:rgba(0,0,0,0.5); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; z-index:10; transition:0.2s;">&times;</span>
-            <div style="width:100%; height:100%; padding-top:50px; box-sizing:border-box;">
-                ${innerHtml}
-            </div>
-        </div>`;
-    
-    document.body.appendChild(modal);
-    
-    const closeBtn = modal.querySelector('.close-admin');
-    closeBtn.onclick = () => modal.remove();
-    closeBtn.onmouseenter = () => closeBtn.style.background = 'rgba(231,76,60,0.9)';
-    closeBtn.onmouseleave = () => closeBtn.style.background = 'rgba(0,0,0,0.5)';
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    
-    const escHandler = (e) => { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', escHandler); } };
-    document.addEventListener('keydown', escHandler);
+    window.location.href = previewUrl; // Même onglet, retour via bouton précédent
 }
-
-// ========== CSS pour modal admin (ajouter dans admin.css) ==========
-/*
-.doc-preview-modal-admin {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-    backdrop-filter: blur(8px);
-    animation: fadeIn 0.2s ease;
-}
-*/
 // ========== AFFICHAGE ÉTUDIANTS AVEC DÉLÉGATION ==========
 let refreshCounter = 0;
 
@@ -818,7 +788,11 @@ function injectDocumentIntoDOM(bookingId, doc) {
     const isDrive = isGoogleDriveLink(doc.document_url);
     const href = isDrive ? previewUrl : escapeHtml(doc.document_url);
     
-    const newDocHtml = `<a href="${href}" target="_blank" class="doc-link" title="${escapeHtml(doc.document_name)}"><i class="fas fa-${icon}"></i></a>`;
+    const newDocHtml = `<a href="${href}" class="doc-link" 
+    data-doc="${JSON.stringify(doc).replace(/"/g, '&quot;')}"
+    title="${escapeHtml(doc.document_name)}">
+    <i class="fas fa-${icon}"></i>
+</a>`;
     
     // Si c'est le premier document, le conteneur est vide mais existe
     if (!docsContainer.innerHTML.trim()) {
