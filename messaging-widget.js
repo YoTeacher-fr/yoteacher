@@ -1,7 +1,6 @@
 // ========== MESSAGING WIDGET ==========
 // Widget flottant de messagerie — bulle fixe en bas à droite
-// Usage : inclure messaging-widget.css + messaging-widget.js sur n'importe quelle page
-// Le widget détecte automatiquement si l'utilisateur est admin ou étudiant
+// CORRECTION : attente robuste de Supabase avant initialisation
 
 (function() {
     'use strict';
@@ -11,12 +10,8 @@
     // ==========================================
     const WIDGET_CONFIG = {
         position: { bottom: 24, right: 24 },
-        colors: {
-            primary: '#2c3e50',
-            accent: '#3c84f6',
-            sent: '#2c3e50',
-            received: '#ffffff'
-        }
+        maxWaitMs: 15000,        // Temps max d'attente de Supabase (15s)
+        checkIntervalMs: 200     // Intervalle de vérification
     };
 
     // ==========================================
@@ -27,10 +22,12 @@
         isAdmin: false,
         myId: null,
         teacherId: null,
+        teacherName: null,
         activePartner: null,
         conversations: [],
         channel: null,
-        unreadTotal: 0
+        unreadTotal: 0,
+        initialized: false
     };
 
     // ==========================================
@@ -49,10 +46,43 @@
     }
 
     // ==========================================
+    // ATTENTE ROBUSTE DE SUPABASE
+    // ==========================================
+    // Problème : supabase.js crée window.supabase de manière async.
+    // Le widget arrive souvent avant que la promesse ne resolve.
+    // Solution : on attend activement avec un timeout.
+    // ==========================================
+    async function waitForSupabase() {
+        const start = Date.now();
+
+        while (Date.now() - start < WIDGET_CONFIG.maxWaitMs) {
+            // Vérification 1 : window.supabase existe ET a la méthode auth
+            if (window.supabase && typeof window.supabase.auth === 'object' &&
+                typeof window.supabase.auth.getUser === 'function') {
+                // Vérification 2 : on peut vraiment appeler getUser()
+                try {
+                    const { data, error } = await window.supabase.auth.getUser();
+                    if (!error && data && data.user) {
+                        console.log('✅ [WIDGET] Supabase prêt, utilisateur:', data.user.email);
+                        return { client: window.supabase, user: data.user };
+                    }
+                    // Supabase existe mais pas de session encore
+                    console.log('⏳ [WIDGET] Supabase prêt mais pas de session, on réessaie...');
+                } catch (e) {
+                    console.log('⏳ [WIDGET] Supabase partiellement prêt, on réessaie...');
+                }
+            }
+            // Attendre avant de réessayer
+            await new Promise(r => setTimeout(r, WIDGET_CONFIG.checkIntervalMs));
+        }
+
+        throw new Error('Supabase non disponible après ' + WIDGET_CONFIG.maxWaitMs + 'ms');
+    }
+
+    // ==========================================
     // DOM : CRÉATION DU WIDGET
     // ==========================================
     function createWidget() {
-        // Vérifier si déjà présent
         if (document.getElementById('messaging-widget-root')) return;
 
         const root = document.createElement('div');
@@ -81,6 +111,11 @@
                 win.style.display = 'none';
                 win.classList.remove('closing');
                 state.isOpen = false;
+                // Désactiver le canal quand la fenêtre est fermée (économie ressources)
+                if (state.channel) {
+                    state.channel.unsubscribe();
+                    state.channel = null;
+                }
             }, 250);
         } else {
             state.isOpen = true;
@@ -220,7 +255,7 @@
         if (!container) return;
 
         try {
-            const { data: msgs, error } = await supabase.rpc('get_messages_with', { partner: partnerId });
+            const { data: msgs, error } = await window.supabase.rpc('get_messages_with', { partner: partnerId });
             if (error) throw error;
 
             container.innerHTML = '';
@@ -237,10 +272,10 @@
             container.scrollTop = container.scrollHeight;
 
             // Marquer comme lu
-            await supabase.rpc('mark_messages_read', { partner: partnerId });
+            await window.supabase.rpc('mark_messages_read', { partner: partnerId });
             updateUnreadBadge();
         } catch (err) {
-            console.error('Erreur chargement messages:', err);
+            console.error('[WIDGET] Erreur chargement messages:', err);
             container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de chargement</p></div>`;
         }
     }
@@ -253,7 +288,7 @@
         if (!container) return;
 
         try {
-            const { data: partners, error } = await supabase.rpc('get_conversation_partners');
+            const { data: partners, error } = await window.supabase.rpc('get_conversation_partners');
             if (error) throw error;
 
             state.conversations = partners || [];
@@ -295,7 +330,7 @@
 
             updateUnreadBadge();
         } catch (err) {
-            console.error('Erreur chargement conversations:', err);
+            console.error('[WIDGET] Erreur chargement conversations:', err);
             container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de chargement</p></div>`;
         }
     }
@@ -329,16 +364,16 @@
         if (input) input.value = '';
 
         try {
-            const { error } = await supabase.from('messages').insert({
+            const { error } = await window.supabase.from('messages').insert({
                 sender_id: state.myId,
                 receiver_id: receiverId,
                 content: content
             });
             if (error) throw error;
         } catch (err) {
-            console.error('Erreur envoi:', err);
+            console.error('[WIDGET] Erreur envoi:', err);
             if (input) input.value = content;
-            alert('Erreur d\'envoi : ' + err.message);
+            alert("Erreur d'envoi : " + err.message);
         }
     }
 
@@ -353,10 +388,7 @@
         const partnerId = state.isAdmin ? state.activePartner : state.teacherId;
         if (!partnerId || !state.myId) return;
 
-        // Utiliser le filtre 'in' pour n'écouter que les messages
-        // où receiver_id est l'un des deux participants (moi ou mon partenaire)
-        // Puis on filtre côté client pour la conversation active
-        state.channel = supabase
+        state.channel = window.supabase
             .channel('widget-messages-' + state.myId)
             .on('postgres_changes', {
                 event: 'INSERT',
@@ -365,7 +397,6 @@
                 filter: `receiver_id=in.(${state.myId},${partnerId})`
             }, (payload) => {
                 const msg = payload.new;
-                // Vérifier que le message concerne bien cette conversation
                 const relevant =
                     (msg.sender_id === state.myId && msg.receiver_id === partnerId) ||
                     (msg.sender_id === partnerId && msg.receiver_id === state.myId);
@@ -374,23 +405,19 @@
 
                 const container = document.getElementById('msg-widget-messages');
                 if (container) {
-                    // Si c'était l'état vide, le vider
                     if (container.querySelector('.messaging-widget-empty')) {
                         container.innerHTML = '';
                     }
                     appendMessage(msg, container);
                 }
 
-                // Si on reçoit un message, marquer comme lu si la fenêtre est ouverte
                 if (msg.receiver_id === state.myId && state.isOpen) {
-                    supabase.rpc('mark_messages_read', { partner: msg.sender_id });
+                    window.supabase.rpc('mark_messages_read', { partner: msg.sender_id });
                 }
 
-                // Mettre à jour les badges
                 if (!state.isOpen || (state.isAdmin && msg.sender_id !== state.activePartner)) {
                     updateUnreadBadge();
                     if (state.isAdmin && !state.isOpen) {
-                        // Refresh la liste des conversations si on est sur la liste
                         const convContainer = document.getElementById('msg-widget-conversations');
                         if (convContainer) loadAdminConversations();
                     }
@@ -404,7 +431,7 @@
     // ==========================================
     async function updateUnreadBadge() {
         try {
-            const { data: partners, error } = await supabase.rpc('get_conversation_partners');
+            const { data: partners, error } = await window.supabase.rpc('get_conversation_partners');
             if (error) throw error;
 
             const total = (partners || []).reduce((sum, p) => sum + (p.unread_count || 0), 0);
@@ -421,74 +448,87 @@
                 bubble.removeAttribute('data-unread');
             }
         } catch (err) {
-            console.error('Erreur badge:', err);
+            console.error('[WIDGET] Erreur badge:', err);
         }
     }
 
     // ==========================================
     // DÉTECTION ADMIN vs ÉTUDIANT
     // ==========================================
-    async function detectRole() {
+    async function detectRole(supabaseClient, user) {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return false;
-
             state.myId = user.id;
 
-            // Vérifier si admin via edge function (utilise ADMIN_EMAILS)
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             const token = session?.access_token;
-            if (!token) return false;
+            if (!token) throw new Error('Pas de token');
 
             const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/teacher-info`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            if (res.ok) {
-                const teacher = await res.json();
-                // Si mon ID correspond à l'ID du professeur → je suis admin
-                if (teacher.id === user.id) {
-                    state.isAdmin = true;
-                    state.teacherId = user.id;
-                    return true;
+            if (!res.ok) {
+                // Si 404, l'edge function n'existe pas encore
+                if (res.status === 404) {
+                    console.warn('[WIDGET] Edge function teacher-info non déployée');
+                    return false;
                 }
-                // Sinon je suis étudiant, le prof est teacher.id
+                throw new Error('teacher-info: ' + res.status);
+            }
+
+            const teacher = await res.json();
+
+            if (teacher.id === user.id) {
+                state.isAdmin = true;
+                state.teacherId = user.id;
+                console.log('✅ [WIDGET] Mode ADMIN détecté');
+            } else {
                 state.teacherId = teacher.id;
                 state.teacherName = teacher.full_name;
                 state.isAdmin = false;
-                return true;
+                console.log('✅ [WIDGET] Mode ÉTUDIANT détecté, prof:', teacher.full_name);
             }
-            return false;
+            return true;
         } catch (err) {
-            console.error('Erreur détection rôle:', err);
+            console.error('[WIDGET] Erreur détection rôle:', err);
             return false;
         }
     }
 
     // ==========================================
-    // INITIALISATION
+    // INITIALISATION PRINCIPALE
     // ==========================================
     async function init() {
-        // Attendre que Supabase soit prêt
-        if (!window.supabase) {
-            console.log('⏳ Attente Supabase...');
-            setTimeout(init, 500);
-            return;
+        console.log('🚀 [WIDGET] Démarrage...');
+
+        try {
+            // Étape 1 : Attendre Supabase avec timeout
+            const { client, user } = await waitForSupabase();
+
+            // Étape 2 : Détecter le rôle (admin ou étudiant)
+            const roleOk = await detectRole(client, user);
+            if (!roleOk) {
+                console.log('❌ [WIDGET] Impossible de détecter le rôle, widget désactivé');
+                return;
+            }
+
+            // Étape 3 : Créer le DOM
+            createWidget();
+
+            // Étape 4 : Charger le badge initial
+            await updateUnreadBadge();
+
+            // Étape 5 : Polling périodique pour les badges (quand fenêtre fermée)
+            setInterval(() => {
+                if (!state.isOpen) updateUnreadBadge();
+            }, 30000);
+
+            state.initialized = true;
+            console.log('✅ [WIDGET] Widget messagerie initialisé');
+
+        } catch (err) {
+            console.error('❌ [WIDGET] Initialisation échouée:', err.message);
         }
-
-        const ready = await detectRole();
-        if (!ready) {
-            console.log('❌ Widget messagerie : utilisateur non authentifié');
-            return;
-        }
-
-        createWidget();
-        updateUnreadBadge();
-
-        // Rafraîchir le badge toutes les 30 secondes
-        setInterval(updateUnreadBadge, 30000);
-
-        console.log('✅ Widget messagerie initialisé —', state.isAdmin ? 'Admin' : 'Étudiant');
     }
 
     // ==========================================
