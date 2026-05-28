@@ -28,7 +28,7 @@ if (!window.YOTEACHER_CONFIG) {
                     console.log("📦 Chargement de Supabase via CDN alternatif...");
                     
                     // Utiliser unpkg au lieu de jsDelivr
-                    await loadScript('https://unpkg.com/@supabase/supabase-js@2/dist/supabase.min.js');
+                    await loadScript('supabase.min.js');
                     console.log("✅ Supabase chargé depuis CDN");
                 }
                 
