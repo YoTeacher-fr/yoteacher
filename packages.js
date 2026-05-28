@@ -340,10 +340,4 @@ class PackagesManager {
 // ============================================================================
 window.packagesManager = new PackagesManager();
 
-document.addEventListener('DOMContentLoaded', async () => {
-    if (window.packagesManager && !window.packagesManager.isInitialized) {
-        await window.packagesManager.initialize();
-    }
-});
-
 console.log('✅ PackagesManager chargé - Version DB-driven (calculs supprimés, appels RPC uniquement)');

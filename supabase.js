@@ -41,15 +41,8 @@ if (!window.YOTEACHER_CONFIG) {
                         storage: window.localStorage
                     }
                 });
-                
-                // Tester la connexion
-                try {
-                    const { data: { session } } = await client.auth.getSession();
-                    console.log("✅ Supabase connecté, session:", session ? "présente" : "absente");
-                } catch (sessionError) {
-                    // Ignorer les erreurs de session au démarrage
-                    console.log("ℹ️ Supabase connecté (session non vérifiée)");
-                }
+
+		console.log("✅ Supabase client créé");
                 
                 window.supabase = client;
                 window.supabaseReady = true;
