@@ -1,5 +1,5 @@
-// ========== MESSAGING WIDGET — VERSION DEBUG ==========
-// Logs ultra-précis à chaque étape. PAS de solution, que du diagnostic.
+// ========== MESSAGING WIDGET — VERSION CORRIGÉE (bug Supabase 2.106.1)
+// Fix : timeout forcé + getSession() avant requêtes + fallback fetch
 
 (function() {
     'use strict';
@@ -15,6 +15,67 @@
         }
     }
 
+    // ========== FIX CRITIQUE : Timeout wrapper ==========
+    function withTimeout(promise, ms = 8000, label = 'req') {
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error(`${label} timeout after ${ms}ms`)), ms);
+        });
+        return Promise.race([promise, timeoutPromise]);
+    }
+
+    // ========== FIX CRITIQUE : Forcer un getSession() frais ==========
+    async function forceFreshSession() {
+        try {
+            if (!window.supabase?.auth?.getSession) return false;
+            const { data, error } = await withTimeout(
+                window.supabase.auth.getSession(),
+                5000,
+                'getSession'
+            );
+            if (error) {
+                log('❌ getSession() a retourné une erreur:', error.message);
+                return false;
+            }
+            log('✅ getSession() frais OK, token valide:', !!data?.session?.access_token);
+            return !!data?.session;
+        } catch (e) {
+            log('❌ getSession() a throw:', e.message);
+            return false;
+        }
+    }
+
+    // ========== FIX CRITIQUE : Fallback fetch direct pour l'INSERT ==========
+    async function insertMessageDirect(content, receiverId) {
+        log('=== FALLBACK : insertMessageDirect ===');
+        try {
+            const { data: { session } } = await window.supabase.auth.getSession();
+            if (!session?.access_token) throw new Error('Pas de token');
+
+            const url = `${window.YOTEACHER_CONFIG.SUPABASE_URL}/rest/v1/messages`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'apikey': window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({
+                    sender_id: state.myId,
+                    receiver_id: receiverId,
+                    content: content
+                })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            log('✅ Fallback INSERT réussi:', data?.[0]?.id);
+            return { data, error: null };
+        } catch (err) {
+            log('❌ Fallback INSERT échoué:', err.message);
+            return { data: null, error: err };
+        }
+    }
+
     let state = {
         isOpen: false,
         isAdmin: false,
@@ -25,7 +86,8 @@
         messageCache: new Map(),
         notifyChannel: null,
         chatChannel: null,
-        pendingMessages: new Set()
+        pendingMessages: new Set(),
+        supabaseBlocked: false  // Flag pour détecter le blocage
     };
 
     function escapeHtml(str) {
@@ -331,7 +393,7 @@
     }
 
     // ==========================================
-    // ÉTAPE 7 : CHARGEMENT MESSAGES (avec logs DEBUG)
+    // ÉTAPE 7 : CHARGEMENT MESSAGES (avec timeout fix)
     // ==========================================
     async function loadMessages(partnerId) {
         log('=== ÉTAPE 7 : loadMessages ===');
@@ -343,8 +405,15 @@
         if (!container) { log('❌ Container null'); return; }
 
         try {
+            // FIX : Forcer un getSession() frais avant la requête
+            await forceFreshSession();
+
             log('Appel RPC get_messages_with...');
-            const { data: msgs, error } = await window.supabase.rpc('get_messages_with', { partner: partnerId });
+            const { data: msgs, error } = await withTimeout(
+                window.supabase.rpc('get_messages_with', { partner: partnerId }),
+                10000,
+                'rpc-get_messages_with'
+            );
 
             log('RPC retourné — error:', error);
             log('RPC retourné — data:', msgs ? msgs.length + ' messages' : 'null');
@@ -364,12 +433,21 @@
             container.scrollTop = container.scrollHeight;
 
             log('Appel mark_messages_read...');
-            const { error: readError } = await window.supabase.rpc('mark_messages_read', { partner: partnerId });
+            const { error: readError } = await withTimeout(
+                window.supabase.rpc('mark_messages_read', { partner: partnerId }),
+                8000,
+                'rpc-mark_messages_read'
+            );
             log('mark_messages_read — error:', readError);
 
         } catch (err) {
             log('❌ loadMessages a throw:', err.message);
             log('Stack:', err.stack);
+            // Si timeout, marquer Supabase comme potentiellement bloqué
+            if (err.message.includes('timeout')) {
+                state.supabaseBlocked = true;
+                log('⚠️ Supabase marqué comme bloqué');
+            }
         }
     }
 
@@ -383,8 +461,14 @@
         if (!container) { log('❌ Container null'); return; }
 
         try {
+            await forceFreshSession();
+
             log('Appel RPC get_conversation_partners...');
-            const { data: partners, error } = await window.supabase.rpc('get_conversation_partners');
+            const { data: partners, error } = await withTimeout(
+                window.supabase.rpc('get_conversation_partners'),
+                10000,
+                'rpc-get_conversation_partners'
+            );
 
             log('RPC retourné — error:', error);
             log('RPC retourné — data:', partners ? partners.length + ' conversations' : 'null');
@@ -481,7 +565,7 @@
     }
 
     // ==========================================
-    // ÉTAPE 9 : ENVOI (avec logs DEBUG)
+    // ÉTAPE 9 : ENVOI (avec timeout fix + fallback)
     // ==========================================
     async function sendMessage() {
         log('=== ÉTAPE 9 : sendMessage ===');
@@ -519,15 +603,44 @@
         }
 
         try {
+            // FIX : Forcer un getSession() frais avant l'INSERT
+            await forceFreshSession();
+
             log('INSERT dans messages...');
             log('sender_id:', state.myId);
             log('receiver_id:', receiverId);
 
-            const { data, error } = await window.supabase.from('messages').insert({
-                sender_id: state.myId,
-                receiver_id: receiverId,
-                content: content
-            }).select();
+            let data, error;
+
+            // Si Supabase a déjà été bloqué, utiliser directement le fallback
+            if (state.supabaseBlocked) {
+                log('⚠️ Supabase était bloqué, utilisation du fallback direct');
+                const fallback = await insertMessageDirect(content, receiverId);
+                data = fallback.data;
+                error = fallback.error;
+            } else {
+                // Essai normal avec timeout
+                const result = await withTimeout(
+                    window.supabase.from('messages').insert({
+                        sender_id: state.myId,
+                        receiver_id: receiverId,
+                        content: content
+                    }).select(),
+                    10000,
+                    'insert-msg'
+                );
+                data = result.data;
+                error = result.error;
+
+                // Si timeout, essayer le fallback
+                if (!data && !error) {
+                    log('⚠️ INSERT a timeout, tentative fallback...');
+                    state.supabaseBlocked = true;
+                    const fallback = await insertMessageDirect(content, receiverId);
+                    data = fallback.data;
+                    error = fallback.error;
+                }
+            }
 
             log('INSERT retourné — error:', error);
             log('INSERT retourné — data:', data ? JSON.stringify(data) : 'null');
@@ -562,7 +675,7 @@
             log('❌ sendMessage a throw:', err.message);
             log('Stack:', err.stack);
             state.pendingMessages.delete(tempId);
-            if (input) input.value = content;
+            if (input) input.value = content; // Restore le texte
             alert("Erreur d'envoi : " + err.message);
         }
     }
@@ -713,7 +826,6 @@
             })
             .subscribe((status) => {
                 log('Notify channel status:', status);
-                // Pas de reconnexion auto sur CLOSED — laisser le polling s'en charger
             });
     }
 
@@ -723,8 +835,14 @@
     async function updateUnreadBadge() {
         log('=== ÉTAPE 12 : updateUnreadBadge ===');
         try {
+            await forceFreshSession();
+
             log('Appel RPC get_conversation_partners...');
-            const { data: partners, error } = await window.supabase.rpc('get_conversation_partners');
+            const { data: partners, error } = await withTimeout(
+                window.supabase.rpc('get_conversation_partners'),
+                10000,
+                'rpc-badge'
+            );
             log('RPC retourné — error:', error);
             log('RPC retourné — data:', partners ? partners.length + ' conversations' : 'null');
 
@@ -768,8 +886,9 @@
 
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 log('SIGNED_IN/TOKEN_REFRESHED détecté');
-                // On ne reconnecte pas le canal ici — laisser le polling s'en charger
-                // pour éviter la boucle infinie
+                // FIX : Réinitialiser le flag de blocage après un refresh réussi
+                state.supabaseBlocked = false;
+                log('🔄 Flag supabaseBlocked réinitialisé');
             }
         });
     }
