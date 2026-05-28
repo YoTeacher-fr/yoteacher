@@ -1,5 +1,6 @@
-// ========== MESSAGING WIDGET v2 ==========
-// Corrections : reconnexion Realtime, canal global persistant, cache local
+// ========== MESSAGING WIDGET v3 ==========
+// Corrections : pas de doublons, reconnexion sur SIGNED_IN, gestion CLOSED,
+//               notifyChannel admin écoute correctement, retry sur erreur RPC
 
 (function() {
     'use strict';
@@ -7,8 +8,10 @@
     const CONFIG = {
         maxWaitMs: 15000,
         checkIntervalMs: 200,
-        badgePollMs: 15000,      // Plus fréquent (15s au lieu de 30s)
-        reconnectMs: 5000        // Reconnexion Realtime après déco
+        badgePollMs: 15000,
+        reconnectMs: 3000,
+        rpcRetryMs: 2000,
+        rpcMaxRetries: 3
     };
 
     let state = {
@@ -19,11 +22,12 @@
         teacherName: null,
         activePartner: null,
         conversations: [],
-        chatChannel: null,       // Canal pour la conversation active (ouverture fenêtre)
-        notifyChannel: null,      // Canal global pour les notifications (TOUJOURS actif)
+        chatChannel: null,
+        notifyChannel: null,
         unreadTotal: 0,
         initialized: false,
-        messageCache: new Map()   // Cache : partnerId -> array de messages
+        messageCache: new Map(),
+        pendingMessages: new Set()  // IDs des messages en cours d'envoi (évite doublons optimistes)
     };
 
     function escapeHtml(str) {
@@ -39,7 +43,7 @@
     }
 
     // ==========================================
-    // ATTENTE ROBUSTE DE SUPABASE
+    // ATTENTE SUPABASE
     // ==========================================
     async function waitForSupabase() {
         const start = Date.now();
@@ -48,7 +52,6 @@
                 try {
                     const { data, error } = await window.supabase.auth.getUser();
                     if (!error && data?.user) {
-                        console.log('[WIDGET] Supabase prêt');
                         return { client: window.supabase, user: data.user };
                     }
                 } catch (e) {}
@@ -56,6 +59,23 @@
             await new Promise(r => setTimeout(r, CONFIG.checkIntervalMs));
         }
         throw new Error('Supabase timeout');
+    }
+
+    // ==========================================
+    // RPC AVEC RETRY
+    // ==========================================
+    async function rpcWithRetry(fnName, params, retries = CONFIG.rpcMaxRetries) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const { data, error } = await window.supabase.rpc(fnName, params);
+                if (error) throw error;
+                return { data, error: null };
+            } catch (err) {
+                if (i === retries - 1) throw err;
+                console.log(`[WIDGET] RPC ${fnName} échoué, retry ${i+1}/${retries}...`);
+                await new Promise(r => setTimeout(r, CONFIG.rpcRetryMs));
+            }
+        }
     }
 
     // ==========================================
@@ -85,7 +105,6 @@
                 win.classList.remove('closing');
                 state.isOpen = false;
                 state.activePartner = null;
-                // On garde notifyChannel actif, on coupe seulement chatChannel
                 if (state.chatChannel) {
                     state.chatChannel.unsubscribe();
                     state.chatChannel = null;
@@ -138,7 +157,6 @@
         document.getElementById('msg-widget-send').addEventListener('click', sendMessage);
         document.getElementById('msg-widget-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
-        // Afficher le cache immédiatement (pas de flash vide)
         const container = document.getElementById('msg-widget-messages');
         if (cached && cached.length > 0) {
             renderMessagesToContainer(cached, container);
@@ -151,7 +169,6 @@
             `;
         }
 
-        // Puis recharger depuis le serveur (mise à jour en arrière-plan)
         await loadMessages(state.teacherId);
         setupChatRealtime(state.teacherId);
     }
@@ -236,60 +253,41 @@
     }
 
     // ==========================================
-    // CHARGEMENT MESSAGES (avec cache)
+    // CHARGEMENT MESSAGES (avec retry)
     // ==========================================
     async function loadMessages(partnerId) {
         const container = document.getElementById('msg-widget-messages');
         if (!container) return;
 
         try {
-            const { data: msgs, error } = await window.supabase.rpc('get_messages_with', { partner: partnerId });
-            if (error) throw error;
+            const { data: msgs } = await rpcWithRetry('get_messages_with', { partner: partnerId });
 
-            // Mettre en cache
             if (msgs) state.messageCache.set(partnerId, msgs);
-
             renderMessagesToContainer(msgs, container);
             container.scrollTop = container.scrollHeight;
 
-            await window.supabase.rpc('mark_messages_read', { partner: partnerId });
+            await rpcWithRetry('mark_messages_read', { partner: partnerId });
             updateUnreadBadge();
         } catch (err) {
             console.error('[WIDGET] loadMessages error:', err);
-            // Si on a un cache, l'afficher même en cas d'erreur réseau
             const cached = state.messageCache.get(partnerId);
             if (cached && cached.length > 0) {
                 renderMessagesToContainer(cached, container);
+            } else {
+                container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de connexion. Réessayez.</p></div>`;
             }
         }
-    }
-
-    function renderMessagesToContainer(msgs, container) {
-        if (!msgs || msgs.length === 0) {
-            if (!container.querySelector('.messaging-widget-msg')) {
-                container.innerHTML = `
-                    <div class="messaging-widget-empty">
-                        <i class="fas fa-comment-slash"></i>
-                        <p>Aucun message encore.<br>Commencez la conversation !</p>
-                    </div>
-                `;
-            }
-            return;
-        }
-        container.innerHTML = '';
-        msgs.forEach(m => appendMessage(m, container));
     }
 
     // ==========================================
-    // CHARGEMENT CONVERSATIONS ADMIN
+    // CHARGEMENT CONVERSATIONS ADMIN (avec retry)
     // ==========================================
     async function loadAdminConversations() {
         const container = document.getElementById('msg-widget-conversations');
         if (!container) return;
 
         try {
-            const { data: partners, error } = await window.supabase.rpc('get_conversation_partners');
-            if (error) throw error;
+            const { data: partners } = await rpcWithRetry('get_conversation_partners');
 
             state.conversations = partners || [];
             container.innerHTML = '';
@@ -331,24 +329,45 @@
             updateUnreadBadge();
         } catch (err) {
             console.error('[WIDGET] loadAdminConversations error:', err);
-            container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de chargement. Réessayez.</p></div>`;
+            container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de connexion. <button onclick="location.reload()">Rafraîchir</button></p></div>`;
         }
     }
 
+    function renderMessagesToContainer(msgs, container) {
+        if (!msgs || msgs.length === 0) {
+            if (!container.querySelector('.messaging-widget-msg')) {
+                container.innerHTML = `
+                    <div class="messaging-widget-empty">
+                        <i class="fas fa-comment-slash"></i>
+                        <p>Aucun message encore.<br>Commencez la conversation !</p>
+                    </div>
+                `;
+            }
+            return;
+        }
+        container.innerHTML = '';
+        msgs.forEach(m => appendMessage(m, container));
+    }
+
     // ==========================================
-    // AJOUT MESSAGE AU DOM
+    // AJOUT MESSAGE AU DOM (avec dédoublonnage)
     // ==========================================
     function appendMessage(msg, container) {
+        // Éviter les doublons : vérifier si ce message est déjà dans le DOM
+        const existing = container.querySelector(`[data-msg-id="${msg.id}"]`);
+        if (existing) return;
+
         const isMe = msg.sender_id === state.myId;
         const div = document.createElement('div');
         div.className = `messaging-widget-msg ${isMe ? 'sent' : 'received'}`;
+        div.setAttribute('data-msg-id', msg.id || 'pending-' + Date.now());
         div.innerHTML = `${escapeHtml(msg.content)}<span class="messaging-widget-msg-time">${formatTime(msg.created_at)}</span>`;
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
 
     // ==========================================
-    // ENVOI
+    // ENVOI (sans doublon optimiste)
     // ==========================================
     async function sendMessage() {
         const input = document.getElementById('msg-widget-input');
@@ -360,39 +379,59 @@
 
         if (input) input.value = '';
 
-        // Optimistic UI : afficher immédiatement
+        // Générer un ID temporaire pour traquer ce message
+        const tempId = 'pending-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        state.pendingMessages.add(tempId);
+
+        // Afficher immédiatement (optimistic) avec l'ID temporaire
         const container = document.getElementById('msg-widget-messages');
         if (container) {
             if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
             const optimisticMsg = {
+                id: tempId,
                 sender_id: state.myId,
                 receiver_id: receiverId,
                 content: content,
                 created_at: new Date().toISOString()
             };
             appendMessage(optimisticMsg, container);
-            // Mettre à jour le cache
-            const cached = state.messageCache.get(receiverId) || [];
-            cached.push(optimisticMsg);
-            state.messageCache.set(receiverId, cached);
         }
 
         try {
-            const { error } = await window.supabase.from('messages').insert({
+            const { data, error } = await window.supabase.from('messages').insert({
                 sender_id: state.myId,
                 receiver_id: receiverId,
                 content: content
-            });
+            }).select();
+
             if (error) throw error;
+
+            // Remplacer l'ID temporaire par l'ID réel
+            const realMsg = data?.[0];
+            if (realMsg) {
+                const pendingEl = document.querySelector(`[data-msg-id="${tempId}"]`);
+                if (pendingEl) {
+                    pendingEl.setAttribute('data-msg-id', realMsg.id);
+                }
+                // Mettre à jour le cache
+                const cached = state.messageCache.get(receiverId) || [];
+                const idx = cached.findIndex(m => m.id === tempId);
+                if (idx >= 0) cached[idx] = realMsg;
+                else cached.push(realMsg);
+                state.messageCache.set(receiverId, cached);
+            }
+
+            state.pendingMessages.delete(tempId);
         } catch (err) {
             console.error('[WIDGET] Erreur envoi:', err);
+            state.pendingMessages.delete(tempId);
             if (input) input.value = content;
             alert("Erreur d'envoi : " + err.message);
         }
     }
 
     // ==========================================
-    // REALTIME : CANAL CONVERSATION (fenêtre ouverte)
+    // REALTIME : CANAL CONVERSATION
     // ==========================================
     function setupChatRealtime(partnerId) {
         if (state.chatChannel) {
@@ -410,10 +449,15 @@
                 filter: `receiver_id=in.(${state.myId},${partnerId})`
             }, (payload) => {
                 const msg = payload.new;
+
+                // Vérifier que c'est bien pour cette conversation
                 const relevant =
                     (msg.sender_id === state.myId && msg.receiver_id === partnerId) ||
                     (msg.sender_id === partnerId && msg.receiver_id === state.myId);
                 if (!relevant) return;
+
+                // Vérifier que ce n'est pas un message pending déjà affiché
+                if (state.pendingMessages.has(msg.id)) return;
 
                 const container = document.getElementById('msg-widget-messages');
                 if (container) {
@@ -423,12 +467,8 @@
 
                 // Mettre à jour le cache
                 const cached = state.messageCache.get(partnerId) || [];
-                // Éviter les doublons (optimistic UI)
-                const alreadyExists = cached.some(m =>
-                    m.content === msg.content &&
-                    Math.abs(new Date(m.created_at) - new Date(msg.created_at)) < 2000
-                );
-                if (!alreadyExists) {
+                const alreadyInCache = cached.some(m => m.id === msg.id);
+                if (!alreadyInCache) {
                     cached.push(msg);
                     state.messageCache.set(partnerId, cached);
                 }
@@ -439,14 +479,14 @@
             })
             .subscribe((status) => {
                 console.log('[WIDGET] Chat channel status:', status);
-                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
                     setTimeout(() => setupChatRealtime(partnerId), CONFIG.reconnectMs);
                 }
             });
     }
 
     // ==========================================
-    // REALTIME : CANAL NOTIFICATION (TOUJOURS actif)
+    // REALTIME : CANAL NOTIFICATION (toujours actif)
     // ==========================================
     function setupNotifyRealtime() {
         if (state.notifyChannel) {
@@ -454,6 +494,14 @@
             state.notifyChannel = null;
         }
         if (!state.myId) return;
+
+        // Pour l'admin : écouter TOUS les messages reçus (receiver_id = monId)
+        // + aussi les messages envoyés PAR l'étudiant (sender_id != monId, receiver_id = monId)
+        // Le filter receiver_id=eq.monId suffit car l'admin est TOUJOURS le receiver
+        // quand un étudiant envoie un message.
+
+        // MAIS : si l'admin envoie un message, l'étudiant est receiver. L'admin ne reçoit pas
+        // de notif pour ses propres messages (c'est correct).
 
         state.notifyChannel = window.supabase
             .channel('widget-notify-' + state.myId)
@@ -464,44 +512,45 @@
                 filter: `receiver_id=eq.${state.myId}`
             }, (payload) => {
                 const msg = payload.new;
-                console.log('[WIDGET] Nouveau message reçu (notify):', msg.sender_id);
+                console.log('[WIDGET] Notify reçu de:', msg.sender_id);
 
                 // Mettre à jour le cache
                 const cached = state.messageCache.get(msg.sender_id) || [];
-                cached.push(msg);
-                state.messageCache.set(msg.sender_id, cached);
+                const alreadyInCache = cached.some(m => m.id === msg.id);
+                if (!alreadyInCache) {
+                    cached.push(msg);
+                    state.messageCache.set(msg.sender_id, cached);
+                }
 
                 // Si fenêtre fermée ou conversation inactive → badge
-                if (!state.isOpen || (state.isAdmin && msg.sender_id !== state.activePartner)) {
+                const isCurrentConv = state.isOpen && (
+                    state.isAdmin
+                        ? msg.sender_id === state.activePartner
+                        : msg.sender_id === state.teacherId
+                );
+
+                if (!isCurrentConv) {
                     updateUnreadBadge();
-                    // Notification navigateur (optionnel)
-                    if (Notification.permission === 'granted') {
+                    // Notification navigateur
+                    if (Notification.permission === 'granted' && !state.isOpen) {
                         new Notification('Nouveau message', {
                             body: msg.content.substring(0, 60),
                             icon: '💬'
                         });
                     }
-                }
-
-                // Si conversation active → afficher directement
-                if (state.isOpen) {
-                    const isCurrentConv = state.isAdmin
-                        ? msg.sender_id === state.activePartner
-                        : msg.sender_id === state.teacherId;
-
-                    if (isCurrentConv) {
-                        const container = document.getElementById('msg-widget-messages');
-                        if (container) {
-                            if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
-                            appendMessage(msg, container);
-                        }
-                        window.supabase.rpc('mark_messages_read', { partner: msg.sender_id });
+                } else {
+                    // Conversation active : afficher directement
+                    const container = document.getElementById('msg-widget-messages');
+                    if (container) {
+                        if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
+                        appendMessage(msg, container);
                     }
+                    window.supabase.rpc('mark_messages_read', { partner: msg.sender_id });
                 }
             })
             .subscribe((status) => {
                 console.log('[WIDGET] Notify channel status:', status);
-                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
                     setTimeout(() => setupNotifyRealtime(), CONFIG.reconnectMs);
                 }
             });
@@ -512,9 +561,7 @@
     // ==========================================
     async function updateUnreadBadge() {
         try {
-            const { data: partners, error } = await window.supabase.rpc('get_conversation_partners');
-            if (error) throw error;
-
+            const { data: partners } = await rpcWithRetry('get_conversation_partners');
             const total = (partners || []).reduce((sum, p) => sum + (p.unread_count || 0), 0);
             state.unreadTotal = total;
 
@@ -576,6 +623,30 @@
     }
 
     // ==========================================
+    // GESTION RECONNECTION SUPABASE (SIGNED_IN)
+    // ==========================================
+    function listenForAuthChanges() {
+        if (!window.supabase) return;
+        window.supabase.auth.onAuthStateChange((event, session) => {
+            console.log('[WIDGET] Auth event:', event);
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                // Reconnecter les canaux après reconnection
+                if (state.notifyChannel) {
+                    state.notifyChannel.unsubscribe();
+                    state.notifyChannel = null;
+                }
+                setupNotifyRealtime();
+
+                // Si chat ouvert, reconnecter aussi
+                if (state.isOpen && state.chatChannel) {
+                    const partnerId = state.isAdmin ? state.activePartner : state.teacherId;
+                    if (partnerId) setupChatRealtime(partnerId);
+                }
+            }
+        });
+    }
+
+    // ==========================================
     // INITIALISATION
     // ==========================================
     async function init() {
@@ -585,22 +656,19 @@
             const { client, user } = await waitForSupabase();
             const roleOk = await detectRole(client, user);
             if (!roleOk) {
-                console.log('[WIDGET] Rôle non détecté, widget désactivé');
+                console.log('[WIDGET] Rôle non détecté');
                 return;
             }
 
             createWidget();
             await updateUnreadBadge();
-
-            // Canal de notification TOUJOURS actif (même fenêtre fermée)
             setupNotifyRealtime();
+            listenForAuthChanges();
 
-            // Polling de secours pour le badge
             setInterval(() => {
                 if (!state.isOpen) updateUnreadBadge();
             }, CONFIG.badgePollMs);
 
-            // Demander permission notifications navigateur
             if ('Notification' in window && Notification.permission === 'default') {
                 Notification.requestPermission();
             }
