@@ -1,6 +1,5 @@
-// ========== MESSAGING WIDGET — VERSION RADICALE (Supabase 2.106.1 deadlock bypass)
-// Stratégie : fetch direct REST pour TOUTES les requêtes si Supabase est bloqué
-// Le client supabase n'est utilisé que pour le Realtime (qui continue de fonctionner)
+// ========== MESSAGING WIDGET — VERSION AVEC PRÉSENCE & TYPING
+// Fallback REST + Realtime broadcast pour statut online & typing indicator
 
 (function() {
     'use strict';
@@ -39,7 +38,7 @@
         return null;
     }
 
-    // ========== FETCH DIRECT REST (contournement Supabase bloqué) ==========
+    // ========== FETCH DIRECT REST ==========
     async function restRpc(functionName, params = {}) {
         const token = getStoredToken();
         if (!token) throw new Error('Pas de token');
@@ -57,7 +56,6 @@
             const text = await res.text().catch(() => '');
             throw new Error(`HTTP ${res.status}: ${text.substring(0, 200)}`);
         }
-        // 204 No Content pour mark_messages_read
         if (res.status === 204) return null;
         return await res.json();
     }
@@ -98,7 +96,14 @@
         pendingMessages: new Set(),
         supabaseBlocked: false,
         accessToken: null,
-        unreadTotal: 0
+        unreadTotal: 0,
+        // --- NOUVEAU : présence ---
+        presenceChannel: null,
+        currentPresencePartner: null,
+        lastPartnerHeartbeat: 0,
+        heartbeatTimer: null,
+        onlineCheckTimer: null,
+        typingTimer: null
     };
 
     function escapeHtml(str) {
@@ -112,6 +117,116 @@
         const now = new Date();
         if (d.toDateString() === now.toDateString()) return formatTime(iso);
         return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    }
+
+    // ==========================================
+    // PRÉSENCE & TYPING
+    // ==========================================
+    function setupPresence(partnerId) {
+        if (!partnerId || !state.myId) return;
+        if (state.presenceChannel && state.currentPresencePartner === partnerId) return;
+
+        log('=== setupPresence ===');
+        if (state.presenceChannel) {
+            try { state.presenceChannel.unsubscribe(); } catch (e) {}
+            state.presenceChannel = null;
+        }
+        state.currentPresencePartner = partnerId;
+        state.lastPartnerHeartbeat = Date.now(); // optimiste au départ
+
+        const channelName = 'widget-presence-' + [state.myId, partnerId].sort().join('-');
+        log('Presence channel:', channelName);
+
+        state.presenceChannel = window.supabase
+            .channel(channelName)
+            .on('broadcast', { event: 'heartbeat' }, (payload) => {
+                const p = payload.payload;
+                if (p && p.userId === partnerId) {
+                    state.lastPartnerHeartbeat = Date.now();
+                    updateOnlineStatus(true);
+                    log('💓 Heartbeat reçu de', partnerId);
+                }
+            })
+            .on('broadcast', { event: 'typing' }, (payload) => {
+                const p = payload.payload;
+                if (p && p.userId === partnerId) {
+                    showTypingIndicator();
+                    log('⌨️ Typing reçu de', partnerId);
+                }
+            })
+            .subscribe((status) => {
+                log('Presence channel status:', status);
+                if (status === 'SUBSCRIBED') {
+                    // Heartbeat immédiat
+                    state.presenceChannel.send({
+                        type: 'broadcast',
+                        event: 'heartbeat',
+                        payload: { userId: state.myId, timestamp: Date.now() }
+                    }).catch(() => {});
+                }
+            });
+
+        // Heartbeat toutes les 10s
+        if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
+        state.heartbeatTimer = setInterval(() => {
+            if (state.presenceChannel) {
+                state.presenceChannel.send({
+                    type: 'broadcast',
+                    event: 'heartbeat',
+                    payload: { userId: state.myId, timestamp: Date.now() }
+                }).catch(() => {});
+            }
+        }, 10000);
+
+        // Vérification statut toutes les 5s
+        if (state.onlineCheckTimer) clearInterval(state.onlineCheckTimer);
+        state.onlineCheckTimer = setInterval(() => {
+            const isOnline = Date.now() - state.lastPartnerHeartbeat < 20000;
+            updateOnlineStatus(isOnline);
+        }, 5000);
+    }
+
+    function updateOnlineStatus(isOnline) {
+        const dot = document.getElementById('msg-widget-status-dot');
+        const text = document.getElementById('msg-widget-status-text');
+        if (!dot || !text) return;
+        if (isOnline) {
+            dot.classList.remove('offline');
+            text.textContent = 'En ligne';
+        } else {
+            dot.classList.add('offline');
+            text.textContent = 'Hors ligne';
+        }
+    }
+
+    function showTypingIndicator() {
+        const el = document.getElementById('msg-widget-typing');
+        if (!el) return;
+        const name = state.isAdmin ? "L'étudiant" : "Le professeur";
+        el.textContent = name + " est en train d'écrire…";
+        el.style.display = 'block';
+        if (state.typingTimer) clearTimeout(state.typingTimer);
+        state.typingTimer = setTimeout(() => {
+            if (el) el.style.display = 'none';
+        }, 3000);
+    }
+
+    function setupTypingListener(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        let debounceTimer;
+        input.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (state.presenceChannel) {
+                    state.presenceChannel.send({
+                        type: 'broadcast',
+                        event: 'typing',
+                        payload: { userId: state.myId }
+                    }).catch(() => {});
+                }
+            }, 300);
+        });
     }
 
     // ==========================================
@@ -233,12 +348,16 @@
                     <div class="messaging-widget-avatar">👨‍🏫</div>
                     <div class="messaging-widget-header-text">
                         <div class="messaging-widget-header-name">${escapeHtml(state.teacherName || 'Professeur')}</div>
-                        <div class="messaging-widget-header-status"><span class="messaging-widget-status-dot"></span>En ligne</div>
+                        <div class="messaging-widget-header-status">
+                            <span class="messaging-widget-status-dot" id="msg-widget-status-dot"></span>
+                            <span id="msg-widget-status-text">En ligne</span>
+                        </div>
                     </div>
                 </div>
                 <button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button>
             </div>
             <div class="messaging-widget-messages" id="msg-widget-messages"></div>
+            <div class="messaging-widget-typing" id="msg-widget-typing" style="display:none;"></div>
             <div class="messaging-widget-input-area">
                 <input type="text" class="messaging-widget-input" id="msg-widget-input" placeholder="Écrivez un message..." autocomplete="off">
                 <button class="messaging-widget-send" id="msg-widget-send"><i class="fas fa-paper-plane"></i></button>
@@ -256,10 +375,13 @@
         }
         await loadMessages(state.teacherId);
         setupChatRealtime(state.teacherId);
+        setupPresence(state.teacherId);
+        setupTypingListener('msg-widget-input');
+        updateOnlineStatus(Date.now() - state.lastPartnerHeartbeat < 20000);
     }
 
     // ==========================================
-    // ÉTAPE 5 & 6 : RENDU ADMIN
+    // ÉTAPE 5 : RENDU ADMIN - LISTE
     // ==========================================
     async function renderAdminConversations() {
         log('=== ÉTAPE 5 : renderAdminConversations ===');
@@ -284,6 +406,9 @@
         await loadAdminConversations();
     }
 
+    // ==========================================
+    // ÉTAPE 6 : RENDU ADMIN - CHAT
+    // ==========================================
     async function renderAdminChat(partnerId, partnerName) {
         log('=== ÉTAPE 6 : renderAdminChat ===');
         const win = document.getElementById('msg-widget-window');
@@ -297,12 +422,16 @@
                     <div class="messaging-widget-avatar">🎓</div>
                     <div class="messaging-widget-header-text">
                         <div class="messaging-widget-header-name">${escapeHtml(partnerName || 'Étudiant')}</div>
-                        <div class="messaging-widget-header-status"><span class="messaging-widget-status-dot"></span>Conversation privée</div>
+                        <div class="messaging-widget-header-status">
+                            <span class="messaging-widget-status-dot" id="msg-widget-status-dot"></span>
+                            <span id="msg-widget-status-text">En ligne</span>
+                        </div>
                     </div>
                 </div>
                 <button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button>
             </div>
             <div class="messaging-widget-messages" id="msg-widget-messages"></div>
+            <div class="messaging-widget-typing" id="msg-widget-typing" style="display:none;"></div>
             <div class="messaging-widget-input-area">
                 <input type="text" class="messaging-widget-input" id="msg-widget-input" placeholder="Répondez à votre étudiant..." autocomplete="off">
                 <button class="messaging-widget-send" id="msg-widget-send"><i class="fas fa-paper-plane"></i></button>
@@ -323,10 +452,13 @@
 
         await loadMessages(partnerId);
         setupChatRealtime(partnerId);
+        setupPresence(partnerId);
+        setupTypingListener('msg-widget-input');
+        updateOnlineStatus(Date.now() - state.lastPartnerHeartbeat < 20000);
     }
 
     // ==========================================
-    // ÉTAPE 7 : CHARGEMENT MESSAGES (avec fallback REST)
+    // ÉTAPE 7 : CHARGEMENT MESSAGES (fallback REST)
     // ==========================================
     async function loadMessages(partnerId) {
         log('=== ÉTAPE 7 : loadMessages ===');
@@ -336,7 +468,6 @@
         let msgs = null;
         let error = null;
 
-        // Essai 1 : Supabase client (rapide si pas bloqué)
         if (!state.supabaseBlocked) {
             try {
                 log('Appel RPC get_messages_with (supabase)...');
@@ -354,7 +485,6 @@
             }
         }
 
-        // Essai 2 : Fallback REST direct (si supabase bloqué ou erreur)
         if (!msgs && state.supabaseBlocked) {
             try {
                 log('🔄 Fallback REST get_messages_with...');
@@ -378,7 +508,6 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // Marquer comme lus (fire-and-forget, pas bloquant)
         try {
             if (state.supabaseBlocked) {
                 restRpc('mark_messages_read', { partner: partnerId }).catch(() => {});
@@ -389,7 +518,7 @@
     }
 
     // ==========================================
-    // ÉTAPE 8 : CHARGEMENT CONVERSATIONS ADMIN (avec fallback REST)
+    // ÉTAPE 8 : CHARGEMENT CONVERSATIONS ADMIN
     // ==========================================
     async function loadAdminConversations() {
         log('=== ÉTAPE 8 : loadAdminConversations ===');
@@ -399,7 +528,6 @@
         let partners = null;
         let error = null;
 
-        // Essai 1 : Supabase client
         if (!state.supabaseBlocked) {
             try {
                 log('Appel RPC get_conversation_partners (supabase)...');
@@ -417,7 +545,6 @@
             }
         }
 
-        // Essai 2 : Fallback REST direct
         if (!partners && state.supabaseBlocked) {
             try {
                 log('🔄 Fallback REST get_conversation_partners...');
@@ -491,7 +618,7 @@
     }
 
     // ==========================================
-    // ÉTAPE 9 : ENVOI (avec fallback REST immédiat)
+    // ÉTAPE 9 : ENVOI (fallback REST)
     // ==========================================
     async function sendMessage() {
         log('=== ÉTAPE 9 : sendMessage ===');
@@ -506,7 +633,6 @@
         const tempId = 'pending-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         state.pendingMessages.add(tempId);
 
-        // Optimistic UI
         const container = document.getElementById('msg-widget-messages');
         if (container) {
             if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
@@ -516,7 +642,6 @@
         let data = null;
         let error = null;
 
-        // Essai 1 : Supabase (si pas bloqué)
         if (!state.supabaseBlocked) {
             try {
                 log('INSERT via supabase...');
@@ -533,7 +658,6 @@
             }
         }
 
-        // Essai 2 : Fallback REST direct
         if (!data && state.supabaseBlocked) {
             try {
                 log('🔄 Fallback REST INSERT...');
@@ -658,13 +782,12 @@
     }
 
     // ==========================================
-    // ÉTAPE 12 : BADGE (avec fallback REST)
+    // ÉTAPE 12 : BADGE (fallback REST)
     // ==========================================
     async function updateUnreadBadge() {
         log('=== ÉTAPE 12 : updateUnreadBadge ===');
         let partners = null;
 
-        // Essai 1 : Supabase
         if (!state.supabaseBlocked) {
             try {
                 log('Badge via supabase...');
@@ -683,7 +806,6 @@
             }
         }
 
-        // Essai 2 : Fallback REST
         if (!partners && state.supabaseBlocked) {
             try {
                 log('🔄 Badge fallback REST...');
@@ -727,9 +849,6 @@
                 log('🔑 Token mis à jour');
             }
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                // On NE réinitialise PAS supabaseBlocked ici.
-                // Le SIGNED_IN est justement le déclencheur du bug.
-                // On laisse le flag à true, les fallbacks REST prendront le relais.
                 log('🔄 Auth refresh détecté — fallbacks REST actifs');
             }
         });
@@ -750,6 +869,12 @@
             if (!roleOk) { log('❌ Rôle non détecté'); return; }
 
             createWidget();
+
+            // Setup présence permanente pour l'étudiant (teacherId ne change jamais)
+            if (!state.isAdmin && state.teacherId) {
+                setupPresence(state.teacherId);
+            }
+
             await updateUnreadBadge();
             setupNotifyRealtime();
             listenForAuthChanges();
