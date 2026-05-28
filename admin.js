@@ -1,4 +1,22 @@
 // admin.js – version optimisée (perf)
+// Lancement immédiat — le token est déjà dans localStorage
+const _earlyDashboardPromise = (() => {
+    try {
+        const key = Object.keys(localStorage)
+            .find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+        if (!key) return null;
+        const data = JSON.parse(localStorage.getItem(key));
+        if (data?.expires_at && Date.now() > (data.expires_at - 60) * 1000) return null;
+        const token = data?.access_token;
+        if (!token || !window.YOTEACHER_CONFIG?.SUPABASE_URL) return null;
+        console.log('⚡ Fetch admin-dashboard lancé immédiatement');
+        return fetch(
+            `${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-dashboard`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        ).then(r => r.ok ? r.json() : null).catch(() => null);
+    } catch { return null; }
+})();
+
 console.log('🔵 [ADMIN.JS] Script chargé');
 
 if (typeof ChartDataLabels !== 'undefined') {
@@ -116,6 +134,12 @@ function getUserEmailFromToken(token) {
 }
 
 async function fetchAdminDashboard() {
+    // Si la requête est déjà partie (et peut-être déjà revenue), on l'utilise
+    if (_earlyDashboardPromise) {
+        const data = await _earlyDashboardPromise;
+        if (data) return data;
+    }
+    // Fallback : chemin normal si le fetch anticipé a échoué
     const token = await getToken();
     const url = `${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/admin-dashboard`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
