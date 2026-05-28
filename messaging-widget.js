@@ -1,22 +1,16 @@
-// ========== MESSAGING WIDGET ==========
-// Widget flottant de messagerie — bulle fixe en bas à droite
-// CORRECTION : attente robuste de Supabase avant initialisation
+// ========== MESSAGING WIDGET v2 ==========
+// Corrections : reconnexion Realtime, canal global persistant, cache local
 
 (function() {
     'use strict';
 
-    // ==========================================
-    // CONFIGURATION
-    // ==========================================
-    const WIDGET_CONFIG = {
-        position: { bottom: 24, right: 24 },
-        maxWaitMs: 15000,        // Temps max d'attente de Supabase (15s)
-        checkIntervalMs: 200     // Intervalle de vérification
+    const CONFIG = {
+        maxWaitMs: 15000,
+        checkIntervalMs: 200,
+        badgePollMs: 15000,      // Plus fréquent (15s au lieu de 30s)
+        reconnectMs: 5000        // Reconnexion Realtime après déco
     };
 
-    // ==========================================
-    // ÉTAT
-    // ==========================================
     let state = {
         isOpen: false,
         isAdmin: false,
@@ -25,14 +19,13 @@
         teacherName: null,
         activePartner: null,
         conversations: [],
-        channel: null,
+        chatChannel: null,       // Canal pour la conversation active (ouverture fenêtre)
+        notifyChannel: null,      // Canal global pour les notifications (TOUJOURS actif)
         unreadTotal: 0,
-        initialized: false
+        initialized: false,
+        messageCache: new Map()   // Cache : partnerId -> array de messages
     };
 
-    // ==========================================
-    // UTILITAIRES
-    // ==========================================
     function escapeHtml(str) {
         return (str || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
     }
@@ -48,43 +41,28 @@
     // ==========================================
     // ATTENTE ROBUSTE DE SUPABASE
     // ==========================================
-    // Problème : supabase.js crée window.supabase de manière async.
-    // Le widget arrive souvent avant que la promesse ne resolve.
-    // Solution : on attend activement avec un timeout.
-    // ==========================================
     async function waitForSupabase() {
         const start = Date.now();
-
-        while (Date.now() - start < WIDGET_CONFIG.maxWaitMs) {
-            // Vérification 1 : window.supabase existe ET a la méthode auth
-            if (window.supabase && typeof window.supabase.auth === 'object' &&
-                typeof window.supabase.auth.getUser === 'function') {
-                // Vérification 2 : on peut vraiment appeler getUser()
+        while (Date.now() - start < CONFIG.maxWaitMs) {
+            if (window.supabase && typeof window.supabase.auth?.getUser === 'function') {
                 try {
                     const { data, error } = await window.supabase.auth.getUser();
-                    if (!error && data && data.user) {
-                        console.log('✅ [WIDGET] Supabase prêt, utilisateur:', data.user.email);
+                    if (!error && data?.user) {
+                        console.log('[WIDGET] Supabase prêt');
                         return { client: window.supabase, user: data.user };
                     }
-                    // Supabase existe mais pas de session encore
-                    console.log('⏳ [WIDGET] Supabase prêt mais pas de session, on réessaie...');
-                } catch (e) {
-                    console.log('⏳ [WIDGET] Supabase partiellement prêt, on réessaie...');
-                }
+                } catch (e) {}
             }
-            // Attendre avant de réessayer
-            await new Promise(r => setTimeout(r, WIDGET_CONFIG.checkIntervalMs));
+            await new Promise(r => setTimeout(r, CONFIG.checkIntervalMs));
         }
-
-        throw new Error('Supabase non disponible après ' + WIDGET_CONFIG.maxWaitMs + 'ms');
+        throw new Error('Supabase timeout');
     }
 
     // ==========================================
-    // DOM : CRÉATION DU WIDGET
+    // DOM
     // ==========================================
     function createWidget() {
         if (document.getElementById('messaging-widget-root')) return;
-
         const root = document.createElement('div');
         root.id = 'messaging-widget-root';
         root.innerHTML = `
@@ -94,27 +72,23 @@
             <div id="msg-widget-window" class="messaging-widget-window" style="display:none;"></div>
         `;
         document.body.appendChild(root);
-
         document.getElementById('msg-widget-bubble').addEventListener('click', toggleWindow);
     }
 
-    // ==========================================
-    // TOGGLE OUVERTURE/FERMETURE
-    // ==========================================
     function toggleWindow() {
         const win = document.getElementById('msg-widget-window');
         if (!win) return;
-
         if (state.isOpen) {
             win.classList.add('closing');
             setTimeout(() => {
                 win.style.display = 'none';
                 win.classList.remove('closing');
                 state.isOpen = false;
-                // Désactiver le canal quand la fenêtre est fermée (économie ressources)
-                if (state.channel) {
-                    state.channel.unsubscribe();
-                    state.channel = null;
+                state.activePartner = null;
+                // On garde notifyChannel actif, on coupe seulement chatChannel
+                if (state.chatChannel) {
+                    state.chatChannel.unsubscribe();
+                    state.chatChannel = null;
                 }
             }, 250);
         } else {
@@ -133,13 +107,14 @@
     }
 
     // ==========================================
-    // RENDU : ÉTUDIANT (chat direct avec prof)
+    // RENDU ÉTUDIANT
     // ==========================================
     async function renderStudentChat() {
         const win = document.getElementById('msg-widget-window');
         if (!win || !state.teacherId) return;
 
         const teacherName = state.teacherName || 'Professeur';
+        const cached = state.messageCache.get(state.teacherId);
 
         win.innerHTML = `
             <div class="messaging-widget-header">
@@ -147,10 +122,7 @@
                     <div class="messaging-widget-avatar">👨‍🏫</div>
                     <div class="messaging-widget-header-text">
                         <div class="messaging-widget-header-name">${escapeHtml(teacherName)}</div>
-                        <div class="messaging-widget-header-status">
-                            <span class="messaging-widget-status-dot"></span>
-                            En ligne
-                        </div>
+                        <div class="messaging-widget-header-status"><span class="messaging-widget-status-dot"></span>En ligne</div>
                     </div>
                 </div>
                 <button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button>
@@ -163,17 +135,29 @@
         `;
 
         document.getElementById('msg-widget-close').addEventListener('click', closeWindow);
-        document.getElementById('msg-widget-send').addEventListener('click', () => sendMessage());
-        document.getElementById('msg-widget-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        document.getElementById('msg-widget-send').addEventListener('click', sendMessage);
+        document.getElementById('msg-widget-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
+        // Afficher le cache immédiatement (pas de flash vide)
+        const container = document.getElementById('msg-widget-messages');
+        if (cached && cached.length > 0) {
+            renderMessagesToContainer(cached, container);
+        } else {
+            container.innerHTML = `
+                <div class="messaging-widget-empty">
+                    <i class="fas fa-comment-slash"></i>
+                    <p>Aucun message encore.<br>Commencez la conversation !</p>
+                </div>
+            `;
+        }
+
+        // Puis recharger depuis le serveur (mise à jour en arrière-plan)
         await loadMessages(state.teacherId);
-        setupRealtime();
+        setupChatRealtime(state.teacherId);
     }
 
     // ==========================================
-    // RENDU : ADMIN (liste des conversations)
+    // RENDU ADMIN - LISTE
     // ==========================================
     async function renderAdminConversations() {
         const win = document.getElementById('msg-widget-window');
@@ -191,25 +175,21 @@
                 <button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button>
             </div>
             <div class="messaging-widget-conversations" id="msg-widget-conversations">
-                <div class="messaging-widget-empty">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Chargement...</p>
-                </div>
+                <div class="messaging-widget-empty"><i class="fas fa-spinner fa-spin"></i><p>Chargement...</p></div>
             </div>
         `;
-
         document.getElementById('msg-widget-close').addEventListener('click', closeWindow);
         await loadAdminConversations();
     }
 
     // ==========================================
-    // RENDU : ADMIN (chat individuel)
+    // RENDU ADMIN - CHAT
     // ==========================================
     async function renderAdminChat(partnerId, partnerName) {
         const win = document.getElementById('msg-widget-window');
         if (!win) return;
-
         state.activePartner = partnerId;
+        const cached = state.messageCache.get(partnerId);
 
         win.innerHTML = `
             <div class="messaging-widget-header">
@@ -218,10 +198,7 @@
                     <div class="messaging-widget-avatar">🎓</div>
                     <div class="messaging-widget-header-text">
                         <div class="messaging-widget-header-name">${escapeHtml(partnerName || 'Étudiant')}</div>
-                        <div class="messaging-widget-header-status">
-                            <span class="messaging-widget-status-dot"></span>
-                            Conversation privée
-                        </div>
+                        <div class="messaging-widget-header-status"><span class="messaging-widget-status-dot"></span>Conversation privée</div>
                     </div>
                 </div>
                 <button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button>
@@ -235,20 +212,31 @@
 
         document.getElementById('msg-widget-back').addEventListener('click', () => {
             state.activePartner = null;
+            if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
             renderAdminConversations();
         });
         document.getElementById('msg-widget-close').addEventListener('click', closeWindow);
-        document.getElementById('msg-widget-send').addEventListener('click', () => sendMessage());
-        document.getElementById('msg-widget-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        document.getElementById('msg-widget-send').addEventListener('click', sendMessage);
+        document.getElementById('msg-widget-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+
+        const container = document.getElementById('msg-widget-messages');
+        if (cached && cached.length > 0) {
+            renderMessagesToContainer(cached, container);
+        } else {
+            container.innerHTML = `
+                <div class="messaging-widget-empty">
+                    <i class="fas fa-comment-slash"></i>
+                    <p>Aucun message encore.<br>Commencez la conversation !</p>
+                </div>
+            `;
+        }
 
         await loadMessages(partnerId);
-        setupRealtime();
+        setupChatRealtime(partnerId);
     }
 
     // ==========================================
-    // CHARGEMENT DES MESSAGES
+    // CHARGEMENT MESSAGES (avec cache)
     // ==========================================
     async function loadMessages(partnerId) {
         const container = document.getElementById('msg-widget-messages');
@@ -258,26 +246,38 @@
             const { data: msgs, error } = await window.supabase.rpc('get_messages_with', { partner: partnerId });
             if (error) throw error;
 
-            container.innerHTML = '';
-            if (!msgs || msgs.length === 0) {
+            // Mettre en cache
+            if (msgs) state.messageCache.set(partnerId, msgs);
+
+            renderMessagesToContainer(msgs, container);
+            container.scrollTop = container.scrollHeight;
+
+            await window.supabase.rpc('mark_messages_read', { partner: partnerId });
+            updateUnreadBadge();
+        } catch (err) {
+            console.error('[WIDGET] loadMessages error:', err);
+            // Si on a un cache, l'afficher même en cas d'erreur réseau
+            const cached = state.messageCache.get(partnerId);
+            if (cached && cached.length > 0) {
+                renderMessagesToContainer(cached, container);
+            }
+        }
+    }
+
+    function renderMessagesToContainer(msgs, container) {
+        if (!msgs || msgs.length === 0) {
+            if (!container.querySelector('.messaging-widget-msg')) {
                 container.innerHTML = `
                     <div class="messaging-widget-empty">
                         <i class="fas fa-comment-slash"></i>
                         <p>Aucun message encore.<br>Commencez la conversation !</p>
                     </div>
                 `;
-            } else {
-                msgs.forEach(m => appendMessage(m, container));
             }
-            container.scrollTop = container.scrollHeight;
-
-            // Marquer comme lu
-            await window.supabase.rpc('mark_messages_read', { partner: partnerId });
-            updateUnreadBadge();
-        } catch (err) {
-            console.error('[WIDGET] Erreur chargement messages:', err);
-            container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de chargement</p></div>`;
+            return;
         }
+        container.innerHTML = '';
+        msgs.forEach(m => appendMessage(m, container));
     }
 
     // ==========================================
@@ -317,7 +317,7 @@
                     <div class="messaging-widget-conv-avatar">${escapeHtml(initials)}</div>
                     <div class="messaging-widget-conv-info">
                         <div class="messaging-widget-conv-name">${escapeHtml(p.partner_name || 'Étudiant')}</div>
-                        <div class="messaging-widget-conv-preview">Cliquez pour ouvrir la conversation</div>
+                        <div class="messaging-widget-conv-preview">Cliquez pour ouvrir</div>
                     </div>
                     <div class="messaging-widget-conv-meta">
                         <span class="messaging-widget-conv-time">${time}</span>
@@ -330,28 +330,25 @@
 
             updateUnreadBadge();
         } catch (err) {
-            console.error('[WIDGET] Erreur chargement conversations:', err);
-            container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de chargement</p></div>`;
+            console.error('[WIDGET] loadAdminConversations error:', err);
+            container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de chargement. Réessayez.</p></div>`;
         }
     }
 
     // ==========================================
-    // AJOUTER UN MESSAGE AU DOM
+    // AJOUT MESSAGE AU DOM
     // ==========================================
     function appendMessage(msg, container) {
         const isMe = msg.sender_id === state.myId;
         const div = document.createElement('div');
         div.className = `messaging-widget-msg ${isMe ? 'sent' : 'received'}`;
-        div.innerHTML = `
-            ${escapeHtml(msg.content)}
-            <span class="messaging-widget-msg-time">${formatTime(msg.created_at)}</span>
-        `;
+        div.innerHTML = `${escapeHtml(msg.content)}<span class="messaging-widget-msg-time">${formatTime(msg.created_at)}</span>`;
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
 
     // ==========================================
-    // ENVOI DE MESSAGE
+    // ENVOI
     // ==========================================
     async function sendMessage() {
         const input = document.getElementById('msg-widget-input');
@@ -362,6 +359,23 @@
         if (!receiverId) return;
 
         if (input) input.value = '';
+
+        // Optimistic UI : afficher immédiatement
+        const container = document.getElementById('msg-widget-messages');
+        if (container) {
+            if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
+            const optimisticMsg = {
+                sender_id: state.myId,
+                receiver_id: receiverId,
+                content: content,
+                created_at: new Date().toISOString()
+            };
+            appendMessage(optimisticMsg, container);
+            // Mettre à jour le cache
+            const cached = state.messageCache.get(receiverId) || [];
+            cached.push(optimisticMsg);
+            state.messageCache.set(receiverId, cached);
+        }
 
         try {
             const { error } = await window.supabase.from('messages').insert({
@@ -378,18 +392,17 @@
     }
 
     // ==========================================
-    // TEMPS RÉEL (Realtime)
+    // REALTIME : CANAL CONVERSATION (fenêtre ouverte)
     // ==========================================
-    function setupRealtime() {
-        if (state.channel) {
-            state.channel.unsubscribe();
+    function setupChatRealtime(partnerId) {
+        if (state.chatChannel) {
+            state.chatChannel.unsubscribe();
+            state.chatChannel = null;
         }
-
-        const partnerId = state.isAdmin ? state.activePartner : state.teacherId;
         if (!partnerId || !state.myId) return;
 
-        state.channel = window.supabase
-            .channel('widget-messages-' + state.myId)
+        state.chatChannel = window.supabase
+            .channel('widget-chat-' + state.myId + '-' + partnerId)
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
@@ -400,34 +413,102 @@
                 const relevant =
                     (msg.sender_id === state.myId && msg.receiver_id === partnerId) ||
                     (msg.sender_id === partnerId && msg.receiver_id === state.myId);
-
                 if (!relevant) return;
 
                 const container = document.getElementById('msg-widget-messages');
                 if (container) {
-                    if (container.querySelector('.messaging-widget-empty')) {
-                        container.innerHTML = '';
-                    }
+                    if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
                     appendMessage(msg, container);
                 }
 
-                if (msg.receiver_id === state.myId && state.isOpen) {
-                    window.supabase.rpc('mark_messages_read', { partner: msg.sender_id });
+                // Mettre à jour le cache
+                const cached = state.messageCache.get(partnerId) || [];
+                // Éviter les doublons (optimistic UI)
+                const alreadyExists = cached.some(m =>
+                    m.content === msg.content &&
+                    Math.abs(new Date(m.created_at) - new Date(msg.created_at)) < 2000
+                );
+                if (!alreadyExists) {
+                    cached.push(msg);
+                    state.messageCache.set(partnerId, cached);
                 }
 
-                if (!state.isOpen || (state.isAdmin && msg.sender_id !== state.activePartner)) {
-                    updateUnreadBadge();
-                    if (state.isAdmin && !state.isOpen) {
-                        const convContainer = document.getElementById('msg-widget-conversations');
-                        if (convContainer) loadAdminConversations();
-                    }
+                if (msg.receiver_id === state.myId) {
+                    window.supabase.rpc('mark_messages_read', { partner: msg.sender_id });
                 }
             })
-            .subscribe();
+            .subscribe((status) => {
+                console.log('[WIDGET] Chat channel status:', status);
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    setTimeout(() => setupChatRealtime(partnerId), CONFIG.reconnectMs);
+                }
+            });
     }
 
     // ==========================================
-    // BADGE NON-LUS
+    // REALTIME : CANAL NOTIFICATION (TOUJOURS actif)
+    // ==========================================
+    function setupNotifyRealtime() {
+        if (state.notifyChannel) {
+            state.notifyChannel.unsubscribe();
+            state.notifyChannel = null;
+        }
+        if (!state.myId) return;
+
+        state.notifyChannel = window.supabase
+            .channel('widget-notify-' + state.myId)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'messages',
+                filter: `receiver_id=eq.${state.myId}`
+            }, (payload) => {
+                const msg = payload.new;
+                console.log('[WIDGET] Nouveau message reçu (notify):', msg.sender_id);
+
+                // Mettre à jour le cache
+                const cached = state.messageCache.get(msg.sender_id) || [];
+                cached.push(msg);
+                state.messageCache.set(msg.sender_id, cached);
+
+                // Si fenêtre fermée ou conversation inactive → badge
+                if (!state.isOpen || (state.isAdmin && msg.sender_id !== state.activePartner)) {
+                    updateUnreadBadge();
+                    // Notification navigateur (optionnel)
+                    if (Notification.permission === 'granted') {
+                        new Notification('Nouveau message', {
+                            body: msg.content.substring(0, 60),
+                            icon: '💬'
+                        });
+                    }
+                }
+
+                // Si conversation active → afficher directement
+                if (state.isOpen) {
+                    const isCurrentConv = state.isAdmin
+                        ? msg.sender_id === state.activePartner
+                        : msg.sender_id === state.teacherId;
+
+                    if (isCurrentConv) {
+                        const container = document.getElementById('msg-widget-messages');
+                        if (container) {
+                            if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
+                            appendMessage(msg, container);
+                        }
+                        window.supabase.rpc('mark_messages_read', { partner: msg.sender_id });
+                    }
+                }
+            })
+            .subscribe((status) => {
+                console.log('[WIDGET] Notify channel status:', status);
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    setTimeout(() => setupNotifyRealtime(), CONFIG.reconnectMs);
+                }
+            });
+    }
+
+    // ==========================================
+    // BADGE
     // ==========================================
     async function updateUnreadBadge() {
         try {
@@ -448,18 +529,18 @@
                 bubble.removeAttribute('data-unread');
             }
         } catch (err) {
-            console.error('[WIDGET] Erreur badge:', err);
+            console.error('[WIDGET] Badge error:', err);
         }
     }
 
     // ==========================================
-    // DÉTECTION ADMIN vs ÉTUDIANT
+    // DÉTECTION RÔLE
     // ==========================================
-    async function detectRole(supabaseClient, user) {
+    async function detectRole(client, user) {
         try {
             state.myId = user.id;
 
-            const { data: { session } } = await supabaseClient.auth.getSession();
+            const { data: { session } } = await client.auth.getSession();
             const token = session?.access_token;
             if (!token) throw new Error('Pas de token');
 
@@ -468,7 +549,6 @@
             });
 
             if (!res.ok) {
-                // Si 404, l'edge function n'existe pas encore
                 if (res.status === 404) {
                     console.warn('[WIDGET] Edge function teacher-info non déployée');
                     return false;
@@ -481,53 +561,55 @@
             if (teacher.id === user.id) {
                 state.isAdmin = true;
                 state.teacherId = user.id;
-                console.log('✅ [WIDGET] Mode ADMIN détecté');
+                console.log('[WIDGET] Mode ADMIN');
             } else {
                 state.teacherId = teacher.id;
                 state.teacherName = teacher.full_name;
                 state.isAdmin = false;
-                console.log('✅ [WIDGET] Mode ÉTUDIANT détecté, prof:', teacher.full_name);
+                console.log('[WIDGET] Mode ÉTUDIANT, prof:', teacher.full_name);
             }
             return true;
         } catch (err) {
-            console.error('[WIDGET] Erreur détection rôle:', err);
+            console.error('[WIDGET] detectRole error:', err);
             return false;
         }
     }
 
     // ==========================================
-    // INITIALISATION PRINCIPALE
+    // INITIALISATION
     // ==========================================
     async function init() {
         console.log('🚀 [WIDGET] Démarrage...');
 
         try {
-            // Étape 1 : Attendre Supabase avec timeout
             const { client, user } = await waitForSupabase();
-
-            // Étape 2 : Détecter le rôle (admin ou étudiant)
             const roleOk = await detectRole(client, user);
             if (!roleOk) {
-                console.log('❌ [WIDGET] Impossible de détecter le rôle, widget désactivé');
+                console.log('[WIDGET] Rôle non détecté, widget désactivé');
                 return;
             }
 
-            // Étape 3 : Créer le DOM
             createWidget();
-
-            // Étape 4 : Charger le badge initial
             await updateUnreadBadge();
 
-            // Étape 5 : Polling périodique pour les badges (quand fenêtre fermée)
+            // Canal de notification TOUJOURS actif (même fenêtre fermée)
+            setupNotifyRealtime();
+
+            // Polling de secours pour le badge
             setInterval(() => {
                 if (!state.isOpen) updateUnreadBadge();
-            }, 30000);
+            }, CONFIG.badgePollMs);
+
+            // Demander permission notifications navigateur
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
 
             state.initialized = true;
-            console.log('✅ [WIDGET] Widget messagerie initialisé');
+            console.log('✅ [WIDGET] Initialisé');
 
         } catch (err) {
-            console.error('❌ [WIDGET] Initialisation échouée:', err.message);
+            console.error('❌ [WIDGET] Init failed:', err.message);
         }
     }
 
