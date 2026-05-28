@@ -1,8 +1,6 @@
-
-// ===== SUPABASE.JS - VERSION CORRIGÉE (CDN ALTERNATIF) =====
+// ===== SUPABASE.JS - VERSION LOCAL PRIORITAIRE =====
 console.log("🔌 Initialisation de Supabase...");
 
-// Vérifier la configuration
 if (!window.YOTEACHER_CONFIG) {
     console.error("❌ Configuration manquante");
     window.supabase = null;
@@ -17,37 +15,44 @@ if (!window.YOTEACHER_CONFIG) {
         window.supabaseReady = false;
         window.supabaseInitialized = Promise.resolve(false);
     } else {
-        // Initialisation avec CDN alternatif (unpkg au lieu de jsDelivr)
         window.supabaseInitialized = (async function() {
             try {
-                // Vérifier si Supabase est déjà chargé globalement (par balise script)
+                // 1. PRIORITÉ : Supabase déjà chargé globalement (balise script locale)
                 if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-                    console.log("✅ Supabase déjà disponible globalement");
+                    console.log("✅ Supabase déjà disponible globalement (local v2.106.1)");
                 } else {
-                    // Charger Supabase via CDN alternatif
-                    console.log("📦 Chargement de Supabase via CDN alternatif...");
-                    
-                    // Utiliser unpkg au lieu de jsDelivr
-                    await loadScript('supabase.min.js');
-                    console.log("✅ Supabase chargé depuis CDN");
+                    // 2. Essayer de charger le local supabase.min.js (même dossier)
+                    try {
+                        console.log("📦 Tentative chargement local supabase.min.js...");
+                        await loadScript('supabase.min.js');
+                        console.log("✅ Supabase chargé depuis fichier local");
+                    } catch (localErr) {
+                        console.warn("⚠️ Local non trouvé, fallback CDN jsDelivr v2.106.1:", localErr.message);
+                        const cdnUrl = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.106.1/dist/umd/supabase.min.js';
+                        await loadScript(cdnUrl);
+                        console.log("✅ Supabase chargé depuis CDN (fallback)");
+                    }
                 }
-                
-                // Initialiser le client
+
+                // 3. Créer le client
                 const client = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
                     auth: {
                         persistSession: true,
                         autoRefreshToken: true,
                         detectSessionInUrl: true,
                         storage: window.localStorage
+                    },
+                    realtime: {
+                        timeout: 20000
                     }
                 });
 
-		console.log("✅ Supabase client créé");
-                
+                console.log("✅ Supabase client créé");
+
                 window.supabase = client;
                 window.supabaseReady = true;
                 return true;
-                
+
             } catch (error) {
                 console.error("❌ Erreur initialisation Supabase:", error.message);
                 window.supabase = null;
@@ -58,77 +63,70 @@ if (!window.YOTEACHER_CONFIG) {
     }
 }
 
-// Fonction helper pour charger un script
 function loadScript(src) {
     return new Promise((resolve, reject) => {
         if (document.querySelector(`script[src="${src}"]`)) {
             resolve();
             return;
         }
-        
         const script = document.createElement('script');
         script.src = src;
         script.async = true;
-        
-        script.onload = () => {
-            console.log(`✅ Script chargé: ${src}`);
-            resolve();
-        };
-        
-        script.onerror = (error) => {
-            console.error(`❌ Erreur chargement script: ${src}`, error);
-            reject(new Error(`Échec chargement script: ${src}`));
-        };
-        
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`Échec chargement script: ${src}`));
         document.head.appendChild(script);
     });
 }
 
-// Fonction helper pour compatibilité
 window.waitForSupabase = function(callback) {
     if (window.supabaseInitialized) {
-        window.supabaseInitialized.then(() => {
-            if (callback) callback();
-        });
+        window.supabaseInitialized.then(() => { if (callback) callback(); });
     } else if (callback) {
         callback();
     }
 };
 
-// Fonction pour forcer la réinitialisation
-window.resetSupabase = function() {
+// Réinitialisation : local prioritaire, CDN fallback
+window.resetSupabase = async function() {
     console.log("🔄 Réinitialisation de Supabase...");
     window.supabase = null;
     window.supabaseReady = false;
-    
-    // Recréer la promesse d'initialisation
-    if (window.YOTEACHER_CONFIG && window.YOTEACHER_CONFIG.SUPABASE_URL && window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY) {
-        window.supabaseInitialized = (async function() {
-            try {
-                // Charger depuis CDN
-                await loadScript('https://unpkg.com/@supabase/supabase-js@2/dist/supabase.min.js');
-                
-                const client = window.supabase.createClient(
-                    window.YOTEACHER_CONFIG.SUPABASE_URL, 
-                    window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY, 
-                    {
-                        auth: {
-                            persistSession: true,
-                            autoRefreshToken: true,
-                            detectSessionInUrl: true,
-                            storage: window.localStorage
-                        }
-                    }
-                );
-                
-                window.supabase = client;
-                window.supabaseReady = true;
-                console.log("✅ Supabase réinitialisé avec succès");
-                return true;
-            } catch (error) {
-                console.error("❌ Échec réinitialisation:", error);
-                return false;
+
+    if (!window.YOTEACHER_CONFIG?.SUPABASE_URL || !window.YOTEACHER_CONFIG?.SUPABASE_ANON_KEY) {
+        console.error("❌ Config manquante pour reset");
+        return false;
+    }
+
+    try {
+        // Essayer local d'abord
+        try {
+            await loadScript('supabase.min.js');
+            console.log("✅ Reset : local chargé");
+        } catch (localErr) {
+            console.warn("⚠️ Reset : local échoué, fallback CDN");
+            const cdnUrl = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.106.1/dist/umd/supabase.min.js';
+            await loadScript(cdnUrl);
+        }
+
+        const client = window.supabase.createClient(
+            window.YOTEACHER_CONFIG.SUPABASE_URL, 
+            window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY, 
+            {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true,
+                    storage: window.localStorage
+                }
             }
-        })();
+        );
+
+        window.supabase = client;
+        window.supabaseReady = true;
+        console.log("✅ Supabase réinitialisé avec succès");
+        return true;
+    } catch (error) {
+        console.error("❌ Échec réinitialisation:", error);
+        return false;
     }
 };

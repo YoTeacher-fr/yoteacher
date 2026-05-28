@@ -1,5 +1,5 @@
-// ========== MESSAGING WIDGET — VERSION CORRIGÉE (bug Supabase 2.106.1)
-// Fix : timeout forcé + getSession() avant requêtes + fallback fetch
+// ========== MESSAGING WIDGET — VERSION CORRIGÉE (Supabase 2.106.1 deadlock fix)
+// Fix : plus de getSession() avant requêtes + token stocké au démarrage + fallback localStorage
 
 (function() {
     'use strict';
@@ -15,48 +15,51 @@
         }
     }
 
-    // ========== FIX CRITIQUE : Timeout wrapper ==========
-    function withTimeout(promise, ms = 8000, label = 'req') {
+    // ========== UTILITAIRE : Timeout wrapper ==========
+    function withTimeout(promise, ms = 15000, label = 'req') {
         const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error(`${label} timeout after ${ms}ms`)), ms);
         });
         return Promise.race([promise, timeoutPromise]);
     }
 
-    // ========== FIX CRITIQUE : Forcer un getSession() frais ==========
-    async function forceFreshSession() {
+    // ========== UTILITAIRE : Récupérer token depuis localStorage (fallback) ==========
+    function getStoredToken() {
+        // 1. Token en mémoire
+        if (state.accessToken) return state.accessToken;
+
+        // 2. Token dans localStorage (format Supabase v2)
         try {
-            if (!window.supabase?.auth?.getSession) return false;
-            const { data, error } = await withTimeout(
-                window.supabase.auth.getSession(),
-                5000,
-                'getSession'
-            );
-            if (error) {
-                log('❌ getSession() a retourné une erreur:', error.message);
-                return false;
+            const url = new URL(window.YOTEACHER_CONFIG.SUPABASE_URL);
+            const projectRef = url.hostname.split('.')[0];
+            const key = `sb-${projectRef}-auth-token`;
+            const stored = localStorage.getItem(key);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed.access_token) {
+                    state.accessToken = parsed.access_token;
+                    return parsed.access_token;
+                }
             }
-            log('✅ getSession() frais OK, token valide:', !!data?.session?.access_token);
-            return !!data?.session;
         } catch (e) {
-            log('❌ getSession() a throw:', e.message);
-            return false;
+            log('⚠️ Impossible de lire localStorage:', e.message);
         }
+        return null;
     }
 
-    // ========== FIX CRITIQUE : Fallback fetch direct pour l'INSERT ==========
+    // ========== FALLBACK : INSERT direct via fetch REST ==========
     async function insertMessageDirect(content, receiverId) {
         log('=== FALLBACK : insertMessageDirect ===');
         try {
-            const { data: { session } } = await window.supabase.auth.getSession();
-            if (!session?.access_token) throw new Error('Pas de token');
+            const token = getStoredToken();
+            if (!token) throw new Error('Pas de token disponible (ni en mémoire ni localStorage)');
 
             const url = `${window.YOTEACHER_CONFIG.SUPABASE_URL}/rest/v1/messages`;
             const res = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'apikey': window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${session.access_token}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                     'Prefer': 'return=representation'
                 },
@@ -87,7 +90,8 @@
         notifyChannel: null,
         chatChannel: null,
         pendingMessages: new Set(),
-        supabaseBlocked: false  // Flag pour détecter le blocage
+        supabaseBlocked: false,
+        accessToken: null  // ← NOUVEAU : token stocké en mémoire
     };
 
     function escapeHtml(str) {
@@ -96,6 +100,14 @@
 
     function formatTime(iso) {
         return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatDateShort(iso) {
+        const d = new Date(iso);
+        const now = new Date();
+        const isToday = d.toDateString() === now.toDateString();
+        if (isToday) return formatTime(iso);
+        return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     }
 
     // ==========================================
@@ -108,18 +120,9 @@
 
         while (Date.now() - start < 15000) {
             attempts++;
-            log('Tentative ' + attempts + ' — window.supabase existe ?', !!window.supabase);
-
-            if (window.supabase) {
-                log('window.supabase existe');
-                log('window.supabase.auth existe ?', !!window.supabase.auth);
-                log('window.supabase.auth.getUser existe ?', typeof window.supabase.auth?.getUser);
-
+            if (window.supabase && window.supabase.auth) {
                 try {
                     const { data, error } = await window.supabase.auth.getUser();
-                    log('getUser() retourné — error:', error);
-                    log('getUser() retourné — data.user existe ?', !!data?.user);
-
                     if (!error && data?.user) {
                         log('✅ Supabase prêt, user.id:', data.user.id);
                         return { client: window.supabase, user: data.user };
@@ -138,29 +141,30 @@
     // ==========================================
     async function detectRole(client, user) {
         log('=== ÉTAPE 2 : detectRole ===');
-        log('user.id:', user.id);
-        log('user.email:', user.email);
         state.myId = user.id;
 
         try {
+            // Récupérer le token UNE SEULE FOIS au démarrage
             const { data: { session } } = await client.auth.getSession();
-            log('Session récupérée — token existe ?', !!session?.access_token);
+            if (session?.access_token) {
+                state.accessToken = session.access_token;
+                log('🔑 Token stocké en mémoire');
+            }
 
             if (!session?.access_token) {
-                log('❌ PAS DE TOKEN');
-                return false;
+                log('❌ PAS DE TOKEN — tentative localStorage');
+                const token = getStoredToken();
+                if (!token) return false;
             }
 
             const url = window.YOTEACHER_CONFIG?.SUPABASE_URL + '/functions/v1/teacher-info';
             log('Appel edge function:', url);
 
             const res = await fetch(url, {
-                headers: { Authorization: 'Bearer ' + session.access_token }
+                headers: { Authorization: 'Bearer ' + (state.accessToken || getStoredToken()) }
             });
 
             log('Réponse edge function — status:', res.status);
-            log('Réponse edge function — ok:', res.ok);
-
             if (!res.ok) {
                 log('❌ Edge function a échoué');
                 return false;
@@ -182,7 +186,6 @@
             return true;
         } catch (err) {
             log('❌ detectRole a throw:', err.message);
-            log('Stack:', err.stack);
             return false;
         }
     }
@@ -192,10 +195,7 @@
     // ==========================================
     function createWidget() {
         log('=== ÉTAPE 3 : createWidget ===');
-        if (document.getElementById('messaging-widget-root')) {
-            log('Widget DOM existe déjà');
-            return;
-        }
+        if (document.getElementById('messaging-widget-root')) return;
         const root = document.createElement('div');
         root.id = 'messaging-widget-root';
         root.innerHTML = `
@@ -256,8 +256,7 @@
         log('teacherId:', state.teacherId);
 
         const win = document.getElementById('msg-widget-window');
-        if (!win) { log('❌ win null'); return; }
-        if (!state.teacherId) { log('❌ teacherId null'); return; }
+        if (!win || !state.teacherId) { log('❌ win ou teacherId null'); return; }
 
         const cached = state.messageCache.get(state.teacherId);
         log('Cache pour teacherId:', cached ? cached.length + ' messages' : 'VIDE');
@@ -285,8 +284,6 @@
         document.getElementById('msg-widget-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
         const container = document.getElementById('msg-widget-messages');
-        log('Container messages:', !!container);
-
         if (cached && cached.length > 0) {
             log('Affichage depuis cache');
             renderMessagesToContainer(cached, container);
@@ -338,8 +335,7 @@
     // ==========================================
     async function renderAdminChat(partnerId, partnerName) {
         log('=== ÉTAPE 6 : renderAdminChat ===');
-        log('partnerId:', partnerId);
-        log('partnerName:', partnerName);
+        log('partnerId:', partnerId, 'partnerName:', partnerName);
 
         const win = document.getElementById('msg-widget-window');
         if (!win) { log('❌ win null'); return; }
@@ -367,7 +363,6 @@
         `;
 
         document.getElementById('msg-widget-back').addEventListener('click', () => {
-            log('Clic retour');
             state.activePartner = null;
             if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
             renderAdminConversations();
@@ -393,57 +388,44 @@
     }
 
     // ==========================================
-    // ÉTAPE 7 : CHARGEMENT MESSAGES (avec timeout fix)
+    // ÉTAPE 7 : CHARGEMENT MESSAGES (SANS getSession forcé)
     // ==========================================
     async function loadMessages(partnerId) {
         log('=== ÉTAPE 7 : loadMessages ===');
-        log('partnerId:', partnerId);
-        log('myId:', state.myId);
+        log('partnerId:', partnerId, 'myId:', state.myId);
 
         const container = document.getElementById('msg-widget-messages');
-        log('Container existe ?', !!container);
         if (!container) { log('❌ Container null'); return; }
 
         try {
-            // FIX : Forcer un getSession() frais avant la requête
-            await forceFreshSession();
-
+            // SUPPRIMÉ : await forceFreshSession(); ← CAUSAIT LE DEADLOCK
             log('Appel RPC get_messages_with...');
             const { data: msgs, error } = await withTimeout(
                 window.supabase.rpc('get_messages_with', { partner: partnerId }),
-                10000,
+                15000,
                 'rpc-get_messages_with'
             );
 
             log('RPC retourné — error:', error);
             log('RPC retourné — data:', msgs ? msgs.length + ' messages' : 'null');
 
-            if (error) {
-                log('❌ RPC a retourné une erreur:', error.message);
-                throw error;
-            }
+            if (error) throw error;
 
             if (msgs) {
-                log('Mise en cache de', msgs.length, 'messages');
                 state.messageCache.set(partnerId, msgs);
+                log('Mise en cache de', msgs.length, 'messages');
             }
 
-            log('Rendu des messages dans le DOM...');
             renderMessagesToContainer(msgs, container);
             container.scrollTop = container.scrollHeight;
 
-            log('Appel mark_messages_read...');
-            const { error: readError } = await withTimeout(
-                window.supabase.rpc('mark_messages_read', { partner: partnerId }),
-                8000,
-                'rpc-mark_messages_read'
-            );
-            log('mark_messages_read — error:', readError);
+            // Marquer comme lus (fire-and-forget, pas bloquant)
+            window.supabase.rpc('mark_messages_read', { partner: partnerId }).catch(e => {
+                log('mark_messages_read silencieux échec:', e.message);
+            });
 
         } catch (err) {
             log('❌ loadMessages a throw:', err.message);
-            log('Stack:', err.stack);
-            // Si timeout, marquer Supabase comme potentiellement bloqué
             if (err.message.includes('timeout')) {
                 state.supabaseBlocked = true;
                 log('⚠️ Supabase marqué comme bloqué');
@@ -457,32 +439,23 @@
     async function loadAdminConversations() {
         log('=== ÉTAPE 8 : loadAdminConversations ===');
         const container = document.getElementById('msg-widget-conversations');
-        log('Container existe ?', !!container);
         if (!container) { log('❌ Container null'); return; }
 
         try {
-            await forceFreshSession();
-
+            // SUPPRIMÉ : await forceFreshSession();
             log('Appel RPC get_conversation_partners...');
             const { data: partners, error } = await withTimeout(
                 window.supabase.rpc('get_conversation_partners'),
-                10000,
+                15000,
                 'rpc-get_conversation_partners'
             );
 
-            log('RPC retourné — error:', error);
-            log('RPC retourné — data:', partners ? partners.length + ' conversations' : 'null');
-
-            if (error) {
-                log('❌ RPC a retourné une erreur:', error.message);
-                throw error;
-            }
+            if (error) throw error;
 
             state.conversations = partners || [];
             container.innerHTML = '';
 
             if (!partners || partners.length === 0) {
-                log('Aucune conversation');
                 container.innerHTML = `
                     <div class="messaging-widget-empty">
                         <i class="fas fa-inbox"></i>
@@ -492,7 +465,6 @@
                 return;
             }
 
-            log('Rendu de', partners.length, 'conversations');
             partners.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'messaging-widget-conv-item';
@@ -519,7 +491,6 @@
 
         } catch (err) {
             log('❌ loadAdminConversations a throw:', err.message);
-            log('Stack:', err.stack);
             container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur: ${err.message}</p></div>`;
         }
     }
@@ -527,10 +498,8 @@
     function renderMessagesToContainer(msgs, container) {
         log('=== renderMessagesToContainer ===');
         log('msgs:', msgs ? msgs.length : 'null');
-        log('container:', !!container);
 
         if (!msgs || msgs.length === 0) {
-            log('Aucun message à rendre');
             if (!container.querySelector('.messaging-widget-msg')) {
                 container.innerHTML = `
                     <div class="messaging-widget-empty">
@@ -543,7 +512,6 @@
         }
         container.innerHTML = '';
         msgs.forEach((m, i) => {
-            log('Rendu message', i, ':', m.id, m.content.substring(0, 30));
             appendMessage(m, container);
         });
     }
@@ -565,7 +533,7 @@
     }
 
     // ==========================================
-    // ÉTAPE 9 : ENVOI (avec timeout fix + fallback)
+    // ÉTAPE 9 : ENVOI (sans getSession forcé + fallback immédiat)
     // ==========================================
     async function sendMessage() {
         log('=== ÉTAPE 9 : sendMessage ===');
@@ -575,11 +543,7 @@
         if (!content) { log('❌ Content vide'); return; }
 
         const receiverId = state.isAdmin ? state.activePartner : state.teacherId;
-        log('receiverId:', receiverId);
-        log('isAdmin:', state.isAdmin);
-        log('activePartner:', state.activePartner);
-        log('teacherId:', state.teacherId);
-
+        log('receiverId:', receiverId, 'isAdmin:', state.isAdmin);
         if (!receiverId) { log('❌ receiverId null'); return; }
         if (input) input.value = '';
 
@@ -603,38 +567,33 @@
         }
 
         try {
-            // FIX : Forcer un getSession() frais avant l'INSERT
-            await forceFreshSession();
-
+            // SUPPRIMÉ : await forceFreshSession(); ← CAUSAIT LE DEADLOCK
             log('INSERT dans messages...');
-            log('sender_id:', state.myId);
-            log('receiver_id:', receiverId);
 
-            let data, error;
+            let data = null, error = null;
 
-            // Si Supabase a déjà été bloqué, utiliser directement le fallback
+            // Si Supabase a été marqué bloqué, fallback immédiat
             if (state.supabaseBlocked) {
-                log('⚠️ Supabase était bloqué, utilisation du fallback direct');
+                log('⚠️ Supabase bloqué, fallback direct');
                 const fallback = await insertMessageDirect(content, receiverId);
                 data = fallback.data;
                 error = fallback.error;
             } else {
-                // Essai normal avec timeout
-                const result = await withTimeout(
-                    window.supabase.from('messages').insert({
-                        sender_id: state.myId,
-                        receiver_id: receiverId,
-                        content: content
-                    }).select(),
-                    10000,
-                    'insert-msg'
-                );
-                data = result.data;
-                error = result.error;
-
-                // Si timeout, essayer le fallback
-                if (!data && !error) {
-                    log('⚠️ INSERT a timeout, tentative fallback...');
+                // Essai normal
+                try {
+                    const result = await withTimeout(
+                        window.supabase.from('messages').insert({
+                            sender_id: state.myId,
+                            receiver_id: receiverId,
+                            content: content
+                        }).select(),
+                        15000,
+                        'insert-msg'
+                    );
+                    data = result.data;
+                    error = result.error;
+                } catch (timeoutErr) {
+                    log('⚠️ INSERT timeout, tentative fallback...');
                     state.supabaseBlocked = true;
                     const fallback = await insertMessageDirect(content, receiverId);
                     data = fallback.data;
@@ -643,38 +602,34 @@
             }
 
             log('INSERT retourné — error:', error);
-            log('INSERT retourné — data:', data ? JSON.stringify(data) : 'null');
+            log('INSERT retourné — data:', data ? 'OK' : 'null');
 
-            if (error) {
-                log('❌ INSERT a échoué:', error.message);
-                throw error;
-            }
+            if (error) throw error;
 
             const realMsg = data?.[0];
             if (realMsg) {
                 log('Message réel reçu, id:', realMsg.id);
                 const pendingEl = document.querySelector(`[data-msg-id="${tempId}"]`);
-                if (pendingEl) {
-                    pendingEl.setAttribute('data-msg-id', realMsg.id);
-                    log('ID temporaire remplacé par réel');
-                }
+                if (pendingEl) pendingEl.setAttribute('data-msg-id', realMsg.id);
+
                 const cached = state.messageCache.get(receiverId) || [];
                 const idx = cached.findIndex(m => m.id === tempId);
                 if (idx >= 0) cached[idx] = realMsg;
                 else cached.push(realMsg);
                 state.messageCache.set(receiverId, cached);
                 log('Cache mis à jour');
-            } else {
-                log('❌ INSERT a retourné data vide !');
             }
 
             state.pendingMessages.delete(tempId);
+            state.supabaseBlocked = false; // Réussi, débloquer
             log('✅ Envoi terminé avec succès');
 
         } catch (err) {
             log('❌ sendMessage a throw:', err.message);
-            log('Stack:', err.stack);
             state.pendingMessages.delete(tempId);
+            // Retirer le message optimiste en cas d'échec total
+            const pendingEl = document.querySelector(`[data-msg-id="${tempId}"]`);
+            if (pendingEl) pendingEl.remove();
             if (input) input.value = content; // Restore le texte
             alert("Erreur d'envoi : " + err.message);
         }
@@ -692,10 +647,7 @@
             state.chatChannel.unsubscribe();
             state.chatChannel = null;
         }
-        if (!partnerId || !state.myId) {
-            log('❌ partnerId ou myId null');
-            return;
-        }
+        if (!partnerId || !state.myId) { log('❌ partnerId ou myId null'); return; }
 
         const channelName = 'widget-chat-' + state.myId + '-' + partnerId;
         log('Nom canal:', channelName);
@@ -709,8 +661,6 @@
                 filter: `receiver_id=in.(${state.myId},${partnerId})`
             }, (payload) => {
                 log('=== Chat realtime event ===');
-                log('payload.new:', JSON.stringify(payload.new));
-
                 const msg = payload.new;
                 const relevant =
                     (msg.sender_id === state.myId && msg.receiver_id === partnerId) ||
@@ -721,7 +671,6 @@
                 if (state.pendingMessages.has(msg.id)) { log('Message pending, ignoré'); return; }
 
                 const container = document.getElementById('msg-widget-messages');
-                log('Container existe ?', !!container);
                 if (container) {
                     if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
                     appendMessage(msg, container);
@@ -729,16 +678,14 @@
                 }
 
                 const cached = state.messageCache.get(partnerId) || [];
-                const alreadyInCache = cached.some(m => m.id === msg.id);
-                if (!alreadyInCache) {
+                if (!cached.some(m => m.id === msg.id)) {
                     cached.push(msg);
                     state.messageCache.set(partnerId, cached);
                     log('Message ajouté au cache');
                 }
 
                 if (msg.receiver_id === state.myId) {
-                    log('Marquage comme lu...');
-                    window.supabase.rpc('mark_messages_read', { partner: msg.sender_id });
+                    window.supabase.rpc('mark_messages_read', { partner: msg.sender_id }).catch(() => {});
                 }
             })
             .subscribe((status) => {
@@ -754,18 +701,13 @@
         log('myId:', state.myId);
 
         if (state.notifyChannel) {
-            log('Unsubscribe ancien notifyChannel');
             try { state.notifyChannel.unsubscribe(); } catch (e) {}
             state.notifyChannel = null;
         }
-        if (!state.myId) {
-            log('❌ myId null, pas de canal');
-            return;
-        }
+        if (!state.myId) { log('❌ myId null'); return; }
 
         const channelName = 'widget-notify-' + state.myId;
         log('Nom canal:', channelName);
-        log('Filter: receiver_id=eq.' + state.myId);
 
         state.notifyChannel = window.supabase
             .channel(channelName)
@@ -776,28 +718,14 @@
                 filter: `receiver_id=eq.${state.myId}`
             }, (payload) => {
                 log('=== NOTIFY realtime event ===');
-                log('payload.new:', JSON.stringify(payload.new));
-
                 const msg = payload.new;
-                log('Message reçu de:', msg.sender_id);
-                log('Mon ID:', state.myId);
-                log('isAdmin:', state.isAdmin);
-                log('isOpen:', state.isOpen);
-                log('activePartner:', state.activePartner);
-                log('teacherId:', state.teacherId);
 
-                // Mise à jour cache
                 const cached = state.messageCache.get(msg.sender_id) || [];
-                const alreadyInCache = cached.some(m => m.id === msg.id);
-                if (!alreadyInCache) {
+                if (!cached.some(m => m.id === msg.id)) {
                     cached.push(msg);
                     state.messageCache.set(msg.sender_id, cached);
-                    log('Message ajouté au cache');
-                } else {
-                    log('Message déjà dans cache');
                 }
 
-                // Déterminer si c'est la conversation active
                 const isCurrentConv = state.isOpen && (
                     state.isAdmin
                         ? msg.sender_id === state.activePartner
@@ -821,7 +749,7 @@
                         if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
                         appendMessage(msg, container);
                     }
-                    window.supabase.rpc('mark_messages_read', { partner: msg.sender_id });
+                    window.supabase.rpc('mark_messages_read', { partner: msg.sender_id }).catch(() => {});
                 }
             })
             .subscribe((status) => {
@@ -830,33 +758,26 @@
     }
 
     // ==========================================
-    // ÉTAPE 12 : BADGE
+    // ÉTAPE 12 : BADGE (sans getSession forcé)
     // ==========================================
     async function updateUnreadBadge() {
         log('=== ÉTAPE 12 : updateUnreadBadge ===');
         try {
-            await forceFreshSession();
-
+            // SUPPRIMÉ : await forceFreshSession();
             log('Appel RPC get_conversation_partners...');
             const { data: partners, error } = await withTimeout(
                 window.supabase.rpc('get_conversation_partners'),
-                10000,
+                15000,
                 'rpc-badge'
             );
-            log('RPC retourné — error:', error);
-            log('RPC retourné — data:', partners ? partners.length + ' conversations' : 'null');
 
-            if (error) {
-                log('❌ RPC a retourné une erreur:', error.message);
-                throw error;
-            }
+            if (error) throw error;
 
             const total = (partners || []).reduce((sum, p) => sum + (p.unread_count || 0), 0);
             log('Total non-lus:', total);
             state.unreadTotal = total;
 
             const bubble = document.getElementById('msg-widget-bubble');
-            log('Bubble existe ?', !!bubble);
             if (!bubble) return;
 
             if (total > 0) {
@@ -874,7 +795,7 @@
     }
 
     // ==========================================
-    // ÉTAPE 13 : AUTH CHANGES
+    // ÉTAPE 13 : AUTH CHANGES (mise à jour token)
     // ==========================================
     function listenForAuthChanges() {
         log('=== ÉTAPE 13 : listenForAuthChanges ===');
@@ -882,11 +803,11 @@
 
         window.supabase.auth.onAuthStateChange((event, session) => {
             log('Auth event:', event);
-            log('Session existe ?', !!session);
-
+            if (session?.access_token) {
+                state.accessToken = session.access_token;
+                log('🔑 Token mis à jour en mémoire');
+            }
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                log('SIGNED_IN/TOKEN_REFRESHED détecté');
-                // FIX : Réinitialiser le flag de blocage après un refresh réussi
                 state.supabaseBlocked = false;
                 log('🔄 Flag supabaseBlocked réinitialisé');
             }
@@ -908,8 +829,6 @@
 
             log('Détection rôle...');
             const roleOk = await detectRole(client, user);
-            log('detectRole retourné:', roleOk);
-
             if (!roleOk) {
                 log('❌ Rôle non détecté, arrêt');
                 return;
@@ -944,7 +863,6 @@
 
         } catch (err) {
             log('❌ Init failed:', err.message);
-            log('Stack:', err.stack);
         }
     }
 
