@@ -1,18 +1,19 @@
-// ========== MESSAGING WIDGET v4 ==========
-// Correction : pas de boucle infinie de reconnexion, gestion propre des canaux,
-//              vérification DOM avant écriture, badge fiable
+// ========== MESSAGING WIDGET — VERSION DEBUG ==========
+// Logs ultra-précis à chaque étape. PAS de solution, que du diagnostic.
 
 (function() {
     'use strict';
 
-    const CONFIG = {
-        maxWaitMs: 15000,
-        checkIntervalMs: 200,
-        badgePollMs: 15000,
-        reconnectMs: 5000,        // Délai augmenté pour éviter les boucles
-        rpcRetryMs: 2000,
-        rpcMaxRetries: 3
-    };
+    const DEBUG = true;
+    function log(label, data) {
+        if (!DEBUG) return;
+        const prefix = '[WIDGET-DEBUG ' + new Date().toISOString().substr(11, 8) + '] ' + label;
+        if (data !== undefined) {
+            console.log(prefix, data);
+        } else {
+            console.log(prefix);
+        }
+    }
 
     let state = {
         isOpen: false,
@@ -21,14 +22,10 @@
         teacherId: null,
         teacherName: null,
         activePartner: null,
-        conversations: [],
-        chatChannel: null,
-        notifyChannel: null,
-        unreadTotal: 0,
-        initialized: false,
         messageCache: new Map(),
-        pendingMessages: new Set(),
-        isReconnecting: false     // ← VERROU : empêche les reconnexions simultanées
+        notifyChannel: null,
+        chatChannel: null,
+        pendingMessages: new Set()
     };
 
     function escapeHtml(str) {
@@ -39,51 +36,104 @@
         return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     }
 
-    function formatDateShort(iso) {
-        return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    }
-
     // ==========================================
-    // ATTENTE SUPABASE
+    // ÉTAPE 1 : ATTENTE SUPABASE
     // ==========================================
     async function waitForSupabase() {
+        log('=== ÉTAPE 1 : waitForSupabase ===');
         const start = Date.now();
-        while (Date.now() - start < CONFIG.maxWaitMs) {
-            if (window.supabase && typeof window.supabase.auth?.getUser === 'function') {
+        let attempts = 0;
+
+        while (Date.now() - start < 15000) {
+            attempts++;
+            log('Tentative ' + attempts + ' — window.supabase existe ?', !!window.supabase);
+
+            if (window.supabase) {
+                log('window.supabase existe');
+                log('window.supabase.auth existe ?', !!window.supabase.auth);
+                log('window.supabase.auth.getUser existe ?', typeof window.supabase.auth?.getUser);
+
                 try {
                     const { data, error } = await window.supabase.auth.getUser();
+                    log('getUser() retourné — error:', error);
+                    log('getUser() retourné — data.user existe ?', !!data?.user);
+
                     if (!error && data?.user) {
+                        log('✅ Supabase prêt, user.id:', data.user.id);
                         return { client: window.supabase, user: data.user };
                     }
-                } catch (e) {}
+                } catch (e) {
+                    log('getUser() a throw:', e.message);
+                }
             }
-            await new Promise(r => setTimeout(r, CONFIG.checkIntervalMs));
+            await new Promise(r => setTimeout(r, 200));
         }
-        throw new Error('Supabase timeout');
+        throw new Error('Supabase timeout après ' + attempts + ' tentatives');
     }
 
     // ==========================================
-    // RPC AVEC RETRY
+    // ÉTAPE 2 : DÉTECTION RÔLE
     // ==========================================
-    async function rpcWithRetry(fnName, params, retries = CONFIG.rpcMaxRetries) {
-        for (let i = 0; i < retries; i++) {
-            try {
-                const { data, error } = await window.supabase.rpc(fnName, params);
-                if (error) throw error;
-                return { data, error: null };
-            } catch (err) {
-                if (i === retries - 1) throw err;
-                console.log(`[WIDGET] RPC ${fnName} retry ${i+1}/${retries}...`);
-                await new Promise(r => setTimeout(r, CONFIG.rpcRetryMs));
+    async function detectRole(client, user) {
+        log('=== ÉTAPE 2 : detectRole ===');
+        log('user.id:', user.id);
+        log('user.email:', user.email);
+        state.myId = user.id;
+
+        try {
+            const { data: { session } } = await client.auth.getSession();
+            log('Session récupérée — token existe ?', !!session?.access_token);
+
+            if (!session?.access_token) {
+                log('❌ PAS DE TOKEN');
+                return false;
             }
+
+            const url = window.YOTEACHER_CONFIG?.SUPABASE_URL + '/functions/v1/teacher-info';
+            log('Appel edge function:', url);
+
+            const res = await fetch(url, {
+                headers: { Authorization: 'Bearer ' + session.access_token }
+            });
+
+            log('Réponse edge function — status:', res.status);
+            log('Réponse edge function — ok:', res.ok);
+
+            if (!res.ok) {
+                log('❌ Edge function a échoué');
+                return false;
+            }
+
+            const teacher = await res.json();
+            log('Edge function retourné:', JSON.stringify(teacher));
+
+            if (teacher.id === user.id) {
+                state.isAdmin = true;
+                state.teacherId = user.id;
+                log('✅ Mode ADMIN');
+            } else {
+                state.teacherId = teacher.id;
+                state.teacherName = teacher.full_name;
+                state.isAdmin = false;
+                log('✅ Mode ÉTUDIANT, teacherId:', teacher.id);
+            }
+            return true;
+        } catch (err) {
+            log('❌ detectRole a throw:', err.message);
+            log('Stack:', err.stack);
+            return false;
         }
     }
 
     // ==========================================
-    // DOM
+    // ÉTAPE 3 : CRÉATION DOM
     // ==========================================
     function createWidget() {
-        if (document.getElementById('messaging-widget-root')) return;
+        log('=== ÉTAPE 3 : createWidget ===');
+        if (document.getElementById('messaging-widget-root')) {
+            log('Widget DOM existe déjà');
+            return;
+        }
         const root = document.createElement('div');
         root.id = 'messaging-widget-root';
         root.innerHTML = `
@@ -94,12 +144,17 @@
         `;
         document.body.appendChild(root);
         document.getElementById('msg-widget-bubble').addEventListener('click', toggleWindow);
+        log('✅ Widget DOM créé');
     }
 
     function toggleWindow() {
+        log('=== toggleWindow ===');
+        log('state.isOpen avant:', state.isOpen);
         const win = document.getElementById('msg-widget-window');
-        if (!win) return;
+        if (!win) { log('❌ Fenêtre DOM non trouvée'); return; }
+
         if (state.isOpen) {
+            log('Fermeture fenêtre');
             win.classList.add('closing');
             setTimeout(() => {
                 win.style.display = 'none';
@@ -107,16 +162,21 @@
                 state.isOpen = false;
                 state.activePartner = null;
                 if (state.chatChannel) {
+                    log('Unsubscribe chatChannel');
                     state.chatChannel.unsubscribe();
                     state.chatChannel = null;
                 }
+                log('✅ Fenêtre fermée');
             }, 250);
         } else {
+            log('Ouverture fenêtre');
             state.isOpen = true;
             win.style.display = 'flex';
             if (state.isAdmin) {
+                log('Rendu ADMIN');
                 renderAdminConversations();
             } else {
+                log('Rendu ÉTUDIANT');
                 renderStudentChat();
             }
         }
@@ -127,21 +187,25 @@
     }
 
     // ==========================================
-    // RENDU ÉTUDIANT
+    // ÉTAPE 4 : RENDU ÉTUDIANT
     // ==========================================
     async function renderStudentChat() {
-        const win = document.getElementById('msg-widget-window');
-        if (!win || !state.teacherId) return;
+        log('=== ÉTAPE 4 : renderStudentChat ===');
+        log('teacherId:', state.teacherId);
 
-        const teacherName = state.teacherName || 'Professeur';
+        const win = document.getElementById('msg-widget-window');
+        if (!win) { log('❌ win null'); return; }
+        if (!state.teacherId) { log('❌ teacherId null'); return; }
+
         const cached = state.messageCache.get(state.teacherId);
+        log('Cache pour teacherId:', cached ? cached.length + ' messages' : 'VIDE');
 
         win.innerHTML = `
             <div class="messaging-widget-header">
                 <div class="messaging-widget-header-info">
                     <div class="messaging-widget-avatar">👨‍🏫</div>
                     <div class="messaging-widget-header-text">
-                        <div class="messaging-widget-header-name">${escapeHtml(teacherName)}</div>
+                        <div class="messaging-widget-header-name">${escapeHtml(state.teacherName || 'Professeur')}</div>
                         <div class="messaging-widget-header-status"><span class="messaging-widget-status-dot"></span>En ligne</div>
                     </div>
                 </div>
@@ -159,9 +223,13 @@
         document.getElementById('msg-widget-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
         const container = document.getElementById('msg-widget-messages');
+        log('Container messages:', !!container);
+
         if (cached && cached.length > 0) {
+            log('Affichage depuis cache');
             renderMessagesToContainer(cached, container);
         } else {
+            log('Aucun cache, affichage état vide');
             container.innerHTML = `
                 <div class="messaging-widget-empty">
                     <i class="fas fa-comment-slash"></i>
@@ -170,16 +238,19 @@
             `;
         }
 
+        log('Appel loadMessages...');
         await loadMessages(state.teacherId);
+        log('Appel setupChatRealtime...');
         setupChatRealtime(state.teacherId);
     }
 
     // ==========================================
-    // RENDU ADMIN - LISTE
+    // ÉTAPE 5 : RENDU ADMIN - LISTE
     // ==========================================
     async function renderAdminConversations() {
+        log('=== ÉTAPE 5 : renderAdminConversations ===');
         const win = document.getElementById('msg-widget-window');
-        if (!win) return;
+        if (!win) { log('❌ win null'); return; }
 
         win.innerHTML = `
             <div class="messaging-widget-header">
@@ -201,13 +272,18 @@
     }
 
     // ==========================================
-    // RENDU ADMIN - CHAT
+    // ÉTAPE 6 : RENDU ADMIN - CHAT
     // ==========================================
     async function renderAdminChat(partnerId, partnerName) {
+        log('=== ÉTAPE 6 : renderAdminChat ===');
+        log('partnerId:', partnerId);
+        log('partnerName:', partnerName);
+
         const win = document.getElementById('msg-widget-window');
-        if (!win) return;
+        if (!win) { log('❌ win null'); return; }
         state.activePartner = partnerId;
         const cached = state.messageCache.get(partnerId);
+        log('Cache pour partnerId:', cached ? cached.length + ' messages' : 'VIDE');
 
         win.innerHTML = `
             <div class="messaging-widget-header">
@@ -229,6 +305,7 @@
         `;
 
         document.getElementById('msg-widget-back').addEventListener('click', () => {
+            log('Clic retour');
             state.activePartner = null;
             if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
             renderAdminConversations();
@@ -254,46 +331,74 @@
     }
 
     // ==========================================
-    // CHARGEMENT MESSAGES
+    // ÉTAPE 7 : CHARGEMENT MESSAGES (avec logs DEBUG)
     // ==========================================
     async function loadMessages(partnerId) {
+        log('=== ÉTAPE 7 : loadMessages ===');
+        log('partnerId:', partnerId);
+        log('myId:', state.myId);
+
         const container = document.getElementById('msg-widget-messages');
-        if (!container) return;
+        log('Container existe ?', !!container);
+        if (!container) { log('❌ Container null'); return; }
 
         try {
-            const { data: msgs } = await rpcWithRetry('get_messages_with', { partner: partnerId });
+            log('Appel RPC get_messages_with...');
+            const { data: msgs, error } = await window.supabase.rpc('get_messages_with', { partner: partnerId });
 
-            if (msgs) state.messageCache.set(partnerId, msgs);
+            log('RPC retourné — error:', error);
+            log('RPC retourné — data:', msgs ? msgs.length + ' messages' : 'null');
+
+            if (error) {
+                log('❌ RPC a retourné une erreur:', error.message);
+                throw error;
+            }
+
+            if (msgs) {
+                log('Mise en cache de', msgs.length, 'messages');
+                state.messageCache.set(partnerId, msgs);
+            }
+
+            log('Rendu des messages dans le DOM...');
             renderMessagesToContainer(msgs, container);
             container.scrollTop = container.scrollHeight;
 
-            await rpcWithRetry('mark_messages_read', { partner: partnerId });
-            updateUnreadBadge();
+            log('Appel mark_messages_read...');
+            const { error: readError } = await window.supabase.rpc('mark_messages_read', { partner: partnerId });
+            log('mark_messages_read — error:', readError);
+
         } catch (err) {
-            console.error('[WIDGET] loadMessages error:', err);
-            const cached = state.messageCache.get(partnerId);
-            if (cached && cached.length > 0) {
-                renderMessagesToContainer(cached, container);
-            } else {
-                container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de connexion. <button onclick="this.closest('.messaging-widget-window').querySelector('.messaging-widget-back')?.click()">Retour</button></p></div>`;
-            }
+            log('❌ loadMessages a throw:', err.message);
+            log('Stack:', err.stack);
         }
     }
 
     // ==========================================
-    // CHARGEMENT CONVERSATIONS ADMIN
+    // ÉTAPE 8 : CHARGEMENT CONVERSATIONS ADMIN
     // ==========================================
     async function loadAdminConversations() {
+        log('=== ÉTAPE 8 : loadAdminConversations ===');
         const container = document.getElementById('msg-widget-conversations');
-        if (!container) return;
+        log('Container existe ?', !!container);
+        if (!container) { log('❌ Container null'); return; }
 
         try {
-            const { data: partners } = await rpcWithRetry('get_conversation_partners');
+            log('Appel RPC get_conversation_partners...');
+            const { data: partners, error } = await window.supabase.rpc('get_conversation_partners');
+
+            log('RPC retourné — error:', error);
+            log('RPC retourné — data:', partners ? partners.length + ' conversations' : 'null');
+
+            if (error) {
+                log('❌ RPC a retourné une erreur:', error.message);
+                throw error;
+            }
 
             state.conversations = partners || [];
             container.innerHTML = '';
 
             if (!partners || partners.length === 0) {
+                log('Aucune conversation');
                 container.innerHTML = `
                     <div class="messaging-widget-empty">
                         <i class="fas fa-inbox"></i>
@@ -303,6 +408,7 @@
                 return;
             }
 
+            log('Rendu de', partners.length, 'conversations');
             partners.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'messaging-widget-conv-item';
@@ -327,15 +433,20 @@
                 container.appendChild(div);
             });
 
-            updateUnreadBadge();
         } catch (err) {
-            console.error('[WIDGET] loadAdminConversations error:', err);
-            container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de connexion. <button onclick="window.location.reload()">Rafraîchir la page</button></p></div>`;
+            log('❌ loadAdminConversations a throw:', err.message);
+            log('Stack:', err.stack);
+            container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur: ${err.message}</p></div>`;
         }
     }
 
     function renderMessagesToContainer(msgs, container) {
+        log('=== renderMessagesToContainer ===');
+        log('msgs:', msgs ? msgs.length : 'null');
+        log('container:', !!container);
+
         if (!msgs || msgs.length === 0) {
+            log('Aucun message à rendre');
             if (!container.querySelector('.messaging-widget-msg')) {
                 container.innerHTML = `
                     <div class="messaging-widget-empty">
@@ -347,15 +458,18 @@
             return;
         }
         container.innerHTML = '';
-        msgs.forEach(m => appendMessage(m, container));
+        msgs.forEach((m, i) => {
+            log('Rendu message', i, ':', m.id, m.content.substring(0, 30));
+            appendMessage(m, container);
+        });
     }
 
-    // ==========================================
-    // AJOUT MESSAGE AU DOM (dédoublonnage)
-    // ==========================================
     function appendMessage(msg, container) {
         const existing = container.querySelector(`[data-msg-id="${msg.id}"]`);
-        if (existing) return;
+        if (existing) {
+            log('Message déjà dans DOM, ignoré:', msg.id);
+            return;
+        }
 
         const isMe = msg.sender_id === state.myId;
         const div = document.createElement('div');
@@ -367,21 +481,29 @@
     }
 
     // ==========================================
-    // ENVOI
+    // ÉTAPE 9 : ENVOI (avec logs DEBUG)
     // ==========================================
     async function sendMessage() {
+        log('=== ÉTAPE 9 : sendMessage ===');
         const input = document.getElementById('msg-widget-input');
         const content = input?.value.trim();
-        if (!content) return;
+        log('content:', content);
+        if (!content) { log('❌ Content vide'); return; }
 
         const receiverId = state.isAdmin ? state.activePartner : state.teacherId;
-        if (!receiverId) return;
+        log('receiverId:', receiverId);
+        log('isAdmin:', state.isAdmin);
+        log('activePartner:', state.activePartner);
+        log('teacherId:', state.teacherId);
 
+        if (!receiverId) { log('❌ receiverId null'); return; }
         if (input) input.value = '';
 
         const tempId = 'pending-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         state.pendingMessages.add(tempId);
+        log('tempId:', tempId);
 
+        // Optimistic UI
         const container = document.getElementById('msg-widget-messages');
         if (container) {
             if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
@@ -393,33 +515,52 @@
                 created_at: new Date().toISOString()
             };
             appendMessage(optimisticMsg, container);
+            log('Message optimiste affiché');
         }
 
         try {
+            log('INSERT dans messages...');
+            log('sender_id:', state.myId);
+            log('receiver_id:', receiverId);
+
             const { data, error } = await window.supabase.from('messages').insert({
                 sender_id: state.myId,
                 receiver_id: receiverId,
                 content: content
             }).select();
 
-            if (error) throw error;
+            log('INSERT retourné — error:', error);
+            log('INSERT retourné — data:', data ? JSON.stringify(data) : 'null');
+
+            if (error) {
+                log('❌ INSERT a échoué:', error.message);
+                throw error;
+            }
 
             const realMsg = data?.[0];
             if (realMsg) {
+                log('Message réel reçu, id:', realMsg.id);
                 const pendingEl = document.querySelector(`[data-msg-id="${tempId}"]`);
                 if (pendingEl) {
                     pendingEl.setAttribute('data-msg-id', realMsg.id);
+                    log('ID temporaire remplacé par réel');
                 }
                 const cached = state.messageCache.get(receiverId) || [];
                 const idx = cached.findIndex(m => m.id === tempId);
                 if (idx >= 0) cached[idx] = realMsg;
                 else cached.push(realMsg);
                 state.messageCache.set(receiverId, cached);
+                log('Cache mis à jour');
+            } else {
+                log('❌ INSERT a retourné data vide !');
             }
 
             state.pendingMessages.delete(tempId);
+            log('✅ Envoi terminé avec succès');
+
         } catch (err) {
-            console.error('[WIDGET] Erreur envoi:', err);
+            log('❌ sendMessage a throw:', err.message);
+            log('Stack:', err.stack);
             state.pendingMessages.delete(tempId);
             if (input) input.value = content;
             alert("Erreur d'envoi : " + err.message);
@@ -427,34 +568,51 @@
     }
 
     // ==========================================
-    // REALTIME : CANAL CONVERSATION
+    // ÉTAPE 10 : REALTIME CHAT
     // ==========================================
     function setupChatRealtime(partnerId) {
+        log('=== ÉTAPE 10 : setupChatRealtime ===');
+        log('partnerId:', partnerId);
+
         if (state.chatChannel) {
+            log('Unsubscribe ancien chatChannel');
             state.chatChannel.unsubscribe();
             state.chatChannel = null;
         }
-        if (!partnerId || !state.myId) return;
+        if (!partnerId || !state.myId) {
+            log('❌ partnerId ou myId null');
+            return;
+        }
+
+        const channelName = 'widget-chat-' + state.myId + '-' + partnerId;
+        log('Nom canal:', channelName);
 
         state.chatChannel = window.supabase
-            .channel('widget-chat-' + state.myId + '-' + partnerId)
+            .channel(channelName)
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'messages',
                 filter: `receiver_id=in.(${state.myId},${partnerId})`
             }, (payload) => {
+                log('=== Chat realtime event ===');
+                log('payload.new:', JSON.stringify(payload.new));
+
                 const msg = payload.new;
                 const relevant =
                     (msg.sender_id === state.myId && msg.receiver_id === partnerId) ||
                     (msg.sender_id === partnerId && msg.receiver_id === state.myId);
-                if (!relevant) return;
-                if (state.pendingMessages.has(msg.id)) return;
+                log('relevant:', relevant);
+
+                if (!relevant) { log('Message non pertinent, ignoré'); return; }
+                if (state.pendingMessages.has(msg.id)) { log('Message pending, ignoré'); return; }
 
                 const container = document.getElementById('msg-widget-messages');
+                log('Container existe ?', !!container);
                 if (container) {
                     if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
                     appendMessage(msg, container);
+                    log('Message ajouté au DOM');
                 }
 
                 const cached = state.messageCache.get(partnerId) || [];
@@ -462,66 +620,80 @@
                 if (!alreadyInCache) {
                     cached.push(msg);
                     state.messageCache.set(partnerId, cached);
+                    log('Message ajouté au cache');
                 }
 
                 if (msg.receiver_id === state.myId) {
+                    log('Marquage comme lu...');
                     window.supabase.rpc('mark_messages_read', { partner: msg.sender_id });
                 }
             })
             .subscribe((status) => {
-                console.log('[WIDGET] Chat channel status:', status);
-                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                    setTimeout(() => setupChatRealtime(partnerId), CONFIG.reconnectMs);
-                }
-                // CLOSED = fermé proprement (pas de reconnexion auto, c'est volontaire)
+                log('Chat channel status:', status);
             });
     }
 
     // ==========================================
-    // REALTIME : CANAL NOTIFICATION (toujours actif)
+    // ÉTAPE 11 : REALTIME NOTIFY
     // ==========================================
     function setupNotifyRealtime() {
-        // VERROU : si une reconnexion est déjà en cours, ignorer
-        if (state.isReconnecting) {
-            console.log('[WIDGET] Reconnexion déjà en cours, ignorée');
+        log('=== ÉTAPE 11 : setupNotifyRealtime ===');
+        log('myId:', state.myId);
+
+        if (state.notifyChannel) {
+            log('Unsubscribe ancien notifyChannel');
+            try { state.notifyChannel.unsubscribe(); } catch (e) {}
+            state.notifyChannel = null;
+        }
+        if (!state.myId) {
+            log('❌ myId null, pas de canal');
             return;
         }
 
-        // Nettoyage propre de l'ancien canal
-        if (state.notifyChannel) {
-            try {
-                state.notifyChannel.unsubscribe();
-            } catch (e) {}
-            state.notifyChannel = null;
-        }
-
-        if (!state.myId) return;
+        const channelName = 'widget-notify-' + state.myId;
+        log('Nom canal:', channelName);
+        log('Filter: receiver_id=eq.' + state.myId);
 
         state.notifyChannel = window.supabase
-            .channel('widget-notify-' + state.myId)
+            .channel(channelName)
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'messages',
                 filter: `receiver_id=eq.${state.myId}`
             }, (payload) => {
-                const msg = payload.new;
-                console.log('[WIDGET] Notify reçu de:', msg.sender_id);
+                log('=== NOTIFY realtime event ===');
+                log('payload.new:', JSON.stringify(payload.new));
 
+                const msg = payload.new;
+                log('Message reçu de:', msg.sender_id);
+                log('Mon ID:', state.myId);
+                log('isAdmin:', state.isAdmin);
+                log('isOpen:', state.isOpen);
+                log('activePartner:', state.activePartner);
+                log('teacherId:', state.teacherId);
+
+                // Mise à jour cache
                 const cached = state.messageCache.get(msg.sender_id) || [];
                 const alreadyInCache = cached.some(m => m.id === msg.id);
                 if (!alreadyInCache) {
                     cached.push(msg);
                     state.messageCache.set(msg.sender_id, cached);
+                    log('Message ajouté au cache');
+                } else {
+                    log('Message déjà dans cache');
                 }
 
+                // Déterminer si c'est la conversation active
                 const isCurrentConv = state.isOpen && (
                     state.isAdmin
                         ? msg.sender_id === state.activePartner
                         : msg.sender_id === state.teacherId
                 );
+                log('isCurrentConv:', isCurrentConv);
 
                 if (!isCurrentConv) {
+                    log('Conversation inactive, mise à jour badge');
                     updateUnreadBadge();
                     if (Notification.permission === 'granted' && !state.isOpen) {
                         new Notification('Nouveau message', {
@@ -530,6 +702,7 @@
                         });
                     }
                 } else {
+                    log('Conversation active, affichage direct');
                     const container = document.getElementById('msg-widget-messages');
                     if (container) {
                         if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
@@ -539,144 +712,120 @@
                 }
             })
             .subscribe((status) => {
-                console.log('[WIDGET] Notify channel status:', status);
-
-                // Seuls CHANNEL_ERROR et TIMED_OUT méritent une reconnexion
-                // CLOSED = fermé volontairement ou par Supabase lors d'un refresh
-                // On ne reconnecte PAS immédiatement sur CLOSED pour éviter la boucle
-                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                    console.log('[WIDGET] Erreur canal, reconnexion dans', CONFIG.reconnectMs, 'ms');
-                    state.isReconnecting = true;
-                    setTimeout(() => {
-                        state.isReconnecting = false;
-                        setupNotifyRealtime();
-                    }, CONFIG.reconnectMs);
-                }
-                // Sur CLOSED : on laisse le polling badgePollMs s'en occuper
-                // ou l'événement SIGNED_IN déclenchera une reconnexion propre
+                log('Notify channel status:', status);
+                // Pas de reconnexion auto sur CLOSED — laisser le polling s'en charger
             });
     }
 
     // ==========================================
-    // BADGE
+    // ÉTAPE 12 : BADGE
     // ==========================================
     async function updateUnreadBadge() {
+        log('=== ÉTAPE 12 : updateUnreadBadge ===');
         try {
-            const { data: partners } = await rpcWithRetry('get_conversation_partners');
+            log('Appel RPC get_conversation_partners...');
+            const { data: partners, error } = await window.supabase.rpc('get_conversation_partners');
+            log('RPC retourné — error:', error);
+            log('RPC retourné — data:', partners ? partners.length + ' conversations' : 'null');
+
+            if (error) {
+                log('❌ RPC a retourné une erreur:', error.message);
+                throw error;
+            }
+
             const total = (partners || []).reduce((sum, p) => sum + (p.unread_count || 0), 0);
+            log('Total non-lus:', total);
             state.unreadTotal = total;
 
             const bubble = document.getElementById('msg-widget-bubble');
+            log('Bubble existe ?', !!bubble);
             if (!bubble) return;
 
             if (total > 0) {
                 bubble.classList.add('has-unread');
                 bubble.setAttribute('data-unread', total > 99 ? '99+' : total);
+                log('Badge affiché:', total);
             } else {
                 bubble.classList.remove('has-unread');
                 bubble.removeAttribute('data-unread');
+                log('Badge retiré');
             }
         } catch (err) {
-            console.error('[WIDGET] Badge error:', err);
+            log('❌ updateUnreadBadge a throw:', err.message);
         }
     }
 
     // ==========================================
-    // DÉTECTION RÔLE
-    // ==========================================
-    async function detectRole(client, user) {
-        try {
-            state.myId = user.id;
-
-            const { data: { session } } = await client.auth.getSession();
-            const token = session?.access_token;
-            if (!token) throw new Error('Pas de token');
-
-            const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/functions/v1/teacher-info`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (!res.ok) {
-                if (res.status === 404) {
-                    console.warn('[WIDGET] Edge function teacher-info non déployée');
-                    return false;
-                }
-                throw new Error('teacher-info: ' + res.status);
-            }
-
-            const teacher = await res.json();
-
-            if (teacher.id === user.id) {
-                state.isAdmin = true;
-                state.teacherId = user.id;
-                console.log('[WIDGET] Mode ADMIN');
-            } else {
-                state.teacherId = teacher.id;
-                state.teacherName = teacher.full_name;
-                state.isAdmin = false;
-                console.log('[WIDGET] Mode ÉTUDIANT, prof:', teacher.full_name);
-            }
-            return true;
-        } catch (err) {
-            console.error('[WIDGET] detectRole error:', err);
-            return false;
-        }
-    }
-
-    // ==========================================
-    // GESTION AUTH CHANGES (SIGNED_IN)
+    // ÉTAPE 13 : AUTH CHANGES
     // ==========================================
     function listenForAuthChanges() {
-        if (!window.supabase) return;
+        log('=== ÉTAPE 13 : listenForAuthChanges ===');
+        if (!window.supabase) { log('❌ window.supabase null'); return; }
 
         window.supabase.auth.onAuthStateChange((event, session) => {
-            console.log('[WIDGET] Auth event:', event);
+            log('Auth event:', event);
+            log('Session existe ?', !!session);
 
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                // Attendre que Supabase stabilise la session avant de reconnecter
-                setTimeout(() => {
-                    if (!state.isReconnecting) {
-                        console.log('[WIDGET] Reconnexion post-auth...');
-                        setupNotifyRealtime();
-                    }
-                }, 1000);
+                log('SIGNED_IN/TOKEN_REFRESHED détecté');
+                // On ne reconnecte pas le canal ici — laisser le polling s'en charger
+                // pour éviter la boucle infinie
             }
         });
     }
 
     // ==========================================
-    // INITIALISATION
+    // ÉTAPE 14 : INITIALISATION
     // ==========================================
     async function init() {
-        console.log('🚀 [WIDGET] Démarrage...');
+        log('========================================');
+        log('🚀 DÉMARRAGE WIDGET');
+        log('========================================');
 
         try {
+            log('Attente Supabase...');
             const { client, user } = await waitForSupabase();
+            log('Supabase prêt, user:', user.email);
+
+            log('Détection rôle...');
             const roleOk = await detectRole(client, user);
+            log('detectRole retourné:', roleOk);
+
             if (!roleOk) {
-                console.log('[WIDGET] Rôle non détecté');
+                log('❌ Rôle non détecté, arrêt');
                 return;
             }
 
+            log('Création DOM...');
             createWidget();
+
+            log('Mise à jour badge initiale...');
             await updateUnreadBadge();
+
+            log('Setup notify realtime...');
             setupNotifyRealtime();
+
+            log('Setup auth listener...');
             listenForAuthChanges();
 
-            // Polling de secours pour le badge (même si Realtime est down)
+            log('Setup polling badge...');
             setInterval(() => {
-                if (!state.isOpen) updateUnreadBadge();
-            }, CONFIG.badgePollMs);
+                if (!state.isOpen) {
+                    log('Polling badge (fenêtre fermée)');
+                    updateUnreadBadge();
+                }
+            }, 15000);
 
             if ('Notification' in window && Notification.permission === 'default') {
                 Notification.requestPermission();
             }
 
-            state.initialized = true;
-            console.log('✅ [WIDGET] Initialisé');
+            log('✅ WIDGET INITIALISÉ');
+            log('========================================');
 
         } catch (err) {
-            console.error('❌ [WIDGET] Init failed:', err.message);
+            log('❌ Init failed:', err.message);
+            log('Stack:', err.stack);
         }
     }
 
