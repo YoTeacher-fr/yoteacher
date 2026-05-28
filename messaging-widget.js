@@ -1,6 +1,6 @@
-// ========== MESSAGING WIDGET v3 ==========
-// Corrections : pas de doublons, reconnexion sur SIGNED_IN, gestion CLOSED,
-//               notifyChannel admin écoute correctement, retry sur erreur RPC
+// ========== MESSAGING WIDGET v4 ==========
+// Correction : pas de boucle infinie de reconnexion, gestion propre des canaux,
+//              vérification DOM avant écriture, badge fiable
 
 (function() {
     'use strict';
@@ -9,7 +9,7 @@
         maxWaitMs: 15000,
         checkIntervalMs: 200,
         badgePollMs: 15000,
-        reconnectMs: 3000,
+        reconnectMs: 5000,        // Délai augmenté pour éviter les boucles
         rpcRetryMs: 2000,
         rpcMaxRetries: 3
     };
@@ -27,7 +27,8 @@
         unreadTotal: 0,
         initialized: false,
         messageCache: new Map(),
-        pendingMessages: new Set()  // IDs des messages en cours d'envoi (évite doublons optimistes)
+        pendingMessages: new Set(),
+        isReconnecting: false     // ← VERROU : empêche les reconnexions simultanées
     };
 
     function escapeHtml(str) {
@@ -72,7 +73,7 @@
                 return { data, error: null };
             } catch (err) {
                 if (i === retries - 1) throw err;
-                console.log(`[WIDGET] RPC ${fnName} échoué, retry ${i+1}/${retries}...`);
+                console.log(`[WIDGET] RPC ${fnName} retry ${i+1}/${retries}...`);
                 await new Promise(r => setTimeout(r, CONFIG.rpcRetryMs));
             }
         }
@@ -253,7 +254,7 @@
     }
 
     // ==========================================
-    // CHARGEMENT MESSAGES (avec retry)
+    // CHARGEMENT MESSAGES
     // ==========================================
     async function loadMessages(partnerId) {
         const container = document.getElementById('msg-widget-messages');
@@ -274,13 +275,13 @@
             if (cached && cached.length > 0) {
                 renderMessagesToContainer(cached, container);
             } else {
-                container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de connexion. Réessayez.</p></div>`;
+                container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de connexion. <button onclick="this.closest('.messaging-widget-window').querySelector('.messaging-widget-back')?.click()">Retour</button></p></div>`;
             }
         }
     }
 
     // ==========================================
-    // CHARGEMENT CONVERSATIONS ADMIN (avec retry)
+    // CHARGEMENT CONVERSATIONS ADMIN
     // ==========================================
     async function loadAdminConversations() {
         const container = document.getElementById('msg-widget-conversations');
@@ -329,7 +330,7 @@
             updateUnreadBadge();
         } catch (err) {
             console.error('[WIDGET] loadAdminConversations error:', err);
-            container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de connexion. <button onclick="location.reload()">Rafraîchir</button></p></div>`;
+            container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur de connexion. <button onclick="window.location.reload()">Rafraîchir la page</button></p></div>`;
         }
     }
 
@@ -350,10 +351,9 @@
     }
 
     // ==========================================
-    // AJOUT MESSAGE AU DOM (avec dédoublonnage)
+    // AJOUT MESSAGE AU DOM (dédoublonnage)
     // ==========================================
     function appendMessage(msg, container) {
-        // Éviter les doublons : vérifier si ce message est déjà dans le DOM
         const existing = container.querySelector(`[data-msg-id="${msg.id}"]`);
         if (existing) return;
 
@@ -367,7 +367,7 @@
     }
 
     // ==========================================
-    // ENVOI (sans doublon optimiste)
+    // ENVOI
     // ==========================================
     async function sendMessage() {
         const input = document.getElementById('msg-widget-input');
@@ -379,11 +379,9 @@
 
         if (input) input.value = '';
 
-        // Générer un ID temporaire pour traquer ce message
         const tempId = 'pending-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         state.pendingMessages.add(tempId);
 
-        // Afficher immédiatement (optimistic) avec l'ID temporaire
         const container = document.getElementById('msg-widget-messages');
         if (container) {
             if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
@@ -406,14 +404,12 @@
 
             if (error) throw error;
 
-            // Remplacer l'ID temporaire par l'ID réel
             const realMsg = data?.[0];
             if (realMsg) {
                 const pendingEl = document.querySelector(`[data-msg-id="${tempId}"]`);
                 if (pendingEl) {
                     pendingEl.setAttribute('data-msg-id', realMsg.id);
                 }
-                // Mettre à jour le cache
                 const cached = state.messageCache.get(receiverId) || [];
                 const idx = cached.findIndex(m => m.id === tempId);
                 if (idx >= 0) cached[idx] = realMsg;
@@ -449,14 +445,10 @@
                 filter: `receiver_id=in.(${state.myId},${partnerId})`
             }, (payload) => {
                 const msg = payload.new;
-
-                // Vérifier que c'est bien pour cette conversation
                 const relevant =
                     (msg.sender_id === state.myId && msg.receiver_id === partnerId) ||
                     (msg.sender_id === partnerId && msg.receiver_id === state.myId);
                 if (!relevant) return;
-
-                // Vérifier que ce n'est pas un message pending déjà affiché
                 if (state.pendingMessages.has(msg.id)) return;
 
                 const container = document.getElementById('msg-widget-messages');
@@ -465,7 +457,6 @@
                     appendMessage(msg, container);
                 }
 
-                // Mettre à jour le cache
                 const cached = state.messageCache.get(partnerId) || [];
                 const alreadyInCache = cached.some(m => m.id === msg.id);
                 if (!alreadyInCache) {
@@ -479,9 +470,10 @@
             })
             .subscribe((status) => {
                 console.log('[WIDGET] Chat channel status:', status);
-                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
                     setTimeout(() => setupChatRealtime(partnerId), CONFIG.reconnectMs);
                 }
+                // CLOSED = fermé proprement (pas de reconnexion auto, c'est volontaire)
             });
     }
 
@@ -489,19 +481,21 @@
     // REALTIME : CANAL NOTIFICATION (toujours actif)
     // ==========================================
     function setupNotifyRealtime() {
+        // VERROU : si une reconnexion est déjà en cours, ignorer
+        if (state.isReconnecting) {
+            console.log('[WIDGET] Reconnexion déjà en cours, ignorée');
+            return;
+        }
+
+        // Nettoyage propre de l'ancien canal
         if (state.notifyChannel) {
-            state.notifyChannel.unsubscribe();
+            try {
+                state.notifyChannel.unsubscribe();
+            } catch (e) {}
             state.notifyChannel = null;
         }
+
         if (!state.myId) return;
-
-        // Pour l'admin : écouter TOUS les messages reçus (receiver_id = monId)
-        // + aussi les messages envoyés PAR l'étudiant (sender_id != monId, receiver_id = monId)
-        // Le filter receiver_id=eq.monId suffit car l'admin est TOUJOURS le receiver
-        // quand un étudiant envoie un message.
-
-        // MAIS : si l'admin envoie un message, l'étudiant est receiver. L'admin ne reçoit pas
-        // de notif pour ses propres messages (c'est correct).
 
         state.notifyChannel = window.supabase
             .channel('widget-notify-' + state.myId)
@@ -514,7 +508,6 @@
                 const msg = payload.new;
                 console.log('[WIDGET] Notify reçu de:', msg.sender_id);
 
-                // Mettre à jour le cache
                 const cached = state.messageCache.get(msg.sender_id) || [];
                 const alreadyInCache = cached.some(m => m.id === msg.id);
                 if (!alreadyInCache) {
@@ -522,7 +515,6 @@
                     state.messageCache.set(msg.sender_id, cached);
                 }
 
-                // Si fenêtre fermée ou conversation inactive → badge
                 const isCurrentConv = state.isOpen && (
                     state.isAdmin
                         ? msg.sender_id === state.activePartner
@@ -531,7 +523,6 @@
 
                 if (!isCurrentConv) {
                     updateUnreadBadge();
-                    // Notification navigateur
                     if (Notification.permission === 'granted' && !state.isOpen) {
                         new Notification('Nouveau message', {
                             body: msg.content.substring(0, 60),
@@ -539,7 +530,6 @@
                         });
                     }
                 } else {
-                    // Conversation active : afficher directement
                     const container = document.getElementById('msg-widget-messages');
                     if (container) {
                         if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
@@ -550,9 +540,20 @@
             })
             .subscribe((status) => {
                 console.log('[WIDGET] Notify channel status:', status);
-                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-                    setTimeout(() => setupNotifyRealtime(), CONFIG.reconnectMs);
+
+                // Seuls CHANNEL_ERROR et TIMED_OUT méritent une reconnexion
+                // CLOSED = fermé volontairement ou par Supabase lors d'un refresh
+                // On ne reconnecte PAS immédiatement sur CLOSED pour éviter la boucle
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    console.log('[WIDGET] Erreur canal, reconnexion dans', CONFIG.reconnectMs, 'ms');
+                    state.isReconnecting = true;
+                    setTimeout(() => {
+                        state.isReconnecting = false;
+                        setupNotifyRealtime();
+                    }, CONFIG.reconnectMs);
                 }
+                // Sur CLOSED : on laisse le polling badgePollMs s'en occuper
+                // ou l'événement SIGNED_IN déclenchera une reconnexion propre
             });
     }
 
@@ -623,25 +624,22 @@
     }
 
     // ==========================================
-    // GESTION RECONNECTION SUPABASE (SIGNED_IN)
+    // GESTION AUTH CHANGES (SIGNED_IN)
     // ==========================================
     function listenForAuthChanges() {
         if (!window.supabase) return;
+
         window.supabase.auth.onAuthStateChange((event, session) => {
             console.log('[WIDGET] Auth event:', event);
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                // Reconnecter les canaux après reconnection
-                if (state.notifyChannel) {
-                    state.notifyChannel.unsubscribe();
-                    state.notifyChannel = null;
-                }
-                setupNotifyRealtime();
 
-                // Si chat ouvert, reconnecter aussi
-                if (state.isOpen && state.chatChannel) {
-                    const partnerId = state.isAdmin ? state.activePartner : state.teacherId;
-                    if (partnerId) setupChatRealtime(partnerId);
-                }
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                // Attendre que Supabase stabilise la session avant de reconnecter
+                setTimeout(() => {
+                    if (!state.isReconnecting) {
+                        console.log('[WIDGET] Reconnexion post-auth...');
+                        setupNotifyRealtime();
+                    }
+                }, 1000);
             }
         });
     }
@@ -665,6 +663,7 @@
             setupNotifyRealtime();
             listenForAuthChanges();
 
+            // Polling de secours pour le badge (même si Realtime est down)
             setInterval(() => {
                 if (!state.isOpen) updateUnreadBadge();
             }, CONFIG.badgePollMs);
