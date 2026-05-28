@@ -1,5 +1,5 @@
-// ========== MESSAGING WIDGET — VERSION AVEC PRÉSENCE & TYPING
-// Fallback REST + Realtime broadcast pour statut online & typing indicator
+// ========== MESSAGING WIDGET — VERSION AVEC PRÉSENCE & TYPING (sticky)
+// Typing reste visible tant que l'input n'est pas vide ou message envoyé
 
 (function() {
     'use strict';
@@ -97,13 +97,16 @@
         supabaseBlocked: false,
         accessToken: null,
         unreadTotal: 0,
-        // --- NOUVEAU : présence ---
+        // --- PRÉSENCE ---
         presenceChannel: null,
         currentPresencePartner: null,
         lastPartnerHeartbeat: 0,
         heartbeatTimer: null,
         onlineCheckTimer: null,
-        typingTimer: null
+        // --- TYPING ---
+        typingTimer: null,
+        isTyping: false,
+        typingDebounceTimer: null
     };
 
     function escapeHtml(str) {
@@ -132,7 +135,7 @@
             state.presenceChannel = null;
         }
         state.currentPresencePartner = partnerId;
-        state.lastPartnerHeartbeat = Date.now(); // optimiste au départ
+        state.lastPartnerHeartbeat = Date.now();
 
         const channelName = 'widget-presence-' + [state.myId, partnerId].sort().join('-');
         log('Presence channel:', channelName);
@@ -150,14 +153,17 @@
             .on('broadcast', { event: 'typing' }, (payload) => {
                 const p = payload.payload;
                 if (p && p.userId === partnerId) {
-                    showTypingIndicator();
-                    log('⌨️ Typing reçu de', partnerId);
+                    if (p.active) {
+                        showTypingIndicator();
+                    } else {
+                        hideTypingIndicator();
+                    }
+                    log('⌨️ Typing reçu de', partnerId, '- active:', p.active);
                 }
             })
             .subscribe((status) => {
                 log('Presence channel status:', status);
                 if (status === 'SUBSCRIBED') {
-                    // Heartbeat immédiat
                     state.presenceChannel.send({
                         type: 'broadcast',
                         event: 'heartbeat',
@@ -166,7 +172,6 @@
                 }
             });
 
-        // Heartbeat toutes les 10s
         if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
         state.heartbeatTimer = setInterval(() => {
             if (state.presenceChannel) {
@@ -178,7 +183,6 @@
             }
         }, 10000);
 
-        // Vérification statut toutes les 5s
         if (state.onlineCheckTimer) clearInterval(state.onlineCheckTimer);
         state.onlineCheckTimer = setInterval(() => {
             const isOnline = Date.now() - state.lastPartnerHeartbeat < 20000;
@@ -204,29 +208,50 @@
         if (!el) return;
         const name = state.isAdmin ? "L'étudiant" : "Le professeur";
         el.textContent = name + " est en train d'écrire…";
-        el.style.display = 'block';
-        if (state.typingTimer) clearTimeout(state.typingTimer);
-        state.typingTimer = setTimeout(() => {
-            if (el) el.style.display = 'none';
-        }, 3000);
+        el.style.display = 'flex';
     }
 
+    function hideTypingIndicator() {
+        const el = document.getElementById('msg-widget-typing');
+        if (!el) return;
+        el.style.display = 'none';
+    }
+
+    // --- NOUVEAU : Typing sticky ---
     function setupTypingListener(inputId) {
         const input = document.getElementById(inputId);
         if (!input) return;
-        let debounceTimer;
+
         input.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                if (state.presenceChannel) {
-                    state.presenceChannel.send({
-                        type: 'broadcast',
-                        event: 'typing',
-                        payload: { userId: state.myId }
-                    }).catch(() => {});
-                }
-            }, 300);
+            const hasText = input.value.trim().length > 0;
+
+            if (hasText && !state.isTyping) {
+                // On commence à taper
+                state.isTyping = true;
+                broadcastTyping(true);
+            } else if (!hasText && state.isTyping) {
+                // Input vidé → on arrête
+                state.isTyping = false;
+                broadcastTyping(false);
+            }
         });
+
+        // Si on quitte la page sans envoyer
+        window.addEventListener('beforeunload', () => {
+            if (state.isTyping) {
+                broadcastTyping(false);
+            }
+        });
+    }
+
+    function broadcastTyping(active) {
+        if (!state.presenceChannel) return;
+        state.presenceChannel.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: { userId: state.myId, active: active }
+        }).catch(() => {});
+        log('📡 Broadcast typing:', active);
     }
 
     // ==========================================
@@ -323,7 +348,11 @@
                 win.classList.remove('closing');
                 state.isOpen = false;
                 state.activePartner = null;
+                state.isTyping = false;
                 if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
+                if (state.presenceChannel) { state.presenceChannel.unsubscribe(); state.presenceChannel = null; }
+                if (state.heartbeatTimer) { clearInterval(state.heartbeatTimer); state.heartbeatTimer = null; }
+                if (state.onlineCheckTimer) { clearInterval(state.onlineCheckTimer); state.onlineCheckTimer = null; }
             }, 250);
         } else {
             state.isOpen = true;
@@ -439,6 +468,7 @@
         `;
         document.getElementById('msg-widget-back').addEventListener('click', () => {
             state.activePartner = null;
+            state.isTyping = false;
             if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
             renderAdminConversations();
         });
@@ -458,7 +488,7 @@
     }
 
     // ==========================================
-    // ÉTAPE 7 : CHARGEMENT MESSAGES (fallback REST)
+    // ÉTAPE 7 : CHARGEMENT MESSAGES
     // ==========================================
     async function loadMessages(partnerId) {
         log('=== ÉTAPE 7 : loadMessages ===');
@@ -618,13 +648,17 @@
     }
 
     // ==========================================
-    // ÉTAPE 9 : ENVOI (fallback REST)
+    // ÉTAPE 9 : ENVOI (avec reset typing)
     // ==========================================
     async function sendMessage() {
         log('=== ÉTAPE 9 : sendMessage ===');
         const input = document.getElementById('msg-widget-input');
         const content = input?.value.trim();
         if (!content) return;
+
+        // --- RESET TYPING AVANT ENVOI ---
+        state.isTyping = false;
+        broadcastTyping(false);
 
         const receiverId = state.isAdmin ? state.activePartner : state.teacherId;
         if (!receiverId) { log('❌ receiverId null'); return; }
@@ -782,7 +816,7 @@
     }
 
     // ==========================================
-    // ÉTAPE 12 : BADGE (fallback REST)
+    // ÉTAPE 12 : BADGE
     // ==========================================
     async function updateUnreadBadge() {
         log('=== ÉTAPE 12 : updateUnreadBadge ===');
@@ -870,7 +904,6 @@
 
             createWidget();
 
-            // Setup présence permanente pour l'étudiant (teacherId ne change jamais)
             if (!state.isAdmin && state.teacherId) {
                 setupPresence(state.teacherId);
             }
