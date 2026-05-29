@@ -295,101 +295,85 @@
     background: #f5f7fa;
 }
 
-.messaging-widget-msg {
-    max-width: 85%;
+/* ========== LIGNE MESSAGE + AVATAR ========== */
+.messaging-widget-msg-row {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 8px;
+    max-width: 85%;
     animation: msgAppear 0.25s ease;
 }
 
-@keyframes msgAppear {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Messages envoyés (moi) */
-.messaging-widget-msg.sent {
+.messaging-widget-msg-row.sent {
     align-self: flex-end;
     flex-direction: row-reverse;
 }
 
-.messaging-widget-msg.sent .msg-bubble {
-    background: #3c84f6;
-    color: white;
-    border-bottom-right-radius: 4px;
-    border-bottom-left-radius: 18px;
-    border-top-right-radius: 18px;
-    border-top-left-radius: 18px;
-}
-
-.messaging-widget-msg.sent .msg-avatar-wrapper {
-    display: none; /* Pas d'avatar pour mes propres messages */
-}
-
-/* Messages reçus (l'autre) */
-.messaging-widget-msg.received {
+.messaging-widget-msg-row.received {
     align-self: flex-start;
-    flex-direction: row;
 }
 
-.messaging-widget-msg.received .msg-bubble {
-    background: white;
-    color: #333;
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 18px;
-    border-top-right-radius: 18px;
-    border-top-left-radius: 18px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-/* Avatar dans les messages */
-.msg-avatar-wrapper {
-    flex-shrink: 0;
-    margin-bottom: 4px;
-}
-
-.msg-avatar-wrapper img,
-.msg-avatar-wrapper span {
+/* Avatar mini devant chaque message */
+.messaging-widget-msg-avatar {
     width: 28px;
     height: 28px;
     border-radius: 50%;
+    background: linear-gradient(135deg, #3c84f6, #2c3e50);
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 11px;
-    font-weight: 600;
-    object-fit: cover;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    user-select: none;
+    align-self: center;
 }
 
-/* Contenu du message */
-.msg-content-wrapper {
-    display: flex;
-    flex-direction: column;
-    max-width: calc(100% - 36px);
+.messaging-widget-msg-avatar.student {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
-.msg-bubble {
+.messaging-widget-msg-avatar.teacher {
+    background: linear-gradient(135deg, #3c84f6, #1e88e5);
+}
+
+/* Bulle de texte */
+.messaging-widget-msg {
+    max-width: 100%;
     padding: 10px 14px;
+    border-radius: 18px;
     font-size: 14px;
     line-height: 1.4;
     word-break: break-word;
 }
 
+.messaging-widget-msg.sent {
+    align-self: flex-end;
+    background: #3c84f6;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.messaging-widget-msg.received {
+    align-self: flex-start;
+    background: white;
+    color: #333;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
 .messaging-widget-msg-time {
     font-size: 11px;
-    opacity: 0.5;
+    opacity: 0.6;
     margin-top: 4px;
     display: block;
-    align-self: flex-end;
 }
 
-.messaging-widget-msg.sent .messaging-widget-msg-time {
-    color: rgba(255,255,255,0.7);
-}
-
-.messaging-widget-msg.received .messaging-widget-msg-time {
-    color: #888;
+@keyframes msgAppear {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 /* ========== INDICATEUR "EN TRAIN D'ÉCRIRE" ========== */
