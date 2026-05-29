@@ -13,8 +13,169 @@
     <link rel="stylesheet" href="profile.css">
     <link rel="stylesheet" href="auth-ui.css">
 
-    <!-- CSS UPLOAD AVATAR -->
+    <!-- CSS CROPPER CIRCULAIRE -->
     <style>
+        .cropper-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .cropper-modal.show {
+            opacity: 1;
+        }
+        .cropper-container {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .cropper-modal.show .cropper-container {
+            transform: scale(1);
+        }
+        .cropper-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+        }
+        .cropper-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #333;
+            font-weight: 600;
+        }
+        .cropper-close {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            color: #888;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+            line-height: 1;
+            padding: 0;
+        }
+        .cropper-close:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+        .cropper-stage {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: #f8f9fa;
+            overflow: hidden;
+            cursor: grab;
+            touch-action: none;
+        }
+        .cropper-stage:active {
+            cursor: grabbing;
+        }
+        .cropper-canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: none;
+            max-height: none;
+        }
+        .cropper-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cropper-circle {
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        .cropper-circle::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 2px dashed rgba(255,255,255,0.5);
+            animation: cropperRotate 20s linear infinite;
+        }
+        @keyframes cropperRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .cropper-hint {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .cropper-controls {
+            display: flex;
+            gap: 12px;
+            padding: 20px 25px;
+            justify-content: flex-end;
+            border-top: 1px solid #eee;
+        }
+        .cropper-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+        .cropper-btn.secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+        .cropper-btn.secondary:hover {
+            background: #e8e8e8;
+        }
+        .cropper-btn.primary {
+            background: #3c84f6;
+            color: white;
+        }
+        .cropper-btn.primary:hover {
+            background: #2c74e6;
+            transform: translateY(-1px);
+        }
         .avatar-upload {
             text-align: center;
             margin-top: 15px;
@@ -76,6 +237,12 @@
             justify-content: center;
             font-size: 2rem;
             border-radius: 50%;
+        }
+        @media (max-width: 480px) {
+            .cropper-stage { height: 350px; }
+            .cropper-circle { width: 240px; height: 240px; }
+            .cropper-controls { padding: 15px; }
+            .cropper-btn { padding: 10px 18px; font-size: 0.9rem; }
         }
     </style>
 
@@ -389,6 +556,16 @@
             eventsAttached: false
         };
 
+        // ===== CROPPER STATE =====
+        const CROPPER = {
+            canvas: null, ctx: null, image: null,
+            scale: 1, minScale: 0.5, maxScale: 3,
+            offsetX: 0, offsetY: 0,
+            isDragging: false, lastX: 0, lastY: 0,
+            circleSize: 280, exportSize: 300,
+            resolve: null, reject: null
+        };
+
         // ===== AVATAR : UTILITAIRES =====
         function getInitials(email, firstName, lastName) {
             if (firstName && lastName) return (firstName[0] + lastName[0]).toUpperCase();
@@ -443,38 +620,146 @@
             }
         }
 
-        // ===== REDIMENSIONNEMENT AUTOMATIQUE =====
-        async function resizeImageAuto(file, maxSize = 300, quality = 0.70) {
+        // ===== CROPPER : OUVERTURE =====
+        function openCropper(file) {
             return new Promise((resolve, reject) => {
-                const img = new Image();
-                const canvas = document.createElement('canvas');
+                const modal = document.getElementById('cropperModal');
+                const canvas = document.getElementById('cropperCanvas');
                 const ctx = canvas.getContext('2d');
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    img.src = e.target.result;
-                    img.onload = () => {
-                        let { width, height } = img;
-                        const ratio = Math.min(maxSize / width, maxSize / height);
-                        if (ratio < 1) { width = Math.round(width * ratio); height = Math.round(height * ratio); }
-                        canvas.width = width; canvas.height = height;
-                        ctx.fillStyle = '#FFFFFF';
-                        ctx.fillRect(0, 0, width, height);
-                        ctx.drawImage(img, 0, 0, width, height);
-                        // Clip circulaire visuel (rendu CSS s'en charge, mais on peut aussi clip ici)
-                        canvas.toBlob((blob) => {
-                            if (!blob) { reject(new Error('Échec compression')); return; }
-                            console.log(`📦 Avatar redimensionné: ${(blob.size/1024).toFixed(1)}KB (${width}x${height})`);
-                            resolve(new File([blob], `avatar_${Date.now()}.jpg`, { type: 'image/jpeg' }));
-                        }, 'image/jpeg', quality);
-                    };
-                    img.onerror = () => reject(new Error('Image invalide'));
+                CROPPER.canvas = canvas; CROPPER.ctx = ctx;
+                CROPPER.scale = 1; CROPPER.offsetX = 0; CROPPER.offsetY = 0;
+                const img = new Image();
+                img.onload = () => {
+                    CROPPER.image = img;
+                    const stage = document.querySelector('.cropper-stage');
+                    const stageRect = stage.getBoundingClientRect();
+                    canvas.width = stageRect.width;
+                    canvas.height = stageRect.height;
+                    const scaleX = canvas.width / img.width;
+                    const scaleY = canvas.height / img.height;
+                    CROPPER.scale = Math.max(scaleX, scaleY) * 1.2;
+                    CROPPER.minScale = Math.min(scaleX, scaleY) * 0.5;
+                    CROPPER.maxScale = Math.max(scaleX, scaleY) * 4;
+                    drawCropper();
+                    modal.style.display = 'flex';
+                    requestAnimationFrame(() => modal.classList.add('show'));
+                    CROPPER.resolve = (blob) => { closeCropper(); resolve(blob); };
+                    CROPPER.reject = (err) => { closeCropper(); reject(err); };
                 };
-                reader.onerror = reject;
+                img.onerror = () => reject(new Error('Image invalide'));
+                const reader = new FileReader();
+                reader.onload = (e) => img.src = e.target.result;
                 reader.readAsDataURL(file);
             });
         }
 
-        // ===== UPLOAD AVATAR DIRECT =====
+        function closeCropper() {
+            const modal = document.getElementById('cropperModal');
+            modal.classList.remove('show');
+            setTimeout(() => { modal.style.display = 'none'; CROPPER.image = null; }, 300);
+        }
+
+        function drawCropper() {
+            if (!CROPPER.image) return;
+            const { canvas, ctx, image, scale, offsetX, offsetY } = CROPPER;
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const imgW = image.width * scale;
+            const imgH = image.height * scale;
+            const x = (canvas.width - imgW) / 2 + offsetX;
+            const y = (canvas.height - imgH) / 2 + offsetY;
+            ctx.drawImage(image, x, y, imgW, imgH);
+        }
+
+        function exportCircularAvatar() {
+            return new Promise((resolve) => {
+                const { image, scale, offsetX, offsetY, exportSize } = CROPPER;
+                const output = document.createElement('canvas');
+                output.width = exportSize; output.height = exportSize;
+                const ctx = output.getContext('2d');
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, exportSize, exportSize);
+                ctx.beginPath();
+                ctx.arc(exportSize/2, exportSize/2, exportSize/2, 0, Math.PI * 2);
+                ctx.closePath(); ctx.clip();
+                const previewCanvas = CROPPER.canvas;
+                const previewW = previewCanvas.width;
+                const previewH = previewCanvas.height;
+                const circleCenterX = previewW / 2;
+                const circleCenterY = previewH / 2;
+                const imgW = image.width * scale;
+                const imgH = image.height * scale;
+                const imgX = (previewW - imgW) / 2 + offsetX;
+                const imgY = (previewH - imgH) / 2 + offsetY;
+                const srcX = (circleCenterX - CROPPER.circleSize/2 - imgX) / scale;
+                const srcY = (circleCenterY - CROPPER.circleSize/2 - imgY) / scale;
+                const srcW = CROPPER.circleSize / scale;
+                const srcH = CROPPER.circleSize / scale;
+                ctx.drawImage(
+                    image,
+                    Math.max(0, srcX), Math.max(0, srcY),
+                    Math.min(image.width - srcX, srcW), Math.min(image.height - srcY, srcH),
+                    0, 0, exportSize, exportSize
+                );
+                output.toBlob((blob) => {
+                    const file = new File([blob], `avatar_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                    console.log(`📦 Avatar circulaire: ${(file.size/1024).toFixed(1)}KB`);
+                    resolve(file);
+                }, 'image/jpeg', 0.75);
+            });
+        }
+
+        // ===== CROPPER : EVENTS =====
+        function attachCropperEvents() {
+            const stage = document.querySelector('.cropper-stage');
+            const canvas = document.getElementById('cropperCanvas');
+            stage.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = CROPPER.scale * delta;
+                if (newScale >= CROPPER.minScale && newScale <= CROPPER.maxScale) {
+                    CROPPER.scale = newScale;
+                    drawCropper();
+                }
+            }, { passive: false });
+            const startDrag = (x, y) => { CROPPER.isDragging = true; CROPPER.lastX = x; CROPPER.lastY = y; stage.style.cursor = 'grabbing'; };
+            const moveDrag = (x, y) => {
+                if (!CROPPER.isDragging) return;
+                CROPPER.offsetX += x - CROPPER.lastX;
+                CROPPER.offsetY += y - CROPPER.lastY;
+                CROPPER.lastX = x; CROPPER.lastY = y;
+                drawCropper();
+            };
+            const endDrag = () => { CROPPER.isDragging = false; stage.style.cursor = 'grab'; };
+            canvas.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+            window.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
+            window.addEventListener('mouseup', endDrag);
+            canvas.addEventListener('touchstart', (e) => { if (e.touches.length === 1) startDrag(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+            window.addEventListener('touchmove', (e) => { if (e.touches.length === 1) moveDrag(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+            window.addEventListener('touchend', endDrag);
+            document.getElementById('cropperConfirm').addEventListener('click', async () => {
+                if (!CROPPER.image) return;
+                const croppedFile = await exportCircularAvatar();
+                CROPPER.resolve(croppedFile);
+            });
+            document.getElementById('cropperReset').addEventListener('click', () => {
+                const img = CROPPER.image;
+                const canvas = CROPPER.canvas;
+                const scaleX = canvas.width / img.width;
+                const scaleY = canvas.height / img.height;
+                CROPPER.scale = Math.max(scaleX, scaleY) * 1.2;
+                CROPPER.offsetX = 0; CROPPER.offsetY = 0;
+                drawCropper();
+            });
+            document.getElementById('cropperClose').addEventListener('click', () => {
+                CROPPER.reject(new Error('Annulé'));
+            });
+            document.getElementById('cropperModal').addEventListener('click', (e) => {
+                if (e.target.id === 'cropperModal') CROPPER.reject(new Error('Annulé'));
+            });
+        }
+
+        // ===== UPLOAD AVATAR COMPLET =====
         async function uploadAvatar(file) {
             const { currentUser, supabaseClient } = window.PROFILE_STATE;
             if (!currentUser || !supabaseClient) { showError('Session invalide'); return; }
@@ -484,36 +769,31 @@
             try {
                 progressDiv.style.display = 'block';
                 uploadBtn.disabled = true;
-                progressBar.style.width = '20%';
-                // 1. Redimensionnement automatique (pas de cropper)
-                const resizedFile = await resizeImageAuto(file, 300, 0.70);
-                progressBar.style.width = '50%';
-                // 2. Supprimer ancien avatar
+                progressBar.style.width = '10%';
+                const croppedFile = await openCropper(file);
+                progressBar.style.width = '40%';
                 const oldAvatarUrl = currentUser.profile?.avatar_url;
                 if (oldAvatarUrl) await deleteOldAvatar(supabaseClient, oldAvatarUrl);
                 progressBar.style.width = '60%';
-                // 3. Upload
                 const filePath = `${currentUser.id}/avatar_${Date.now()}.jpg`;
-                const { error } = await supabaseClient.storage.from('avatars').upload(filePath, resizedFile, { cacheControl: '3600', upsert: false });
+                const { error } = await supabaseClient.storage.from('avatars').upload(filePath, croppedFile, { cacheControl: '3600', upsert: false });
                 if (error) throw error;
                 progressBar.style.width = '80%';
-                // 4. URL publique
                 const { data: { publicUrl } } = supabaseClient.storage.from('avatars').getPublicUrl(filePath);
-                // 5. Update base
                 const { error: updateError } = await supabaseClient.from('profiles').update({ avatar_url: publicUrl, updated_at: new Date().toISOString() }).eq('id', currentUser.id);
                 if (updateError) throw updateError;
-                // 6. Nettoyage
                 await cleanupUserAvatars(supabaseClient, currentUser.id);
                 progressBar.style.width = '100%';
-                // 7. Update local
                 if (!currentUser.profile) currentUser.profile = {};
                 currentUser.profile.avatar_url = publicUrl;
                 renderAvatar(currentUser.profile);
                 showSuccess('Photo mise à jour !');
                 if (window.authManager?.saveUserToStorage) window.authManager.saveUserToStorage();
             } catch (error) {
-                console.error('❌ Upload avatar:', error);
-                showError('Erreur: ' + error.message);
+                if (error.message !== 'Annulé' && error.message !== 'Annulé par l'utilisateur') {
+                    console.error('❌ Upload avatar:', error);
+                    showError('Erreur: ' + error.message);
+                }
             } finally {
                 setTimeout(() => { progressDiv.style.display = 'none'; progressBar.style.width = '0%'; uploadBtn.disabled = false; }, 800);
             }
@@ -534,6 +814,7 @@
                 await uploadAvatar(file);
                 avatarInput.value = '';
             });
+            attachCropperEvents();
         }
         
         // ===== FONCTIONS UTILITAIRES =====
@@ -1126,5 +1407,34 @@
         // Exposer l'initialisation
         window.initProfilePage = initProfilePage;
     </script>
+
+    <!-- Modal Cropper Circulaire -->
+    <div id="cropperModal" class="cropper-modal">
+        <div class="cropper-container">
+            <div class="cropper-header">
+                <h3 data-i18n="profile.adjust_photo">Ajuster la photo</h3>
+                <button type="button" class="cropper-close" id="cropperClose">&times;</button>
+            </div>
+            <div class="cropper-stage">
+                <canvas id="cropperCanvas" class="cropper-canvas"></canvas>
+                <div class="cropper-overlay">
+                    <div class="cropper-circle"></div>
+                </div>
+                <div class="cropper-hint">
+                    <i class="fas fa-mouse"></i> 
+                    <span data-i18n="profile.crop_hint">Molette pour zoomer, glisser pour déplacer</span>
+                </div>
+            </div>
+            <div class="cropper-controls">
+                <button type="button" class="cropper-btn secondary" id="cropperReset">
+                    <i class="fas fa-undo"></i> <span data-i18n="profile.reset">Réinitialiser</span>
+                </button>
+                <button type="button" class="cropper-btn primary" id="cropperConfirm">
+                    <i class="fas fa-check"></i> <span data-i18n="profile.confirm">Appliquer</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
