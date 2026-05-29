@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="profile.title">Mon profil - YoTeach</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇫🇷</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#127467;&#127479;</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,368 +12,128 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="profile.css">
     <link rel="stylesheet" href="auth-ui.css">
-
-    <!-- CSS CROPPER CIRCULAIRE -->
-    <style>
-        .cropper-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            z-index: 10000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .cropper-modal.show {
-            opacity: 1;
-        }
-        .cropper-container {
-            background: white;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 500px;
-            overflow: hidden;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-        .cropper-modal.show .cropper-container {
-            transform: scale(1);
-        }
-        .cropper-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 25px;
-            border-bottom: 1px solid #eee;
-        }
-        .cropper-header h3 {
-            margin: 0;
-            font-size: 1.2rem;
-            color: #333;
-            font-weight: 600;
-        }
-        .cropper-close {
-            background: none;
-            border: none;
-            font-size: 1.8rem;
-            color: #888;
-            cursor: pointer;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.2s;
-            line-height: 1;
-            padding: 0;
-        }
-        .cropper-close:hover {
-            background: #f5f5f5;
-            color: #333;
-        }
-        .cropper-stage {
-            position: relative;
-            width: 100%;
-            height: 400px;
-            background: #f8f9fa;
-            overflow: hidden;
-            cursor: grab;
-            touch-action: none;
-        }
-        .cropper-stage:active {
-            cursor: grabbing;
-        }
-        .cropper-canvas {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            max-width: none;
-            max-height: none;
-        }
-        .cropper-overlay {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .cropper-circle {
-            width: 280px;
-            height: 280px;
-            border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
-            position: relative;
-        }
-        .cropper-circle::after {
-            content: '';
-            position: absolute;
-            inset: -8px;
-            border-radius: 50%;
-            border: 2px dashed rgba(255,255,255,0.5);
-            animation: cropperRotate 20s linear infinite;
-        }
-        @keyframes cropperRotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .cropper-hint {
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.6);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            pointer-events: none;
-            white-space: nowrap;
-        }
-        .cropper-controls {
-            display: flex;
-            gap: 12px;
-            padding: 20px 25px;
-            justify-content: flex-end;
-            border-top: 1px solid #eee;
-        }
-        .cropper-btn {
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-family: inherit;
-        }
-        .cropper-btn.secondary {
-            background: #f5f5f5;
-            color: #666;
-        }
-        .cropper-btn.secondary:hover {
-            background: #e8e8e8;
-        }
-        .cropper-btn.primary {
-            background: #3c84f6;
-            color: white;
-        }
-        .cropper-btn.primary:hover {
-            background: #2c74e6;
-            transform: translateY(-1px);
-        }
-        .avatar-upload {
-            text-align: center;
-            margin-top: 15px;
-        }
-        .btn-upload {
-            background: rgba(60, 132, 246, 0.1);
-            color: #3c84f6;
-            border: 2px dashed #3c84f6;
-            padding: 10px 20px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-upload:hover {
-            background: #3c84f6;
-            color: white;
-            border-style: solid;
-        }
-        .upload-progress {
-            margin-top: 10px;
-        }
-        .progress-bar {
-            width: 100%;
-            height: 4px;
-            background: #e0e0e0;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: #3c84f6;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        .avatar-large {
-            position: relative;
-            cursor: pointer;
-            transition: opacity 0.3s;
-            overflow: hidden;
-        }
-        .avatar-large img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-        .avatar-large:hover::after {
-            content: '📷';
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            border-radius: 50%;
-        }
-        @media (max-width: 480px) {
-            .cropper-stage { height: 350px; }
-            .cropper-circle { width: 240px; height: 240px; }
-            .cropper-controls { padding: 15px; }
-            .cropper-btn { padding: 10px 18px; font-size: 0.9rem; }
-        }
-    </style>
-
 </head>
 <body>
     <script>
     document.body.style.opacity = '0';
     document.body.style.visibility = 'hidden';
-    
+
     function checkAuthentication() {
-        console.log('🔐 Vérification de l\'authentification pour profile...');
-        
-        const storedUser = localStorage.getItem('yoteacher_user');
-        
+        console.log(' Verif authentification pour profile...');
+
+        var storedUser = localStorage.getItem('yoteacher_user');
+
         if (storedUser) {
             try {
-                const userData = JSON.parse(storedUser);
-                console.log('✅ Utilisateur trouvé dans localStorage:', userData.email);
-                
+                var userData = JSON.parse(storedUser);
+                console.log(' Utilisateur trouve dans localStorage:', userData.email);
+
                 if (!window.authManager) {
                     window.authManager = {
                         user: userData,
-                        isAuthenticated: () => true,
-                        getCurrentUser: () => userData
+                        isAuthenticated: function() { return true; },
+                        getCurrentUser: function() { return userData; }
                     };
                 } else if (!window.authManager.user) {
                     window.authManager.user = userData;
                 }
-                
+
                 document.body.style.opacity = '1';
                 document.body.style.visibility = 'visible';
-                
-                setTimeout(() => {
+
+                setTimeout(function() {
                     if (window.initProfilePage) {
                         window.initProfilePage();
                     }
                 }, 100);
-                
+
                 return;
             } catch (error) {
-                console.error('❌ Erreur lecture localStorage:', error);
+                console.error(' Erreur lecture localStorage:', error);
             }
         }
-        
-        let attempts = 0;
-        const maxAttempts = 30;
-        
+
+        var attempts = 0;
+        var maxAttempts = 30;
+
         function checkAuthManager() {
             attempts++;
-            
+
             if (window.authManager && typeof window.authManager.isAuthenticated === 'function') {
                 if (window.authManager.isAuthenticated()) {
-                    console.log('✅ Utilisateur authentifié via authManager');
+                    console.log(' Utilisateur authentifie via authManager');
                     document.body.style.opacity = '1';
                     document.body.style.visibility = 'visible';
-                    
-                    setTimeout(() => {
+
+                    setTimeout(function() {
                         if (window.initProfilePage) {
                             window.initProfilePage();
                         }
                     }, 100);
                 } else {
-                    console.log('❌ AuthManager dit non authentifié');
+                    console.log(' AuthManager dit non authentifie');
                     redirectToLogin();
                 }
             } else if (attempts >= maxAttempts) {
-                console.log('⚠️ AuthManager non initialisé après 3s');
+                console.log(' AuthManager non initialise apres 3s');
                 redirectToLogin();
             } else {
                 setTimeout(checkAuthManager, 100);
             }
         }
-        
+
         function redirectToLogin() {
-            const currentUrl = encodeURIComponent(window.location.href);
-            window.location.replace(`login.html?redirect=${currentUrl}`);
+            var currentUrl = encodeURIComponent(window.location.href);
+            window.location.replace('login.html?redirect=' + currentUrl);
         }
-        
+
         setTimeout(checkAuthManager, 200);
     }
-    
-    // Écouter UNE SEULE FOIS les événements
+
+    // Ecouter UNE SEULE FOIS les evenements
     if (!window.profileEventListenersAttached) {
         window.addEventListener('auth:login', function() {
-            console.log('✅ Événement auth:login reçu pour profile');
-            // NE PAS recharger toute la page, juste mettre à jour les données
+            console.log(' Evenement auth:login recu pour profile');
             if (window.updateProfileData) {
                 window.updateProfileData();
             }
         });
-        
+
         window.addEventListener('auth:logout', function() {
-            const currentUrl = encodeURIComponent(window.location.href);
-            window.location.replace(`login.html?redirect=${currentUrl}`);
+            var currentUrl = encodeURIComponent(window.location.href);
+            window.location.replace('login.html?redirect=' + currentUrl);
         });
-        
+
         window.profileEventListenersAttached = true;
     }
-    
+
     setTimeout(checkAuthentication, 200);
     </script>
 
-    <!-- Header identique à legal.html -->
+    <!-- Header identique a legal.html -->
     <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
-                <!-- Logo à gauche -->
+                <!-- Logo a gauche -->
                 <div class="logo-section">
                     <a href="index.html" class="logo" data-i18n="header.logo">Yoann</a>
-                    <div class="flag">🇫🇷</div>
+                    <div class="flag">&#127467;&#127479;</div>
                 </div>
-                
+
                 <!-- Groupe de droite pour mobile (language, bouton) -->
                 <div class="mobile-header-right-group">
-                    <!-- Langue mobile -->
                     <div class="language-switcher-mobile" id="languageSwitcherMobile">
                         <span data-i18n="header.language">EN</span>
                     </div>
-                    
-                    <!-- Bouton Connexion/Dashboard Mobile -->
                     <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
                 </div>
-                
-                <!-- Groupe des boutons de droite - FORCÉ À DROITE -->
+
+                <!-- Groupe des boutons de droite - FORCE A DROITE -->
                 <div class="header-right-group">
-                    <!-- Sélecteur de langue uniquement -->
                     <div class="language-switcher" id="languageSwitcherDesktop">
-                        <span class="flag">🌐</span>
+                        <span class="flag">&#127760;</span>
                         <span data-i18n="header.language">EN</span>
                     </div>
-                    
                     <a href="login.html" class="login-btn" data-i18n="header.login">Connexion</a>
                 </div>
             </div>
@@ -407,7 +167,7 @@
                         </a>
                         <a href="#" class="nav-item" data-tab="language">
                             <i class="fas fa-language"></i> 
-                            <span data-i18n="profile.language_tab">Niveau français</span>
+                            <span data-i18n="profile.language_tab">Niveau francais</span>
                         </a>
                         <a href="#" class="nav-item" data-tab="password">
                             <i class="fas fa-key"></i> 
@@ -430,13 +190,13 @@
                     <div class="tab-content active" id="personalTab">
                         <div class="tab-header">
                             <h2 data-i18n="profile.personal_info_title">Informations personnelles</h2>
-                            <p data-i18n="profile.personal_info_subtitle">Mettez à jour vos informations de contact</p>
+                            <p data-i18n="profile.personal_info_subtitle">Mettez a jour vos informations de contact</p>
                         </div>
 
                         <form id="personalForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="firstName" class="form-label" data-i18n="profile.first_name_label">Prénom</label>
+                                    <label for="firstName" class="form-label" data-i18n="profile.first_name_label">Prenom</label>
                                     <input type="text" id="firstName" class="form-input" required>
                                 </div>
                                 <div class="form-group">
@@ -448,16 +208,16 @@
                             <div class="form-group">
                                 <label for="email" class="form-label" data-i18n="profile.email_label">Adresse email</label>
                                 <input type="email" id="email" class="form-input" required disabled>
-                                <small style="color: #888; font-size: 0.85rem;" data-i18n="profile.email_hint">L'email ne peut pas être modifié</small>
+                                <small style="color: #888; font-size: 0.85rem;" data-i18n="profile.email_hint">L'email ne peut pas etre modifie</small>
                             </div>
 
                             <div class="form-group">
                                 <label for="country" class="form-label" data-i18n="profile.country_label">Pays</label>
                                 <select id="country" class="form-select country-select">
-                                    <option value="" data-i18n="profile.select_country">Sélectionnez votre pays</option>
+                                    <option value="" data-i18n="profile.select_country">Selectionnez votre pays</option>
                                 </select>
                                 <small style="color: #888; font-size: 0.85rem; display: block; margin-top: 5px;" id="countryInfo" data-i18n="profile.country_hint">
-                                    Sélectionnez votre pays de résidence
+                                    Selectionnez votre pays de residence
                                 </small>
                             </div>
 
@@ -470,33 +230,33 @@
 
                     <div class="tab-content" id="languageTab">
                         <div class="tab-header">
-                            <h2 data-i18n="profile.french_level_title">Niveau de français</h2>
-                            <p data-i18n="profile.french_level_subtitle">Définissez votre niveau actuel en français</p>
+                            <h2 data-i18n="profile.french_level_title">Niveau de francais</h2>
+                            <p data-i18n="profile.french_level_subtitle">Definissez votre niveau actuel en francais</p>
                         </div>
 
                         <form id="languageForm" style="display: flex; flex-direction: column; flex: 1;">
                             <div class="form-group">
                                 <label for="frenchLevel" class="form-label" data-i18n="profile.french_level_label">Niveau actuel (CEFR)</label>
                                 <select id="frenchLevel" class="form-select">
-                                    <option value="" data-i18n="profile.select_level">Sélectionnez votre niveau</option>
-                                    <option value="A1">A1 - Débutant</option>
-                                    <option value="A2">A2 - Élémentaire</option>
-                                    <option value="B1">B1 - Intermédiaire</option>
-                                    <option value="B2">B2 - Intermédiaire avancé</option>
-                                    <option value="C1">C1 - Avancé</option>
-                                    <option value="C2">C2 - Maîtrise</option>
+                                    <option value="" data-i18n="profile.select_level">Selectionnez votre niveau</option>
+                                    <option value="A1">A1 - Debutant</option>
+                                    <option value="A2">A2 - Elementaire</option>
+                                    <option value="B1">B1 - Intermediaire</option>
+                                    <option value="B2">B2 - Intermediaire avance</option>
+                                    <option value="C1">C1 - Avance</option>
+                                    <option value="C2">C2 - Maitrise</option>
                                 </select>
                             </div>
 
                             <div class="form-group">
                                 <label for="learningGoals" class="form-label" data-i18n="profile.learning_goals_label">Objectifs d'apprentissage</label>
-                                <textarea id="learningGoals" class="form-textarea large-textarea" data-i18n-placeholder="profile.learning_goals_placeholder" placeholder="Ex: Préparer le DELF B2, Améliorer mon français professionnel, Préparer un examen, Voyager en France... (optionnel)"></textarea>
-                                <small style="color: #888; font-size: 0.85rem;" data-i18n="profile.learning_goals_hint">Décrivez vos objectifs en détail (optionnel)</small>
+                                <textarea id="learningGoals" class="form-textarea large-textarea" data-i18n-placeholder="profile.learning_goals_placeholder" placeholder="Ex: Preparer le DELF B2, Ameliorer mon francais professionnel, Preparer un examen, Voyager en France... (optionnel)"></textarea>
+                                <small style="color: #888; font-size: 0.85rem;" data-i18n="profile.learning_goals_hint">Decrivez vos objectifs en detail (optionnel)</small>
                             </div>
 
                             <button type="submit" class="btn-save" id="languageSaveBtn">
                                 <i class="fas fa-save"></i> 
-                                <span data-i18n="profile.save_language_btn">Enregistrer les préférences</span>
+                                <span data-i18n="profile.save_language_btn">Enregistrer les preferences</span>
                             </button>
                         </form>
                     </div>
@@ -504,7 +264,7 @@
                     <div class="tab-content" id="passwordTab">
                         <div class="tab-header">
                             <h2 data-i18n="profile.change_password_title">Changer le mot de passe</h2>
-                            <p data-i18n="profile.change_password_subtitle">Mettez à jour votre mot de passe de connexion</p>
+                            <p data-i18n="profile.change_password_subtitle">Mettez a jour votre mot de passe de connexion</p>
                         </div>
 
                         <form id="passwordForm" style="display: flex; flex-direction: column; flex: 1;">
@@ -516,7 +276,7 @@
                             <div class="form-group">
                                 <label for="newPassword" class="form-label" data-i18n="profile.new_password_label">Nouveau mot de passe</label>
                                 <input type="password" id="newPassword" class="form-input" required>
-                                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;" data-i18n="profile.new_password_hint">Minimum 8 caractères</small>
+                                <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;" data-i18n="profile.new_password_hint">Minimum 8 caracteres</small>
                             </div>
 
                             <div class="form-group">
@@ -543,898 +303,6 @@
     <script src="common.js"></script>
     <script src="translation.js"></script>
     <script src="pays.js"></script>
-    
-    <script>
-        // ===== ÉTAT GLOBAL DE LA PAGE =====
-        window.PROFILE_STATE = {
-            currentUser: null,
-            supabaseClient: null,
-            isSavingPersonal: false,
-            isSavingLanguage: false,
-            isSavingPassword: false,
-            initialized: false,
-            eventsAttached: false
-        };
-
-        // ===== CROPPER STATE =====
-        const CROPPER = {
-            canvas: null, ctx: null, image: null,
-            scale: 1, minScale: 0.5, maxScale: 3,
-            offsetX: 0, offsetY: 0,
-            isDragging: false, lastX: 0, lastY: 0,
-            circleSize: 280, exportSize: 300,
-            resolve: null, reject: null
-        };
-
-        // ===== AVATAR : UTILITAIRES =====
-        function getInitials(email, firstName, lastName) {
-            if (firstName && lastName) return (firstName[0] + lastName[0]).toUpperCase();
-            return email ? email.substring(0, 2).toUpperCase() : '??';
-        }
-
-        function renderAvatar(profile) {
-            const avatarDiv = document.getElementById('userAvatar');
-            const avatarUrl = profile?.avatar_url;
-            if (avatarUrl) {
-                avatarDiv.innerHTML = `<img src="${avatarUrl}" alt="Avatar" onerror="this.remove(); renderFallbackAvatar();">`;
-            } else {
-                renderFallbackAvatar();
-            }
-        }
-
-        function renderFallbackAvatar() {
-            const avatarDiv = document.getElementById('userAvatar');
-            const user = window.PROFILE_STATE.currentUser;
-            const profile = user?.profile || {};
-            const initials = getInitials(user?.email, profile?.first_name, profile?.last_name);
-            avatarDiv.textContent = initials;
-        }
-
-        // ===== SUPPRESSION ANCIEN AVATAR =====
-        async function deleteOldAvatar(supabaseClient, currentAvatarUrl) {
-            if (!currentAvatarUrl) return;
-            try {
-                const urlParts = currentAvatarUrl.split('/avatars/');
-                if (urlParts.length < 2) return;
-                const filePath = urlParts[1];
-                const { error } = await supabaseClient.storage.from('avatars').remove([filePath]);
-                if (!error) console.log('🗑️ Ancien avatar supprimé');
-            } catch (e) {
-                console.warn('⚠️ Suppression ancien avatar échouée:', e);
-            }
-        }
-
-        // ===== NETTOYAGE DOSSIER =====
-        async function cleanupUserAvatars(supabaseClient, userId) {
-            try {
-                const { data: files, error } = await supabaseClient.storage.from('avatars').list(userId + '/');
-                if (error || !files || files.length <= 1) return;
-                const sorted = files.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                const toDelete = sorted.slice(1).map(f => `${userId}/${f.name}`);
-                if (toDelete.length > 0) {
-                    await supabaseClient.storage.from('avatars').remove(toDelete);
-                    console.log(`🧹 ${toDelete.length} ancien(s) avatar(s) nettoyé(s)`);
-                }
-            } catch (e) {
-                console.warn('⚠️ Nettoyage échoué:', e);
-            }
-        }
-
-        // ===== CROPPER : OUVERTURE =====
-        function openCropper(file) {
-            return new Promise((resolve, reject) => {
-                const modal = document.getElementById('cropperModal');
-                const canvas = document.getElementById('cropperCanvas');
-                const ctx = canvas.getContext('2d');
-                CROPPER.canvas = canvas; CROPPER.ctx = ctx;
-                CROPPER.scale = 1; CROPPER.offsetX = 0; CROPPER.offsetY = 0;
-                const img = new Image();
-                img.onload = () => {
-                    CROPPER.image = img;
-                    const stage = document.querySelector('.cropper-stage');
-                    const stageRect = stage.getBoundingClientRect();
-                    canvas.width = stageRect.width;
-                    canvas.height = stageRect.height;
-                    const scaleX = canvas.width / img.width;
-                    const scaleY = canvas.height / img.height;
-                    CROPPER.scale = Math.max(scaleX, scaleY) * 1.2;
-                    CROPPER.minScale = Math.min(scaleX, scaleY) * 0.5;
-                    CROPPER.maxScale = Math.max(scaleX, scaleY) * 4;
-                    drawCropper();
-                    modal.style.display = 'flex';
-                    requestAnimationFrame(() => modal.classList.add('show'));
-                    CROPPER.resolve = (blob) => { closeCropper(); resolve(blob); };
-                    CROPPER.reject = (err) => { closeCropper(); reject(err); };
-                };
-                img.onerror = () => reject(new Error('Image invalide'));
-                const reader = new FileReader();
-                reader.onload = (e) => img.src = e.target.result;
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function closeCropper() {
-            const modal = document.getElementById('cropperModal');
-            modal.classList.remove('show');
-            setTimeout(() => { modal.style.display = 'none'; CROPPER.image = null; }, 300);
-        }
-
-        function drawCropper() {
-            if (!CROPPER.image) return;
-            const { canvas, ctx, image, scale, offsetX, offsetY } = CROPPER;
-            ctx.fillStyle = '#f8f9fa';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            const imgW = image.width * scale;
-            const imgH = image.height * scale;
-            const x = (canvas.width - imgW) / 2 + offsetX;
-            const y = (canvas.height - imgH) / 2 + offsetY;
-            ctx.drawImage(image, x, y, imgW, imgH);
-        }
-
-        function exportCircularAvatar() {
-            return new Promise((resolve) => {
-                const { image, scale, offsetX, offsetY, exportSize } = CROPPER;
-                const output = document.createElement('canvas');
-                output.width = exportSize; output.height = exportSize;
-                const ctx = output.getContext('2d');
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(0, 0, exportSize, exportSize);
-                ctx.beginPath();
-                ctx.arc(exportSize/2, exportSize/2, exportSize/2, 0, Math.PI * 2);
-                ctx.closePath(); ctx.clip();
-                const previewCanvas = CROPPER.canvas;
-                const previewW = previewCanvas.width;
-                const previewH = previewCanvas.height;
-                const circleCenterX = previewW / 2;
-                const circleCenterY = previewH / 2;
-                const imgW = image.width * scale;
-                const imgH = image.height * scale;
-                const imgX = (previewW - imgW) / 2 + offsetX;
-                const imgY = (previewH - imgH) / 2 + offsetY;
-                const srcX = (circleCenterX - CROPPER.circleSize/2 - imgX) / scale;
-                const srcY = (circleCenterY - CROPPER.circleSize/2 - imgY) / scale;
-                const srcW = CROPPER.circleSize / scale;
-                const srcH = CROPPER.circleSize / scale;
-                ctx.drawImage(
-                    image,
-                    Math.max(0, srcX), Math.max(0, srcY),
-                    Math.min(image.width - srcX, srcW), Math.min(image.height - srcY, srcH),
-                    0, 0, exportSize, exportSize
-                );
-                output.toBlob((blob) => {
-                    const file = new File([blob], `avatar_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                    console.log(`📦 Avatar circulaire: ${(file.size/1024).toFixed(1)}KB`);
-                    resolve(file);
-                }, 'image/jpeg', 0.75);
-            });
-        }
-
-        // ===== CROPPER : EVENTS =====
-        function attachCropperEvents() {
-            const stage = document.querySelector('.cropper-stage');
-            const canvas = document.getElementById('cropperCanvas');
-            stage.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                const newScale = CROPPER.scale * delta;
-                if (newScale >= CROPPER.minScale && newScale <= CROPPER.maxScale) {
-                    CROPPER.scale = newScale;
-                    drawCropper();
-                }
-            }, { passive: false });
-            const startDrag = (x, y) => { CROPPER.isDragging = true; CROPPER.lastX = x; CROPPER.lastY = y; stage.style.cursor = 'grabbing'; };
-            const moveDrag = (x, y) => {
-                if (!CROPPER.isDragging) return;
-                CROPPER.offsetX += x - CROPPER.lastX;
-                CROPPER.offsetY += y - CROPPER.lastY;
-                CROPPER.lastX = x; CROPPER.lastY = y;
-                drawCropper();
-            };
-            const endDrag = () => { CROPPER.isDragging = false; stage.style.cursor = 'grab'; };
-            canvas.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
-            window.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
-            window.addEventListener('mouseup', endDrag);
-            canvas.addEventListener('touchstart', (e) => { if (e.touches.length === 1) startDrag(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
-            window.addEventListener('touchmove', (e) => { if (e.touches.length === 1) moveDrag(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
-            window.addEventListener('touchend', endDrag);
-            document.getElementById('cropperConfirm').addEventListener('click', async () => {
-                if (!CROPPER.image) return;
-                const croppedFile = await exportCircularAvatar();
-                CROPPER.resolve(croppedFile);
-            });
-            document.getElementById('cropperReset').addEventListener('click', () => {
-                const img = CROPPER.image;
-                const canvas = CROPPER.canvas;
-                const scaleX = canvas.width / img.width;
-                const scaleY = canvas.height / img.height;
-                CROPPER.scale = Math.max(scaleX, scaleY) * 1.2;
-                CROPPER.offsetX = 0; CROPPER.offsetY = 0;
-                drawCropper();
-            });
-            document.getElementById('cropperClose').addEventListener('click', () => {
-                CROPPER.reject(new Error('Annulé'));
-            });
-            document.getElementById('cropperModal').addEventListener('click', (e) => {
-                if (e.target.id === 'cropperModal') CROPPER.reject(new Error('Annulé'));
-            });
-        }
-
-        // ===== UPLOAD AVATAR COMPLET =====
-        async function uploadAvatar(file) {
-            const { currentUser, supabaseClient } = window.PROFILE_STATE;
-            if (!currentUser || !supabaseClient) { showError('Session invalide'); return; }
-            const progressBar = document.getElementById('progressFill');
-            const progressDiv = document.getElementById('uploadProgress');
-            const uploadBtn = document.getElementById('avatarUploadBtn');
-            try {
-                progressDiv.style.display = 'block';
-                uploadBtn.disabled = true;
-                progressBar.style.width = '10%';
-                const croppedFile = await openCropper(file);
-                progressBar.style.width = '40%';
-                const oldAvatarUrl = currentUser.profile?.avatar_url;
-                if (oldAvatarUrl) await deleteOldAvatar(supabaseClient, oldAvatarUrl);
-                progressBar.style.width = '60%';
-                const filePath = `${currentUser.id}/avatar_${Date.now()}.jpg`;
-                const { error } = await supabaseClient.storage.from('avatars').upload(filePath, croppedFile, { cacheControl: '3600', upsert: false });
-                if (error) throw error;
-                progressBar.style.width = '80%';
-                const { data: { publicUrl } } = supabaseClient.storage.from('avatars').getPublicUrl(filePath);
-                const { error: updateError } = await supabaseClient.from('profiles').update({ avatar_url: publicUrl, updated_at: new Date().toISOString() }).eq('id', currentUser.id);
-                if (updateError) throw updateError;
-                await cleanupUserAvatars(supabaseClient, currentUser.id);
-                progressBar.style.width = '100%';
-                if (!currentUser.profile) currentUser.profile = {};
-                currentUser.profile.avatar_url = publicUrl;
-                renderAvatar(currentUser.profile);
-                showSuccess('Photo mise à jour !');
-                if (window.authManager?.saveUserToStorage) window.authManager.saveUserToStorage();
-            } catch (error) {
-                if (error.message !== 'Annulé' && error.message !== 'Annulé par l'utilisateur') {
-                    console.error('❌ Upload avatar:', error);
-                    showError('Erreur: ' + error.message);
-                }
-            } finally {
-                setTimeout(() => { progressDiv.style.display = 'none'; progressBar.style.width = '0%'; uploadBtn.disabled = false; }, 800);
-            }
-        }
-
-        function attachAvatarEvents() {
-            const avatarInput = document.getElementById('avatarInput');
-            const uploadBtn = document.getElementById('avatarUploadBtn');
-            const avatarDiv = document.getElementById('userAvatar');
-            if (!avatarInput || !uploadBtn) return;
-            uploadBtn.addEventListener('click', () => avatarInput.click());
-            avatarDiv.addEventListener('click', () => avatarInput.click());
-            avatarInput.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                if (!file.type.startsWith('image/')) { showError('Veuillez sélectionner une image'); return; }
-                if (file.size > 10 * 1024 * 1024) { showError('Image trop lourde (max 10MB)'); return; }
-                await uploadAvatar(file);
-                avatarInput.value = '';
-            });
-            attachCropperEvents();
-        }
-        
-        // ===== FONCTIONS UTILITAIRES =====
-        function waitForSupabase() {
-            return new Promise((resolve, reject) => {
-                let attempts = 0;
-                const maxAttempts = 50;
-                
-                const check = () => {
-                    attempts++;
-                    if (window.supabase && typeof window.supabase.from === 'function') {
-                        window.PROFILE_STATE.supabaseClient = window.supabase;
-                        console.log('✅ Supabase prêt pour le profil');
-                        resolve();
-                    } else if (attempts >= maxAttempts) {
-                        reject(new Error('Supabase non initialisé'));
-                    } else {
-                        setTimeout(check, 100);
-                    }
-                };
-                check();
-            });
-        }
-        
-        function waitForAuthManager() {
-            return new Promise((resolve) => {
-                let attempts = 0;
-                const maxAttempts = 50;
-                
-                const check = () => {
-                    attempts++;
-                    if (window.authManager && window.authManager.getCurrentUser !== undefined) {
-                        window.PROFILE_STATE.currentUser = window.authManager.getCurrentUser();
-                        resolve();
-                    } else if (attempts >= maxAttempts) {
-                        resolve();
-                    } else {
-                        setTimeout(check, 100);
-                    }
-                };
-                check();
-            });
-        }
-        
-        // Fonction pour mettre à jour le profil
-        async function updateProfileField(field, value) {
-            const { currentUser, supabaseClient } = window.PROFILE_STATE;
-            
-            if (!currentUser || !supabaseClient) {
-                console.error('❌ Impossible de mettre à jour: utilisateur ou Supabase non disponible');
-                return { success: false, error: 'Non disponible' };
-            }
-            
-            try {
-                const updateData = {
-                    [field]: value,
-                    updated_at: new Date().toISOString()
-                };
-                
-                console.log(`📤 Mise à jour ${field}:`, updateData);
-                
-                const { error } = await supabaseClient
-                    .from('profiles')
-                    .update(updateData)
-                    .eq('id', currentUser.id);
-                
-                if (error) {
-                    console.error(`❌ Erreur mise à jour ${field}:`, error);
-                    return { success: false, error: error.message };
-                }
-                
-                console.log(`✅ ${field} mis à jour avec succès`);
-                return { success: true };
-                
-            } catch (error) {
-                console.error(`❌ Exception mise à jour ${field}:`, error);
-                return { success: false, error: error.message };
-            }
-        }
-        
-        // ===== CHARGEMENT DES DONNÉES =====
-        async function loadProfileData() {
-            console.log('📥 Chargement des données du profil...');
-            
-            const { currentUser, supabaseClient } = window.PROFILE_STATE;
-            
-            if (!currentUser || !supabaseClient) {
-                console.error('❌ Impossible de charger: données manquantes');
-                return;
-            }
-            
-            try {
-                // Récupérer le profil
-                const { data: profile, error } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', currentUser.id)
-                    .maybeSingle();
-                
-                if (error) {
-                    console.error('❌ Erreur chargement profil:', error);
-                    return;
-                }
-                
-                // Stocker le profil
-                currentUser.profile = profile || {};
-                
-                // Remplir les formulaires
-                const fullName = currentUser.profile.full_name || currentUser.user_metadata?.full_name || '';
-                const nameParts = fullName.split(' ');
-                document.getElementById('firstName').value = nameParts[0] || '';
-                document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
-                document.getElementById('email').value = currentUser.email;
-                document.getElementById('frenchLevel').value = currentUser.profile.french_level || '';
-                document.getElementById('learningGoals').value = currentUser.profile.learning_goals || '';
-                
-                // Charger les pays
-                if (window.loadCountriesIntoSelect) {
-                    const userCountry = currentUser.profile.country || '';
-                    window.loadCountriesIntoSelect('country', userCountry);
-                    const countryInfo = document.getElementById('countryInfo');
-                    if (countryInfo) {
-                        countryInfo.textContent = window.YOTEACHER_COUNTRIES.length + ' pays disponibles';
-                    }
-                }
-                
-                console.log('✅ Données profil chargées');
-                
-            } catch (error) {
-                console.error('❌ Exception chargement données:', error);
-            }
-        }
-        
-        // ===== FONCTIONS DE GESTION DES BOUTONS =====
-        function resetButton(type, button, originalText) {
-            // Réinitialiser l'état immédiatement
-            switch(type) {
-                case 'personal':
-                    window.PROFILE_STATE.isSavingPersonal = false;
-                    break;
-                case 'language':
-                    window.PROFILE_STATE.isSavingLanguage = false;
-                    break;
-                case 'password':
-                    window.PROFILE_STATE.isSavingPassword = false;
-                    break;
-            }
-            
-            // S'assurer que le bouton existe toujours
-            if (button && button.parentNode) {
-                button.innerHTML = originalText;
-                button.disabled = false;
-            }
-            
-            console.log(`✅ Bouton ${type} réactivé (état: ${window.PROFILE_STATE[`isSaving${type.charAt(0).toUpperCase() + type.slice(1)}`]})`);
-        }
-        
-        function prepareButtonForSave(type) {
-            const buttonMap = {
-                personal: 'personalSaveBtn',
-                language: 'languageSaveBtn',
-                password: 'passwordSaveBtn'
-            };
-            
-            const buttonId = buttonMap[type];
-            const button = document.getElementById(buttonId);
-            
-            if (!button) {
-                console.error(`❌ Bouton ${type} non trouvé`);
-                return null;
-            }
-            
-            const originalText = button.innerHTML;
-            
-            // Marquer comme en cours
-            window.PROFILE_STATE[`isSaving${type.charAt(0).toUpperCase() + type.slice(1)}`] = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (window.translationManager?.getTranslation('profile.saving') || 'Sauvegarde...');
-            button.disabled = true;
-            
-            return { button, originalText };
-        }
-        
-        // ===== ATTACHEMENT DES ÉVÉNEMENTS (UNE SEULE FOIS) =====
-        function attachFormEvents() {
-            if (window.PROFILE_STATE.eventsAttached) {
-                console.log('⚠️ Événements déjà attachés');
-                return;
-            }
-            
-            console.log('🔗 Attachement des événements des formulaires...');
-            
-            // Gestion des onglets
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    document.querySelectorAll('.nav-item').forEach(i => {
-                        i.classList.remove('active');
-                    });
-                    document.querySelectorAll('.tab-content').forEach(tab => {
-                        tab.classList.remove('active');
-                    });
-                    
-                    this.classList.add('active');
-                    const tabId = this.dataset.tab + 'Tab';
-                    document.getElementById(tabId).classList.add('active');
-                });
-            });
-            
-            // Formulaire informations personnelles
-            document.getElementById('personalForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const { currentUser } = window.PROFILE_STATE;
-                
-                // Préparer le bouton
-                const buttonInfo = prepareButtonForSave('personal');
-                if (!buttonInfo) return;
-                
-                const { button, originalText } = buttonInfo;
-                
-                const firstName = document.getElementById('firstName').value.trim();
-                const lastName = document.getElementById('lastName').value.trim();
-                const fullName = `${firstName} ${lastName}`;
-                const country = document.getElementById('country').value;
-                
-                // Validation
-                if (!firstName || !lastName) {
-                    showError(window.translationManager?.getTranslation('profile.error_required_fields') || 'Le prénom et le nom sont obligatoires');
-                    resetButton('personal', button, originalText);
-                    return;
-                }
-                
-                if (!country) {
-                    showError(window.translationManager?.getTranslation('profile.error_country') || 'Veuillez sélectionner un pays');
-                    resetButton('personal', button, originalText);
-                    return;
-                }
-                
-                try {
-                    // 1. Mettre à jour le nom complet et le pays
-                    const result1 = await updateProfileField('full_name', fullName);
-                    const result2 = await updateProfileField('country', country);
-                    
-                    if (!result1.success || !result2.success) {
-                        throw new Error(window.translationManager?.getTranslation('profile.error_saving') || 'Erreur lors de la sauvegarde');
-                    }
-                    
-                    // 2. Mettre à jour localement
-                    if (!currentUser.profile) currentUser.profile = {};
-                    currentUser.profile.full_name = fullName;
-                    currentUser.profile.country = country;
-                    
-                    // 3. Sauvegarder dans localStorage
-                    if (window.authManager && window.authManager.saveUserToStorage) {
-                        window.authManager.saveUserToStorage();
-                        console.log('💾 Données sauvegardées localStorage');
-                    }
-                    
-                    showSuccess(window.translationManager?.getTranslation('profile.update_success') || 'Profil mis à jour avec succès !');
-                    
-                } catch (error) {
-                    console.error('❌ Erreur sauvegarde:', error);
-                    showError('Erreur: ' + error.message);
-                } finally {
-                    // Réactiver le bouton après 500ms
-                    setTimeout(() => {
-                        resetButton('personal', button, originalText);
-                    }, 500);
-                }
-            });
-            
-            // Formulaire niveau français - VERSION CORRIGÉE
-            document.getElementById('languageForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const { currentUser } = window.PROFILE_STATE;
-                
-                // Préparer le bouton avec gestion d'erreur
-                const buttonInfo = prepareButtonForSave('language');
-                if (!buttonInfo) {
-                    showError('Erreur: bouton non disponible');
-                    return;
-                }
-                
-                const { button, originalText } = buttonInfo;
-                
-                const frenchLevel = document.getElementById('frenchLevel').value;
-                const learningGoals = document.getElementById('learningGoals').value.trim();
-                
-                // Validation simple
-                if (!frenchLevel) {
-                    showError(window.translationManager?.getTranslation('profile.error_french_level') || 'Veuillez sélectionner votre niveau');
-                    // Réinitialiser immédiatement
-                    window.PROFILE_STATE.isSavingLanguage = false;
-                    button.innerHTML = originalText;
-                    button.disabled = false;
-                    return;
-                }
-                
-                try {
-                    // 1. Mettre à jour le niveau
-                    const result = await updateProfileField('french_level', frenchLevel);
-                    
-                    if (!result.success) {
-                        throw new Error(window.translationManager?.getTranslation('profile.error_saving') || 'Erreur lors de la sauvegarde du niveau');
-                    }
-                    
-                    // 2. Mettre à jour les objectifs si remplis
-                    if (learningGoals) {
-                        const resultGoals = await updateProfileField('learning_goals', learningGoals);
-                        if (!resultGoals.success) {
-                            console.warn('⚠️ Erreur sauvegarde objectifs, mais niveau sauvegardé');
-                        }
-                    }
-                    
-                    // 3. Mettre à jour localement
-                    if (!currentUser.profile) currentUser.profile = {};
-                    currentUser.profile.french_level = frenchLevel;
-                    if (learningGoals) {
-                        currentUser.profile.learning_goals = learningGoals;
-                    }
-                    
-                    // 4. Sauvegarder dans localStorage
-                    if (window.authManager && window.authManager.saveUserToStorage) {
-                        window.authManager.saveUserToStorage();
-                    }
-                    
-                    showSuccess(window.translationManager?.getTranslation('profile.level_update_success') || 'Niveau de français mis à jour !');
-                    
-                } catch (error) {
-                    console.error('❌ Erreur sauvegarde niveau:', error);
-                    showError('Erreur: ' + error.message);
-                } finally {
-                    // TOUJOURS réinitialiser l'état, même en cas d'erreur
-                    window.PROFILE_STATE.isSavingLanguage = false;
-                    
-                    // Réactiver le bouton avec protection
-                    setTimeout(() => {
-                        try {
-                            if (button && button.parentNode) {
-                                button.innerHTML = originalText;
-                                button.disabled = false;
-                            }
-                        } catch (btnError) {
-                            console.warn('⚠️ Erreur réinitialisation bouton:', btnError);
-                        }
-                    }, 500);
-                }
-            });
-            
-            // Formulaire mot de passe
-            document.getElementById('passwordForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const { supabaseClient } = window.PROFILE_STATE;
-                
-                // Préparer le bouton
-                const buttonInfo = prepareButtonForSave('password');
-                if (!buttonInfo) return;
-                
-                const { button, originalText } = buttonInfo;
-                
-                const newPassword = document.getElementById('newPassword').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                
-                // Validation
-                if (newPassword.length < 8) {
-                    showError(window.translationManager?.getTranslation('profile.error_password_length') || 'Le mot de passe doit contenir au moins 8 caractères');
-                    resetButton('password', button, originalText);
-                    return;
-                }
-                
-                if (newPassword !== confirmPassword) {
-                    showError(window.translationManager?.getTranslation('profile.error_password_match') || 'Les mots de passe ne correspondent pas');
-                    resetButton('password', button, originalText);
-                    return;
-                }
-                
-                try {
-                    if (!supabaseClient || !supabaseClient.auth) {
-                        throw new Error('Supabase non disponible');
-                    }
-                    
-                    console.log('🔐 Début du changement de mot de passe...');
-                    
-                    // Créer une promesse qui écoute l'événement auth state change
-                    const updatePromise = new Promise((resolve, reject) => {
-                        const timeout = setTimeout(() => {
-                            reject(new Error('Timeout: pas de réponse après 15 secondes'));
-                        }, 15000);
-                        
-                        // Écouter l'événement de changement d'état auth
-                        const { data: authListener } = supabaseClient.auth.onAuthStateChange((event, session) => {
-                            if (event === 'USER_UPDATED') {
-                                console.log('✅ Événement USER_UPDATED reçu');
-                                clearTimeout(timeout);
-                                authListener?.subscription?.unsubscribe();
-                                resolve({ success: true });
-                            }
-                        });
-                        
-                        // Déclencher la mise à jour
-                        supabaseClient.auth.updateUser({ password: newPassword })
-                            .then(result => {
-                                console.log('📝 updateUser résolu:', result);
-                                // Ne pas résoudre ici, attendre l'événement USER_UPDATED
-                            })
-                            .catch(err => {
-                                console.error('❌ updateUser erreur:', err);
-                                clearTimeout(timeout);
-                                authListener?.subscription?.unsubscribe();
-                                reject(err);
-                            });
-                    });
-                    
-                    // Attendre la promesse
-                    await updatePromise;
-                    
-                    console.log('✅ Mot de passe changé avec succès');
-                    showSuccess(window.translationManager?.getTranslation('profile.password_update_success') || 'Mot de passe mis à jour avec succès !');
-                    document.getElementById('passwordForm').reset();
-                    
-                    // Réinitialiser le bouton après succès
-                    setTimeout(() => {
-                        resetButton('password', button, originalText);
-                    }, 500);
-                    
-                } catch (error) {
-                    console.error('❌ Erreur changement mot de passe:', error);
-                    showError('Erreur: ' + (error.message || 'Impossible de changer le mot de passe'));
-                    
-                    // Réinitialiser le bouton après erreur
-                    setTimeout(() => {
-                        resetButton('password', button, originalText);
-                    }, 500);
-                }
-            });
-            
-            window.PROFILE_STATE.eventsAttached = true;
-            console.log('✅ Événements attachés avec succès');
-        }
-        
-        // ===== INITIALISATION PRINCIPALE =====
-        async function initProfilePage() {
-            console.log('🚀 Initialisation de la page profil...');
-            
-            // Ne pas initialiser plusieurs fois
-            if (window.PROFILE_STATE.initialized) {
-                console.log('⚠️ Page déjà initialisée');
-                return;
-            }
-            
-            try {
-                // Attendre Supabase ET authManager
-                await Promise.all([waitForSupabase(), waitForAuthManager()]);
-                
-                const { currentUser } = window.PROFILE_STATE;
-                
-                if (!currentUser) {
-                    console.error('❌ Aucun utilisateur trouvé');
-                    showError('Aucun utilisateur trouvé. Veuillez vous reconnecter.');
-                    return;
-                }
-                
-                console.log('✅ Initialisation réussie pour:', currentUser.email);
-                
-                // Initialiser l'avatar
-                renderAvatar(currentUser.profile || {});
-                attachAvatarEvents();
-                
-                // Charger les données
-                await loadProfileData();
-                
-                // Attacher les événements (une seule fois)
-                attachFormEvents();
-                
-                // Initialiser le système de traduction
-                if (window.translationManager) {
-                    console.log('🌐 Initialisation du système de traduction dans le profil...');
-                    
-                    // Appliquer les traductions immédiatement
-                    window.translationManager.applyTranslations();
-                    
-                    // Attacher l'événement au bouton de langue desktop
-                    const langSwitcherDesktop = document.getElementById('languageSwitcherDesktop');
-                    if (langSwitcherDesktop) {
-                        // Nettoyer les anciens écouteurs
-                        const newSwitcher = langSwitcherDesktop.cloneNode(true);
-                        langSwitcherDesktop.parentNode.replaceChild(newSwitcher, langSwitcherDesktop);
-                        
-                        // Ajouter le nouvel écouteur
-                        document.getElementById('languageSwitcherDesktop').addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('🌍 Clic sur le sélecteur de langue desktop dans profile.html');
-                            window.translationManager.toggleLanguage();
-                        });
-                        console.log('✅ Bouton de langue desktop du profil initialisé');
-                    }
-                    
-                    // Attacher l'événement au bouton de langue mobile
-                    const langSwitcherMobile = document.getElementById('languageSwitcherMobile');
-                    if (langSwitcherMobile) {
-                        // Nettoyer les anciens écouteurs
-                        const newSwitcherMobile = langSwitcherMobile.cloneNode(true);
-                        langSwitcherMobile.parentNode.replaceChild(newSwitcherMobile, langSwitcherMobile);
-                        
-                        // Ajouter le nouvel écouteur
-                        document.getElementById('languageSwitcherMobile').addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('🌍 Clic sur le sélecteur de langue mobile dans profile.html');
-                            window.translationManager.toggleLanguage();
-                        });
-                        console.log('✅ Bouton de langue mobile du profil initialisé');
-                    }
-                    
-                    // Écouter les changements de langue pour mettre à jour la page
-                    window.addEventListener('language:changed', function() {
-                        console.log('🌍 Langue changée, mise à jour du profil...');
-                        setTimeout(() => {
-                            // Recharger les données du profil pour s'assurer que tout est traduit
-                            if (window.loadProfileData) {
-                                window.loadProfileData();
-                            }
-                        }, 100);
-                    });
-                } else {
-                    console.warn('⚠️ translationManager non disponible pour le profil');
-                }
-                
-                // Marquer comme initialisé
-                window.PROFILE_STATE.initialized = true;
-                
-                console.log('✅ Page profil initialisée avec succès');
-                
-            } catch (error) {
-                console.error('❌ Erreur initialisation:', error);
-                showError('Erreur lors de l\'initialisation: ' + error.message);
-            }
-        }
-        
-        // ===== FONCTIONS D'AFFICHAGE DES MESSAGES =====
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            const errorText = document.getElementById('errorText');
-            const successDiv = document.getElementById('successMessage');
-            
-            if (errorDiv && errorText) {
-                errorText.textContent = message;
-                errorDiv.style.display = 'flex';
-                if (successDiv) successDiv.style.display = 'none';
-                
-                setTimeout(() => {
-                    if (errorDiv) errorDiv.style.display = 'none';
-                }, 5000);
-            }
-        }
-        
-        function showSuccess(message) {
-            const successDiv = document.getElementById('successMessage');
-            const successText = document.getElementById('successText');
-            const errorDiv = document.getElementById('errorMessage');
-            
-            if (successDiv && successText) {
-                successText.textContent = message;
-                successDiv.style.display = 'flex';
-                if (errorDiv) errorDiv.style.display = 'none';
-                
-                setTimeout(() => {
-                    if (successDiv) successDiv.style.display = 'none';
-                }, 3000);
-            }
-        }
-        
-        // Fonction pour mettre à jour les données (appelée par auth:login)
-        window.updateProfileData = async function() {
-            console.log('🔄 Mise à jour des données du profil...');
-            
-            // Recharger l'utilisateur depuis authManager
-            if (window.authManager && window.authManager.getCurrentUser) {
-                window.PROFILE_STATE.currentUser = window.authManager.getCurrentUser();
-            }
-            
-            // Recharger les données
-            await loadProfileData();
-        };
-        
-        // Exposer l'initialisation
-        window.initProfilePage = initProfilePage;
-    </script>
-
-    <!-- Modal Cropper Circulaire -->
-    <div id="cropperModal" class="cropper-modal">
-        <div class="cropper-container">
-            <div class="cropper-header">
-                <h3 data-i18n="profile.adjust_photo">Ajuster la photo</h3>
-                <button type="button" class="cropper-close" id="cropperClose">&times;</button>
-            </div>
-            <div class="cropper-stage">
-                <canvas id="cropperCanvas" class="cropper-canvas"></canvas>
-                <div class="cropper-overlay">
-                    <div class="cropper-circle"></div>
-                </div>
-                <div class="cropper-hint">
-                    <i class="fas fa-mouse"></i> 
-                    <span data-i18n="profile.crop_hint">Molette pour zoomer, glisser pour déplacer</span>
-                </div>
-            </div>
-            <div class="cropper-controls">
-                <button type="button" class="cropper-btn secondary" id="cropperReset">
-                    <i class="fas fa-undo"></i> <span data-i18n="profile.reset">Réinitialiser</span>
-                </button>
-                <button type="button" class="cropper-btn primary" id="cropperConfirm">
-                    <i class="fas fa-check"></i> <span data-i18n="profile.confirm">Appliquer</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
+    <script src="profile.js"></script>
 </body>
 </html>
