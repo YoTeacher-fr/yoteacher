@@ -435,9 +435,15 @@
             container.scrollTop = container.scrollHeight;
         }
         try {
-            if (state.supabaseBlocked) restRpc('mark_messages_read', { partner: partnerId }).catch(function(){});
-            else window.supabase.rpc('mark_messages_read', { partner: partnerId }).catch(function(){});
-        } catch (e) {}
+            if (state.supabaseBlocked) {
+                await restRpc('mark_messages_read', { partner: partnerId });
+            } else {
+                await withTimeout(window.supabase.rpc('mark_messages_read', { partner: partnerId }), 5000, 'mark_read');
+            }
+            await updateUnreadBadge();
+        } catch (e) {
+            await updateUnreadBadge();
+        }
     }
 
     async function loadAdminConversations() {
@@ -555,7 +561,7 @@
         const channelName = 'widget-chat-' + state.myId + '-' + partnerId;
         state.chatChannel = window.supabase
             .channel(channelName)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'receiver_id=in.(' + state.myId + ',' + partnerId + ')' }, function(payload) {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'receiver_id=in.(' + state.myId + ',' + partnerId + ')' }, async function(payload) {
                 const msg = payload.new;
                 const relevant = (msg.sender_id === state.myId && msg.receiver_id === partnerId) || (msg.sender_id === partnerId && msg.receiver_id === state.myId);
                 if (!relevant || state.pendingMessages.has(msg.id)) return;
@@ -569,8 +575,14 @@
                 for (var i = 0; i < cached.length; i++) { if (cached[i].id === msg.id) { found = true; break; } }
                 if (!found) { cached.push(msg); state.messageCache.set(partnerId, cached); }
                 if (msg.receiver_id === state.myId) {
-                    if (state.supabaseBlocked) restRpc('mark_messages_read', { partner: msg.sender_id }).catch(function(){});
-                    else window.supabase.rpc('mark_messages_read', { partner: msg.sender_id }).catch(function(){});
+                    try {
+                        if (state.supabaseBlocked) {
+                            await restRpc('mark_messages_read', { partner: msg.sender_id });
+                        } else {
+                            await window.supabase.rpc('mark_messages_read', { partner: msg.sender_id });
+                        }
+                        await updateUnreadBadge();
+                    } catch (e) {}
                 }
             })
             .subscribe(function(){});
@@ -582,7 +594,7 @@
         const channelName = 'widget-notify-' + state.myId;
         state.notifyChannel = window.supabase
             .channel(channelName)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'receiver_id=eq.' + state.myId }, function(payload) {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'receiver_id=eq.' + state.myId }, async function(payload) {
                 const msg = payload.new;
                 const cached = state.messageCache.get(msg.sender_id) || [];
                 let found = false;
@@ -590,7 +602,7 @@
                 if (!found) { cached.push(msg); state.messageCache.set(msg.sender_id, cached); }
                 const isCurrentConv = state.isOpen && (state.isAdmin ? msg.sender_id === state.activePartner : msg.sender_id === state.teacherId);
                 if (!isCurrentConv) {
-                    updateUnreadBadge();
+                    await updateUnreadBadge();
                     if (Notification.permission === 'granted' && !state.isOpen) {
                         new Notification('Nouveau message', { body: msg.content.substring(0, 60), icon: '💬' });
                     }
@@ -600,8 +612,14 @@
                         if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
                         appendMessage(msg, container);
                     }
-                    if (state.supabaseBlocked) restRpc('mark_messages_read', { partner: msg.sender_id }).catch(function(){});
-                    else window.supabase.rpc('mark_messages_read', { partner: msg.sender_id }).catch(function(){});
+                    try {
+                        if (state.supabaseBlocked) {
+                            await restRpc('mark_messages_read', { partner: msg.sender_id });
+                        } else {
+                            await window.supabase.rpc('mark_messages_read', { partner: msg.sender_id });
+                        }
+                        await updateUnreadBadge();
+                    } catch (e) {}
                 }
             })
             .subscribe(function(){});
