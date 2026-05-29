@@ -12,6 +12,73 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="profile.css">
     <link rel="stylesheet" href="auth-ui.css">
+
+    <!-- CSS UPLOAD AVATAR -->
+    <style>
+        .avatar-upload {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .btn-upload {
+            background: rgba(60, 132, 246, 0.1);
+            color: #3c84f6;
+            border: 2px dashed #3c84f6;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-upload:hover {
+            background: #3c84f6;
+            color: white;
+            border-style: solid;
+        }
+        .upload-progress {
+            margin-top: 10px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #3c84f6;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .avatar-large {
+            position: relative;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            overflow: hidden;
+        }
+        .avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .avatar-large:hover::after {
+            content: '📷';
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border-radius: 50%;
+        }
+    </style>
+
 </head>
 <body>
     <script>
@@ -153,6 +220,17 @@
                 <div class="profile-sidebar">
                     <div class="profile-avatar">
                         <div class="avatar-large" id="userAvatar"></div>
+                        <div class="avatar-upload">
+                            <input type="file" id="avatarInput" accept="image/*" hidden>
+                            <button type="button" class="btn-upload" id="avatarUploadBtn">
+                                <i class="fas fa-camera"></i> 
+                                <span data-i18n="profile.change_photo">Changer la photo</span>
+                            </button>
+                            <div class="upload-progress" id="uploadProgress" style="display:none;">
+                                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                                <small id="uploadStatus">Upload...</small>
+                            </div>
+                        </div>
                     </div>
 
                     <nav class="profile-nav">
@@ -304,14 +382,159 @@
         window.PROFILE_STATE = {
             currentUser: null,
             supabaseClient: null,
-            // Variables d'état PERSISTANTES
             isSavingPersonal: false,
             isSavingLanguage: false,
             isSavingPassword: false,
-            // Prévenir les doubles initialisations
             initialized: false,
             eventsAttached: false
         };
+
+        // ===== AVATAR : UTILITAIRES =====
+        function getInitials(email, firstName, lastName) {
+            if (firstName && lastName) return (firstName[0] + lastName[0]).toUpperCase();
+            return email ? email.substring(0, 2).toUpperCase() : '??';
+        }
+
+        function renderAvatar(profile) {
+            const avatarDiv = document.getElementById('userAvatar');
+            const avatarUrl = profile?.avatar_url;
+            if (avatarUrl) {
+                avatarDiv.innerHTML = `<img src="${avatarUrl}" alt="Avatar" onerror="this.remove(); renderFallbackAvatar();">`;
+            } else {
+                renderFallbackAvatar();
+            }
+        }
+
+        function renderFallbackAvatar() {
+            const avatarDiv = document.getElementById('userAvatar');
+            const user = window.PROFILE_STATE.currentUser;
+            const profile = user?.profile || {};
+            const initials = getInitials(user?.email, profile?.first_name, profile?.last_name);
+            avatarDiv.textContent = initials;
+        }
+
+        // ===== SUPPRESSION ANCIEN AVATAR =====
+        async function deleteOldAvatar(supabaseClient, currentAvatarUrl) {
+            if (!currentAvatarUrl) return;
+            try {
+                const urlParts = currentAvatarUrl.split('/avatars/');
+                if (urlParts.length < 2) return;
+                const filePath = urlParts[1];
+                const { error } = await supabaseClient.storage.from('avatars').remove([filePath]);
+                if (!error) console.log('🗑️ Ancien avatar supprimé');
+            } catch (e) {
+                console.warn('⚠️ Suppression ancien avatar échouée:', e);
+            }
+        }
+
+        // ===== NETTOYAGE DOSSIER =====
+        async function cleanupUserAvatars(supabaseClient, userId) {
+            try {
+                const { data: files, error } = await supabaseClient.storage.from('avatars').list(userId + '/');
+                if (error || !files || files.length <= 1) return;
+                const sorted = files.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                const toDelete = sorted.slice(1).map(f => `${userId}/${f.name}`);
+                if (toDelete.length > 0) {
+                    await supabaseClient.storage.from('avatars').remove(toDelete);
+                    console.log(`🧹 ${toDelete.length} ancien(s) avatar(s) nettoyé(s)`);
+                }
+            } catch (e) {
+                console.warn('⚠️ Nettoyage échoué:', e);
+            }
+        }
+
+        // ===== REDIMENSIONNEMENT AUTOMATIQUE =====
+        async function resizeImageAuto(file, maxSize = 300, quality = 0.70) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        let { width, height } = img;
+                        const ratio = Math.min(maxSize / width, maxSize / height);
+                        if (ratio < 1) { width = Math.round(width * ratio); height = Math.round(height * ratio); }
+                        canvas.width = width; canvas.height = height;
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        // Clip circulaire visuel (rendu CSS s'en charge, mais on peut aussi clip ici)
+                        canvas.toBlob((blob) => {
+                            if (!blob) { reject(new Error('Échec compression')); return; }
+                            console.log(`📦 Avatar redimensionné: ${(blob.size/1024).toFixed(1)}KB (${width}x${height})`);
+                            resolve(new File([blob], `avatar_${Date.now()}.jpg`, { type: 'image/jpeg' }));
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = () => reject(new Error('Image invalide'));
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ===== UPLOAD AVATAR DIRECT =====
+        async function uploadAvatar(file) {
+            const { currentUser, supabaseClient } = window.PROFILE_STATE;
+            if (!currentUser || !supabaseClient) { showError('Session invalide'); return; }
+            const progressBar = document.getElementById('progressFill');
+            const progressDiv = document.getElementById('uploadProgress');
+            const uploadBtn = document.getElementById('avatarUploadBtn');
+            try {
+                progressDiv.style.display = 'block';
+                uploadBtn.disabled = true;
+                progressBar.style.width = '20%';
+                // 1. Redimensionnement automatique (pas de cropper)
+                const resizedFile = await resizeImageAuto(file, 300, 0.70);
+                progressBar.style.width = '50%';
+                // 2. Supprimer ancien avatar
+                const oldAvatarUrl = currentUser.profile?.avatar_url;
+                if (oldAvatarUrl) await deleteOldAvatar(supabaseClient, oldAvatarUrl);
+                progressBar.style.width = '60%';
+                // 3. Upload
+                const filePath = `${currentUser.id}/avatar_${Date.now()}.jpg`;
+                const { error } = await supabaseClient.storage.from('avatars').upload(filePath, resizedFile, { cacheControl: '3600', upsert: false });
+                if (error) throw error;
+                progressBar.style.width = '80%';
+                // 4. URL publique
+                const { data: { publicUrl } } = supabaseClient.storage.from('avatars').getPublicUrl(filePath);
+                // 5. Update base
+                const { error: updateError } = await supabaseClient.from('profiles').update({ avatar_url: publicUrl, updated_at: new Date().toISOString() }).eq('id', currentUser.id);
+                if (updateError) throw updateError;
+                // 6. Nettoyage
+                await cleanupUserAvatars(supabaseClient, currentUser.id);
+                progressBar.style.width = '100%';
+                // 7. Update local
+                if (!currentUser.profile) currentUser.profile = {};
+                currentUser.profile.avatar_url = publicUrl;
+                renderAvatar(currentUser.profile);
+                showSuccess('Photo mise à jour !');
+                if (window.authManager?.saveUserToStorage) window.authManager.saveUserToStorage();
+            } catch (error) {
+                console.error('❌ Upload avatar:', error);
+                showError('Erreur: ' + error.message);
+            } finally {
+                setTimeout(() => { progressDiv.style.display = 'none'; progressBar.style.width = '0%'; uploadBtn.disabled = false; }, 800);
+            }
+        }
+
+        function attachAvatarEvents() {
+            const avatarInput = document.getElementById('avatarInput');
+            const uploadBtn = document.getElementById('avatarUploadBtn');
+            const avatarDiv = document.getElementById('userAvatar');
+            if (!avatarInput || !uploadBtn) return;
+            uploadBtn.addEventListener('click', () => avatarInput.click());
+            avatarDiv.addEventListener('click', () => avatarInput.click());
+            avatarInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (!file.type.startsWith('image/')) { showError('Veuillez sélectionner une image'); return; }
+                if (file.size > 10 * 1024 * 1024) { showError('Image trop lourde (max 10MB)'); return; }
+                await uploadAvatar(file);
+                avatarInput.value = '';
+            });
+        }
         
         // ===== FONCTIONS UTILITAIRES =====
         function waitForSupabase() {
@@ -779,8 +1002,8 @@
                 console.log('✅ Initialisation réussie pour:', currentUser.email);
                 
                 // Initialiser l'avatar
-                const initials = currentUser.email.substring(0, 2).toUpperCase();
-                document.getElementById('userAvatar').textContent = initials;
+                renderAvatar(currentUser.profile || {});
+                attachAvatarEvents();
                 
                 // Charger les données
                 await loadProfileData();
