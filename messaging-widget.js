@@ -152,8 +152,27 @@
         return name.substring(0, 2).toUpperCase();
     }
 
-    // CORRECTION: getAvatarHtml determine correctement le nom pour chaque participant
-    function getAvatarHtml(userId) {
+    // Regenerer une signed URL fraiche pour l'avatar
+    async function regenerateAvatarUrl(userId) {
+        if (!userId || !window.supabase) return null;
+        try {
+            const result = await window.supabase.storage.from('avatars').list(userId + '/');
+            const files = result.data;
+            if (!files || files.length === 0) return null;
+            const sorted = files.sort(function(a, b) {
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+            const latest = sorted[0];
+            const filePath = userId + '/' + latest.name;
+            const signedResult = await window.supabase.storage.from('avatars').createSignedUrl(filePath, 3600);
+            if (signedResult.data && signedResult.data.signedUrl) {
+                return signedResult.data.signedUrl;
+            }
+        } catch (e) { log('regenerateAvatarUrl error', e.message); }
+        return null;
+    }
+
+    function getAvatarHtml(userId, avatarUrl) {
         var isMe = userId === state.myId;
         var profile = isMe ? state.myProfile : state.partnerProfile;
         var name = '';
@@ -161,18 +180,16 @@
         if (profile && profile.full_name) {
             name = profile.full_name;
         } else if (isMe) {
-            // Moi: pas de profil charge, essayer de recuperer depuis le user
             name = '';
         } else {
-            // L'autre: utiliser le nom stocke dans l'etat
             name = state.activePartnerName || state.teacherName || '';
         }
 
         var initials = getInitials(name);
-        var avatarUrl = profile ? profile.avatar_url : null;
+        var url = avatarUrl || (profile ? profile.avatar_url : null);
 
-        if (avatarUrl) {
-            return '<div class="msg-avatar"><img src="' + escapeHtml(avatarUrl) + '" alt="" onerror="this.parentNode.textContent=\'' + initials + '\';this.remove()"></div>';
+        if (url) {
+            return '<div class="msg-avatar"><img src="' + escapeHtml(url) + '" alt="" onerror="this.parentNode.textContent=\'' + initials + '\';this.remove()"></div>';
         }
         return '<div class="msg-avatar">' + initials + '</div>';
     }
@@ -180,15 +197,24 @@
     async function loadMyProfile() {
         if (!state.myId) return;
         try {
+            var profileData = null;
             if (!state.supabaseBlocked) {
                 const result = await withTimeout(
                     window.supabase.from('profiles').select('full_name,avatar_url').eq('id', state.myId).single(),
                     5000, 'myProfile'
                 );
-                if (result.data) state.myProfile = result.data;
+                if (result.data) profileData = result.data;
             } else {
                 const rows = await restSelect('profiles', 'id=eq.' + state.myId + '&select=full_name,avatar_url');
-                if (rows && rows[0]) state.myProfile = rows[0];
+                if (rows && rows[0]) profileData = rows[0];
+            }
+            if (profileData) {
+                // Essayer de regenerer l'URL si elle est expiree
+                if (profileData.avatar_url) {
+                    const freshUrl = await regenerateAvatarUrl(state.myId);
+                    if (freshUrl) profileData.avatar_url = freshUrl;
+                }
+                state.myProfile = profileData;
             }
         } catch (e) { log('loadMyProfile error', e.message); }
     }
@@ -198,21 +224,25 @@
         state.partnerProfile = null;
         state.activePartnerName = partnerName || null;
         try {
+            var profileData = null;
             if (!state.supabaseBlocked) {
                 const result = await withTimeout(
                     window.supabase.from('profiles').select('full_name,avatar_url').eq('id', partnerId).single(),
                     5000, 'partnerProfile'
                 );
-                if (result.data) {
-                    state.partnerProfile = result.data;
-                    if (result.data.full_name) state.activePartnerName = result.data.full_name;
-                }
+                if (result.data) profileData = result.data;
             } else {
                 const rows = await restSelect('profiles', 'id=eq.' + partnerId + '&select=full_name,avatar_url');
-                if (rows && rows[0]) {
-                    state.partnerProfile = rows[0];
-                    if (rows[0].full_name) state.activePartnerName = rows[0].full_name;
+                if (rows && rows[0]) profileData = rows[0];
+            }
+            if (profileData) {
+                if (profileData.full_name) state.activePartnerName = profileData.full_name;
+                // Regenerer l'URL de l'avatar si possible
+                if (profileData.avatar_url) {
+                    const freshUrl = await regenerateAvatarUrl(partnerId);
+                    if (freshUrl) profileData.avatar_url = freshUrl;
                 }
+                state.partnerProfile = profileData;
             }
         } catch (e) { log('loadPartnerProfile error', e.message); }
     }
@@ -499,7 +529,7 @@
         row.className = 'messaging-widget-msg ' + (isMe ? 'sent' : 'received');
         row.setAttribute('data-msg-id', msg.id || 'pending-' + Date.now());
 
-        const avatarHtml = getAvatarHtml(msg.sender_id);
+        const avatarHtml = getAvatarHtml(msg.sender_id, null);
         const bubbleHtml = '<div class="msg-wrapper"><div class="msg-bubble">' + escapeHtml(msg.content) + '</div><span class="msg-time">' + formatMessageDate(msg.created_at) + '</span></div>';
 
         row.innerHTML = avatarHtml + bubbleHtml;
