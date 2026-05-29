@@ -4,14 +4,6 @@
 (function() {
     'use strict';
 
-    const DEBUG = true;
-    function log(label, data) {
-        if (!DEBUG) return;
-        const prefix = '[WIDGET] ' + label;
-        if (data !== undefined) console.log(prefix, data);
-        else console.log(prefix);
-    }
-
     function withTimeout(promise, ms, label) {
         ms = ms || 8000;
         label = label || 'req';
@@ -168,8 +160,6 @@
 
         var initials = getInitials(name);
         var url = avatarUrl || (profile ? profile.avatar_url : null);
-        log('getAvatarHtml', { userId: userId, isMe: isMe, profile: profile, partnerProfile: state.partnerProfile, url: url, initials: initials });
-
         if (url) {
             return '<div class="msg-avatar"><img src="' + url + '" alt="" onerror="this.parentNode.textContent=\'' + initials + '\';this.remove()"></div>';
         }
@@ -180,26 +170,21 @@
         if (!state.myId) return;
         try {
             var profileData = null;
-            log('loadMyProfile START', state.myId);
             if (!state.supabaseBlocked) {
                 const result = await withTimeout(
                     window.supabase.rpc('get_profile', { user_id: state.myId }).maybeSingle(),
                     5000, 'myProfile'
                 );
-                log('loadMyProfile RPC result', result);
                 if (result.data) profileData = result.data;
             } else {
                 const rows = await restRpc('get_profile', { user_id: state.myId });
-                log('loadMyProfile REST result', rows);
                 if (rows && rows[0]) profileData = rows[0];
             }
             if (profileData) {
                 state.myProfile = profileData;
-                log('loadMyProfile OK', profileData);
             } else {
-                log('loadMyProfile EMPTY');
             }
-        } catch (e) { log('loadMyProfile ERROR', e.message); }
+        } catch (e) { }
     }
 
     async function loadPartnerProfile(partnerId, partnerName) {
@@ -208,27 +193,22 @@
         state.activePartnerName = partnerName || null;
         try {
             var profileData = null;
-            log('loadPartnerProfile START', { partnerId: partnerId, partnerName: partnerName });
             if (!state.supabaseBlocked) {
                 const result = await withTimeout(
                     window.supabase.rpc('get_profile', { user_id: partnerId }).maybeSingle(),
                     5000, 'partnerProfile'
                 );
-                log('loadPartnerProfile RPC result', result);
                 if (result.data) profileData = result.data;
             } else {
                 const rows = await restRpc('get_profile', { user_id: partnerId });
-                log('loadPartnerProfile REST result', rows);
                 if (rows && rows[0]) profileData = rows[0];
             }
             if (profileData) {
                 if (profileData.full_name) state.activePartnerName = profileData.full_name;
                 state.partnerProfile = profileData;
-                log('loadPartnerProfile OK', profileData);
             } else {
-                log('loadPartnerProfile EMPTY');
             }
-        } catch (e) { log('loadPartnerProfile ERROR', e.message); }
+        } catch (e) { }
     }
 
     function setupPresence(partnerId) {
@@ -494,7 +474,6 @@
     }
 
     function renderMessagesToContainer(msgs, container) {
-        log('renderMessagesToContainer', { count: msgs ? msgs.length : 0, partner: state.activePartner || state.teacherId });
         if (!msgs || msgs.length === 0) {
             if (!container.querySelector('.messaging-widget-msg')) {
                 container.innerHTML = '<div class="messaging-widget-empty"><i class="fas fa-comment-slash"></i><p>Aucun message encore.<br>Commencez la conversation !</p></div>';
@@ -506,7 +485,6 @@
     }
 
     function appendMessage(msg, container) {
-        log('appendMessage', { senderId: msg.sender_id, myId: state.myId, isMe: msg.sender_id === state.myId, content: msg.content.substring(0, 30) });
         const existing = container.querySelector('[data-msg-id="' + msg.id + '"]');
         if (existing) return;
         const isMe = msg.sender_id === state.myId;
