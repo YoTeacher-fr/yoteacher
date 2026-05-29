@@ -372,21 +372,21 @@
     word-break: break-word;
 }
 
-/* Date/heure en dessous de la bulle */
+/* Date/heure en dessous de la bulle - VISIBLE sur fond gris pour TOUS */
 .msg-time {
     font-size: 11px;
-    opacity: 0.5;
+    opacity: 0.6;
     margin-top: 4px;
     display: block;
+    color: #666;
 }
 
+/* Alignement de la date selon le cote */
 .messaging-widget-msg.sent .msg-time {
-    color: rgba(255,255,255,0.7);
     align-self: flex-end;
 }
 
 .messaging-widget-msg.received .msg-time {
-    color: #888;
     align-self: flex-start;
 }
 

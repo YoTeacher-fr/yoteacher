@@ -96,7 +96,8 @@
 
     let state = {
         isOpen: false, isAdmin: false, myId: null, teacherId: null,
-        teacherName: null, activePartner: null, messageCache: new Map(),
+        teacherName: null, activePartner: null, activePartnerName: null,
+        messageCache: new Map(),
         conversations: [], notifyChannel: null, chatChannel: null,
         pendingMessages: new Set(), supabaseBlocked: false,
         accessToken: null, unreadTotal: 0,
@@ -151,15 +152,22 @@
         return name.substring(0, 2).toUpperCase();
     }
 
+    // CORRECTION: getAvatarHtml determine correctement le nom pour chaque participant
     function getAvatarHtml(userId) {
         var isMe = userId === state.myId;
         var profile = isMe ? state.myProfile : state.partnerProfile;
         var name = '';
+
         if (profile && profile.full_name) {
             name = profile.full_name;
-        } else if (!isMe) {
-            name = state.teacherName || '';
+        } else if (isMe) {
+            // Moi: pas de profil charge, essayer de recuperer depuis le user
+            name = '';
+        } else {
+            // L'autre: utiliser le nom stocke dans l'etat
+            name = state.activePartnerName || state.teacherName || '';
         }
+
         var initials = getInitials(name);
         var avatarUrl = profile ? profile.avatar_url : null;
 
@@ -185,19 +193,26 @@
         } catch (e) { log('loadMyProfile error', e.message); }
     }
 
-    async function loadPartnerProfile(partnerId) {
+    async function loadPartnerProfile(partnerId, partnerName) {
         if (!partnerId) return;
         state.partnerProfile = null;
+        state.activePartnerName = partnerName || null;
         try {
             if (!state.supabaseBlocked) {
                 const result = await withTimeout(
                     window.supabase.from('profiles').select('full_name,avatar_url').eq('id', partnerId).single(),
                     5000, 'partnerProfile'
                 );
-                if (result.data) state.partnerProfile = result.data;
+                if (result.data) {
+                    state.partnerProfile = result.data;
+                    if (result.data.full_name) state.activePartnerName = result.data.full_name;
+                }
             } else {
                 const rows = await restSelect('profiles', 'id=eq.' + partnerId + '&select=full_name,avatar_url');
-                if (rows && rows[0]) state.partnerProfile = rows[0];
+                if (rows && rows[0]) {
+                    state.partnerProfile = rows[0];
+                    if (rows[0].full_name) state.activePartnerName = rows[0].full_name;
+                }
             }
         } catch (e) { log('loadPartnerProfile error', e.message); }
     }
@@ -260,7 +275,7 @@
     function showTypingIndicator() {
         const el = document.getElementById('msg-widget-typing');
         if (!el) return;
-        const name = state.isAdmin ? "L'étudiant" : "Le professeur";
+        const name = state.isAdmin ? "L'etudiant" : "Le professeur";
         el.textContent = name + " est en train d'ecrire…";
         el.style.display = 'flex';
     }
@@ -295,8 +310,8 @@
         while (Date.now() - start < 15000) {
             if (window.supabase && window.supabase.auth) {
                 try {
-                    const { data, error } = await window.supabase.auth.getUser();
-                    if (!error && data && data.user) return { client: window.supabase, user: data.user };
+                    const result = await window.supabase.auth.getUser();
+                    if (!result.error && result.data && result.data.user) return { client: window.supabase, user: result.data.user };
                 } catch (e) {}
             }
             await new Promise(function(r) { setTimeout(r, 200); });
@@ -338,7 +353,7 @@
             win.classList.add('closing');
             setTimeout(function() {
                 win.style.display = 'none'; win.classList.remove('closing');
-                state.isOpen = false; state.activePartner = null; state.isTyping = false;
+                state.isOpen = false; state.activePartner = null; state.activePartnerName = null; state.isTyping = false;
                 state.partnerProfile = null;
                 if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
                 if (state.presenceChannel) { state.presenceChannel.unsubscribe(); state.presenceChannel = null; }
@@ -355,7 +370,7 @@
     async function renderStudentChat() {
         const win = document.getElementById('msg-widget-window');
         if (!win || !state.teacherId) return;
-        await loadPartnerProfile(state.teacherId);
+        await loadPartnerProfile(state.teacherId, state.teacherName);
         const cached = state.messageCache.get(state.teacherId);
         win.innerHTML = '<div class="messaging-widget-header"><div class="messaging-widget-header-info"><div class="messaging-widget-avatar">👨‍🏫</div><div class="messaging-widget-header-text"><div class="messaging-widget-header-name">' + escapeHtml(state.teacherName || 'Professeur') + '</div><div class="messaging-widget-header-status"><span class="messaging-widget-status-dot" id="msg-widget-status-dot"></span><span id="msg-widget-status-text">En ligne</span></div></div></div><button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button></div><div class="messaging-widget-messages" id="msg-widget-messages"></div><div class="messaging-widget-typing" id="msg-widget-typing" style="display:none;"></div><div class="messaging-widget-input-area"><input type="text" class="messaging-widget-input" id="msg-widget-input" placeholder="Ecrivez un message..." autocomplete="off"><button class="messaging-widget-send" id="msg-widget-send"><i class="fas fa-paper-plane"></i></button></div>';
         document.getElementById('msg-widget-close').addEventListener('click', closeWindow);
@@ -383,11 +398,11 @@
         const win = document.getElementById('msg-widget-window');
         if (!win) return;
         state.activePartner = partnerId;
-        await loadPartnerProfile(partnerId);
+        await loadPartnerProfile(partnerId, partnerName);
         const cached = state.messageCache.get(partnerId);
         win.innerHTML = '<div class="messaging-widget-header"><button class="messaging-widget-back" id="msg-widget-back"><i class="fas fa-arrow-left"></i></button><div class="messaging-widget-header-info"><div class="messaging-widget-avatar">🎓</div><div class="messaging-widget-header-text"><div class="messaging-widget-header-name">' + escapeHtml(partnerName || 'Etudiant') + '</div><div class="messaging-widget-header-status"><span class="messaging-widget-status-dot" id="msg-widget-status-dot"></span><span id="msg-widget-status-text">En ligne</span></div></div></div><button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button></div><div class="messaging-widget-messages" id="msg-widget-messages"></div><div class="messaging-widget-typing" id="msg-widget-typing" style="display:none;"></div><div class="messaging-widget-input-area"><input type="text" class="messaging-widget-input" id="msg-widget-input" placeholder="Repondez a votre etudiant..." autocomplete="off"><button class="messaging-widget-send" id="msg-widget-send"><i class="fas fa-paper-plane"></i></button></div>';
         document.getElementById('msg-widget-back').addEventListener('click', function() {
-            state.activePartner = null; state.isTyping = false;
+            state.activePartner = null; state.activePartnerName = null; state.isTyping = false;
             state.partnerProfile = null;
             if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
             renderAdminConversations();
