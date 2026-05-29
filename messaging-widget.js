@@ -238,11 +238,6 @@
             }
             if (profileData) {
                 if (profileData.full_name) state.activePartnerName = profileData.full_name;
-                // Regenerer l'URL de l'avatar si possible
-                if (profileData.avatar_url) {
-                    const freshUrl = await regenerateAvatarUrl(partnerId);
-                    if (freshUrl) profileData.avatar_url = freshUrl;
-                }
                 state.partnerProfile = profileData;
             }
         } catch (e) { log('loadPartnerProfile error', e.message); }
