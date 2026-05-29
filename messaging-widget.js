@@ -181,12 +181,12 @@
             var profileData = null;
             if (!state.supabaseBlocked) {
                 const result = await withTimeout(
-                    window.supabase.from('profiles').select('full_name,avatar_url').eq('id', state.myId).maybeSingle(),
+                    window.supabase.rpc('get_profile', { user_id: state.myId }).maybeSingle(),
                     5000, 'myProfile'
                 );
                 if (result.data) profileData = result.data;
             } else {
-                const rows = await restSelect('profiles', 'id=eq.' + state.myId + '&select=full_name,avatar_url');
+                const rows = await restRpc('get_profile', { user_id: state.myId });
                 if (rows && rows[0]) profileData = rows[0];
             }
             if (profileData) {
@@ -203,12 +203,12 @@
             var profileData = null;
             if (!state.supabaseBlocked) {
                 const result = await withTimeout(
-                    window.supabase.from('profiles').select('full_name,avatar_url').eq('id', partnerId).maybeSingle(),
+                    window.supabase.rpc('get_profile', { user_id: partnerId }).maybeSingle(),
                     5000, 'partnerProfile'
                 );
                 if (result.data) profileData = result.data;
             } else {
-                const rows = await restSelect('profiles', 'id=eq.' + partnerId + '&select=full_name,avatar_url');
+                const rows = await restRpc('get_profile', { user_id: partnerId });
                 if (rows && rows[0]) profileData = rows[0];
             }
             if (profileData) {
