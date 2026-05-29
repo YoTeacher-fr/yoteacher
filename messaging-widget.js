@@ -4,7 +4,7 @@
 (function() {
     'use strict';
 
-    const DEBUG = false;
+    const DEBUG = true;
     function log(label, data) {
         if (!DEBUG) return;
         const prefix = '[WIDGET] ' + label;
@@ -179,20 +179,26 @@
         if (!state.myId) return;
         try {
             var profileData = null;
+            log('loadMyProfile START', state.myId);
             if (!state.supabaseBlocked) {
                 const result = await withTimeout(
                     window.supabase.rpc('get_profile', { user_id: state.myId }).maybeSingle(),
                     5000, 'myProfile'
                 );
+                log('loadMyProfile RPC result', result);
                 if (result.data) profileData = result.data;
             } else {
                 const rows = await restRpc('get_profile', { user_id: state.myId });
+                log('loadMyProfile REST result', rows);
                 if (rows && rows[0]) profileData = rows[0];
             }
             if (profileData) {
                 state.myProfile = profileData;
+                log('loadMyProfile OK', profileData);
+            } else {
+                log('loadMyProfile EMPTY');
             }
-        } catch (e) { log('loadMyProfile error', e.message); }
+        } catch (e) { log('loadMyProfile ERROR', e.message); }
     }
 
     async function loadPartnerProfile(partnerId, partnerName) {
@@ -201,21 +207,27 @@
         state.activePartnerName = partnerName || null;
         try {
             var profileData = null;
+            log('loadPartnerProfile START', { partnerId: partnerId, partnerName: partnerName });
             if (!state.supabaseBlocked) {
                 const result = await withTimeout(
                     window.supabase.rpc('get_profile', { user_id: partnerId }).maybeSingle(),
                     5000, 'partnerProfile'
                 );
+                log('loadPartnerProfile RPC result', result);
                 if (result.data) profileData = result.data;
             } else {
                 const rows = await restRpc('get_profile', { user_id: partnerId });
+                log('loadPartnerProfile REST result', rows);
                 if (rows && rows[0]) profileData = rows[0];
             }
             if (profileData) {
                 if (profileData.full_name) state.activePartnerName = profileData.full_name;
                 state.partnerProfile = profileData;
+                log('loadPartnerProfile OK', profileData);
+            } else {
+                log('loadPartnerProfile EMPTY');
             }
-        } catch (e) { log('loadPartnerProfile error', e.message); }
+        } catch (e) { log('loadPartnerProfile ERROR', e.message); }
     }
 
     function setupPresence(partnerId) {
