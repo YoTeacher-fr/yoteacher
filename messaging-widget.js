@@ -153,26 +153,6 @@
         return name.substring(0, 2).toUpperCase();
     }
 
-    // Regenerer une signed URL fraiche pour l'avatar
-    async function regenerateAvatarUrl(userId) {
-        if (!userId || !window.supabase) return null;
-        try {
-            const result = await window.supabase.storage.from('avatars').list(userId + '/');
-            const files = result.data;
-            if (!files || files.length === 0) return null;
-            const sorted = files.sort(function(a, b) {
-                return new Date(b.created_at) - new Date(a.created_at);
-            });
-            const latest = sorted[0];
-            const filePath = userId + '/' + latest.name;
-            const signedResult = await window.supabase.storage.from('avatars').createSignedUrl(filePath, 3600);
-            if (signedResult.data && signedResult.data.signedUrl) {
-                return signedResult.data.signedUrl;
-            }
-        } catch (e) { log('regenerateAvatarUrl error', e.message); }
-        return null;
-    }
-
     function getAvatarHtml(userId, avatarUrl) {
         var isMe = userId === state.myId;
         var profile = isMe ? state.myProfile : state.partnerProfile;
@@ -190,7 +170,7 @@
         var url = avatarUrl || (profile ? profile.avatar_url : null);
 
         if (url) {
-            return '<div class="msg-avatar"><img src="' + escapeHtml(url) + '" alt="" onerror="this.parentNode.textContent=\'' + initials + '\';this.remove()"></div>';
+            return '<div class="msg-avatar"><img src="' + url + '" alt="" onerror="this.parentNode.textContent=\'' + initials + '\';this.remove()"></div>';
         }
         return '<div class="msg-avatar">' + initials + '</div>';
     }
@@ -210,11 +190,6 @@
                 if (rows && rows[0]) profileData = rows[0];
             }
             if (profileData) {
-                // Essayer de regenerer l'URL si elle est expiree
-                if (profileData.avatar_url) {
-                    const freshUrl = await regenerateAvatarUrl(state.myId);
-                    if (freshUrl) profileData.avatar_url = freshUrl;
-                }
                 state.myProfile = profileData;
             }
         } catch (e) { log('loadMyProfile error', e.message); }
