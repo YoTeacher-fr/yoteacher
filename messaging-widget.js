@@ -79,14 +79,15 @@
 
     let state = {
         isOpen: false, isAdmin: false, myId: null, teacherId: null,
-        teacherName: null, activePartner: null, activePartnerName: null,
-        messageCache: new Map(),
+        teacherName: null, activePartner: null, messageCache: new Map(),
         conversations: [], notifyChannel: null, chatChannel: null,
         pendingMessages: new Set(), supabaseBlocked: false,
         accessToken: null, unreadTotal: 0,
         presenceChannel: null, currentPresencePartner: null,
         lastPartnerHeartbeat: 0, heartbeatTimer: null, onlineCheckTimer: null,
-        isTyping: false
+        isTyping: false,
+        myProfile: null,
+        partnerProfile: null
     };
 
     function escapeHtml(str) {
@@ -125,39 +126,64 @@
         return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     }
 
-    // ========== AVATAR DES MESSAGES ==========
-    function getInitialsFromName(name) {
-        if (!name) return '';
-        var parts = name.split(' ').filter(function(n) { return n.length > 0; });
+    // ========== AVATAR ==========
+    function getInitials(name) {
+        if (!name) return '??';
+        var parts = name.trim().split(/\s+/).filter(function(n) { return n.length > 0; });
         if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
         return name.substring(0, 2).toUpperCase();
     }
 
-    function getMessageAvatarHtml(isSent) {
-        var isMe = isSent;
-        var initials = '';
-        var cssClass = '';
+    function getAvatarHtml(userId) {
+        var isMe = userId === state.myId;
+        var profile = isMe ? state.myProfile : state.partnerProfile;
+        var name = profile ? profile.full_name : (isMe ? '' : state.teacherName);
+        var initials = getInitials(name);
+        var avatarUrl = profile ? profile.avatar_url : null;
 
-        if (isMe) {
-            if (state.isAdmin) {
-                cssClass = 'teacher';
-                initials = getInitialsFromName(state.teacherName);
-            } else {
-                cssClass = 'student';
-                initials = '';
-            }
-        } else {
-            if (state.isAdmin) {
-                cssClass = 'student';
-                initials = getInitialsFromName(state.activePartnerName);
-            } else {
-                cssClass = 'teacher';
-                initials = getInitialsFromName(state.teacherName);
-            }
+        if (avatarUrl) {
+            return '<div class="msg-avatar"><img src="' + escapeHtml(avatarUrl) + '" alt="avatar" onerror="this.style.display='none';this.parentNode.textContent='' + initials + ''"></div>';
         }
+        return '<div class="msg-avatar">' + initials + '</div>';
+    }
 
-        var display = initials || (isMe ? (state.isAdmin ? '👨‍🏫' : '👤') : (state.isAdmin ? '🎓' : '👨‍🏫'));
-        return '<div class="messaging-widget-msg-avatar ' + cssClass + '">' + display + '</div>';
+    async function loadMyProfile() {
+        if (!state.myId) return;
+        try {
+            if (!state.supabaseBlocked) {
+                const result = await withTimeout(window.supabase.from('profiles').select('full_name,avatar_url').eq('id', state.myId).single(), 5000, 'myProfile');
+                if (result.data) state.myProfile = result.data;
+            } else {
+                const rows = await restSelect('profiles', 'id=eq.' + state.myId + '&select=full_name,avatar_url');
+                if (rows && rows[0]) state.myProfile = rows[0];
+            }
+        } catch (e) { log('loadMyProfile error', e.message); }
+    }
+
+    async function loadPartnerProfile(partnerId) {
+        if (!partnerId) return;
+        try {
+            if (!state.supabaseBlocked) {
+                const result = await withTimeout(window.supabase.from('profiles').select('full_name,avatar_url').eq('id', partnerId).single(), 5000, 'partnerProfile');
+                if (result.data) state.partnerProfile = result.data;
+            } else {
+                const rows = await restSelect('profiles', 'id=eq.' + partnerId + '&select=full_name,avatar_url');
+                if (rows && rows[0]) state.partnerProfile = rows[0];
+            }
+        } catch (e) { log('loadPartnerProfile error', e.message); }
+    }
+
+    async function restSelect(table, query) {
+        const token = getStoredToken();
+        if (!token) throw new Error('Pas de token');
+        const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/rest/v1/${table}?${query}`, {
+            headers: {
+                'apikey': window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
     }
 
     function setupPresence(partnerId) {
@@ -288,7 +314,8 @@
             win.classList.add('closing');
             setTimeout(() => {
                 win.style.display = 'none'; win.classList.remove('closing');
-                state.isOpen = false; state.activePartner = null; state.activePartnerName = null; state.isTyping = false;
+                state.isOpen = false; state.activePartner = null; state.isTyping = false;
+                state.partnerProfile = null;
                 if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
                 if (state.presenceChannel) { state.presenceChannel.unsubscribe(); state.presenceChannel = null; }
                 if (state.heartbeatTimer) { clearInterval(state.heartbeatTimer); state.heartbeatTimer = null; }
@@ -304,6 +331,7 @@
     async function renderStudentChat() {
         const win = document.getElementById('msg-widget-window');
         if (!win || !state.teacherId) return;
+        await loadPartnerProfile(state.teacherId);
         const cached = state.messageCache.get(state.teacherId);
         win.innerHTML = `
             <div class="messaging-widget-header">
@@ -365,7 +393,7 @@
         const win = document.getElementById('msg-widget-window');
         if (!win) return;
         state.activePartner = partnerId;
-        state.activePartnerName = partnerName;
+        await loadPartnerProfile(partnerId);
         const cached = state.messageCache.get(partnerId);
         win.innerHTML = `
             <div class="messaging-widget-header">
@@ -390,7 +418,8 @@
             </div>
         `;
         document.getElementById('msg-widget-back').addEventListener('click', () => {
-            state.activePartner = null; state.activePartnerName = null; state.isTyping = false;
+            state.activePartner = null; state.isTyping = false;
+            state.partnerProfile = null;
             if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
             renderAdminConversations();
         });
@@ -478,7 +507,7 @@
 
     function renderMessagesToContainer(msgs, container) {
         if (!msgs || msgs.length === 0) {
-            if (!container.querySelector('.messaging-widget-msg-row')) {
+            if (!container.querySelector('.messaging-widget-msg')) {
                 container.innerHTML = `<div class="messaging-widget-empty"><i class="fas fa-comment-slash"></i><p>Aucun message encore.<br>Commencez la conversation !</p></div>`;
             }
             return;
@@ -493,19 +522,13 @@
         const isMe = msg.sender_id === state.myId;
 
         const row = document.createElement('div');
-        row.className = `messaging-widget-msg-row ${isMe ? 'sent' : 'received'}`;
+        row.className = `messaging-widget-msg ${isMe ? 'sent' : 'received'}`;
+        row.setAttribute('data-msg-id', msg.id || 'pending-' + Date.now());
 
-        const avatarWrapper = document.createElement('div');
-        avatarWrapper.innerHTML = getMessageAvatarHtml(isMe);
-        const avatarDiv = avatarWrapper.firstChild;
+        const avatarHtml = getAvatarHtml(msg.sender_id);
+        const bubbleHtml = `<div class="msg-wrapper"><div class="msg-bubble">${escapeHtml(msg.content)}</div><span class="msg-time">${formatMessageDate(msg.created_at)}</span></div>`;
 
-        const bubble = document.createElement('div');
-        bubble.className = `messaging-widget-msg ${isMe ? 'sent' : 'received'}`;
-        bubble.setAttribute('data-msg-id', msg.id || 'pending-' + Date.now());
-        bubble.innerHTML = `${escapeHtml(msg.content)}<span class="messaging-widget-msg-time">${formatMessageDate(msg.created_at)}</span>`;
-
-        row.appendChild(avatarDiv);
-        row.appendChild(bubble);
+        row.innerHTML = avatarHtml + bubbleHtml;
         container.appendChild(row);
         container.scrollTop = container.scrollHeight;
     }
@@ -650,6 +673,7 @@
             const { client, user } = await waitForSupabase();
             const roleOk = await detectRole(client, user);
             if (!roleOk) return;
+            await loadMyProfile();
             createWidget();
             if (!state.isAdmin && state.teacherId) setupPresence(state.teacherId);
             await updateUnreadBadge();
