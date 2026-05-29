@@ -310,7 +310,7 @@ body.loaded {
 }
 
 .avatar-large:hover::after {
-    content: 'F4F7';
+    content: '📷';
     position: absolute;
     inset: 0;
     background: rgba(0,0,0,0.4);
