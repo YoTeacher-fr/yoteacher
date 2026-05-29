@@ -79,8 +79,7 @@
 
     let state = {
         isOpen: false, isAdmin: false, myId: null, teacherId: null,
-        teacherName: null, activePartner: null, activePartnerName: null,
-        messageCache: new Map(),
+        teacherName: null, activePartner: null, messageCache: new Map(),
         conversations: [], notifyChannel: null, chatChannel: null,
         pendingMessages: new Set(), supabaseBlocked: false,
         accessToken: null, unreadTotal: 0,
@@ -123,41 +122,6 @@
         const d = new Date(iso), now = new Date();
         if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
         return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    }
-
-    // ========== AVATAR DES MESSAGES ==========
-    function getInitialsFromName(name) {
-        if (!name) return '';
-        var parts = name.split(' ').filter(function(n) { return n.length > 0; });
-        if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-        return name.substring(0, 2).toUpperCase();
-    }
-
-    function getMessageAvatarHtml(isSent) {
-        var isMe = isSent;
-        var initials = '';
-        var cssClass = '';
-
-        if (isMe) {
-            if (state.isAdmin) {
-                cssClass = 'teacher';
-                initials = getInitialsFromName(state.teacherName);
-            } else {
-                cssClass = 'student';
-                initials = '';
-            }
-        } else {
-            if (state.isAdmin) {
-                cssClass = 'student';
-                initials = getInitialsFromName(state.activePartnerName);
-            } else {
-                cssClass = 'teacher';
-                initials = getInitialsFromName(state.teacherName);
-            }
-        }
-
-        var display = initials || (isMe ? (state.isAdmin ? '👨‍🏫' : '👤') : (state.isAdmin ? '🎓' : '👨‍🏫'));
-        return '<div class="messaging-widget-msg-avatar ' + cssClass + '">' + display + '</div>';
     }
 
     function setupPresence(partnerId) {
@@ -261,7 +225,7 @@
             });
             if (!res.ok) return false;
             const teacher = await res.json();
-            if (teacher.id === user.id) { state.isAdmin = true; state.teacherId = user.id; state.teacherName = teacher.full_name; }
+            if (teacher.id === user.id) { state.isAdmin = true; state.teacherId = user.id; }
             else { state.teacherId = teacher.id; state.teacherName = teacher.full_name; state.isAdmin = false; }
             return true;
         } catch (err) { return false; }
@@ -288,7 +252,7 @@
             win.classList.add('closing');
             setTimeout(() => {
                 win.style.display = 'none'; win.classList.remove('closing');
-                state.isOpen = false; state.activePartner = null; state.activePartnerName = null; state.isTyping = false;
+                state.isOpen = false; state.activePartner = null; state.isTyping = false;
                 if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
                 if (state.presenceChannel) { state.presenceChannel.unsubscribe(); state.presenceChannel = null; }
                 if (state.heartbeatTimer) { clearInterval(state.heartbeatTimer); state.heartbeatTimer = null; }
@@ -365,7 +329,6 @@
         const win = document.getElementById('msg-widget-window');
         if (!win) return;
         state.activePartner = partnerId;
-        state.activePartnerName = partnerName;
         const cached = state.messageCache.get(partnerId);
         win.innerHTML = `
             <div class="messaging-widget-header">
@@ -390,7 +353,7 @@
             </div>
         `;
         document.getElementById('msg-widget-back').addEventListener('click', () => {
-            state.activePartner = null; state.activePartnerName = null; state.isTyping = false;
+            state.activePartner = null; state.isTyping = false;
             if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
             renderAdminConversations();
         });
@@ -478,7 +441,7 @@
 
     function renderMessagesToContainer(msgs, container) {
         if (!msgs || msgs.length === 0) {
-            if (!container.querySelector('.messaging-widget-msg-row')) {
+            if (!container.querySelector('.messaging-widget-msg')) {
                 container.innerHTML = `<div class="messaging-widget-empty"><i class="fas fa-comment-slash"></i><p>Aucun message encore.<br>Commencez la conversation !</p></div>`;
             }
             return;
@@ -491,22 +454,12 @@
         const existing = container.querySelector(`[data-msg-id="${msg.id}"]`);
         if (existing) return;
         const isMe = msg.sender_id === state.myId;
-
-        const row = document.createElement('div');
-        row.className = `messaging-widget-msg-row ${isMe ? 'sent' : 'received'}`;
-
-        const avatarWrapper = document.createElement('div');
-        avatarWrapper.innerHTML = getMessageAvatarHtml(isMe);
-        const avatarDiv = avatarWrapper.firstChild;
-
-        const bubble = document.createElement('div');
-        bubble.className = `messaging-widget-msg ${isMe ? 'sent' : 'received'}`;
-        bubble.setAttribute('data-msg-id', msg.id || 'pending-' + Date.now());
-        bubble.innerHTML = `${escapeHtml(msg.content)}<span class="messaging-widget-msg-time">${formatMessageDate(msg.created_at)}</span>`;
-
-        row.appendChild(avatarDiv);
-        row.appendChild(bubble);
-        container.appendChild(row);
+        const div = document.createElement('div');
+        div.className = `messaging-widget-msg ${isMe ? 'sent' : 'received'}`;
+        div.setAttribute('data-msg-id', msg.id || 'pending-' + Date.now());
+        // Utilise formatMessageDate au lieu de formatTime simple
+        div.innerHTML = `${escapeHtml(msg.content)}<span class="messaging-widget-msg-time">${formatMessageDate(msg.created_at)}</span>`;
+        container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
 

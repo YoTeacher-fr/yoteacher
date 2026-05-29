@@ -295,63 +295,24 @@
     background: #f5f7fa;
 }
 
-/* ========== LIGNE MESSAGE + AVATAR ========== */
-.messaging-widget-msg-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    max-width: 85%;
-    animation: msgAppear 0.25s ease;
-}
-
-.messaging-widget-msg-row.sent {
-    align-self: flex-end;
-    flex-direction: row-reverse;
-}
-
-.messaging-widget-msg-row.received {
-    align-self: flex-start;
-}
-
-/* Avatar mini devant chaque message */
-.messaging-widget-msg-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #3c84f6, #2c3e50);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    user-select: none;
-    align-self: center;
-}
-
-.messaging-widget-msg-avatar.student {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-}
-
-.messaging-widget-msg-avatar.teacher {
-    background: linear-gradient(135deg, #3c84f6, #1e88e5);
-}
-
-/* Bulle de texte */
 .messaging-widget-msg {
-    max-width: 100%;
+    max-width: 80%;
     padding: 10px 14px;
     border-radius: 18px;
     font-size: 14px;
     line-height: 1.4;
     word-break: break-word;
+    animation: msgAppear 0.25s ease;
+}
+
+@keyframes msgAppear {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 .messaging-widget-msg.sent {
     align-self: flex-end;
-    background: #3c84f6;
+    background: #2c3e50;
     color: white;
     border-bottom-right-radius: 4px;
 }
@@ -369,11 +330,6 @@
     opacity: 0.6;
     margin-top: 4px;
     display: block;
-}
-
-@keyframes msgAppear {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
 }
 
 /* ========== INDICATEUR "EN TRAIN D'ÉCRIRE" ========== */
