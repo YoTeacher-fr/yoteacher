@@ -87,7 +87,8 @@
         const res = await fetch(window.YOTEACHER_CONFIG.SUPABASE_URL + '/rest/v1/' + table + '?' + query, {
             headers: {
                 'apikey': window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY,
-                'Authorization': 'Bearer ' + token
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json'
             }
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -200,7 +201,7 @@
             var profileData = null;
             if (!state.supabaseBlocked) {
                 const result = await withTimeout(
-                    window.supabase.from('profiles').select('full_name,avatar_url').eq('id', state.myId).single(),
+                    window.supabase.from('profiles').select('full_name,avatar_url').eq('id', state.myId).maybeSingle(),
                     5000, 'myProfile'
                 );
                 if (result.data) profileData = result.data;
@@ -227,7 +228,7 @@
             var profileData = null;
             if (!state.supabaseBlocked) {
                 const result = await withTimeout(
-                    window.supabase.from('profiles').select('full_name,avatar_url').eq('id', partnerId).single(),
+                    window.supabase.from('profiles').select('full_name,avatar_url').eq('id', partnerId).maybeSingle(),
                     5000, 'partnerProfile'
                 );
                 if (result.data) profileData = result.data;
