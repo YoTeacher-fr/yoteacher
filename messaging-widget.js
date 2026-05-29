@@ -168,6 +168,7 @@
 
         var initials = getInitials(name);
         var url = avatarUrl || (profile ? profile.avatar_url : null);
+        log('getAvatarHtml', { userId: userId, isMe: isMe, profile: profile, partnerProfile: state.partnerProfile, url: url, initials: initials });
 
         if (url) {
             return '<div class="msg-avatar"><img src="' + url + '" alt="" onerror="this.parentNode.textContent=\'' + initials + '\';this.remove()"></div>';
@@ -493,6 +494,7 @@
     }
 
     function renderMessagesToContainer(msgs, container) {
+        log('renderMessagesToContainer', { count: msgs ? msgs.length : 0, partner: state.activePartner || state.teacherId });
         if (!msgs || msgs.length === 0) {
             if (!container.querySelector('.messaging-widget-msg')) {
                 container.innerHTML = '<div class="messaging-widget-empty"><i class="fas fa-comment-slash"></i><p>Aucun message encore.<br>Commencez la conversation !</p></div>';
@@ -504,6 +506,7 @@
     }
 
     function appendMessage(msg, container) {
+        log('appendMessage', { senderId: msg.sender_id, myId: state.myId, isMe: msg.sender_id === state.myId, content: msg.content.substring(0, 30) });
         const existing = container.querySelector('[data-msg-id="' + msg.id + '"]');
         if (existing) return;
         const isMe = msg.sender_id === state.myId;
