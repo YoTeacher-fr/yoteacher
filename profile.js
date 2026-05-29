@@ -1,7 +1,6 @@
 // ===== PROFILE.JS - VERSION CORRIGEE =====
-// - Initiales dans le bon ordre (prenom puis nom)
-// - avatar_url simple stocke en base (pas de signed URL)
-// - Upload corrige avec meilleure gestion d erreurs
+// - Initiales: prenom d'abord, nom ensuite (JD pour Jean Dupont)
+// - Image: detection correcte du chargement, fallback si erreur
 
 window.PROFILE_STATE = {
     currentUser: null,
@@ -15,36 +14,69 @@ window.PROFILE_STATE = {
 
 // ===== UTILITAIRES AVATAR =====
 function getInitials(email, firstName, lastName) {
-    // ORDRE: prenom d abord, puis nom
-    if (firstName && lastName) {
-        return (firstName[0] + lastName[0]).toUpperCase();
+    // ORDRE CORRECT: prenom puis nom (JD pour Jean Dupont)
+    var fn = (firstName || '').trim();
+    var ln = (lastName || '').trim();
+    if (fn && ln) {
+        return (fn[0] + ln[0]).toUpperCase();
     }
-    if (firstName) return firstName.substring(0, 2).toUpperCase();
-    if (lastName) return lastName.substring(0, 2).toUpperCase();
-    return email ? email.substring(0, 2).toUpperCase() : '??';
+    if (fn) return fn.substring(0, 2).toUpperCase();
+    if (ln) return ln.substring(0, 2).toUpperCase();
+    var em = (email || '').trim();
+    return em ? em.substring(0, 2).toUpperCase() : '??';
 }
 
 function renderAvatar(profile) {
     var avatarDiv = document.getElementById('userAvatar');
     if (!avatarDiv) return;
+
     var avatarUrl = profile && profile.avatar_url;
-    if (avatarUrl) {
-        avatarDiv.innerHTML = '<img src="' + avatarUrl + '" alt="Avatar" onerror="this.remove(); renderFallbackAvatar();">';
-    } else {
+    if (!avatarUrl) {
         renderFallbackAvatar();
+        return;
     }
+
+    // Creer l'image et verifier qu'elle charge
+    var img = new Image();
+    img.onload = function() {
+        avatarDiv.innerHTML = '';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '50%';
+        avatarDiv.appendChild(img);
+    };
+    img.onerror = function() {
+        console.log(' Erreur chargement image, fallback initiales');
+        renderFallbackAvatar();
+    };
+    img.src = avatarUrl;
 }
 
 function renderFallbackAvatar() {
     var avatarDiv = document.getElementById('userAvatar');
     if (!avatarDiv) return;
+
     var user = window.PROFILE_STATE.currentUser;
     var profile = (user && user.profile) || {};
-    // Extraire prenom/nom depuis full_name si disponible
-    var fullName = profile.full_name || '';
-    var nameParts = fullName.split(' ').filter(function(n) { return n.length > 0; });
-    var firstName = nameParts[0] || '';
-    var lastName = nameParts.slice(1).join(' ') || '';
+
+    // Priorite 1: first_name/last_name du profil
+    var firstName = profile.first_name || '';
+    var lastName = profile.last_name || '';
+
+    // Priorite 2: extraire depuis full_name (format "Prenom Nom")
+    if (!firstName && !lastName && profile.full_name) {
+        var parts = profile.full_name.split(' ').filter(function(n) { return n.length > 0; });
+        firstName = parts[0] || '';
+        lastName = parts.slice(1).join(' ') || '';
+    }
+
+    // Priorite 3: user_metadata
+    if (!firstName && user && user.user_metadata) {
+        firstName = user.user_metadata.first_name || user.user_metadata.given_name || '';
+        lastName = user.user_metadata.last_name || user.user_metadata.family_name || '';
+    }
+
     var initials = getInitials(user && user.email, firstName, lastName);
     avatarDiv.textContent = initials;
 }
@@ -151,7 +183,7 @@ async function uploadAvatar(file) {
         }
         if (progressBar) progressBar.style.width = '40%';
 
-        // 3. Upload - chemin SANS slash au debut
+        // 3. Upload
         var filePath = currentUser.id + '/avatar_' + Date.now() + '.jpg';
         console.log(' Upload vers:', filePath);
 
@@ -165,26 +197,18 @@ async function uploadAvatar(file) {
             throw uploadResult.error;
         }
 
-        console.log(' Upload reussi:', uploadResult.data);
+        console.log(' Upload reussi');
         if (progressBar) progressBar.style.width = '60%';
 
-        // 4. URL publique (bucket public OU signed URL si prive)
+        // 4. URL publique
         var publicUrlResult = supabaseClient.storage.from('avatars').getPublicUrl(filePath);
         var avatarUrl = publicUrlResult.data && publicUrlResult.data.publicUrl;
 
-        // Si pas d URL publique (bucket prive), utiliser signed URL
         if (!avatarUrl) {
-            var signedResult = await supabaseClient.storage.from('avatars').createSignedUrl(filePath, 3600);
-            if (signedResult.data && signedResult.data.signedUrl) {
-                avatarUrl = signedResult.data.signedUrl;
-            }
+            throw new Error('Impossible d obtenir l URL');
         }
 
-        if (!avatarUrl) {
-            throw new Error('Impossible d obtenir l URL de l avatar');
-        }
-
-        console.log(' URL avatar:', avatarUrl);
+        console.log(' URL:', avatarUrl);
         if (progressBar) progressBar.style.width = '80%';
 
         // 5. Update base
@@ -205,10 +229,11 @@ async function uploadAvatar(file) {
         await cleanupUserAvatars(supabaseClient, currentUser.id);
         if (progressBar) progressBar.style.width = '100%';
 
-        // 7. Update local
+        // 7. Update local et afficher
         if (!currentUser.profile) currentUser.profile = {};
         currentUser.profile.avatar_url = avatarUrl;
 
+        // Forcer le re-render avec la nouvelle URL
         renderAvatar(currentUser.profile);
         showSuccess('Photo mise a jour !');
 
@@ -218,7 +243,7 @@ async function uploadAvatar(file) {
 
     } catch (error) {
         console.error(' Upload avatar:', error);
-        showError('Erreur upload: ' + (error.message || error.statusCode || 'Inconnue'));
+        showError('Erreur: ' + (error.message || error.statusCode || 'Inconnue'));
     } finally {
         setTimeout(function() {
             if (progressDiv) progressDiv.style.display = 'none';
@@ -471,12 +496,14 @@ function attachFormEvents() {
                 if (!currentUser.profile) currentUser.profile = {};
                 currentUser.profile.full_name = fullName;
                 currentUser.profile.country = country;
+                currentUser.profile.first_name = firstName;
+                currentUser.profile.last_name = lastName;
 
                 if (window.authManager && window.authManager.saveUserToStorage) {
                     window.authManager.saveUserToStorage();
                 }
 
-                // Re-render avatar avec nouvelles initiales
+                // Mettre a jour les initiales
                 renderFallbackAvatar();
 
                 showSuccess('Profil mis a jour !');
@@ -594,7 +621,10 @@ async function initProfilePage() {
 
         console.log(' Init pour:', currentUser.email);
 
-        // Avatar: si avatar_url en base, l utiliser, sinon initiales
+        // Charger le profil depuis la base d abord
+        await loadProfileData();
+
+        // Puis afficher l avatar (avec l URL du profil charge)
         if (currentUser.profile && currentUser.profile.avatar_url) {
             renderAvatar(currentUser.profile);
         } else {
@@ -602,7 +632,6 @@ async function initProfilePage() {
         }
 
         attachAvatarEvents();
-        await loadProfileData();
         attachFormEvents();
 
         // Traduction
@@ -671,6 +700,13 @@ window.updateProfileData = async function() {
         window.PROFILE_STATE.currentUser = window.authManager.getCurrentUser();
     }
     await loadProfileData();
+    // Re-render avatar apres update
+    var user = window.PROFILE_STATE.currentUser;
+    if (user && user.profile && user.profile.avatar_url) {
+        renderAvatar(user.profile);
+    } else {
+        renderFallbackAvatar();
+    }
 };
 
 // Exposer
