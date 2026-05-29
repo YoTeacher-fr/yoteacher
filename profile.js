@@ -47,10 +47,66 @@ function renderAvatar(profile) {
         avatarDiv.appendChild(img);
     };
     img.onerror = function() {
-        console.log(' Erreur chargement image, fallback initiales');
-        renderFallbackAvatar();
+        console.log(' Erreur chargement image, tentative regeneration signed URL...');
+        // Si l'URL est expiree, essayer de regenerer
+        regenerateSignedUrl(profile);
     };
     img.src = avatarUrl;
+}
+
+async function regenerateSignedUrl(profile) {
+    var supabaseClient = window.PROFILE_STATE.supabaseClient;
+    var currentUser = window.PROFILE_STATE.currentUser;
+    if (!supabaseClient || !currentUser || !currentUser.id) {
+        renderFallbackAvatar();
+        return;
+    }
+
+    try {
+        // Lister les fichiers pour trouver le plus recent
+        var result = await supabaseClient.storage.from('avatars').list(currentUser.id + '/');
+        var files = result.data;
+        if (!files || files.length === 0) {
+            renderFallbackAvatar();
+            return;
+        }
+
+        var sorted = files.sort(function(a, b) {
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+        var latest = sorted[0];
+        var filePath = currentUser.id + '/' + latest.name;
+
+        // Generer nouvelle signed URL
+        var signedResult = await supabaseClient.storage.from('avatars').createSignedUrl(filePath, 3600);
+        if (signedResult.data && signedResult.data.signedUrl) {
+            var newUrl = signedResult.data.signedUrl;
+            // Mettre a jour le profil local
+            profile.avatar_url = newUrl;
+            // Re-render
+            var img = new Image();
+            img.onload = function() {
+                var avatarDiv = document.getElementById('userAvatar');
+                if (avatarDiv) {
+                    avatarDiv.innerHTML = '';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    img.style.borderRadius = '50%';
+                    avatarDiv.appendChild(img);
+                }
+            };
+            img.onerror = function() {
+                renderFallbackAvatar();
+            };
+            img.src = newUrl;
+        } else {
+            renderFallbackAvatar();
+        }
+    } catch (e) {
+        console.warn(' Erreur regeneration URL:', e);
+        renderFallbackAvatar();
+    }
 }
 
 function renderFallbackAvatar() {
@@ -200,12 +256,12 @@ async function uploadAvatar(file) {
         console.log(' Upload reussi');
         if (progressBar) progressBar.style.width = '60%';
 
-        // 4. URL publique
-        var publicUrlResult = supabaseClient.storage.from('avatars').getPublicUrl(filePath);
-        var avatarUrl = publicUrlResult.data && publicUrlResult.data.publicUrl;
+        // 4. Generer signed URL (contourne ORB/CORS)
+        var signedResult = await supabaseClient.storage.from('avatars').createSignedUrl(filePath, 3600);
+        var avatarUrl = signedResult.data && signedResult.data.signedUrl;
 
         if (!avatarUrl) {
-            throw new Error('Impossible d obtenir l URL');
+            throw new Error('Impossible de generer l URL signee');
         }
 
         console.log(' URL:', avatarUrl);
