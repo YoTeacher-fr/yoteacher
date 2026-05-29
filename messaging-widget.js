@@ -12,11 +12,15 @@
         else console.log(prefix);
     }
 
-    function withTimeout(promise, ms = 8000, label = 'req') {
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error(`${label} timeout`)), ms);
+    function withTimeout(promise, ms, label) {
+        ms = ms || 8000;
+        label = label || 'req';
+        return new Promise(function(resolve, reject) {
+            const timeoutPromise = new Promise(function(_, rej) {
+                setTimeout(function() { rej(new Error(label + ' timeout')); }, ms);
+            });
+            Promise.race([promise, timeoutPromise]).then(resolve).catch(reject);
         });
-        return Promise.race([promise, timeoutPromise]);
     }
 
     function getStoredToken() {
@@ -24,7 +28,7 @@
         try {
             const url = new URL(window.YOTEACHER_CONFIG.SUPABASE_URL);
             const projectRef = url.hostname.split('.')[0];
-            const key = `sb-${projectRef}-auth-token`;
+            const key = 'sb-' + projectRef + '-auth-token';
             const stored = localStorage.getItem(key);
             if (stored) {
                 const parsed = JSON.parse(stored);
@@ -40,18 +44,18 @@
     async function restRpc(functionName, params) {
         const token = getStoredToken();
         if (!token) throw new Error('Pas de token');
-        const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/rest/v1/rpc/${functionName}`, {
+        const res = await fetch(window.YOTEACHER_CONFIG.SUPABASE_URL + '/rest/v1/rpc/' + functionName, {
             method: 'POST',
             headers: {
                 'apikey': window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${token}`,
+                'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(params || {})
         });
         if (!res.ok) {
-            const text = await res.text().catch(() => '');
-            throw new Error(`HTTP ${res.status}`);
+            const text = await res.text().catch(function() { return ''; });
+            throw new Error('HTTP ' + res.status);
         }
         if (res.status === 204) return null;
         return await res.json();
@@ -60,20 +64,33 @@
     async function restInsert(table, row) {
         const token = getStoredToken();
         if (!token) throw new Error('Pas de token');
-        const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/rest/v1/${table}`, {
+        const res = await fetch(window.YOTEACHER_CONFIG.SUPABASE_URL + '/rest/v1/' + table, {
             method: 'POST',
             headers: {
                 'apikey': window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${token}`,
+                'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json',
                 'Prefer': 'return=representation'
             },
             body: JSON.stringify(row)
         });
         if (!res.ok) {
-            const text = await res.text().catch(() => '');
-            throw new Error(`HTTP ${res.status}`);
+            const text = await res.text().catch(function() { return ''; });
+            throw new Error('HTTP ' + res.status);
         }
+        return await res.json();
+    }
+
+    async function restSelect(table, query) {
+        const token = getStoredToken();
+        if (!token) throw new Error('Pas de token');
+        const res = await fetch(window.YOTEACHER_CONFIG.SUPABASE_URL + '/rest/v1/' + table + '?' + query, {
+            headers: {
+                'apikey': window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         return await res.json();
     }
 
@@ -91,7 +108,9 @@
     };
 
     function escapeHtml(str) {
-        return (str || '').replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+        return (str || '').replace(/[&<>]/g, function(m) {
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m];
+        });
     }
 
     // ========== FORMATAGE DATE INTELLIGENT ==========
@@ -105,18 +124,16 @@
         const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
         if (msgDay.getTime() === today.getTime()) {
-            return time; // Aujourd'hui → 14:30
+            return time;
         }
         if (msgDay.getTime() === yesterday.getTime()) {
-            return 'Hier ' + time; // Hier → Hier 14:30
+            return 'Hier ' + time;
         }
-        // Cette semaine (même semaine calendaire)
         const dayDiff = Math.floor((today - msgDay) / (1000 * 60 * 60 * 24));
         if (dayDiff < 7 && d.getDay() <= now.getDay()) {
             const dayName = d.toLocaleDateString('fr-FR', { weekday: 'long' });
-            return dayName.charAt(0).toUpperCase() + dayName.slice(1) + ' ' + time; // Lundi 14:30
+            return dayName.charAt(0).toUpperCase() + dayName.slice(1) + ' ' + time;
         }
-        // Plus vieux → 15/05/2026 14:30
         return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + time;
     }
 
@@ -137,12 +154,17 @@
     function getAvatarHtml(userId) {
         var isMe = userId === state.myId;
         var profile = isMe ? state.myProfile : state.partnerProfile;
-        var name = profile ? profile.full_name : (isMe ? '' : state.teacherName);
+        var name = '';
+        if (profile && profile.full_name) {
+            name = profile.full_name;
+        } else if (!isMe) {
+            name = state.teacherName || '';
+        }
         var initials = getInitials(name);
         var avatarUrl = profile ? profile.avatar_url : null;
 
         if (avatarUrl) {
-            return '<div class="msg-avatar"><img src="' + escapeHtml(avatarUrl) + '" alt="avatar" onerror="this.style.display='none';this.parentNode.textContent='' + initials + ''"></div>';
+            return '<div class="msg-avatar"><img src="' + escapeHtml(avatarUrl) + '" alt="" onerror="this.parentNode.textContent=\'' + initials + '\';this.remove()"></div>';
         }
         return '<div class="msg-avatar">' + initials + '</div>';
     }
@@ -151,7 +173,10 @@
         if (!state.myId) return;
         try {
             if (!state.supabaseBlocked) {
-                const result = await withTimeout(window.supabase.from('profiles').select('full_name,avatar_url').eq('id', state.myId).single(), 5000, 'myProfile');
+                const result = await withTimeout(
+                    window.supabase.from('profiles').select('full_name,avatar_url').eq('id', state.myId).single(),
+                    5000, 'myProfile'
+                );
                 if (result.data) state.myProfile = result.data;
             } else {
                 const rows = await restSelect('profiles', 'id=eq.' + state.myId + '&select=full_name,avatar_url');
@@ -162,28 +187,19 @@
 
     async function loadPartnerProfile(partnerId) {
         if (!partnerId) return;
+        state.partnerProfile = null;
         try {
             if (!state.supabaseBlocked) {
-                const result = await withTimeout(window.supabase.from('profiles').select('full_name,avatar_url').eq('id', partnerId).single(), 5000, 'partnerProfile');
+                const result = await withTimeout(
+                    window.supabase.from('profiles').select('full_name,avatar_url').eq('id', partnerId).single(),
+                    5000, 'partnerProfile'
+                );
                 if (result.data) state.partnerProfile = result.data;
             } else {
                 const rows = await restSelect('profiles', 'id=eq.' + partnerId + '&select=full_name,avatar_url');
                 if (rows && rows[0]) state.partnerProfile = rows[0];
             }
         } catch (e) { log('loadPartnerProfile error', e.message); }
-    }
-
-    async function restSelect(table, query) {
-        const token = getStoredToken();
-        if (!token) throw new Error('Pas de token');
-        const res = await fetch(`${window.YOTEACHER_CONFIG.SUPABASE_URL}/rest/v1/${table}?${query}`, {
-            headers: {
-                'apikey': window.YOTEACHER_CONFIG.SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
     }
 
     function setupPresence(partnerId) {
@@ -195,32 +211,40 @@
         const channelName = 'widget-presence-' + [state.myId, partnerId].sort().join('-');
         state.presenceChannel = window.supabase
             .channel(channelName)
-            .on('broadcast', { event: 'heartbeat' }, (payload) => {
+            .on('broadcast', { event: 'heartbeat' }, function(payload) {
                 const p = payload.payload;
                 if (p && p.userId === partnerId) {
                     state.lastPartnerHeartbeat = Date.now();
                     updateOnlineStatus(true);
                 }
             })
-            .on('broadcast', { event: 'typing' }, (payload) => {
+            .on('broadcast', { event: 'typing' }, function(payload) {
                 const p = payload.payload;
                 if (p && p.userId === partnerId) {
                     p.active ? showTypingIndicator() : hideTypingIndicator();
                 }
             })
-            .subscribe((status) => {
+            .subscribe(function(status) {
                 if (status === 'SUBSCRIBED' && state.presenceChannel) {
-                    state.presenceChannel.send({ type: 'broadcast', event: 'heartbeat', payload: { userId: state.myId, timestamp: Date.now() }}).catch(() => {});
+                    state.presenceChannel.send({
+                        type: 'broadcast',
+                        event: 'heartbeat',
+                        payload: { userId: state.myId, timestamp: Date.now() }
+                    }).catch(function(){});
                 }
             });
         if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
-        state.heartbeatTimer = setInterval(() => {
+        state.heartbeatTimer = setInterval(function() {
             if (state.presenceChannel) {
-                state.presenceChannel.send({ type: 'broadcast', event: 'heartbeat', payload: { userId: state.myId, timestamp: Date.now() }}).catch(() => {});
+                state.presenceChannel.send({
+                    type: 'broadcast',
+                    event: 'heartbeat',
+                    payload: { userId: state.myId, timestamp: Date.now() }
+                }).catch(function(){});
             }
         }, 10000);
         if (state.onlineCheckTimer) clearInterval(state.onlineCheckTimer);
-        state.onlineCheckTimer = setInterval(() => {
+        state.onlineCheckTimer = setInterval(function() {
             updateOnlineStatus(Date.now() - state.lastPartnerHeartbeat < 20000);
         }, 5000);
     }
@@ -237,7 +261,7 @@
         const el = document.getElementById('msg-widget-typing');
         if (!el) return;
         const name = state.isAdmin ? "L'étudiant" : "Le professeur";
-        el.textContent = name + " est en train d'écrire…";
+        el.textContent = name + " est en train d'ecrire…";
         el.style.display = 'flex';
     }
 
@@ -249,17 +273,21 @@
     function setupTypingListener(inputId) {
         const input = document.getElementById(inputId);
         if (!input) return;
-        input.addEventListener('input', () => {
+        input.addEventListener('input', function() {
             const hasText = input.value.trim().length > 0;
             if (hasText && !state.isTyping) { state.isTyping = true; broadcastTyping(true); }
             else if (!hasText && state.isTyping) { state.isTyping = false; broadcastTyping(false); }
         });
-        window.addEventListener('beforeunload', () => { if (state.isTyping) broadcastTyping(false); });
+        window.addEventListener('beforeunload', function() { if (state.isTyping) broadcastTyping(false); });
     }
 
     function broadcastTyping(active) {
         if (!state.presenceChannel) return;
-        state.presenceChannel.send({ type: 'broadcast', event: 'typing', payload: { userId: state.myId, active: active }}).catch(() => {});
+        state.presenceChannel.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: { userId: state.myId, active: active }
+        }).catch(function(){});
     }
 
     async function waitForSupabase() {
@@ -268,10 +296,10 @@
             if (window.supabase && window.supabase.auth) {
                 try {
                     const { data, error } = await window.supabase.auth.getUser();
-                    if (!error && data?.user) return { client: window.supabase, user: data.user };
+                    if (!error && data && data.user) return { client: window.supabase, user: data.user };
                 } catch (e) {}
             }
-            await new Promise(r => setTimeout(r, 200));
+            await new Promise(function(r) { setTimeout(r, 200); });
         }
         throw new Error('Supabase timeout');
     }
@@ -279,10 +307,11 @@
     async function detectRole(client, user) {
         state.myId = user.id;
         try {
-            const { data: { session } } = await client.auth.getSession();
-            if (session?.access_token) state.accessToken = session.access_token;
-            if (!session?.access_token && !getStoredToken()) return false;
-            const res = await fetch(window.YOTEACHER_CONFIG?.SUPABASE_URL + '/functions/v1/teacher-info', {
+            const sessionResult = await client.auth.getSession();
+            const session = sessionResult.data && sessionResult.data.session;
+            if (session && session.access_token) state.accessToken = session.access_token;
+            if (!session && !getStoredToken()) return false;
+            const res = await fetch(window.YOTEACHER_CONFIG.SUPABASE_URL + '/functions/v1/teacher-info', {
                 headers: { Authorization: 'Bearer ' + (state.accessToken || getStoredToken()) }
             });
             if (!res.ok) return false;
@@ -297,12 +326,7 @@
         if (document.getElementById('messaging-widget-root')) return;
         const root = document.createElement('div');
         root.id = 'messaging-widget-root';
-        root.innerHTML = `
-            <button id="msg-widget-bubble" class="messaging-widget-bubble" title="Messagerie">
-                <i class="fas fa-comment-dots"></i>
-            </button>
-            <div id="msg-widget-window" class="messaging-widget-window" style="display:none;"></div>
-        `;
+        root.innerHTML = '<button id="msg-widget-bubble" class="messaging-widget-bubble" title="Messagerie"><i class="fas fa-comment-dots"></i></button><div id="msg-widget-window" class="messaging-widget-window" style="display:none;"></div>';
         document.body.appendChild(root);
         document.getElementById('msg-widget-bubble').addEventListener('click', toggleWindow);
     }
@@ -312,7 +336,7 @@
         if (!win) return;
         if (state.isOpen) {
             win.classList.add('closing');
-            setTimeout(() => {
+            setTimeout(function() {
                 win.style.display = 'none'; win.classList.remove('closing');
                 state.isOpen = false; state.activePartner = null; state.isTyping = false;
                 state.partnerProfile = null;
@@ -333,33 +357,13 @@
         if (!win || !state.teacherId) return;
         await loadPartnerProfile(state.teacherId);
         const cached = state.messageCache.get(state.teacherId);
-        win.innerHTML = `
-            <div class="messaging-widget-header">
-                <div class="messaging-widget-header-info">
-                    <div class="messaging-widget-avatar">👨‍🏫</div>
-                    <div class="messaging-widget-header-text">
-                        <div class="messaging-widget-header-name">${escapeHtml(state.teacherName || 'Professeur')}</div>
-                        <div class="messaging-widget-header-status">
-                            <span class="messaging-widget-status-dot" id="msg-widget-status-dot"></span>
-                            <span id="msg-widget-status-text">En ligne</span>
-                        </div>
-                    </div>
-                </div>
-                <button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="messaging-widget-messages" id="msg-widget-messages"></div>
-            <div class="messaging-widget-typing" id="msg-widget-typing" style="display:none;"></div>
-            <div class="messaging-widget-input-area">
-                <input type="text" class="messaging-widget-input" id="msg-widget-input" placeholder="Écrivez un message..." autocomplete="off">
-                <button class="messaging-widget-send" id="msg-widget-send"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        `;
+        win.innerHTML = '<div class="messaging-widget-header"><div class="messaging-widget-header-info"><div class="messaging-widget-avatar">👨‍🏫</div><div class="messaging-widget-header-text"><div class="messaging-widget-header-name">' + escapeHtml(state.teacherName || 'Professeur') + '</div><div class="messaging-widget-header-status"><span class="messaging-widget-status-dot" id="msg-widget-status-dot"></span><span id="msg-widget-status-text">En ligne</span></div></div></div><button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button></div><div class="messaging-widget-messages" id="msg-widget-messages"></div><div class="messaging-widget-typing" id="msg-widget-typing" style="display:none;"></div><div class="messaging-widget-input-area"><input type="text" class="messaging-widget-input" id="msg-widget-input" placeholder="Ecrivez un message..." autocomplete="off"><button class="messaging-widget-send" id="msg-widget-send"><i class="fas fa-paper-plane"></i></button></div>';
         document.getElementById('msg-widget-close').addEventListener('click', closeWindow);
         document.getElementById('msg-widget-send').addEventListener('click', sendMessage);
-        document.getElementById('msg-widget-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+        document.getElementById('msg-widget-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') sendMessage(); });
         const container = document.getElementById('msg-widget-messages');
         if (cached && cached.length > 0) renderMessagesToContainer(cached, container);
-        else container.innerHTML = `<div class="messaging-widget-empty"><i class="fas fa-comment-slash"></i><p>Aucun message encore.<br>Commencez la conversation !</p></div>`;
+        else container.innerHTML = '<div class="messaging-widget-empty"><i class="fas fa-comment-slash"></i><p>Aucun message encore.<br>Commencez la conversation !</p></div>';
         await loadMessages(state.teacherId);
         setupChatRealtime(state.teacherId);
         setupPresence(state.teacherId);
@@ -370,21 +374,7 @@
     async function renderAdminConversations() {
         const win = document.getElementById('msg-widget-window');
         if (!win) return;
-        win.innerHTML = `
-            <div class="messaging-widget-header">
-                <div class="messaging-widget-header-info">
-                    <div class="messaging-widget-avatar"><i class="fas fa-comments"></i></div>
-                    <div class="messaging-widget-header-text">
-                        <div class="messaging-widget-header-name">Messagerie</div>
-                        <div class="messaging-widget-header-status">Conversations avec vos étudiants</div>
-                    </div>
-                </div>
-                <button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="messaging-widget-conversations" id="msg-widget-conversations">
-                <div class="messaging-widget-empty"><i class="fas fa-spinner fa-spin"></i><p>Chargement...</p></div>
-            </div>
-        `;
+        win.innerHTML = '<div class="messaging-widget-header"><div class="messaging-widget-header-info"><div class="messaging-widget-avatar"><i class="fas fa-comments"></i></div><div class="messaging-widget-header-text"><div class="messaging-widget-header-name">Messagerie</div><div class="messaging-widget-header-status">Conversations avec vos etudiants</div></div></div><button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button></div><div class="messaging-widget-conversations" id="msg-widget-conversations"><div class="messaging-widget-empty"><i class="fas fa-spinner fa-spin"></i><p>Chargement...</p></div></div>';
         document.getElementById('msg-widget-close').addEventListener('click', closeWindow);
         await loadAdminConversations();
     }
@@ -395,29 +385,8 @@
         state.activePartner = partnerId;
         await loadPartnerProfile(partnerId);
         const cached = state.messageCache.get(partnerId);
-        win.innerHTML = `
-            <div class="messaging-widget-header">
-                <button class="messaging-widget-back" id="msg-widget-back"><i class="fas fa-arrow-left"></i></button>
-                <div class="messaging-widget-header-info">
-                    <div class="messaging-widget-avatar">🎓</div>
-                    <div class="messaging-widget-header-text">
-                        <div class="messaging-widget-header-name">${escapeHtml(partnerName || 'Étudiant')}</div>
-                        <div class="messaging-widget-header-status">
-                            <span class="messaging-widget-status-dot" id="msg-widget-status-dot"></span>
-                            <span id="msg-widget-status-text">En ligne</span>
-                        </div>
-                    </div>
-                </div>
-                <button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="messaging-widget-messages" id="msg-widget-messages"></div>
-            <div class="messaging-widget-typing" id="msg-widget-typing" style="display:none;"></div>
-            <div class="messaging-widget-input-area">
-                <input type="text" class="messaging-widget-input" id="msg-widget-input" placeholder="Répondez à votre étudiant..." autocomplete="off">
-                <button class="messaging-widget-send" id="msg-widget-send"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        `;
-        document.getElementById('msg-widget-back').addEventListener('click', () => {
+        win.innerHTML = '<div class="messaging-widget-header"><button class="messaging-widget-back" id="msg-widget-back"><i class="fas fa-arrow-left"></i></button><div class="messaging-widget-header-info"><div class="messaging-widget-avatar">🎓</div><div class="messaging-widget-header-text"><div class="messaging-widget-header-name">' + escapeHtml(partnerName || 'Etudiant') + '</div><div class="messaging-widget-header-status"><span class="messaging-widget-status-dot" id="msg-widget-status-dot"></span><span id="msg-widget-status-text">En ligne</span></div></div></div><button class="messaging-widget-close" id="msg-widget-close"><i class="fas fa-times"></i></button></div><div class="messaging-widget-messages" id="msg-widget-messages"></div><div class="messaging-widget-typing" id="msg-widget-typing" style="display:none;"></div><div class="messaging-widget-input-area"><input type="text" class="messaging-widget-input" id="msg-widget-input" placeholder="Repondez a votre etudiant..." autocomplete="off"><button class="messaging-widget-send" id="msg-widget-send"><i class="fas fa-paper-plane"></i></button></div>';
+        document.getElementById('msg-widget-back').addEventListener('click', function() {
             state.activePartner = null; state.isTyping = false;
             state.partnerProfile = null;
             if (state.chatChannel) { state.chatChannel.unsubscribe(); state.chatChannel = null; }
@@ -425,10 +394,10 @@
         });
         document.getElementById('msg-widget-close').addEventListener('click', closeWindow);
         document.getElementById('msg-widget-send').addEventListener('click', sendMessage);
-        document.getElementById('msg-widget-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+        document.getElementById('msg-widget-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') sendMessage(); });
         const container = document.getElementById('msg-widget-messages');
         if (cached && cached.length > 0) renderMessagesToContainer(cached, container);
-        else container.innerHTML = `<div class="messaging-widget-empty"><i class="fas fa-comment-slash"></i><p>Aucun message encore.<br>Commencez la conversation !</p></div>`;
+        else container.innerHTML = '<div class="messaging-widget-empty"><i class="fas fa-comment-slash"></i><p>Aucun message encore.<br>Commencez la conversation !</p></div>';
         await loadMessages(partnerId);
         setupChatRealtime(partnerId);
         setupPresence(partnerId);
@@ -457,8 +426,8 @@
             container.scrollTop = container.scrollHeight;
         }
         try {
-            if (state.supabaseBlocked) restRpc('mark_messages_read', { partner: partnerId }).catch(() => {});
-            else window.supabase.rpc('mark_messages_read', { partner: partnerId }).catch(() => {});
+            if (state.supabaseBlocked) restRpc('mark_messages_read', { partner: partnerId }).catch(function(){});
+            else window.supabase.rpc('mark_messages_read', { partner: partnerId }).catch(function(){});
         } catch (e) {}
     }
 
@@ -476,31 +445,21 @@
             try { partners = await restRpc('get_conversation_partners', {}); error = null; }
             catch (err2) { error = err2; }
         }
-        if (error) { container.innerHTML = `<div class="messaging-widget-empty"><p>Erreur: ${escapeHtml(error.message)}</p></div>`; return; }
+        if (error) { container.innerHTML = '<div class="messaging-widget-empty"><p>Erreur: ' + escapeHtml(error.message) + '</p></div>'; return; }
         state.conversations = partners || []; container.innerHTML = '';
         if (!partners || partners.length === 0) {
-            container.innerHTML = `<div class="messaging-widget-empty"><i class="fas fa-inbox"></i><p>Aucune conversation pour le moment</p></div>`;
+            container.innerHTML = '<div class="messaging-widget-empty"><i class="fas fa-inbox"></i><p>Aucune conversation pour le moment</p></div>';
             return;
         }
-        partners.forEach(p => {
+        partners.forEach(function(p) {
             const div = document.createElement('div');
             div.className = 'messaging-widget-conv-item';
             if (p.partner_id === state.activePartner) div.classList.add('active');
-            const initials = (p.partner_name || 'É').substring(0, 2).toUpperCase();
+            const initials = (p.partner_name || 'E').substring(0, 2).toUpperCase();
             const time = p.last_message_at ? formatDateShort(p.last_message_at) : '';
-            const unread = p.unread_count > 0 ? `<span class="messaging-widget-conv-badge">${p.unread_count}</span>` : '';
-            div.innerHTML = `
-                <div class="messaging-widget-conv-avatar">${escapeHtml(initials)}</div>
-                <div class="messaging-widget-conv-info">
-                    <div class="messaging-widget-conv-name">${escapeHtml(p.partner_name || 'Étudiant')}</div>
-                    <div class="messaging-widget-conv-preview">Cliquez pour ouvrir</div>
-                </div>
-                <div class="messaging-widget-conv-meta">
-                    <span class="messaging-widget-conv-time">${time}</span>
-                    ${unread}
-                </div>
-            `;
-            div.addEventListener('click', () => renderAdminChat(p.partner_id, p.partner_name));
+            const unread = p.unread_count > 0 ? '<span class="messaging-widget-conv-badge">' + p.unread_count + '</span>' : '';
+            div.innerHTML = '<div class="messaging-widget-conv-avatar">' + escapeHtml(initials) + '</div><div class="messaging-widget-conv-info"><div class="messaging-widget-conv-name">' + escapeHtml(p.partner_name || 'Etudiant') + '</div><div class="messaging-widget-conv-preview">Cliquez pour ouvrir</div></div><div class="messaging-widget-conv-meta"><span class="messaging-widget-conv-time">' + time + '</span>' + unread + '</div>';
+            div.addEventListener('click', function() { renderAdminChat(p.partner_id, p.partner_name); });
             container.appendChild(div);
         });
     }
@@ -508,25 +467,25 @@
     function renderMessagesToContainer(msgs, container) {
         if (!msgs || msgs.length === 0) {
             if (!container.querySelector('.messaging-widget-msg')) {
-                container.innerHTML = `<div class="messaging-widget-empty"><i class="fas fa-comment-slash"></i><p>Aucun message encore.<br>Commencez la conversation !</p></div>`;
+                container.innerHTML = '<div class="messaging-widget-empty"><i class="fas fa-comment-slash"></i><p>Aucun message encore.<br>Commencez la conversation !</p></div>';
             }
             return;
         }
         container.innerHTML = '';
-        msgs.forEach(m => appendMessage(m, container));
+        msgs.forEach(function(m) { appendMessage(m, container); });
     }
 
     function appendMessage(msg, container) {
-        const existing = container.querySelector(`[data-msg-id="${msg.id}"]`);
+        const existing = container.querySelector('[data-msg-id="' + msg.id + '"]');
         if (existing) return;
         const isMe = msg.sender_id === state.myId;
 
         const row = document.createElement('div');
-        row.className = `messaging-widget-msg ${isMe ? 'sent' : 'received'}`;
+        row.className = 'messaging-widget-msg ' + (isMe ? 'sent' : 'received');
         row.setAttribute('data-msg-id', msg.id || 'pending-' + Date.now());
 
         const avatarHtml = getAvatarHtml(msg.sender_id);
-        const bubbleHtml = `<div class="msg-wrapper"><div class="msg-bubble">${escapeHtml(msg.content)}</div><span class="msg-time">${formatMessageDate(msg.created_at)}</span></div>`;
+        const bubbleHtml = '<div class="msg-wrapper"><div class="msg-bubble">' + escapeHtml(msg.content) + '</div><span class="msg-time">' + formatMessageDate(msg.created_at) + '</span></div>';
 
         row.innerHTML = avatarHtml + bubbleHtml;
         container.appendChild(row);
@@ -535,7 +494,7 @@
 
     async function sendMessage() {
         const input = document.getElementById('msg-widget-input');
-        const content = input?.value.trim();
+        const content = input && input.value.trim();
         if (!content) return;
         state.isTyping = false;
         broadcastTyping(false);
@@ -547,33 +506,33 @@
         const container = document.getElementById('msg-widget-messages');
         if (container) {
             if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
-            appendMessage({ id: tempId, sender_id: state.myId, receiver_id: receiverId, content, created_at: new Date().toISOString() }, container);
+            appendMessage({ id: tempId, sender_id: state.myId, receiver_id: receiverId, content: content, created_at: new Date().toISOString() }, container);
         }
         let data = null, error = null;
         if (!state.supabaseBlocked) {
             try {
-                const result = await withTimeout(window.supabase.from('messages').insert({ sender_id: state.myId, receiver_id: receiverId, content }).select(), 6000, 'insert');
+                const result = await withTimeout(window.supabase.from('messages').insert({ sender_id: state.myId, receiver_id: receiverId, content: content }).select(), 6000, 'insert');
                 data = result.data; error = result.error;
             } catch (err) { state.supabaseBlocked = true; }
         }
         if (!data && state.supabaseBlocked) {
-            try { data = await restInsert('messages', { sender_id: state.myId, receiver_id: receiverId, content }); error = null; }
+            try { data = await restInsert('messages', { sender_id: state.myId, receiver_id: receiverId, content: content }); error = null; }
             catch (err2) { error = err2; }
         }
         if (error) {
-            const pendingEl = document.querySelector(`[data-msg-id="${tempId}"]`);
+            const pendingEl = document.querySelector('[data-msg-id="' + tempId + '"]');
             if (pendingEl) pendingEl.remove();
             if (input) input.value = content;
             alert("Erreur d'envoi : " + error.message);
             state.pendingMessages.delete(tempId);
             return;
         }
-        const realMsg = data?.[0];
+        const realMsg = data && data[0];
         if (realMsg) {
-            const pendingEl = document.querySelector(`[data-msg-id="${tempId}"]`);
+            const pendingEl = document.querySelector('[data-msg-id="' + tempId + '"]');
             if (pendingEl) pendingEl.setAttribute('data-msg-id', realMsg.id);
             const cached = state.messageCache.get(receiverId) || [];
-            const idx = cached.findIndex(m => m.id === tempId);
+            const idx = cached.findIndex(function(m) { return m.id === tempId; });
             if (idx >= 0) cached[idx] = realMsg;
             else cached.push(realMsg);
             state.messageCache.set(receiverId, cached);
@@ -587,7 +546,7 @@
         const channelName = 'widget-chat-' + state.myId + '-' + partnerId;
         state.chatChannel = window.supabase
             .channel(channelName)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=in.(${state.myId},${partnerId})` }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'receiver_id=in.(' + state.myId + ',' + partnerId + ')' }, function(payload) {
                 const msg = payload.new;
                 const relevant = (msg.sender_id === state.myId && msg.receiver_id === partnerId) || (msg.sender_id === partnerId && msg.receiver_id === state.myId);
                 if (!relevant || state.pendingMessages.has(msg.id)) return;
@@ -597,13 +556,15 @@
                     appendMessage(msg, container);
                 }
                 const cached = state.messageCache.get(partnerId) || [];
-                if (!cached.some(m => m.id === msg.id)) { cached.push(msg); state.messageCache.set(partnerId, cached); }
+                let found = false;
+                for (var i = 0; i < cached.length; i++) { if (cached[i].id === msg.id) { found = true; break; } }
+                if (!found) { cached.push(msg); state.messageCache.set(partnerId, cached); }
                 if (msg.receiver_id === state.myId) {
-                    if (state.supabaseBlocked) restRpc('mark_messages_read', { partner: msg.sender_id }).catch(() => {});
-                    else window.supabase.rpc('mark_messages_read', { partner: msg.sender_id }).catch(() => {});
+                    if (state.supabaseBlocked) restRpc('mark_messages_read', { partner: msg.sender_id }).catch(function(){});
+                    else window.supabase.rpc('mark_messages_read', { partner: msg.sender_id }).catch(function(){});
                 }
             })
-            .subscribe(() => {});
+            .subscribe(function(){});
     }
 
     function setupNotifyRealtime() {
@@ -612,10 +573,12 @@
         const channelName = 'widget-notify-' + state.myId;
         state.notifyChannel = window.supabase
             .channel(channelName)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${state.myId}` }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'receiver_id=eq.' + state.myId }, function(payload) {
                 const msg = payload.new;
                 const cached = state.messageCache.get(msg.sender_id) || [];
-                if (!cached.some(m => m.id === msg.id)) { cached.push(msg); state.messageCache.set(msg.sender_id, cached); }
+                let found = false;
+                for (var i = 0; i < cached.length; i++) { if (cached[i].id === msg.id) { found = true; break; } }
+                if (!found) { cached.push(msg); state.messageCache.set(msg.sender_id, cached); }
                 const isCurrentConv = state.isOpen && (state.isAdmin ? msg.sender_id === state.activePartner : msg.sender_id === state.teacherId);
                 if (!isCurrentConv) {
                     updateUnreadBadge();
@@ -628,11 +591,11 @@
                         if (container.querySelector('.messaging-widget-empty')) container.innerHTML = '';
                         appendMessage(msg, container);
                     }
-                    if (state.supabaseBlocked) restRpc('mark_messages_read', { partner: msg.sender_id }).catch(() => {});
-                    else window.supabase.rpc('mark_messages_read', { partner: msg.sender_id }).catch(() => {});
+                    if (state.supabaseBlocked) restRpc('mark_messages_read', { partner: msg.sender_id }).catch(function(){});
+                    else window.supabase.rpc('mark_messages_read', { partner: msg.sender_id }).catch(function(){});
                 }
             })
-            .subscribe(() => {});
+            .subscribe(function(){});
     }
 
     async function updateUnreadBadge() {
@@ -648,7 +611,7 @@
             catch (err2) { return; }
         }
         if (!partners) return;
-        const total = partners.reduce((sum, p) => sum + (p.unread_count || 0), 0);
+        const total = partners.reduce(function(sum, p) { return sum + (p.unread_count || 0); }, 0);
         state.unreadTotal = total;
         const bubble = document.getElementById('msg-widget-bubble');
         if (!bubble) return;
@@ -663,15 +626,15 @@
 
     function listenForAuthChanges() {
         if (!window.supabase) return;
-        window.supabase.auth.onAuthStateChange((event, session) => {
-            if (session?.access_token) state.accessToken = session.access_token;
+        window.supabase.auth.onAuthStateChange(function(event, session) {
+            if (session && session.access_token) state.accessToken = session.access_token;
         });
     }
 
     async function init() {
         try {
-            const { client, user } = await waitForSupabase();
-            const roleOk = await detectRole(client, user);
+            const result = await waitForSupabase();
+            const roleOk = await detectRole(result.client, result.user);
             if (!roleOk) return;
             await loadMyProfile();
             createWidget();
@@ -679,7 +642,7 @@
             await updateUnreadBadge();
             setupNotifyRealtime();
             listenForAuthChanges();
-            setInterval(() => { if (!state.isOpen) updateUnreadBadge(); }, 15000);
+            setInterval(function() { if (!state.isOpen) updateUnreadBadge(); }, 15000);
             if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
         } catch (err) {}
     }
