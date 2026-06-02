@@ -267,7 +267,7 @@ class TranslationManager {
                 'dashboard.book_course_title': 'Réserver un cours',
                 'dashboard.conversation_btn': 'Conversation',
                 'dashboard.curriculum_btn': 'Cours complet',
-                'dashboard.exam_btn': 'Préparation d\'examen',
+                'dashboard.exam_btn': 'Examen',
                 'dashboard.no_lessons_message': 'Aucun cours programmé',
                 'dashboard.lesson_date': 'Date du cours',
                 'dashboard.lesson_time': 'Heure',
@@ -504,7 +504,7 @@ class TranslationManager {
                 'courses.trial': 'Cours d\'essai',
                 'courses.conversation': 'Conversation',
                 'courses.curriculum': 'Cours complet',
-                'courses.exam': 'Préparation d\'examen',
+                'courses.exam': 'Examen',
 
                 // ===== NOUVELLES TRADUCTIONS POUR LA PAGE LÉGALE =====
                 'legal.title': 'Mentions Légales - YoTeach',
@@ -1352,7 +1352,7 @@ class TranslationManager {
                 'dashboard.book_course_title': 'Book a course',
                 'dashboard.conversation_btn': 'Conversation',
                 'dashboard.curriculum_btn': 'Course',
-                'dashboard.exam_btn': 'Exam preparation',
+                'dashboard.exam_btn': 'Exam',
                 'dashboard.no_lessons_message': 'No lessons scheduled',
                 'dashboard.lesson_date': 'Lesson date',
                 'dashboard.lesson_time': 'Time',
@@ -1591,7 +1591,7 @@ class TranslationManager {
                 'courses.trial': 'Trial lesson',
                 'courses.conversation': 'Conversation',
                 'courses.curriculum': 'Course',
-                'courses.exam': 'Exam preparation',
+                'courses.exam': 'Exam',
 
                 // ===== NEW TRANSLATIONS FOR LEGAL PAGE =====
                 'legal.title': 'Legal Notice - YoTeach',
