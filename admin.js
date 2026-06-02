@@ -214,14 +214,13 @@ function renderUpcomingSlice() {
         const endDate = new Date(lessonDate.getTime() + duration * 60000);
         const startTimeStr = lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
         const endTimeStr = endDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-        const timeStr = `${startTimeStr} — ${endTimeStr}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${duration}min`;
         const courseTypeFormatted = (lesson.course_type || '').charAt(0).toUpperCase() + (lesson.course_type || '').slice(1);
         return `
             <div class="upcoming-lesson-card">
                 <div><strong>${escapeHtml(lesson.profiles?.full_name || 'Étudiant')}</strong></div>
                 <div>${escapeHtml(courseTypeFormatted)} #${escapeHtml(lesson.booking_number || '?')}</div>
                 <div>📅 ${dateStr}</div>
-                <div>⏰ <strong>${timeStr}</strong></div>
+                <div>⏰ <strong>${startTimeStr}</strong> - ${endTimeStr}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${duration}min</div>
                 <div style="display: flex; gap: 10px; margin-top: 12px; width: 100%;">
                     ${hasMeeting ? `<a href="${escapeHtml(meetingLink)}" target="_blank" class="btn-join-admin"><i class="fas fa-video"></i> Rejoindre</a>` : '<button class="btn-join-admin-disabled" disabled>Rejoindre</button>'}
                     <button class="btn-cancel-admin" data-id="${lesson.id}">Annuler</button>
