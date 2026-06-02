@@ -394,9 +394,12 @@ body .mobile-dashboard-btn {
 }
 
 .payment-method-icon {
-    font-size: 1.5rem;
     width: 40px;
-    text-align: center;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 /* SVG des logos officiels */
