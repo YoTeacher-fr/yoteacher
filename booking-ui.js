@@ -222,16 +222,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     const hasCredits = await window.packagesManager.hasCreditForDuration(user.id, courseType, duration);
                     
                     if (hasCredits) {
-                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation avec crédit...';
+                        submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${window.translationManager ? window.translationManager.getTranslation('booking.status.credit_booking') : 'Réservation avec crédit...'}`;
+                    if (mobileSubmitBtn) mobileSubmitBtn.innerHTML = submitButton.innerHTML;
                     } else {
-                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+                        submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${window.translationManager ? window.translationManager.getTranslation('booking.status.preparing_payment') : 'Préparation du paiement...'}`;
+                    if (mobileSubmitBtn) mobileSubmitBtn.innerHTML = submitButton.innerHTML;
                     }
                 }
             } catch (error) {
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+                submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${window.translationManager ? window.translationManager.getTranslation('booking.status.preparing_payment') : 'Préparation du paiement...'}`;
+                    if (mobileSubmitBtn) mobileSubmitBtn.innerHTML = submitButton.innerHTML;
             }
         } else {
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Préparation du paiement...';
+            submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${window.translationManager ? window.translationManager.getTranslation('booking.status.preparing_payment') : 'Préparation du paiement...'}`;
+                    if (mobileSubmitBtn) mobileSubmitBtn.innerHTML = submitButton.innerHTML;
         }
 
         try {
