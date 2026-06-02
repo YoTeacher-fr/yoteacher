@@ -467,6 +467,8 @@ class TranslationManager {
                 'payment.duration': 'Durée:',
                 'payment.platform': 'Plateforme:',
                 'payment.total': 'Total à payer:',
+                'payment.package': 'Forfait:',
+                'payment.discount': 'Réduction:',
                 'payment.processing': 'Traitement en cours...',
                 'payment.qr_code': 'QR Code',
                 
