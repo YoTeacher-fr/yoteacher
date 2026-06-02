@@ -210,7 +210,11 @@ function renderUpcomingSlice() {
         const hasMeeting = meetingLink && meetingLink.trim() !== '';
         const lessonDate = new Date(lesson.start_time);
         const dateStr = formatDateWithDay(lessonDate);
-        const timeStr = lessonDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const duration = lesson.duration_minutes || 30;
+        const endDate = new Date(lessonDate.getTime() + duration * 60000);
+        const startTimeStr = lessonDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const endTimeStr = endDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const timeStr = `${startTimeStr} — ${endTimeStr}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${duration}min`;
         const courseTypeFormatted = (lesson.course_type || '').charAt(0).toUpperCase() + (lesson.course_type || '').slice(1);
         return `
             <div class="upcoming-lesson-card">
