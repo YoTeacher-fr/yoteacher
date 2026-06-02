@@ -27,7 +27,11 @@ class PaymentManager {
             }
 
             this.stripe = window.Stripe(stripeKey);
-            this.elements = this.stripe.elements();
+
+            // Déterminer la locale selon la langue du site
+            const currentLang = window.translationManager ? window.translationManager.getCurrentLanguage() : 'fr';
+            const stripeLocale = currentLang === 'en' ? 'en' : 'fr';
+            this.elements = this.stripe.elements({ locale: stripeLocale });
             
             const cardStyle = {
                 base: {

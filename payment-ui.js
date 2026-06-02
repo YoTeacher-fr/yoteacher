@@ -354,14 +354,14 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
             `${amountToDisplay.toFixed(2)} ${currentCurrency}`;
         
         const startDate = new Date(booking.startTime);
-        const formattedDate = startDate.toLocaleDateString('fr-FR', {
+        const formattedDate = startDate.toLocaleDateString(window.translationManager && window.translationManager.getCurrentLanguage() === 'en' ? 'en-US' : 'fr-FR', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         });
         
-        const formattedTime = startDate.toLocaleTimeString('fr-FR', {
+        const formattedTime = startDate.toLocaleTimeString(window.translationManager && window.translationManager.getCurrentLanguage() === 'en' ? 'en-US' : 'fr-FR', {
             hour: '2-digit',
             minute: '2-digit'
         });
@@ -403,8 +403,8 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
         if (booking.isVip) {
             vipInfo = `
                 <div class="summary-item" style="background: #fff8e1; border-radius: 8px; padding: 10px; margin-bottom: 10px;">
-                    <span class="label" style="color: #ff8f00;"><i class="fas fa-crown"></i> Statut:</span>
-                    <span class="value" style="color: #ff8f00; font-weight: 600;">Prix VIP appliqué</span>
+                    <span class="label" style="color: #ff8f00;"><i class="fas fa-crown"></i> ${window.translationManager ? window.translationManager.getTranslation('payment.vip_status') : 'Statut:'}</span>
+                    <span class="value" style="color: #ff8f00; font-weight: 600;">${window.translationManager ? window.translationManager.getTranslation('payment.vip_price_applied') : 'Prix VIP appliqué'}</span>
                 </div>
             `;
         }
@@ -415,12 +415,12 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
             const discount = booking.discountPercent || 0;
             packageInfo = `
                 <div class="summary-item">
-                    <span class="label">Forfait:</span>
-                    <span class="value">${booking.packageQuantity} cours</span>
+                    <span class="label">${window.translationManager ? window.translationManager.getTranslation('payment.package') : 'Forfait:'}</span>
+                    <span class="value">${booking.packageQuantity} ${window.translationManager ? window.translationManager.getTranslation('booking.courses') : 'cours'}</span>
                 </div>
                 ${discount > 0 ? `
                 <div class="summary-item" style="background: #e8f5e9; border-radius: 8px; padding: 10px; margin: 5px 0;">
-                    <span class="label" style="color: #2e7d32;">Réduction:</span>
+                    <span class="label" style="color: #2e7d32;">${window.translationManager ? window.translationManager.getTranslation('payment.discount') : 'Réduction:'}</span>
                     <span class="value" style="color: #2e7d32; font-weight: 600;">${discount}%</span>
                 </div>
                 ` : ''}
@@ -429,7 +429,7 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
         
         summaryContainer.innerHTML = `
             <div class="booking-summary-card">
-                <h3 style="margin-bottom: 20px; color: #333;" data-i18n="payment.booking_details">Détails de votre réservation</h3>
+                <h3 style="margin-bottom: 20px; color: #333;">${window.translationManager ? window.translationManager.getTranslation('payment.booking_details') : 'Détails de votre réservation'}</h3>
                 <div class="summary-details">
                     ${vipInfo}
                     <div class="summary-item">
@@ -447,7 +447,7 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
                     </div>
                     <div class="summary-item">
                         <span class="label">${durationLabel}</span>
-                        <span class="value">${booking.duration || '15'} min</span>
+                        <span class="value">${booking.duration || '15'} ${window.translationManager ? window.translationManager.getTranslation('booking.unit.minutes') : 'min'}</span>
                     </div>
                     <div class="summary-item">
                         <span class="label">${platformLabel}</span>
