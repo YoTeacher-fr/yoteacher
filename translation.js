@@ -1519,7 +1519,7 @@ class TranslationManager {
                 'payment.package': 'Package:',
                 'payment.discount': 'Discount:',
                 'payment.notice': 'Once payment is made,',
-                'payment.notice2': 'please click "I paid" to confirm your reservation.',
+                'payment.notice2': 'click "I paid" to confirm your reservation.',
                 'payment.revolut_notice': 'Once payment is made on Revolut, click "I paid with Revolut" to confirm your reservation.',
                 'payment.paid_revolut': 'I paid with Revolut',
                 'payment.wise_qr': 'Click on the QR code to open Wise',
