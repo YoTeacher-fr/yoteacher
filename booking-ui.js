@@ -735,7 +735,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (!submitBtn || !user || courseType === 'essai' || coursesCount > 1) {
-            submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
+                                const bookPayText = window.translationManager 
+                        ? window.translationManager.getTranslation('booking.book_and_pay')
+                        : 'Réserver et payer';
+                    submitBtn.innerHTML = `<i class="fas fa-calendar-check"></i> <span>${bookPayText}</span>`;
+                    if (mobileSubmitBtn) {
+                        mobileSubmitBtn.innerHTML = submitBtn.innerHTML;
+                        mobileSubmitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
+                    }
             submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
             return;
         }
@@ -746,11 +753,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`💳 Crédits disponibles pour ${courseType} ${duration}min:`, hasCredits);
                 
                 if (hasCredits) {
-                    submitBtn.innerHTML = `<i class="fas fa-ticket-alt"></i> Réserver avec un crédit (${duration}min)`;
+                    const creditText = window.translationManager 
+                        ? window.translationManager.getTranslation('booking.button.book_with_credit', [duration])
+                        : `Réserver avec un crédit (${duration}min)`;
+                    submitBtn.innerHTML = `<i class="fas fa-ticket-alt"></i> ${creditText}`;
+                    if (mobileSubmitBtn) {
+                        mobileSubmitBtn.innerHTML = submitBtn.innerHTML;
+                        mobileSubmitBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+                    }
                     submitBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
                     console.log(`✅ Bouton changé: "Réserver avec un crédit (${duration}min)"`);
                 } else {
-                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> <span data-i18n="booking.book_and_pay">Réserver et payer</span>';
+                                        const bookPayText = window.translationManager 
+                        ? window.translationManager.getTranslation('booking.book_and_pay')
+                        : 'Réserver et payer';
+                    submitBtn.innerHTML = `<i class="fas fa-calendar-check"></i> <span>${bookPayText}</span>`;
+                    if (mobileSubmitBtn) {
+                        mobileSubmitBtn.innerHTML = submitBtn.innerHTML;
+                        mobileSubmitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
+                    }
                     submitBtn.style.background = 'linear-gradient(135deg, #3c84f6, #1e88e5)';
                     console.log(`❌ Pas de crédits pour ${duration}min, bouton normal`);
                 }
@@ -853,10 +874,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 console.error('❌ Erreur RPC calculate_price_estimate:', estimateError);
                                 console.error('   Code:', estimateError.code);
                                 console.error('   Message:', estimateError.message);
-                                price = 'Erreur calcul';
+                                price = window.translationManager ? window.translationManager.getTranslation('booking.error.price_calculation') : 'Erreur calcul';
                             } else if (!priceEstimate || !priceEstimate.success) {
                                 console.warn('⚠️ RPC estimate échoué:', priceEstimate);
-                                price = 'Prix à calculer';
+                                price = window.translationManager ? window.translationManager.getTranslation('booking.error.booking_preparation') : 'Prix à calculer';
                             } else {
                                 console.log('✅ Prix estimé par RPC (DB):', priceEstimate.price, priceEstimate.currency);
                                 
@@ -892,17 +913,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.error('❌ Exception appel RPC estimate:', catchError);
                         console.error('   Type:', catchError.name);
                         console.error('   Message:', catchError.message);
-                        price = 'Erreur calcul';
+                        price = window.translationManager ? window.translationManager.getTranslation('booking.error.price_calculation') : 'Erreur calcul';
                     }
                 } else {
-                    price = 'Sélectionnez date et heure';
+                    price = window.translationManager ? window.translationManager.getTranslation('booking.status.select_date_time') : 'Sélectionnez date et heure';
                 }
                 
                 console.log(`✅ Prix final affiché: ${price}`);
                 
             } else {
                 duration = '60 min';
-                price = 'Connectez-vous';
+                price = window.translationManager ? window.translationManager.getTranslation('booking.status.connect_to_see_price') : 'Connectez-vous';
             }
         }
         
