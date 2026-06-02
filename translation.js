@@ -1513,6 +1513,7 @@ class TranslationManager {
                 'payment.vip_status': 'Status:',
                 'payment.vip_price_applied': 'VIP price applied',
                 'payment.package': 'Package:',
+                'payment.discount': 'Discount:',
                 'payment.notice': 'Once payment is made,',
                 'payment.notice2': 'click "I paid" to confirm your reservation.',
                 'payment.revolut_notice': 'Once payment is made on Revolut, click "I paid with Revolut" to confirm your reservation.',

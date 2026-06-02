@@ -620,11 +620,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 detailsElement.style.display = 'none';
                 buttonElement.classList.remove('active');
             }
+
+            // Traduire les éléments quand on ouvre une méthode
+            if (!isAlreadyOpen && window.translationManager) {
+                window.translationManager.applyTranslations();
+            }
         }
-                // Traduire les éléments de la méthode affichée
-                if (window.translationManager) {
-                    window.translationManager.applyTranslations();
-                }
                 
     }
     
@@ -785,9 +786,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (currentBooking) {
                 updatePaymentDisplay();
             }
-            // Re-traduire les éléments statiques du DOM après un petit délai
-            // pour s'assurer que le DOM est mis à jour
-            setTimeout(function() {
+            // Re-traduire tous les éléments du DOM (statiques et dynamiques)
+            // Utiliser requestAnimationFrame pour s'assurer que le DOM est stable
+            requestAnimationFrame(function() {
                 if (window.translationManager) {
                     window.translationManager.applyTranslations();
                 }
@@ -795,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (window.paymentManager && window.paymentManager.stripe) {
                     window.paymentManager.setupStripeForm();
                 }
-            }, 50);
+            });
         });
 
 
