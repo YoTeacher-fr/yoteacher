@@ -928,7 +928,7 @@ body.loaded {
         gap: 10px !important;
     }
 
-    .header-right-group .login-btn {
+    .header-right-group > *:not(.language-switcher) {
         display: none !important;
     }
 
