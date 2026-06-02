@@ -460,6 +460,11 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
                 </div>
             </div>
         `;
+
+        // Re-traduire les éléments injectés dynamiquement
+        if (window.translationManager) {
+            window.translationManager.applyTranslations();
+        }
     }
     
     // Gestion des boutons de méthode de paiement
@@ -616,6 +621,11 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
                 buttonElement.classList.remove('active');
             }
         }
+                // Traduire les éléments de la méthode affichée
+                if (window.translationManager) {
+                    window.translationManager.applyTranslations();
+                }
+                
     }
     
     // Gestion des boutons de confirmation de paiement
@@ -768,6 +778,27 @@ originalCurrency = booking.currency || booking.originalCurrency || 'EUR';
             updatePaymentDisplay();
         });
         
+        // Écouter les changements de langue
+        window.addEventListener('language:changed', function(e) {
+            console.log('🌐 Événement language:changed reçu', e.detail);
+            // Re-générer le récapitulatif avec la nouvelle langue
+            if (currentBooking) {
+                updatePaymentDisplay();
+            }
+            // Re-traduire les éléments statiques du DOM après un petit délai
+            // pour s'assurer que le DOM est mis à jour
+            setTimeout(function() {
+                if (window.translationManager) {
+                    window.translationManager.applyTranslations();
+                }
+                // Re-initialiser Stripe avec la nouvelle locale
+                if (window.paymentManager && window.paymentManager.stripe) {
+                    window.paymentManager.setupStripeForm();
+                }
+            }, 50);
+        });
+
+
         // Écouter les événements VIP
         window.addEventListener('vip:loaded', function() {
             console.log('🎁 Événement VIP chargé dans payment.html');
