@@ -15,12 +15,12 @@
     <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
-                
+
                 <div class="logo-section">
                     <a href="index.html" class="logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
                 </div>
-                
+
                 <div class="mobile-header-right-group">
                     <!-- Bouton Connexion/Dashboard Mobile -->
                     <a href="login.html" class="mobile-login-btn-header" data-i18n="header.login">Connexion</a>
@@ -33,19 +33,19 @@
                         <i class="fas fa-money-bill-wave"></i>
                         <select id="currencySelector"></select>
                     </div>
-                    
+
                     <!-- Sélecteur de langue -->
                     <div class="language-switcher" id="languageSwitcherDesktop">
                         <span class="flag">🌐</span>
                         <span data-i18n="header.language">EN</span>
                     </div>
-                    
+
                     <!-- Bouton de connexion Desktop (visible si non connecté) -->
                     <a href="login.html" class="login-btn" id="loginBtn" data-i18n="header.login">Connexion</a>
                 </div>
             </div>
         </div>
-        
+
     </header>
 
     <section class="payment-section">
@@ -54,7 +54,7 @@
                 <h1 class="payment-title" data-i18n="payment.title_main">Finaliser votre paiement</h1>
                 <p class="payment-subtitle" data-i18n="payment.subtitle">Choisissez votre moyen de paiement et confirmez votre réservation</p>
             </div>
-            
+
             <!-- Notification pour Interac -->
             <div class="interac-currency-notice" id="interacCurrencyNotice">
                 <i class="fas fa-info-circle"></i>
@@ -69,26 +69,29 @@
                 <!-- Colonne gauche : Moyens de paiement -->
                 <div class="payment-card">
                     <h2 class="card-title" data-i18n="payment.choose_method">Choisir un moyen de paiement</h2>
-                    
+
                     <div class="payment-methods">
                         <!-- Revolut -->
                         <button class="payment-method-btn" data-method="revolut">
-                            <div class="payment-method-icon" style="color: #FF5F00;">
-                                <i class="fas fa-bank"></i>
+                            <div class="payment-method-icon">
+                                <svg viewBox="0 0 32 32" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="32" height="32" rx="7" fill="#000000"/>
+                                    <path d="M8 8h8c2.2 0 4 1.3 4 3.5 0 1.5-.8 2.6-2.1 3.1l2.6 5.4h-3.2l-2.2-4.8H11.2v4.8H8V8zm5.8 4.8c1.2 0 1.9-.6 1.9-1.6 0-1-.7-1.6-1.9-1.6H11.2v3.2h2.6z" fill="#ffffff"/>
+                                </svg>
                             </div>
                             <div class="payment-method-name">Revolut</div>
                             <div class="payment-method-arrow">
                                 <i class="fas fa-chevron-down"></i>
                             </div>
                         </button>
-                        
+
                         <div class="payment-method-details" id="revolutDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label" data-i18n="payment.revolut_qr">Cliquez sur le QR code pour ouvrir Revolut</span>
                                     <img src="assets/images/revolut.webp" alt="QR Code Revolut" id="revolutQrCode" class="qr-code-img" title="Cliquez pour ouvrir Revolut">
                                 </div>
-                                
+
                                 <div class="payment-info">
                                     <div class="info-item clickable" id="revolutLinkItem">
                                         <div class="info-label" data-i18n="payment.revolut_link">Lien Revolut</div>
@@ -103,7 +106,7 @@
                                         <div class="info-value" id="revolutAmount">-</div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="payment-notice">
                                     <p>
                                         <i class="fas fa-info-circle"></i>
@@ -111,7 +114,7 @@
                                         <span data-i18n="payment.revolut_notice">Une fois le paiement effectué sur Revolut, cliquez sur "J'ai payé avec Revolut" pour confirmer votre réservation.</span>
                                     </p>
                                 </div>
-                                
+
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" data-method="revolut">
                                         <i class="fas fa-check"></i> <span data-i18n="payment.paid_revolut">J'ai payé avec Revolut</span>
@@ -122,22 +125,26 @@
 
                         <!-- Wise -->
                         <button class="payment-method-btn" data-method="wise">
-                            <div class="payment-method-icon" style="color: #9C5BDE;">
-                                <i class="fas fa-globe"></i>
+                            <div class="payment-method-icon">
+                                <svg viewBox="0 0 32 32" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M2 24L8 8h3l-3 8h.1L14 8h4l-6 16h-3l3-8h-.1L5 24H2z" fill="#9FE870"/>
+                                    <path d="M13 24L19 8h3l-6 16h-3z" fill="#9FE870"/>
+                                    <path d="M21 24L27 8h3l-6 16h-3z" fill="#00B9FF"/>
+                                </svg>
                             </div>
                             <div class="payment-method-name">Wise</div>
                             <div class="payment-method-arrow">
                                 <i class="fas fa-chevron-down"></i>
                             </div>
                         </button>
-                        
+
                         <div class="payment-method-details" id="wiseDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label" data-i18n="payment.wise_qr">Cliquez sur le QR code pour ouvrir Wise</span>
                                     <img src="assets/images/wise.webp" alt="QR Code Wise" id="wiseQrCode" class="qr-code-img" title="Cliquez pour ouvrir Wise">
                                 </div>
-                                
+
                                 <div class="payment-info">
                                     <div class="info-item clickable" id="wiseLinkItem">
                                         <div class="info-label" data-i18n="payment.wise_link">Lien Wise</div>
@@ -152,7 +159,7 @@
                                         <div class="info-value" id="wiseAmount">-</div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="payment-notice">
                                     <p>
                                         <i class="fas fa-info-circle"></i>
@@ -160,7 +167,7 @@
                                         <span data-i18n="payment.wise_notice">Une fois le paiement effectué sur Wise, cliquez sur "J'ai payé avec Wise" pour confirmer votre réservation.</span>
                                     </p>
                                 </div>
-                                
+
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" data-method="wise">
                                         <i class="fas fa-check"></i> <span data-i18n="payment.paid_wise">J'ai payé avec Wise</span>
@@ -171,15 +178,21 @@
 
                         <!-- Interac -->
                         <button class="payment-method-btn" data-method="interac">
-                            <div class="payment-method-icon" style="color: #E41E26;">
-                                <i class="fas fa-exchange-alt"></i>
+                            <div class="payment-method-icon">
+                                <svg viewBox="0 0 32 32" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="32" height="32" rx="6" fill="#FFB81C"/>
+                                    <path d="M5 22V10h2.5v4.8h.1L11.2 10h3l-4.2 5.2 4.5 6.8h-3.1l-3-4.8-1.9 2.4V22H5z" fill="#1E1E1E"/>
+                                    <path d="M14.5 22V10h2.5v12h-2.5z" fill="#1E1E1E"/>
+                                    <path d="M18.5 22V10h2.2l3.5 7.5h.1V10h2.3v12h-2.2l-3.5-7.5h-.1V22h-2.3z" fill="#1E1E1E"/>
+                                    <circle cx="27" cy="7.5" r="1.5" fill="#1E1E1E"/>
+                                </svg>
                             </div>
                             <div class="payment-method-name">Interac</div>
                             <div class="payment-method-arrow">
                                 <i class="fas fa-chevron-down"></i>
                             </div>
                         </button>
-                        
+
                         <div class="payment-method-details" id="interacDetails">
                             <div class="interac-details">
                                 <h3 style="margin-bottom: 20px; color: #333; display: flex; align-items: center; gap: 10px;">
@@ -188,7 +201,7 @@
                                 <p style="margin-bottom: 20px; color: #555;" data-i18n="payment.interac_instructions">
                                     Veuillez effectuer un virement Interac aux coordonnées suivantes :
                                 </p>
-                                
+
                                 <div class="bank-details">
                                     <div class="detail-item">
                                         <span class="label" data-i18n="payment.beneficiary_name">Nom du bénéficiaire:</span>
@@ -203,7 +216,7 @@
                                         <span class="value" id="interacAmount">-</span>
                                     </div>
                                 </div>
-                                
+
                                 <div class="payment-notice">
                                     <p>
                                         <i class="fas fa-info-circle"></i>
@@ -211,7 +224,7 @@
                                         <span data-i18n="payment.interac_notice">Une fois le virement effectué, cliquez sur "J'ai payé avec Interac" pour confirmer votre réservation.</span>
                                     </p>
                                 </div>
-                                
+
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" data-method="interac">
                                         <i class="fas fa-check"></i> <span data-i18n="payment.paid_interac">J'ai payé avec Interac</span>
@@ -230,14 +243,14 @@
                                 <i class="fas fa-chevron-down"></i>
                             </div>
                         </button>
-                        
+
                         <div class="payment-method-details" id="paypalDetails">
                             <div class="payment-details-grid">
                                 <div class="qr-code-container">
                                     <span class="qr-code-label" data-i18n="payment.paypal_qr">Cliquez sur le QR code pour ouvrir PayPal</span>
                                     <img src="assets/images/paypal.webp" alt="QR Code PayPal" id="paypalQrCode" class="qr-code-img" title="Cliquez pour ouvrir PayPal">
                                 </div>
-                                
+
                                 <div class="payment-info">
                                     <div class="info-item clickable" id="paypalLinkItem">
                                         <div class="info-label" data-i18n="payment.paypal_link">Lien PayPal</div>
@@ -252,7 +265,7 @@
                                         <div class="info-value" id="paypalAmount">-</div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="payment-notice">
                                     <p>
                                         <i class="fas fa-info-circle"></i>
@@ -260,7 +273,7 @@
                                         <span data-i18n="payment.paypal_notice">Une fois le paiement effectué sur PayPal, cliquez sur "J'ai payé avec PayPal" pour confirmer votre réservation.</span>
                                     </p>
                                 </div>
-                                
+
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" data-method="paypal">
                                         <i class="fas fa-check"></i> <span data-i18n="payment.paid_paypal">J'ai payé avec PayPal</span>
@@ -279,12 +292,12 @@
                                 <i class="fas fa-chevron-down"></i>
                             </div>
                         </button>
-                        
+
                         <div class="payment-method-details" id="cardDetails">
                             <div class="card-form">
                                 <div class="stripe-card-element" id="card-element"></div>
                                 <div id="card-errors" role="alert"></div>
-                                
+
                                 <div class="payment-action">
                                     <button class="btn-confirm-payment" id="processCardPayment" data-method="card" disabled>
                                         <i class="fas fa-lock"></i> <span data-i18n="payment.pay_with_card">Payer par carte</span>
@@ -298,7 +311,7 @@
                 <!-- Colonne droite : Récapitulatif -->
                 <div class="payment-card">
                     <h2 class="card-title" data-i18n="payment.summary">Récapitulatif</h2>
-                    
+
                     <div id="paymentSummary"></div>
                 </div>
             </div>
@@ -307,7 +320,7 @@
 
     <!-- Script Stripe -->
     <script src="https://js.stripe.com/v3/"></script>
-    
+
     <!-- Scripts -->
     <script src="config.js"></script>
     <script src="supabase.min.js"></script>
