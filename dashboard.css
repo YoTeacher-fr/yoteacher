@@ -922,6 +922,21 @@ body.loaded {
     .flag {
         font-size: 1.1rem;
     }
+    .header-right-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
+
+    .header-right-group .login-btn {
+        display: none !important;
+    }
+
+    .header-right-group .language-switcher {
+        font-size: 0.85rem;
+        padding: 4px 8px;
+        white-space: nowrap;
+    }
     .main-header {
         min-height: 50px !important;
     }
@@ -956,24 +971,6 @@ body.loaded {
         flex-direction: column;
         gap: 8px;
     }
-
-    /* === CORRECTION : Language switcher visible en mobile === */
-    .header-right-group {
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-    }
-
-    .header-right-group .login-btn {
-        display: none !important;
-    }
-
-    .header-right-group .language-switcher {
-        font-size: 0.85rem;
-        padding: 4px 8px;
-        white-space: nowrap;
-    }
-    /* ======================================================== */
 }
 
 @media (max-width: 480px) {
