@@ -787,10 +787,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 updatePaymentDisplay();
             }
             // Re-traduire tous les éléments du DOM (statiques et dynamiques)
-            // Utiliser requestAnimationFrame pour s'assurer que le DOM est stable
             requestAnimationFrame(function() {
                 if (window.translationManager) {
                     window.translationManager.applyTranslations();
+                    // Forcer la traduction des notices de paiement même si cachées
+                    document.querySelectorAll('.payment-method-details [data-i18n]').forEach(function(el) {
+                        var key = el.getAttribute('data-i18n');
+                        var translation = window.translationManager.getTranslation(key);
+                        if (translation && translation !== key) {
+                            if (translation.indexOf('<') !== -1) {
+                                el.innerHTML = translation;
+                            } else {
+                                el.textContent = translation;
+                            }
+                        }
+                    });
                 }
                 // Re-initialiser Stripe avec la nouvelle locale
                 if (window.paymentManager && window.paymentManager.stripe) {
