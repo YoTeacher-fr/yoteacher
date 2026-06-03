@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.translationManager?.getCurrentLanguage() === 'en') {
             greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
         } else {
-            greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
+            greeting = hour < 18 ? 'Bonjour' : 'Bonsoir';
         }
         let welcomeHTML = `
             <div class="welcome-message">
