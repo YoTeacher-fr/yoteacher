@@ -447,6 +447,35 @@ function prepareButtonForSave(type) {
 }
 
 // ===== ATTACHEMENT DES EVENEMENTS =====
+
+
+// ===== TOGGLE PASSWORD VISIBILITY =====
+function togglePasswordVisibility(inputId, btn) {
+    var input = document.getElementById(inputId);
+    var icon = btn.querySelector('i');
+    if (!input || !icon) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+function attachTogglePasswordEvents() {
+    document.querySelectorAll('.toggle-password').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var inputId = this.getAttribute('data-target');
+            togglePasswordVisibility(inputId, this);
+        });
+    });
+}
+
 function attachFormEvents() {
     if (window.PROFILE_STATE.eventsAttached) return;
 
@@ -604,6 +633,9 @@ function attachFormEvents() {
             }
         });
     }
+
+    // Toggle password visibility
+    attachTogglePasswordEvents();
 
     window.PROFILE_STATE.eventsAttached = true;
     console.log('Formulaires attaches');
