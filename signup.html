@@ -12,6 +12,31 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="signup.css">
 <link rel="stylesheet" href="auth-ui.css">
+<style>
+        .input-wrapper {
+            position: relative;
+        }
+        .input-wrapper .form-input {
+            padding-right: 44px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #999;
+            font-size: 1rem;
+            padding: 0;
+            transition: color 0.2s;
+            z-index: 10;
+        }
+        .toggle-password:hover {
+            color: #3c84f6;
+        }
+    </style>
 </head>
 <body>
     <!-- Header simplifié sans navlinks -->
@@ -82,17 +107,27 @@
 
                     <div class="form-group">
                         <label class="form-label" for="password" data-i18n="login.password">Mot de passe</label>
-                        <input type="password" id="password" class="form-input" 
-                               data-i18n-placeholder="signup.password_placeholder" 
-                               placeholder="Au moins 6 caractères" required minlength="6">
+                        <div class="input-wrapper">
+                            <input type="password" id="password" class="form-input" 
+                                   data-i18n-placeholder="signup.password_placeholder" 
+                                   placeholder="Au moins 6 caractères" required minlength="6">
+                            <button type="button" class="toggle-password" data-target="password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                         <div class="password-hint" data-i18n="signup.password_hint">Minimum 6 caractères</div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="confirmPassword" data-i18n="signup.confirm_password">Confirmer le mot de passe</label>
-                        <input type="password" id="confirmPassword" class="form-input" 
-                               data-i18n-placeholder="signup.confirm_password_placeholder" 
-                               placeholder="Retapez votre mot de passe" required>
+                        <div class="input-wrapper">
+                            <input type="password" id="confirmPassword" class="form-input" 
+                                   data-i18n-placeholder="signup.confirm_password_placeholder" 
+                                   placeholder="Retapez votre mot de passe" required>
+                            <button type="button" class="toggle-password" data-target="confirmPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
 		<div class="form-group terms-check">
    		 <label class="checkbox-label">
@@ -221,6 +256,31 @@
                 successDiv.style.display = 'none';
             }
             
+                        // Toggle password visibility
+            function toggleVisibility(inputId, btn) {
+                const input = document.getElementById(inputId);
+                const icon = btn.querySelector('i');
+                if (!input || !icon) return;
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+
+            document.querySelectorAll('.toggle-password').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const inputId = this.getAttribute('data-target');
+                    toggleVisibility(inputId, this);
+                });
+            });
+
             // Ajouter le paramètre redirect au lien de connexion
             const loginLink = document.querySelector('.auth-footer a[href="login.html"]');
             if (loginLink) {
