@@ -252,7 +252,7 @@ class TranslationManager {
                 'reset_password.success_title': 'Mot de passe mis à jour !',
                 'reset_password.success_desc': 'Votre mot de passe a été modifié avec succès.<br>Vous allez être redirigé vers la page de connexion…',
                 'reset_password.login_now': 'Se connecter maintenant',
-                'reset_password.resend_success': 'Un nouveau lien a été envoyé à {0}. Vérifiez votre boîte mail (et vos spams).',
+                'reset_password.resend_success': 'Un nouveau lien a été envoyé. Vérifiez votre boîte mail.',
                 'reset_password.resend_error': 'Erreur lors de l\'envoi. Veuillez réessayer.',
                 // Reset password page - NEW KEYS
                 'reset_password.code_label': 'Code de réinitialisation',
@@ -1379,7 +1379,7 @@ class TranslationManager {
                 'reset_password.success_title': 'Password updated!',
                 'reset_password.success_desc': 'Your password has been successfully changed.<br>You will be redirected to the login page…',
                 'reset_password.login_now': 'Log in now',
-                'reset_password.resend_success': 'A new link has been sent to {0}. Check your inbox (and spam folder).',
+                'reset_password.resend_success': 'A new link has been sent. Check your inbox.',
                 'reset_password.resend_error': 'Error sending. Please try again.',
                 // Reset password page - NEW KEYS
                 'reset_password.code_label': 'Reset code',
