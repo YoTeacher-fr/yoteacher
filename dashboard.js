@@ -130,9 +130,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPackageIndex = 0;
     const packageTypes = ['conversation', 'curriculum', 'examen'];
     const packageColors = {
-        'conversation': '#2d8de2',
-        'curriculum': '#636dcd',
-        'examen': '#135cb7'
+        'conversation': '#ff9800',
+        'curriculum': '#4caf50',
+        'examen': '#9c27b0'
     };
     const packageIcons = {
         'conversation': 'fas fa-comments',
@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.translationManager?.getCurrentLanguage() === 'en') {
             greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
         } else {
-            greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
+            greeting = hour < 18 ? 'Bonjour' : 'Bonsoir';
         }
         let welcomeHTML = `
             <div class="welcome-message">
