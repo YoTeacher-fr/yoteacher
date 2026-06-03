@@ -242,6 +242,9 @@ class TranslationManager {
                 'signup.have_account': 'Déjà un compte ?',
                 'signup.loading': 'Création du compte...',
                 'signup.success': 'Compte créé avec succès !',
+                'signup.accept_terms': "J'ai lu et j'accepte les",
+                'signup.terms_and_policies': 'Conditions et Politiques',
+                'signup.error.accept_terms': "Veuillez accepter les conditions d'utilisation",
                 
                 // Signup page - Messages d'erreur et succès
                 'signup.error.required_fields': 'Veuillez remplir tous les champs',
@@ -1335,6 +1338,9 @@ class TranslationManager {
                 'signup.have_account': 'Already have an account?',
                 'signup.loading': 'Creating account...',
                 'signup.success': 'Account created successfully!',
+                'signup.accept_terms': 'I have read and accept the',
+                'signup.terms_and_policies': 'Terms and Policies',
+                'signup.error.accept_terms': 'Please accept the terms and conditions',
                 
                 // Signup page - Messages d'erreur et succès
                 'signup.error.required_fields': 'Please fill in all fields',

@@ -172,8 +172,8 @@
                 }
 		const acceptTerms = document.getElementById('acceptTerms');
 		if (!acceptTerms.checked) {
- 		   showError('Veuillez accepter les conditions d\'utilisation');
-  		  return;
+		    showError(window.translationManager?.getTranslation('signup.error.accept_terms') || 'Veuillez accepter les conditions d\'utilisation');
+		    return;
 		}
                 // Masquer les messages précédents
                 hideMessages();
