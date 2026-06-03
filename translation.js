@@ -500,6 +500,13 @@ class TranslationManager {
                 'payment.details_error2': 'Veuillez contacter le support si vous avez des questions.',
                 'payment.credit_used': 'Crédit utilisé',
                 'payment.reservation_with_credit': 'Réservation avec crédit',
+
+                // Credit booking display
+                'payment.with_credit': '(avec crédit)',
+                'payment.package_info': '(forfait de {0} cours)',
+                'payment.credit_used_for_reservation': '1 {0} pour cette réservation',
+                'payment.vip_status': 'Statut :',
+                'payment.vip_price_applied': 'Prix VIP appliqué',
                 
                 // Types de cours pour le dashboard
                 'courses.trial': 'Cours d\'essai',
@@ -1516,8 +1523,6 @@ class TranslationManager {
                 'payment.reference': 'Reference',
                 'payment.amount': 'Amount',
                 'payment.important': 'Important',
-                'payment.vip_status': 'Status:',
-                'payment.vip_price_applied': 'VIP price applied',
                 'payment.package': 'Package:',
                 'payment.discount': 'Discount:',
                 'payment.notice': 'Once payment is made, please',
@@ -1588,6 +1593,13 @@ class TranslationManager {
                 'payment.details_error2': 'Please contact support if you have any questions.',
                 'payment.credit_used': 'Credit used',
                 'payment.reservation_with_credit': 'Reservation with credit',
+
+                // Credit booking display
+                'payment.with_credit': '(with credit)',
+                'payment.package_info': '(package of {0} lessons)',
+                'payment.credit_used_for_reservation': '1 {0} for this reservation',
+                'payment.vip_status': 'Status:',
+                'payment.vip_price_applied': 'VIP price applied',
                 
                 // Types de cours pour le dashboard
                 'courses.trial': 'Trial lesson',

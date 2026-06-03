@@ -147,14 +147,16 @@
             if (!detailsDiv) return;
             
             const bookingDate = new Date(booking.startTime);
-            const formattedDate = bookingDate.toLocaleDateString('fr-FR', {
+            const userLocale = window.translationManager?.getCurrentLanguage() === 'en' ? 'en-US' : 'fr-FR';
+            
+            const formattedDate = bookingDate.toLocaleDateString(userLocale, {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
             
-            const formattedTime = bookingDate.toLocaleTimeString('fr-FR', {
+            const formattedTime = bookingDate.toLocaleTimeString(userLocale, {
                 hour: '2-digit',
                 minute: '2-digit'
             });
@@ -192,7 +194,8 @@
             
             if (booking.isCreditBooking) {
                 // Pour les réservations avec crédit
-                priceDisplay = '0 € (avec crédit)';
+                const withCredit = window.translationManager?.getTranslation('payment.with_credit') || '(avec crédit)';
+                priceDisplay = formatCurrency(0, booking.currency) + ' ' + withCredit;
             } else {
                 // Pour TOUS les autres cas (cours simple, forfait, etc.)
                 // Afficher simplement le prix total payé
@@ -200,7 +203,8 @@
                 
                 // Si c'est un forfait, on peut ajouter une mention dans le prix
                 if (booking.isPackage) {
-                    priceDisplay += ` (forfait de ${booking.packageQuantity} cours)`;
+                    const packageInfo = window.translationManager?.getTranslation('payment.package_info', [booking.packageQuantity]) || (window.translationManager?.getCurrentLanguage() === 'en' ? `(package of ${booking.packageQuantity} lessons)` : `(forfait de ${booking.packageQuantity} cours)`);
+                    priceDisplay += ' ' + packageInfo;
                 }
             }
             
@@ -236,7 +240,7 @@
                             <i class="fas fa-ticket-alt" style="color: #28a745; font-size: 1.2rem;"></i>
                             <div>
                                 <div style="font-weight: bold; color: #28a745;">${reservationWithCreditLabel}</div>
-                                <div style="font-size: 0.9rem; opacity: 0.8;">1 ${creditUsedLabel.toLowerCase()} pour cette réservation</div>
+                                <div style="font-size: 0.9rem; opacity: 0.8;">${window.translationManager?.getTranslation('payment.credit_used_for_reservation', [creditUsedLabel.toLowerCase()]) || (window.translationManager?.getCurrentLanguage() === 'en' ? '1 ' + creditUsedLabel.toLowerCase() + ' for this reservation' : '1 ' + creditUsedLabel.toLowerCase() + ' pour cette réservation')}</div>
                             </div>
                         </div>
                     </div>
