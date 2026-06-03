@@ -416,9 +416,12 @@ body .mobile-dashboard-btn {
 
 /* Réduire le logo Revolut qui paraît visuellement plus gros */
 .payment-method-btn[data-method="revolut"] .payment-method-icon img {
-    height: 22px;
+    height: 20px;
 }
-
+/* Réduire le logo Revolut qui paraît visuellement plus gros */
+.payment-method-btn[data-method="wise"] .payment-method-icon img {
+    height: 30px;
+}
 /* Couleurs spécifiques pour les icônes Font Awesome */
 .payment-method-btn[data-method="paypal"] .payment-method-icon {
     color: #003087;
