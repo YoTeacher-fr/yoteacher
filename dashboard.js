@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.translationManager?.getCurrentLanguage() === 'en') {
             greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
         } else {
-            greeting = hour < 18 ? 'Bonjour' : 'Bonsoir';
+            greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
         }
         let welcomeHTML = `
             <div class="welcome-message">
@@ -268,28 +268,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         isLoadingDashboard = true;
         console.log('📊 Début chargement dashboard...');
-        try {
-            const user = window.authManager?.getCurrentUser();
-            if (!user) {
-                console.log('Utilisateur non trouvé');
-                isLoadingDashboard = false;
-                return;
-            }
-            await loadUserData(user);
+
+        function _showDashboardContent() {
             const loadingSection = document.getElementById('loadingSection');
             const dashboardContent = document.getElementById('dashboardContent');
             const dashboardActions = document.getElementById('dashboardActions');
             if (loadingSection) loadingSection.style.display = 'none';
             if (dashboardContent) dashboardContent.style.display = 'block';
             if (dashboardActions) dashboardActions.style.display = 'flex';
+        }
+
+        // Timeout de sécurité absolu : afficher le contenu après 12s quoi qu'il arrive
+        const safetyTimer = setTimeout(() => {
+            console.warn('⚠️ Safety timeout déclenché, forçage affichage dashboard');
+            _showDashboardContent();
+            dashboardLoaded = true;
+            isLoadingDashboard = false;
+        }, 12000);
+
+        try {
+            const user = window.authManager?.getCurrentUser();
+            if (!user) {
+                console.log('Utilisateur non trouvé');
+                isLoadingDashboard = false;
+                clearTimeout(safetyTimer);
+                return;
+            }
+            await loadUserData(user);
+            clearTimeout(safetyTimer);
+            _showDashboardContent();
             dashboardLoaded = true;
             isLoadingDashboard = false;
             console.log('✅ Dashboard chargé avec succès');
         } catch (error) {
+            clearTimeout(safetyTimer);
             console.error('Erreur chargement dashboard:', error);
             isLoadingDashboard = false;
+            // Afficher le dashboard quand même
+            _showDashboardContent();
             const loadingSection = document.getElementById('loadingSection');
             if (loadingSection) {
+                loadingSection.style.display = 'block';
                 loadingSection.innerHTML = `
                     <div style="color: #e74c3c;">
                         <i class="fas fa-exclamation-triangle"></i>
@@ -303,27 +322,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    function withTimeout(promise, ms, label) {
+        const timeout = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error(`Timeout (${ms}ms): ${label}`)), ms)
+        );
+        return Promise.race([promise, timeout]);
+    }
+
     async function loadUserData(user) {
         const welcomeDiv = document.getElementById('welcomeMessage');
         if (!welcomeDiv) return;
         updateWelcomeMessage(user);
         updateProfileInfo(user);
+
+        // Attendre Supabase avec timeout de sécurité (5s max)
         if (window.supabaseInitialized) {
-            await window.supabaseInitialized;
+            try {
+                await withTimeout(window.supabaseInitialized, 5000, 'supabaseInitialized');
+            } catch (e) {
+                console.warn('⚠️ Supabase init timeout, tentative de continuer...', e.message);
+            }
         }
+
         if (window.supabase && typeof window.supabase.from === 'function') {
             try {
-                // OPTIMISATION : chargements en parallèle (était séquentiel)
-                await Promise.all([
-                    loadUserPackages(user.id),
-                    loadUpcomingLessons(user.id),
-                    loadLessonHistory(user.id),
-                ]);
+                // Chargements en parallèle avec timeout global de 10 secondes
+                await withTimeout(
+                    Promise.allSettled([
+                        loadUserPackages(user.id),
+                        loadUpcomingLessons(user.id),
+                        loadLessonHistory(user.id),
+                    ]),
+                    10000,
+                    'chargement données dashboard'
+                );
             } catch (error) {
-                console.error('Erreur chargement données:', error);
+                // Timeout global atteint : afficher le dashboard quand même avec ce qui est chargé
+                console.warn('⚠️ Timeout chargement données, affichage partiel:', error.message);
+                const nextLessonContent = document.getElementById('nextLessonContent');
+                if (nextLessonContent && !nextLessonContent.innerHTML.trim()) {
+                    nextLessonContent.innerHTML = `<div class="no-upcoming"><i class="fas fa-wifi"></i><p>Impossible de charger les données. Vérifiez votre connexion et <button onclick="location.reload()" style="background:none;border:none;color:#3c84f6;cursor:pointer;text-decoration:underline">rafraîchissez</button>.</p></div>`;
+                }
             }
         } else {
             console.warn('⚠️ Client Supabase non prêt, données non chargées');
+            const nextLessonContent = document.getElementById('nextLessonContent');
+            if (nextLessonContent) {
+                nextLessonContent.innerHTML = `<div class="no-upcoming"><i class="fas fa-exclamation-triangle"></i><p>Connexion à la base de données impossible. <button onclick="location.reload()" style="background:none;border:none;color:#3c84f6;cursor:pointer;text-decoration:underline">Rafraîchir</button></p></div>`;
+            }
         }
     }
     
