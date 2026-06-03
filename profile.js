@@ -401,7 +401,13 @@ async function loadProfileData() {
             window.loadCountriesIntoSelect('country', userCountry);
             var countryInfo = document.getElementById('countryInfo');
             if (countryInfo && window.YOTEACHER_COUNTRIES) {
-                countryInfo.textContent = window.YOTEACHER_COUNTRIES.length + ' pays disponibles';
+                var lang = (window.translationManager && window.translationManager.getCurrentLanguage) 
+                    ? window.translationManager.getCurrentLanguage() 
+                    : (localStorage.getItem('language') || 'fr');
+                var msg = lang === 'en' 
+                    ? (window.YOTEACHER_COUNTRIES.length + ' countries available')
+                    : (window.YOTEACHER_COUNTRIES.length + ' pays disponibles');
+                countryInfo.textContent = msg;
             }
         }
 
@@ -648,8 +654,16 @@ async function initProfilePage() {
                 });
             }
             window.addEventListener('language:changed', function() {
-                setTimeout(function() { if (window.loadProfileData) window.loadProfileData(); }, 100);
-            });
+            setTimeout(function() {
+                if (window.loadProfileData) window.loadProfileData();
+                // Recharger les pays dans la langue courante
+                if (window.loadCountriesIntoSelect) {
+                    var countrySelect = document.getElementById('country');
+                    var currentCountry = countrySelect ? countrySelect.value : '';
+                    window.loadCountriesIntoSelect('country', currentCountry);
+                }
+            }, 100);
+        });
         }
 
         window.PROFILE_STATE.initialized = true;
