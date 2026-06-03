@@ -1085,8 +1085,6 @@ function createModal(contentHtml, width = '80vw', height = '80vh') {
     const refreshBtn = document.getElementById('refreshDashboardBtn');
     const prevLessonBtn = document.getElementById('prevLessonBtn');
     const nextLessonBtn = document.getElementById('nextLessonBtn');
-    const prevHistoryBtn = document.getElementById('prevHistoryBtn');
-    const nextHistoryBtn = document.getElementById('nextHistoryBtn');
     
     async function handleLogout() {
         const isFrench = window.translationManager?.getCurrentLanguage() === 'fr';
@@ -1119,8 +1117,6 @@ function createModal(contentHtml, width = '80vw', height = '80vh') {
     });
     if (prevLessonBtn) prevLessonBtn.addEventListener('click', () => { if (currentLessonIndex > 0) { currentLessonIndex--; displayCurrentLesson(); updateLessonNavigation(); } });
     if (nextLessonBtn) nextLessonBtn.addEventListener('click', () => { if (currentLessonIndex < upcomingLessons.length - 1) { currentLessonIndex++; displayCurrentLesson(); updateLessonNavigation(); } });
-    if (prevHistoryBtn) prevHistoryBtn.addEventListener('click', () => { if (currentHistoryPage > 0) { currentHistoryPage--; renderHistoryPage(); } });
-    if (nextHistoryBtn) nextHistoryBtn.addEventListener('click', () => { const totalPages = Math.ceil(lessonHistory.length / HISTORY_PER_PAGE); if (currentHistoryPage < totalPages - 1) { currentHistoryPage++; renderHistoryPage(); } });
     
     window.addEventListener('language:changed', function() {
         console.log('🌍 Changement de langue détecté, mise à jour du dashboard...');
