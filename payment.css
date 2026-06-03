@@ -394,20 +394,32 @@ body .mobile-dashboard-btn {
 }
 
 .payment-method-icon {
-    width: 40px;
-    height: 40px;
+    height: 28px;
+    width: auto;
+    min-width: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
 }
 
-/* SVG des logos officiels */
-.payment-method-icon svg {
-    width: 28px;
-    height: 28px;
+.payment-method-icon img {
+    height: 100%;
+    width: auto;
     display: block;
-    flex-shrink: 0;
+}
+
+.payment-method-icon i {
+    font-size: 28px;
+    line-height: 1;
+}
+
+/* Couleurs spécifiques pour les icônes Font Awesome */
+.payment-method-btn[data-method="paypal"] .payment-method-icon {
+    color: #003087;
+}
+.payment-method-btn[data-method="card"] .payment-method-icon {
+    color: #635BFF;
 }
 
 .payment-method-name {
