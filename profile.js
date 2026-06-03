@@ -282,10 +282,21 @@ function attachAvatarEvents() {
 }
 
 // ===== FONCTIONS UTILITAIRES =====
+function getSupabaseClient() {
+    if (window.PROFILE_STATE.supabaseClient) {
+        return window.PROFILE_STATE.supabaseClient;
+    }
+    if (window.supabase && typeof window.supabase.from === 'function') {
+        window.PROFILE_STATE.supabaseClient = window.supabase;
+        return window.supabase;
+    }
+    return null;
+}
+
 function waitForSupabase() {
     return new Promise(function(resolve, reject) {
         var attempts = 0;
-        var maxAttempts = 50;
+        var maxAttempts = 80; // Augmenté pour donner plus de temps
 
         function check() {
             attempts++;
@@ -294,7 +305,9 @@ function waitForSupabase() {
                 console.log('Supabase pret');
                 resolve();
             } else if (attempts >= maxAttempts) {
-                reject(new Error('Supabase non initialise'));
+                // Ne pas rejeter - laisser initProfilePage gérer ça plus tard
+                console.warn('Supabase pas encore prêt, tentative différée...');
+                resolve(); // Résoudre quand même, on réessaiera plus tard
             } else {
                 setTimeout(check, 100);
             }
@@ -326,10 +339,13 @@ function waitForAuthManager() {
 // ===== MISE A JOUR PROFIL =====
 async function updateProfileField(field, value) {
     var currentUser = window.PROFILE_STATE.currentUser;
-    var supabaseClient = window.PROFILE_STATE.supabaseClient;
+    var supabaseClient = getSupabaseClient();
 
-    if (!currentUser || !supabaseClient) {
+    if (!currentUser) {
         return { success: false, error: 'Non disponible' };
+    }
+    if (!supabaseClient) {
+        return { success: false, error: 'Supabase non disponible' };
     }
 
     try {
@@ -356,7 +372,7 @@ async function loadProfileData() {
     console.log('Chargement profil...');
 
     var currentUser = window.PROFILE_STATE.currentUser;
-    var supabaseClient = window.PROFILE_STATE.supabaseClient;
+    var supabaseClient = getSupabaseClient();
 
     if (!currentUser) {
         console.error('currentUser manquant');
@@ -600,7 +616,7 @@ function attachFormEvents() {
     if (passwordForm) {
         passwordForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            var supabaseClient = window.PROFILE_STATE.supabaseClient;
+            var supabaseClient = getSupabaseClient();
             var buttonInfo = prepareButtonForSave('password');
             if (!buttonInfo) return;
             var button = buttonInfo.button;
@@ -621,7 +637,11 @@ function attachFormEvents() {
             }
 
             try {
-                if (!supabaseClient || !supabaseClient.auth) throw new Error('Supabase non disponible');
+                if (!supabaseClient || !supabaseClient.auth) {
+                    showError('Supabase non disponible. Veuillez rafraîchir la page.');
+                    resetButton('password', button, originalText);
+                    return;
+                }
                 var result = await supabaseClient.auth.updateUser({ password: newPassword });
                 if (result.error) throw result.error;
                 showSuccess('Mot de passe mis a jour !');
@@ -653,6 +673,12 @@ async function initProfilePage() {
         if (!currentUser) { showError('Aucun utilisateur'); return; }
 
         console.log('Init pour:', currentUser.email);
+
+        // S'assurer que supabaseClient est à jour avant de charger
+        if (!window.PROFILE_STATE.supabaseClient && window.supabase && typeof window.supabase.from === 'function') {
+            window.PROFILE_STATE.supabaseClient = window.supabase;
+            console.log('Supabase client rafraîchi avant loadProfileData');
+        }
 
         await loadProfileData();
 
@@ -736,6 +762,10 @@ window.updateProfileData = async function() {
     console.log('Update profil...');
     if (window.authManager && window.authManager.getCurrentUser) {
         window.PROFILE_STATE.currentUser = window.authManager.getCurrentUser();
+    }
+    // S'assurer que supabaseClient est à jour
+    if (window.supabase && typeof window.supabase.from === 'function') {
+        window.PROFILE_STATE.supabaseClient = window.supabase;
     }
     await loadProfileData();
     var user = window.PROFILE_STATE.currentUser;
