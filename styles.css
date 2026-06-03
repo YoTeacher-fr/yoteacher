@@ -1669,6 +1669,10 @@ button {
     .about-content-col {
         text-align: center;
     }
+
+    .about-title {
+        text-align: center;
+    }
     
     .decorative-line-left {
         margin: 20px auto 25px auto;
