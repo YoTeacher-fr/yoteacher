@@ -731,6 +731,13 @@ background: linear-gradient(
     margin-bottom: 5px;
     display: block;
 }
+.qr-click-label {
+    display: block;
+    text-align: center;
+    font-size: 0.8rem;
+    margin-top: 8px;
+    color: #666;
+}
 
 /* ============================================
    RÉORGANISATION MOBILE : RÉCAPITULATIF EN PREMIER
