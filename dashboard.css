@@ -72,7 +72,7 @@
 }
 
 body {
-    padding-top: 80px !important;
+    padding-top: 70px !important;
     margin: 0;
     height: 100%;
 }
@@ -89,9 +89,9 @@ body.loaded {
 }
 
 .dashboard {
-    padding: 20px 25px 40px;
+    padding: 15px 20px 30px;
     background: #f8f9fa;
-    min-height: calc(100vh - 80px);
+    min-height: calc(100vh - 70px);
 }
 
 .dashboard-container {
@@ -102,10 +102,10 @@ body.loaded {
 .dashboard-header {
     background: linear-gradient(135deg, #3c84f6, #1e88e5);
     color: white;
-    padding: 25px 30px;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(60, 132, 246, 0.25);
-    margin-bottom: 25px;
+    padding: 18px 25px;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(60, 132, 246, 0.22);
+    margin-bottom: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -119,23 +119,23 @@ body.loaded {
 }
 
 .welcome-message h1 {
-    font-size: 1.8rem;
-    margin-bottom: 8px;
+    font-size: 1.5rem;
+    margin-bottom: 6px;
 }
 
 .welcome-message p {
     opacity: 0.9;
-    font-size: 1rem;
+    font-size: 0.9rem;
     margin-bottom: 0;
 }
 
 .vip-badge {
     background: linear-gradient(135deg, #ffd700, #ff9800);
     color: #333;
-    padding: 8px 20px;
+    padding: 5px 14px;
     border-radius: 50px;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -155,10 +155,10 @@ body.loaded {
     background: rgba(255, 255, 255, 0.15);
     border: 2px solid rgba(255, 255, 255, 0.3);
     color: white;
-    padding: 10px 20px;
+    padding: 8px 16px;
     border-radius: 50px;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: all 0.3s;
     display: flex;
@@ -284,6 +284,10 @@ body.loaded {
 .nav-arrow:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+}
+
+#historyNav .nav-arrow:disabled {
+    display: none;
 }
 
 .lesson-counter {
@@ -843,7 +847,7 @@ body.loaded {
     .dashboard-header {
         flex-direction: column;
         text-align: center;
-        padding: 20px;
+        padding: 15px;
     }
     .dashboard-actions {
         justify-content: center;
@@ -868,7 +872,7 @@ body.loaded {
         gap: 12px;
     }
     .dashboard-header {
-        padding: 18px 15px;
+        padding: 14px 12px;
     }
     .welcome-message h1 {
         font-size: 1.4rem;
