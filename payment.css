@@ -875,7 +875,9 @@ background: linear-gradient(
     }
 
     .payment-card {
-        padding: 25px 20px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .payment-method-btn {
