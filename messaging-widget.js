@@ -1,5 +1,7 @@
 // ========== MESSAGING WIDGET — PRODUCTION (sans debug, dates intelligentes)
 // Fallback REST + Realtime broadcast pour statut online & typing
+// FIX: affichage immédiat de la bulle — waitForSupabase basé sur onAuthStateChange
+//      createWidget() avant loadMyProfile() — timeout sur fetch teacher-info
 
 (function() {
     'use strict';
@@ -182,7 +184,6 @@
             }
             if (profileData) {
                 state.myProfile = profileData;
-            } else {
             }
         } catch (e) { }
     }
@@ -206,7 +207,6 @@
             if (profileData) {
                 if (profileData.full_name) state.activePartnerName = profileData.full_name;
                 state.partnerProfile = profileData;
-            } else {
             }
         } catch (e) { }
     }
@@ -299,20 +299,50 @@
         }).catch(function(){});
     }
 
+    // ========== FIX : waitForSupabase basé sur onAuthStateChange ==========
+    // Retour immédiat si session déjà disponible, sinon écoute le premier
+    // événement auth sans boucler toutes les 200ms pendant 15 secondes.
     async function waitForSupabase() {
-        const start = Date.now();
-        while (Date.now() - start < 15000) {
-            if (window.supabase && window.supabase.auth) {
-                try {
-                    const result = await window.supabase.auth.getUser();
-                    if (!result.error && result.data && result.data.user) return { client: window.supabase, user: result.data.user };
-                } catch (e) {}
-            }
-            await new Promise(function(r) { setTimeout(r, 200); });
+        // Attendre que window.supabase soit disponible (max 3s, intervalle 50ms)
+        const clientStart = Date.now();
+        while (!window.supabase || !window.supabase.auth) {
+            if (Date.now() - clientStart > 3000) throw new Error('Supabase client indisponible');
+            await new Promise(function(r) { setTimeout(r, 50); });
         }
-        throw new Error('Supabase timeout');
+
+        // Tenter un retour immédiat si la session est déjà en cache
+        try {
+            const result = await window.supabase.auth.getUser();
+            if (!result.error && result.data && result.data.user) {
+                return { client: window.supabase, user: result.data.user };
+            }
+        } catch (e) {}
+
+        // Sinon écouter le premier changement d'état auth (pas de polling)
+        return new Promise(function(resolve, reject) {
+            var settled = false;
+            var timer = setTimeout(function() {
+                if (!settled) {
+                    settled = true;
+                    if (subscription && subscription.unsubscribe) subscription.unsubscribe();
+                    reject(new Error('Supabase auth timeout'));
+                }
+            }, 10000);
+
+            var subResult = window.supabase.auth.onAuthStateChange(function(event, session) {
+                if (!settled && session && session.user) {
+                    settled = true;
+                    clearTimeout(timer);
+                    var sub = subResult && subResult.data ? subResult.data.subscription : subResult;
+                    if (sub && sub.unsubscribe) sub.unsubscribe();
+                    resolve({ client: window.supabase, user: session.user });
+                }
+            });
+            var subscription = subResult && subResult.data ? subResult.data.subscription : subResult;
+        });
     }
 
+    // ========== FIX : timeout 5s sur le fetch teacher-info ==========
     async function detectRole(client, user) {
         state.myId = user.id;
         try {
@@ -320,9 +350,19 @@
             const session = sessionResult.data && sessionResult.data.session;
             if (session && session.access_token) state.accessToken = session.access_token;
             if (!session && !getStoredToken()) return false;
-            const res = await fetch(window.YOTEACHER_CONFIG.SUPABASE_URL + '/functions/v1/teacher-info', {
-                headers: { Authorization: 'Bearer ' + (state.accessToken || getStoredToken()) }
-            });
+
+            const controller = new AbortController();
+            const fetchTimer = setTimeout(function() { controller.abort(); }, 5000);
+            let res;
+            try {
+                res = await fetch(window.YOTEACHER_CONFIG.SUPABASE_URL + '/functions/v1/teacher-info', {
+                    headers: { Authorization: 'Bearer ' + (state.accessToken || getStoredToken()) },
+                    signal: controller.signal
+                });
+            } finally {
+                clearTimeout(fetchTimer);
+            }
+
             if (!res.ok) return false;
             const teacher = await res.json();
             if (teacher.id === user.id) { state.isAdmin = true; state.teacherId = user.id; state.teacherName = teacher.full_name; }
@@ -658,13 +698,21 @@
         });
     }
 
+    // ========== FIX : createWidget() AVANT loadMyProfile() ==========
+    // La bulle apparait immédiatement après detectRole().
+    // loadMyProfile() s'exécute en arrière-plan sans bloquer l'affichage.
     async function init() {
         try {
             const result = await waitForSupabase();
             const roleOk = await detectRole(result.client, result.user);
             if (!roleOk) return;
-            await loadMyProfile();
+
+            // Afficher la bulle immédiatement
             createWidget();
+
+            // Charger le profil en arrière-plan (non bloquant)
+            loadMyProfile().catch(function() {});
+
             if (!state.isAdmin && state.teacherId) setupPresence(state.teacherId);
             await updateUnreadBadge();
             setupNotifyRealtime();
