@@ -586,20 +586,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Basculer entre les méthodes de paiement
     function togglePaymentMethod(method) {
-        document.querySelectorAll('.payment-method-details').forEach(details => {
-            details.style.display = 'none';
-        });
-        
-        document.querySelectorAll('.payment-method-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
         const detailsId = method + 'Details';
         const detailsElement = document.getElementById(detailsId);
-        const buttonElement = document.querySelector(`[data-method="${method}"]`);
+        const buttonElement = document.querySelector(`[data-method="${method}"]`)
         
         if (detailsElement && buttonElement) {
             const isAlreadyOpen = detailsElement.style.display === 'block';
+            
+            // Fermer tous les autres d'abord
+            document.querySelectorAll('.payment-method-details').forEach(details => {
+                if (details !== detailsElement) {
+                    details.style.display = 'none';
+                }
+            });
+            
+            document.querySelectorAll('.payment-method-btn').forEach(btn => {
+                if (btn !== buttonElement) {
+                    btn.classList.remove('active');
+                }
+            });
             
             if (!isAlreadyOpen) {
                 detailsElement.style.display = 'block';
@@ -626,7 +631,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.translationManager.applyTranslations();
             }
         }
-                
     }
     
     // Gestion des boutons de confirmation de paiement
