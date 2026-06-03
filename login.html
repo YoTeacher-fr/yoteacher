@@ -11,45 +11,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="login.css">
-<link rel="stylesheet" href="auth-ui.css">
+    <link rel="stylesheet" href="auth-ui.css">
 </head>
 <body>
-    <!-- Header simplifié sans navlinks -->
     <header class="main-header scrolled">
         <div class="container">
             <div class="header-content">
-                <!-- Logo à gauche -->
                 <div class="logo-section">
                     <a href="index.html" class="logo">Yoann</a>
                     <div class="flag">🇫🇷</div>
                 </div>
-                
-                <!-- Groupe de droite pour mobile (language, bouton) -->
                 <div class="mobile-header-right-group">
-                    <!-- Langue mobile -->
                     <div class="language-switcher-mobile" id="languageSwitcherMobile">
                         <span data-i18n="header.language">EN</span>
                     </div>
-                    
-                    <!-- Bouton Connexion Mobile -->
                     <button type="button" class="mobile-login-btn-header" data-i18n="header.login">Connexion</button>
                 </div>
-                
-                <!-- Groupe des boutons de droite - FORCÉ À DROITE -->
                 <div class="header-right-group">
-                    <!-- Sélecteur de langue uniquement -->
                     <div class="language-switcher" id="languageSwitcherDesktop">
                         <span class="flag">🌐</span>
                         <span data-i18n="header.language">EN</span>
                     </div>
-                    
                     <button type="button" class="login-btn" data-i18n="header.login">Connexion</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Section login centrée -->
     <section class="auth-section">
         <div class="auth-container">
             <div class="auth-card">
@@ -100,7 +88,6 @@
         </div>
     </section>
 
-    <!-- Scripts -->
     <script src="config.js"></script>
     <script src="supabase.min.js"></script>
     <script src="supabase.js"></script>
@@ -117,7 +104,6 @@
             const successText = document.getElementById('successText');
             const forgotPasswordLink = document.getElementById('forgotPasswordLink');
 
-            // Attendre que l'AuthManager soit initialisé avant de vérifier
             setTimeout(() => {
                 if (window.authManager && window.authManager.isAuthenticated && 
                     window.authManager.isAuthenticated()) {
@@ -125,27 +111,20 @@
                     window.location.href = 'dashboard.html';
                 }
             }, 1500);
-            
-            // Empêcher le bouton du header de recharger la page
+
             preventHeaderLoginButtons();
 
-            // Connexion
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
 
-                // Validation basique
                 if (!email || !password) {
                     showError('Veuillez remplir tous les champs');
                     return;
                 }
 
-                // Masquer les messages précédents
                 hideMessages();
-
-                // Afficher chargement
                 const button = form.querySelector('button');
                 const originalText = button.innerHTML;
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (window.translationManager?.getTranslation('login.loading') || 'Connexion en cours...');
@@ -153,16 +132,10 @@
 
                 try {
                     const result = await window.authManager.signIn(email, password);
-                    
                     if (result.success) {
                         showSuccess(window.translationManager?.getTranslation('login.success') || 'Connexion réussie ! Redirection...');
-                        
-                        // Utiliser le redirectUrl de la réponse (forcément dashboard.html)
                         const redirectUrl = result.redirectUrl || 'dashboard.html';
-                        
-                        setTimeout(() => {
-                            window.location.href = redirectUrl;
-                        }, 1500);
+                        setTimeout(() => { window.location.href = redirectUrl; }, 1500);
                     } else {
                         showError(result.error || 'Erreur de connexion');
                         button.innerHTML = originalText;
@@ -175,51 +148,50 @@
                 }
             });
 
-            // Mot de passe oublié
+            // Mot de passe oublié → envoie l'email puis redirige vers reset-password
             forgotPasswordLink.addEventListener('click', async function(e) {
                 e.preventDefault();
-                
                 const email = document.getElementById('email').value;
-                
+
                 if (!email) {
                     showError('Veuillez entrer votre adresse email pour réinitialiser votre mot de passe');
                     return;
                 }
 
                 hideMessages();
-                
+                const btn = forgotPasswordLink;
+                const originalText = btn.textContent;
+                btn.textContent = 'Envoi en cours…';
+
                 try {
                     const { error } = await supabase.auth.resetPasswordForEmail(email, {
                         redirectTo: window.location.origin + '/reset-password.html'
                     });
-
                     if (error) throw error;
-                    
-                    showSuccess('Un email de réinitialisation a été envoyé à ' + email);
+
+                    // Redirection immédiate vers reset-password avec l'email pré-rempli
+                    window.location.href = 'reset-password.html?email=' + encodeURIComponent(email);
                 } catch (error) {
                     showError('Erreur : ' + error.message);
+                    btn.textContent = originalText;
                 }
             });
 
-            // Fonctions d'affichage des messages
             function showError(message) {
                 errorText.textContent = message;
                 errorDiv.style.display = 'block';
                 successDiv.style.display = 'none';
             }
-
             function showSuccess(message) {
                 successText.textContent = message;
                 successDiv.style.display = 'block';
                 errorDiv.style.display = 'none';
             }
-
             function hideMessages() {
                 errorDiv.style.display = 'none';
                 successDiv.style.display = 'none';
             }
-            
-            // Ajouter le paramètre redirect au lien d'inscription
+
             const signupLink = document.querySelector('.auth-footer a[href="signup.html"]');
             if (signupLink) {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -230,16 +202,12 @@
                     signupLink.href = `${currentHref}${separator}redirect=${redirectParam}`;
                 }
             }
-            
-            // Empêcher les boutons du header de recharger la page
+
             function preventHeaderLoginButtons() {
                 const loginBtns = document.querySelectorAll('.login-btn, .mobile-login-btn-header');
-                
                 loginBtns.forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.preventDefault();
-                        // Le bouton ne fait rien sur la page de connexion
-                        // car l'utilisateur est déjà sur la page de connexion
                     });
                 });
             }
