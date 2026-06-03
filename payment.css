@@ -420,7 +420,7 @@ body .mobile-dashboard-btn {
 }
 /* Réduire le logo Revolut qui paraît visuellement plus gros */
 .payment-method-btn[data-method="wise"] .payment-method-icon img {
-    height: 30px;
+    height: 32px;
 }
 /* Couleurs spécifiques pour les icônes Font Awesome */
 .payment-method-btn[data-method="paypal"] .payment-method-icon {
