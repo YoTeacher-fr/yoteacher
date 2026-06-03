@@ -130,9 +130,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPackageIndex = 0;
     const packageTypes = ['conversation', 'curriculum', 'examen'];
     const packageColors = {
-        'conversation': '#ff9800',
-        'curriculum': '#4caf50',
-        'examen': '#9c27b0'
+        'conversation': '#2d8de2',
+        'curriculum': '#636dcd',
+        'examen': '#135cb7'
     };
     const packageIcons = {
         'conversation': 'fas fa-comments',
