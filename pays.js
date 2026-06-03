@@ -263,6 +263,14 @@ window.loadCountriesIntoSelect = function(selectId, selectedCountry) {
     var firstOption = select.options[0];
     select.innerHTML = '';
     if (firstOption) {
+        // Traduire le texte du placeholder si data-i18n est présent
+        var i18nKey = firstOption.getAttribute('data-i18n');
+        if (i18nKey && window.translationManager && window.translationManager.getTranslation) {
+            var translated = window.translationManager.getTranslation(i18nKey);
+            if (translated && translated !== i18nKey) {
+                firstOption.textContent = translated;
+            }
+        }
         select.appendChild(firstOption);
     }
 
