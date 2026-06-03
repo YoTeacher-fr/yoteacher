@@ -53,6 +53,14 @@ class AuthManager {
             // Écouter les changements d'état
             supabase.auth.onAuthStateChange(async (event, session) => {
                 console.log('🔄 Auth state changed:', event);
+
+                // Ignorer USER_UPDATED pour éviter les deadlocks
+                // (déclenché par updateUser, pas besoin de recharger le profil)
+                if (event === 'USER_UPDATED') {
+                    console.log('ℹ️ USER_UPDATED ignoré (pas de rechargement)');
+                    return;
+                }
+
                 
                 if (session) {
                     this.user = session.user;
