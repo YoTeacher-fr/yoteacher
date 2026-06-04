@@ -524,10 +524,12 @@ function attachEmailChangeEvents() {
                 }
 
                 // 1. Réauthentifier avec le mot de passe actuel
+                window._skipAuthReload = true;
                 var { error: signInError } = await supabaseClient.auth.signInWithPassword({
                     email: currentUser.email,
                     password: currentPassword
                 });
+                window._skipAuthReload = false;
 
                 if (signInError) {
                     throw new Error('Mot de passe incorrect');

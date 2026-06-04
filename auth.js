@@ -61,6 +61,12 @@ class AuthManager {
                     return;
                 }
 
+                // Ignorer SIGNED_IN si c'est une réauthentification interne (email change)
+                if (event === 'SIGNED_IN' && window._skipAuthReload) {
+                    console.log('ℹ️ SIGNED_IN ignoré (réauthentification interne)');
+                    return;
+                }
+
                 
                 if (session) {
                     this.user = session.user;
