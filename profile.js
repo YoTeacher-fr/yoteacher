@@ -462,6 +462,98 @@ function prepareButtonForSave(type) {
     return { button: button, originalText: originalText };
 }
 
+
+// ===== CHANGEMENT EMAIL =====
+function attachEmailChangeEvents() {
+    var changeBtn = document.getElementById('changeEmailBtn');
+    var modal = document.getElementById('emailChangeModal');
+    var closeBtn = document.getElementById('closeEmailModal');
+    var cancelBtn = document.getElementById('cancelEmailChange');
+    var confirmBtn = document.getElementById('confirmEmailChange');
+
+    if (!changeBtn || !modal) return;
+
+    changeBtn.addEventListener('click', function() {
+        modal.style.display = 'flex';
+        document.getElementById('newEmail').value = '';
+        document.getElementById('emailCurrentPassword').value = '';
+        document.getElementById('newEmail').focus();
+    });
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+    // Fermer en cliquant sur l'overlay
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+    });
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async function() {
+            var newEmail = document.getElementById('newEmail').value.trim();
+            var currentPassword = document.getElementById('emailCurrentPassword').value;
+            var currentUser = window.PROFILE_STATE.currentUser;
+            var supabaseClient = getSupabaseClient();
+
+            if (!newEmail || !newEmail.includes('@')) {
+                showError(window.translationManager?.getTranslation('profile.email_invalid') || 'Veuillez entrer une adresse email valide');
+                return;
+            }
+
+            if (currentUser && newEmail === currentUser.email) {
+                showError(window.translationManager?.getTranslation('profile.email_same') || 'La nouvelle adresse doit être différente');
+                return;
+            }
+
+            if (!currentPassword) {
+                showError('Veuillez entrer votre mot de passe actuel');
+                return;
+            }
+
+            confirmBtn.disabled = true;
+            var originalText = confirmBtn.innerHTML;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (window.translationManager?.getTranslation('loading.sending') || 'Envoi...');
+
+            try {
+                if (!supabaseClient || !supabaseClient.auth) {
+                    throw new Error('Supabase non disponible');
+                }
+
+                // 1. Réauthentifier avec le mot de passe actuel
+                var { error: signInError } = await supabaseClient.auth.signInWithPassword({
+                    email: currentUser.email,
+                    password: currentPassword
+                });
+
+                if (signInError) {
+                    throw new Error('Mot de passe incorrect');
+                }
+
+                // 2. Demander le changement d'email
+                var { error: updateError } = await supabaseClient.auth.updateUser({
+                    email: newEmail
+                });
+
+                if (updateError) throw updateError;
+
+                showSuccess(window.translationManager?.getTranslation('profile.email_change_success') || 
+                    'Un email de confirmation a été envoyé à votre nouvelle adresse. Veuillez cliquer sur le lien pour valider.');
+                closeModal();
+
+            } catch (error) {
+                showError((window.translationManager?.getTranslation('profile.email_change_error') || 'Erreur') + ': ' + error.message);
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+            }
+        });
+    }
+}
+
 // ===== ATTACHEMENT DES EVENEMENTS =====
 
 
@@ -656,6 +748,9 @@ function attachFormEvents() {
 
     // Toggle password visibility
     attachTogglePasswordEvents();
+
+    // Email change modal
+    attachEmailChangeEvents();
 
     window.PROFILE_STATE.eventsAttached = true;
     console.log('Formulaires attaches');

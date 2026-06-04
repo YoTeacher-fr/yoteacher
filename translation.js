@@ -411,6 +411,15 @@ class TranslationManager {
                 'profile.error_password_length': 'Le mot de passe doit contenir au moins 8 caractères',
                 'profile.error_password_match': 'Les mots de passe ne correspondent pas',
                 'profile.error_saving': 'Erreur lors de la sauvegarde',
+                'profile.change_email_btn': 'Changer l'email',
+                'profile.change_email_title': 'Changer l'adresse email',
+                'profile.new_email_label': 'Nouvelle adresse email',
+                'profile.current_password_for_email': 'Mot de passe actuel (pour confirmer)',
+                'profile.confirm_email_change': 'Confirmer le changement',
+                'profile.email_change_success': 'Un email de confirmation a été envoyé à votre nouvelle adresse. Veuillez cliquer sur le lien pour valider.',
+                'profile.email_change_error': 'Erreur lors du changement d'email',
+                'profile.email_invalid': 'Veuillez entrer une adresse email valide',
+                'profile.email_same': 'La nouvelle adresse doit être différente de l'actuelle',
                 
                 // Profile existing translations
                 'profile.title': 'Mon profil - YoTeacher',
@@ -1539,6 +1548,15 @@ class TranslationManager {
                 'profile.error_password_length': 'Password must be at least 8 characters long',
                 'profile.error_password_match': 'Passwords do not match',
                 'profile.error_saving': 'Error saving',
+                'profile.change_email_btn': 'Change email',
+                'profile.change_email_title': 'Change email address',
+                'profile.new_email_label': 'New email address',
+                'profile.current_password_for_email': 'Current password (to confirm)',
+                'profile.confirm_email_change': 'Confirm change',
+                'profile.email_change_success': 'A confirmation email has been sent to your new address. Please click the link to verify.',
+                'profile.email_change_error': 'Error changing email',
+                'profile.email_invalid': 'Please enter a valid email address',
+                'profile.email_same': 'The new address must be different from the current one',
                 
                 // Profile existing translations
                 'profile.title': 'My Profile - YoTeacher',
