@@ -8,7 +8,7 @@ class CurrencyManager {
         this.currentCurrency = 'EUR';
         this.exchangeRates = {};
         this.isLoading = false;
-
+        
         // ===== 134 DEVISES SUPPORTÉES =====
         this.supportedCurrencies = [
             'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD',
@@ -29,7 +29,7 @@ class CurrencyManager {
             'USD', 'UYU', 'UZS', 'VND', 'VUV', 'WST', 'XAF', 'XCD',
             'XCG', 'XOF', 'XPF', 'YER', 'ZAR', 'ZMW'
         ];
-
+        
         // ===== SYMBOLES DES DEVISES =====
         this.currencySymbols = {
             'AED': 'د.إ', 'AFN': '؋', 'ALL': 'L', 'AMD': '֏', 'ANG': 'ƒ',
@@ -60,7 +60,7 @@ class CurrencyManager {
             'WST': 'T', 'XAF': 'Fr', 'XCD': '$', 'XCG': '', 'XOF': 'Fr',
             'XPF': 'Fr', 'YER': '﷼', 'ZAR': 'R', 'ZMW': 'K'
         };
-
+        
         // ===== POSITIONS DU SYMBOLE (true = avant, false = après) =====
         this.currencyPositions = {
             'AED': true, 'AFN': true, 'ALL': false, 'AMD': true, 'ANG': true,
@@ -91,24 +91,24 @@ class CurrencyManager {
             'WST': true, 'XAF': true, 'XCD': true, 'XCG': true, 'XOF': true,
             'XPF': true, 'YER': true, 'ZAR': true, 'ZMW': true
         };
-
+        
         // ===== DEVISES SANS DÉCIMALES =====
         this.zeroDecimalCurrencies = [
             'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW',
             'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF'
         ];
-
+        
         console.log('💱 CurrencyManager initialisé avec', this.supportedCurrencies.length, 'devises');
     }
-
+    
     async init() {
         try {
-            console.log('💱 Début de l'initialisation de CurrencyManager');
-
+            console.log('💱 Début de l\'initialisation de CurrencyManager');
+            
             await this.loadExchangeRates();
-
+            
             const profileLoaded = await this.loadCurrencyFromProfile();
-
+            
             if (!profileLoaded) {
                 const storedCurrency = localStorage.getItem('preferredCurrency');
                 if (storedCurrency && this.supportedCurrencies.includes(storedCurrency)) {
@@ -118,10 +118,10 @@ class CurrencyManager {
                     await this.detectUserCurrency();
                 }
             }
-
+            
             this.initCurrencySelectors();
-
-            console.log('✅ CurrencyManager prêt, émission d'événement');
+            
+            console.log('✅ CurrencyManager prêt, émission d\'événement');
             window.dispatchEvent(new CustomEvent('currency:ready', {
                 detail: { 
                     currency: this.currentCurrency,
@@ -129,17 +129,17 @@ class CurrencyManager {
                     symbol: this.getSymbol()
                 }
             }));
-
+            
             window.dispatchEvent(new CustomEvent('currency:initialized'));
-
+            
             return true;
         } catch (error) {
             console.error('❌ Erreur initialisation CurrencyManager:', error);
-
+            
             this.exchangeRates = this.getStaticRates();
             this.exchangeRates['EUR'] = 1;
             this.currentCurrency = 'EUR';
-
+            
             window.dispatchEvent(new CustomEvent('currency:ready', {
                 detail: { 
                     currency: this.currentCurrency,
@@ -147,35 +147,35 @@ class CurrencyManager {
                     symbol: this.getSymbol()
                 }
             }));
-
+            
             return true;
         }
     }
-
+    
     // ===== SYNCHRONISATION SUPABASE =====
     async syncCurrencyToProfile(currencyCode) {
         if (!window.supabase || !window.authManager?.user?.id) {
             console.log('⚠️ Supabase/auth non disponible, sync profil ignorée');
             return false;
         }
-
+        
         try {
             const { error } = await supabase
                 .from('profiles')
                 .update({ preferred_currency: currencyCode })
                 .eq('id', window.authManager.user.id);
-
+                
             if (error) {
                 const isConstraintError = error.code === '23514' 
                     || error.message?.toLowerCase().includes('check constraint');
-
+                
                 if (isConstraintError) {
                     console.warn(
                         `⚠️ CONTRAINTE DB : La devise "${currencyCode}" ` +
                         `n'est pas autorisée par profiles_preferred_currency_check. ` +
                         `La préférence reste en localStorage uniquement.`
                     );
-
+                    
                     if (window.utils?.showNotification) {
                         window.utils.showNotification(
                             `La devise ${currencyCode} fonctionne localement, ` +
@@ -187,33 +187,33 @@ class CurrencyManager {
                 }
                 throw error;
             }
-
+            
             console.log('✅ Devise synchronisée dans le profil Supabase:', currencyCode);
             return true;
-
+            
         } catch (error) {
             console.error('❌ Erreur sync devise vers profil:', error.message);
             return false;
         }
     }
-
+    
     async loadCurrencyFromProfile() {
         if (!window.supabase || !window.authManager?.user?.id) {
             return false;
         }
-
+        
         try {
             const { data, error } = await supabase
                 .from('profiles')
                 .select('preferred_currency')
                 .eq('id', window.authManager.user.id)
                 .maybeSingle();
-
+                
             if (error) {
                 console.warn('⚠️ Erreur chargement devise profil:', error.message);
                 return false;
             }
-
+            
             if (data?.preferred_currency && this.supportedCurrencies.includes(data.preferred_currency)) {
                 this.currentCurrency = data.preferred_currency;
                 localStorage.setItem('preferredCurrency', data.preferred_currency);
@@ -225,12 +225,12 @@ class CurrencyManager {
         }
         return false;
     }
-
+    
     async detectUserCurrency() {
         try {
             const userLocale = navigator.language || navigator.userLanguage;
             const countryCode = userLocale.split('-')[1] || userLocale.split('_')[1];
-
+            
             if (countryCode) {
                 const countryToCurrency = {
                     'US': 'USD', 'GB': 'GBP', 'CA': 'CAD', 'AU': 'AUD', 'JP': 'JPY',
@@ -243,18 +243,18 @@ class CurrencyManager {
                     'GR': 'EUR', 'LU': 'EUR', 'SK': 'EUR', 'SI': 'EUR', 'CY': 'EUR',
                     'MT': 'EUR', 'EE': 'EUR', 'LV': 'EUR', 'LT': 'EUR'
                 };
-
+                
                 const detectedCurrency = countryToCurrency[countryCode.toUpperCase()];
-
+                
                 if (detectedCurrency && this.supportedCurrencies.includes(detectedCurrency)) {
                     this.currentCurrency = detectedCurrency;
                     console.log(`💱 Devise détectée: ${this.currentCurrency} (${countryCode})`);
                     return;
                 }
             }
-
+            
             const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
+            
             if (timezone.includes('America/New_York') || timezone.includes('America/Los_Angeles') || 
                 timezone.includes('America/Chicago') || timezone.includes('America/Toronto')) {
                 this.currentCurrency = 'USD';
@@ -273,26 +273,26 @@ class CurrencyManager {
             } else if (timezone.includes('Asia/Singapore')) {
                 this.currentCurrency = 'SGD';
             }
-
+            
             console.log(`💱 Devise détectée (fuseau): ${this.currentCurrency}`);
-
+            
         } catch (error) {
             console.warn('⚠️ Erreur détection devise, utilisation EUR par défaut:', error);
             this.currentCurrency = 'EUR';
         }
     }
-
+    
     async loadExchangeRates() {
         try {
             this.isLoading = true;
             console.log('💱 Début du chargement des taux de change');
-
+            
             const cachedRates = localStorage.getItem('exchangeRates');
             if (cachedRates) {
                 try {
                     const { rates, timestamp, expiresAt } = JSON.parse(cachedRates);
                     const now = Date.now();
-
+                    
                     if (rates && expiresAt > now) {
                         this.exchangeRates = rates;
                         console.log('💾 Taux de change restaurés depuis le cache:', Object.keys(rates).length + ' devises');
@@ -303,29 +303,28 @@ class CurrencyManager {
                     console.warn('⚠️ Erreur cache taux:', cacheError);
                 }
             }
-
+            
             const staticRates = this.getStaticRates();
             staticRates['EUR'] = 1;
             this.exchangeRates = staticRates;
-
+            
             console.log('💰 Taux statiques chargés (fallback):', Object.keys(staticRates).length + ' devises');
-
-            // Essayer les API en parallèle
+            
             const apiSources = [
                 'https://api.exchangerate-api.com/v4/latest/EUR',
                 'https://open.er-api.com/v6/latest/EUR',
                 'https://api.frankfurter.app/latest'
             ];
-
+            
             const apiPromises = apiSources.map(apiUrl => 
                 this.fetchExchangeRates(apiUrl).catch(error => {
                     console.log(`⚠️ API ${apiUrl} échouée:`, error.message);
                     return null;
                 })
             );
-
+            
             const results = await Promise.allSettled(apiPromises);
-
+            
             for (const result of results) {
                 if (result.status === 'fulfilled' && result.value) {
                     this.exchangeRates = { ...staticRates, ...result.value };
@@ -334,48 +333,48 @@ class CurrencyManager {
                     break;
                 }
             }
-
+            
             if (!this.exchangeRates['USD']) {
                 this.exchangeRates['USD'] = 1.17;
                 console.warn('⚠️ USD manquant, valeur par défaut ajoutée');
             }
-
+            
             if (!this.exchangeRates['EUR']) {
                 this.exchangeRates['EUR'] = 1;
             }
-
+            
             this.isLoading = false;
-
+            
             localStorage.setItem('exchangeRates', JSON.stringify({
                 rates: this.exchangeRates,
                 timestamp: Date.now(),
                 expiresAt: Date.now() + 3600000
             }));
-
+            
             console.log('✅ Taux de change finalisés');
-
+            
             window.dispatchEvent(new CustomEvent('exchangeRates:loaded', {
                 detail: { rates: this.exchangeRates }
             }));
-
+            
             return this.exchangeRates;
-
+            
         } catch (error) {
             console.error('❌ Erreur critique chargement taux:', error);
-
+            
             this.exchangeRates = this.getStaticRates();
             this.exchangeRates['EUR'] = 1;
             this.isLoading = false;
-
+            
             return this.exchangeRates;
         }
     }
-
+    
     async fetchExchangeRates(apiUrl) {
         return new Promise(async (resolve, reject) => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
-
+            
             try {
                 console.log(`🔗 Tentative API: ${apiUrl}`);
                 const response = await fetch(apiUrl, { 
@@ -383,21 +382,21 @@ class CurrencyManager {
                     headers: { 'Accept': 'application/json' }
                 });
                 clearTimeout(timeoutId);
-
+                
                 if (!response.ok) {
                     reject(new Error(`HTTP ${response.status}`));
                     return;
                 }
-
+                
                 const data = await response.json();
-
+                
                 let rates = {};
                 if (data.rates) {
                     rates = data.rates;
                 } else if (data.conversion_rates) {
                     rates = data.conversion_rates;
                 }
-
+                
                 if (rates && rates['USD'] && rates['EUR']) {
                     resolve(rates);
                 } else {
@@ -413,9 +412,8 @@ class CurrencyManager {
             }
         });
     }
-
+    
     getStaticRates() {
-        // Taux approximatifs - Juin 2025 (ECB + estimations)
         return {
             'AED': 4.30, 'AFN': 76.5, 'ALL': 101.5, 'AMD': 425.0, 'ANG': 2.11,
             'AOA': 910.0, 'ARS': 1180.0, 'AUD': 1.65, 'AWG': 1.99, 'AZN': 1.84,
@@ -446,59 +444,59 @@ class CurrencyManager {
             'XPF': 119.0, 'YER': 293.0, 'ZAR': 21.0, 'ZMW': 31.5
         };
     }
-
+    
     convert(amount, fromCurrency = 'EUR', toCurrency = null) {
         if (!toCurrency) {
             toCurrency = this.currentCurrency;
         }
-
+        
         if (isNaN(amount) || amount === null || amount === undefined) {
             console.warn('❌ Montant invalide pour conversion:', amount);
             return 0;
         }
-
+        
         amount = parseFloat(amount);
-
+        
         if (fromCurrency === toCurrency) {
             return amount;
         }
-
+        
         if (!this.exchangeRates || Object.keys(this.exchangeRates).length === 0) {
-            console.warn('🚨 Taux vides, chargement d'urgence...');
+            console.warn('🚨 Taux vides, chargement d\'urgence...');
             this.exchangeRates = this.getStaticRates();
             this.exchangeRates['EUR'] = 1;
         }
-
+        
         let fromRate = this.exchangeRates[fromCurrency];
         let toRate = this.exchangeRates[toCurrency];
-
+        
         if (fromRate === undefined) {
             console.warn(`⚠️ Taux ${fromCurrency} manquant, utilisation 1`);
             fromRate = 1;
         }
-
+        
         if (toRate === undefined) {
             console.warn(`⚠️ Taux ${toCurrency} manquant, utilisation 1`);
             toRate = 1;
         }
-
+        
         const amountInEUR = fromCurrency === 'EUR' ? amount : amount / fromRate;
         const convertedAmount = amountInEUR * toRate;
-
+        
         return parseFloat(convertedAmount.toFixed(2));
     }
-
+    
     formatPrice(amount, currency = null, showSymbol = true) {
         if (!currency) {
             currency = this.currentCurrency;
         }
-
+        
         const convertedAmount = this.convert(amount, 'EUR', currency);
         const symbol = this.currencySymbols[currency] || currency;
         const isSymbolBefore = this.currencyPositions[currency] !== false;
-
+        
         let formattedPrice;
-
+        
         if (this.zeroDecimalCurrencies.includes(currency)) {
             formattedPrice = Math.round(convertedAmount).toLocaleString();
         } else if (currency === 'INR') {
@@ -512,20 +510,20 @@ class CurrencyManager {
                 maximumFractionDigits: 2
             });
         }
-
+        
         if (!showSymbol) {
             return formattedPrice;
         }
-
+        
         return isSymbolBefore ? `${symbol}${formattedPrice}` : `${formattedPrice} ${symbol}`;
     }
-
+    
     formatPriceInCurrency(amount, currency, showSymbol = true) {
         const symbol = this.currencySymbols[currency] || currency;
         const isSymbolBefore = this.currencyPositions[currency] !== false;
-
+        
         let formattedPrice;
-
+        
         if (this.zeroDecimalCurrencies.includes(currency)) {
             formattedPrice = Math.round(amount).toLocaleString();
         } else if (currency === 'INR') {
@@ -539,31 +537,31 @@ class CurrencyManager {
                 maximumFractionDigits: 2
             });
         }
-
+        
         if (!showSymbol) {
             return formattedPrice;
         }
-
+        
         return isSymbolBefore ? `${symbol}${formattedPrice}` : `${formattedPrice} ${symbol}`;
     }
-
+    
     setCurrency(currencyCode) {
         if (!this.supportedCurrencies.includes(currencyCode)) {
             console.warn(`❌ Devise non supportée: ${currencyCode}`);
             return false;
         }
-
+        
         const previousCurrency = this.currentCurrency;
         this.currentCurrency = currencyCode;
-
+        
         localStorage.setItem('preferredCurrency', currencyCode);
-
+        
         this.syncCurrencyToProfile(currencyCode);
-
+        
         console.log(`💱 Devise changée: ${previousCurrency} → ${currencyCode}`);
-
+        
         this.updateCurrencySelectors();
-
+        
         window.dispatchEvent(new CustomEvent('currency:changed', {
             detail: {
                 from: previousCurrency,
@@ -571,84 +569,84 @@ class CurrencyManager {
                 rates: this.exchangeRates
             }
         }));
-
+        
         return true;
     }
-
+    
     initCurrencySelectors() {
         console.log('💱 Initialisation des sélecteurs de devise');
-
+        
         document.querySelectorAll('select[id^="currencySelector"]').forEach(selector => {
             this.initSingleSelector(selector);
         });
-
+        
         const mobileSelector = document.getElementById('currencySelectorMobile');
         if (mobileSelector) {
             this.initSingleSelector(mobileSelector);
         }
-
+        
         console.log('✅ Sélecteurs de devise initialisés');
     }
-
+    
     initSingleSelector(selector) {
         if (!selector) return;
-
+        
         selector.innerHTML = '';
-
+        
         this.supportedCurrencies.forEach(currency => {
             const option = document.createElement('option');
             option.value = currency;
             const symbol = this.currencySymbols[currency] || currency;
             option.textContent = `${symbol} ${currency}`;
-
+            
             if (currency === this.currentCurrency) {
                 option.selected = true;
             }
-
+            
             selector.appendChild(option);
         });
-
+        
         selector.addEventListener('change', (e) => {
             const newCurrency = e.target.value;
             this.setCurrency(newCurrency);
         });
     }
-
+    
     updateCurrencySelectors() {
         console.log('💱 Mise à jour des sélecteurs de devise');
-
+        
         document.querySelectorAll('select[id*="currencySelector"]').forEach(selector => {
             if (selector.value !== this.currentCurrency) {
                 selector.value = this.currentCurrency;
             }
         });
     }
-
+    
     getSymbol(currency = null) {
         if (!currency) {
             currency = this.currentCurrency;
         }
         return this.currencySymbols[currency] || currency;
     }
-
+    
     isInteracCurrency() {
         return this.currentCurrency === 'CAD';
     }
-
+    
     async forceCADForInterac() {
         if (this.currentCurrency !== 'CAD') {
             console.log(`💱 Interac détecté, passage de ${this.currentCurrency} à CAD`);
-
+            
             const previousCurrency = this.currentCurrency;
             localStorage.setItem('previousCurrency', previousCurrency);
-
+            
             const success = this.setCurrency('CAD');
-
+            
             return success;
         }
         return true;
     }
-
+    
     restorePreviousCurrency() {
         const previousCurrency = localStorage.getItem('previousCurrency');
         if (previousCurrency && this.supportedCurrencies.includes(previousCurrency)) {
@@ -659,20 +657,20 @@ class CurrencyManager {
         }
         return false;
     }
-
+    
     convertVIPPrice(vipPriceData, targetCurrency = null) {
         if (!vipPriceData || vipPriceData.price === undefined) {
             console.warn('❌ Données VIP manquantes pour conversion');
             return null;
         }
-
+        
         if (!targetCurrency) {
             targetCurrency = this.currentCurrency;
         }
-
+        
         const originalPrice = parseFloat(vipPriceData.price);
         const originalCurrency = vipPriceData.currency || 'USD';
-
+        
         if (originalCurrency === targetCurrency) {
             return {
                 price: originalPrice,
@@ -683,20 +681,20 @@ class CurrencyManager {
                 converted: false
             };
         }
-
+        
         const fromRate = this.exchangeRates[originalCurrency];
         const toRate = this.exchangeRates[targetCurrency];
-
+        
         if (!fromRate || !toRate) {
             console.warn(`⚠️ Taux non disponibles pour ${originalCurrency} → ${targetCurrency}`);
-
+            
             const toEUR = this.exchangeRates[originalCurrency] || 1;
             const fromEUR = this.exchangeRates[targetCurrency] || 1;
-
+            
             if (toEUR && fromEUR) {
                 const amountInEUR = originalPrice / toEUR;
                 const finalPrice = amountInEUR * fromEUR;
-
+                
                 return {
                     price: finalPrice,
                     currency: targetCurrency,
@@ -716,10 +714,10 @@ class CurrencyManager {
                 };
             }
         }
-
+        
         const amountInEUR = originalPrice / fromRate;
         const finalPrice = amountInEUR * toRate;
-
+        
         return {
             price: finalPrice,
             currency: targetCurrency,
@@ -729,13 +727,13 @@ class CurrencyManager {
             converted: true
         };
     }
-
+    
     formatVIPPrice(vipPriceData, showOriginal = false) {
         if (!vipPriceData || vipPriceData.price === undefined) return 'N/A';
-
+        
         const converted = this.convertVIPPrice(vipPriceData);
         if (!converted) return 'N/A';
-
+        
         if (showOriginal && converted.converted) {
             const originalDisplay = this.formatPriceInCurrency(
                 vipPriceData.price, 
@@ -743,38 +741,38 @@ class CurrencyManager {
             );
             return `${converted.display} (original: ${originalDisplay})`;
         }
-
+        
         return converted.display;
     }
-
+    
     formatWithSymbol(amount, currency = null) {
         if (!currency) {
             currency = this.currentCurrency;
         }
-
+        
         const formatted = this.formatPriceInCurrency(amount, currency, false);
         const symbol = this.currencySymbols[currency] || currency;
         const isSymbolBefore = this.currencyPositions[currency] !== false;
-
+        
         return isSymbolBefore ? `${symbol}${formatted}` : `${formatted} ${symbol}`;
     }
-
+    
     roundForCurrency(amount, currency = null) {
         if (!currency) {
             currency = this.currentCurrency;
         }
-
+        
         if (this.zeroDecimalCurrencies.includes(currency)) {
             return Math.round(amount);
         }
         return Math.round(amount * 100) / 100;
     }
-
+    
     getCurrencyInfo(currency = null) {
         if (!currency) {
             currency = this.currentCurrency;
         }
-
+        
         return {
             code: currency,
             symbol: this.currencySymbols[currency] || currency,
@@ -835,15 +833,15 @@ window.formatPriceInCurrency = (amount, currency, showSymbol = true) => {
 // Fonctions de debug
 window.debugCurrency = () => {
     console.group('🚨 Debug CurrencyManager COMPLET');
-
+    
     if (!window.currencyManager) {
         console.error('❌ currencyManager non disponible');
         console.groupEnd();
         return;
     }
-
+    
     const cm = window.currencyManager;
-
+    
     console.log('📊 Informations générales:');
     console.log('Devise actuelle:', cm.currentCurrency);
     console.log('Symbole:', cm.getSymbol());
@@ -851,36 +849,32 @@ window.debugCurrency = () => {
     console.log('Est en chargement:', cm.isLoading);
     console.log('Devises supportées:', cm.supportedCurrencies.length);
     console.log('Devises sans décimales:', cm.zeroDecimalCurrencies.length);
-
-    console.log('
-💱 Taux de change clés:');
+    
+    console.log('\n💱 Taux de change clés:');
     const keyRates = ['EUR', 'USD', 'CAD', 'GBP', 'AUD', 'JPY', 'CHF'];
     keyRates.forEach(currency => {
         console.log(`${currency}:`, cm.exchangeRates[currency]);
     });
-
-    console.log('
-🧪 Test de conversion:');
+    
+    console.log('\n🧪 Test de conversion:');
     console.log('10 EUR → USD:', cm.convert(10, 'EUR', 'USD'));
     console.log('10 EUR → JPY:', cm.convert(10, 'EUR', 'JPY'));
     console.log('10 EUR → VND:', cm.convert(10, 'EUR', 'VND'));
-
-    console.log('
-💰 Test formatage (sans décimales):');
+    
+    console.log('\n💰 Test formatage (sans décimales):');
     console.log('Format 10000 JPY:', cm.formatPrice(10000, 'JPY'));
     console.log('Format 10000 VND:', cm.formatPrice(10000, 'VND'));
-
-    console.log('
-💰 Test formatage (avec décimales):');
+    
+    console.log('\n💰 Test formatage (avec décimales):');
     console.log('Format 10 EUR:', cm.formatPrice(10));
     console.log('Format 10 USD:', cm.formatPrice(10, 'USD'));
-
+    
     console.groupEnd();
 };
 
 window.debugVIPPriceIssue = function() {
     console.group('🔍 DEBUG PRIX VIP');
-
+    
     if (window.currencyManager) {
         console.log('💱 CurrencyManager:');
         console.log('- Devise courante:', window.currencyManager.currentCurrency);
@@ -888,13 +882,13 @@ window.debugVIPPriceIssue = function() {
         console.log('- Taux USD:', window.currencyManager.exchangeRates['USD']);
         console.log('- Taux EUR:', window.currencyManager.exchangeRates['EUR']);
     }
-
+    
     if (window.authManager) {
         console.log('🔐 AuthManager:');
         console.log('- Utilisateur VIP:', window.authManager.isUserVip());
         console.log('- Utilisateur:', window.authManager.user?.email);
     }
-
+    
     console.groupEnd();
 };
 
