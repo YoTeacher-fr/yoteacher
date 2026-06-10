@@ -726,9 +726,7 @@ class CurrencyManager {
 
         const s = this.currencySymbols[currency] || currency;
         item.innerHTML = `
-            <span class="currency-item-symbol" aria-hidden="true">${s}</span>
-            <span class="currency-item-code">${currency}</span>
-        `;
+            item.innerHTML = `<span class="currency-item-symbol" aria-hidden="true">${s}</span><span class="currency-item-code">${currency}</span>`;
 
         item.addEventListener('click', (e) => {
             e.stopPropagation();
