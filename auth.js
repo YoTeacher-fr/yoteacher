@@ -476,6 +476,17 @@ class AuthManager {
 
             if (data) {
                 this.user.profile = data;
+                
+                // SYNCHRONISER LA DEVISE DU PROFIL VERS CURRENCYMANAGER
+                if (data.preferred_currency && window.currencyManager) {
+                    const currency = data.preferred_currency;
+                    if (window.currencyManager.supportedCurrencies?.includes(currency)) {
+                        window.currencyManager.currentCurrency = currency;
+                        localStorage.setItem('preferredCurrency', currency);
+                        console.log('💱 Devise profil appliquée au CurrencyManager:', currency);
+                    }
+                }
+                
                 console.log('✅ Profil chargé');
             }
         } catch (error) {

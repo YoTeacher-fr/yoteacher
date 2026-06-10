@@ -43,14 +43,18 @@ class CurrencyManager {
             // Charger d'abord les taux
             await this.loadExchangeRates();
             
-            // Récupérer la devise depuis localStorage
-            const storedCurrency = localStorage.getItem('preferredCurrency');
+            // 1. PRIORITÉ : Charger depuis le profil utilisateur (Supabase)
+            const profileLoaded = await this.loadCurrencyFromProfile();
             
-            if (storedCurrency && this.supportedCurrencies.includes(storedCurrency)) {
-                this.currentCurrency = storedCurrency;
-                console.log(`💱 Devise restaurée: ${this.currentCurrency}`);
-            } else {
-                await this.detectUserCurrency();
+            // 2. FALLBACK : localStorage
+            if (!profileLoaded) {
+                const storedCurrency = localStorage.getItem('preferredCurrency');
+                if (storedCurrency && this.supportedCurrencies.includes(storedCurrency)) {
+                    this.currentCurrency = storedCurrency;
+                    console.log(`💱 Devise restaurée depuis localStorage: ${this.currentCurrency}`);
+                } else {
+                    await this.detectUserCurrency();
+                }
             }
             
             // Initialiser les sélecteurs
@@ -89,6 +93,61 @@ class CurrencyManager {
             
             return true;
         }
+    }
+    
+    // ===== SYNCHRONISATION SUPABASE =====
+    async syncCurrencyToProfile(currencyCode) {
+        if (!window.supabase || !window.authManager?.user?.id) {
+            console.log('⚠️ Supabase/auth non disponible, sync profil ignorée');
+            return false;
+        }
+        
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ preferred_currency: currencyCode })
+                .eq('id', window.authManager.user.id);
+                
+            if (error) {
+                console.warn('⚠️ Erreur sync devise profil:', error.message);
+                return false;
+            }
+            
+            console.log('✅ Devise synchronisée dans le profil Supabase:', currencyCode);
+            return true;
+        } catch (error) {
+            console.error('❌ Erreur sync devise vers profil:', error);
+            return false;
+        }
+    }
+    
+    async loadCurrencyFromProfile() {
+        if (!window.supabase || !window.authManager?.user?.id) {
+            return false;
+        }
+        
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('preferred_currency')
+                .eq('id', window.authManager.user.id)
+                .maybeSingle();
+                
+            if (error) {
+                console.warn('⚠️ Erreur chargement devise profil:', error.message);
+                return false;
+            }
+            
+            if (data?.preferred_currency && this.supportedCurrencies.includes(data.preferred_currency)) {
+                this.currentCurrency = data.preferred_currency;
+                localStorage.setItem('preferredCurrency', data.preferred_currency);
+                console.log('💱 Devise chargée depuis profil Supabase:', data.preferred_currency);
+                return true;
+            }
+        } catch (error) {
+            console.warn('⚠️ Exception chargement devise profil:', error);
+        }
+        return false;
     }
     
     async detectUserCurrency() {
@@ -441,6 +500,9 @@ class CurrencyManager {
         
         // Sauvegarder la préférence
         localStorage.setItem('preferredCurrency', currencyCode);
+        
+        // SYNCHRONISER AVEC SUPABASE
+        this.syncCurrencyToProfile(currencyCode);
         
         console.log(`💱 Devise changée: ${previousCurrency} → ${currencyCode}`);
         
