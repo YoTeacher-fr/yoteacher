@@ -2249,9 +2249,8 @@ button {
     cursor: pointer;
     font-size: 0.85rem;
     color: #333;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    white-space: nowrap;
+    word-spacing: -2px;
 }
 
 .currency-dropdown-item:hover,
