@@ -2229,43 +2229,10 @@ button {
     display: inline-block;
 }
 
-/* ===== SELECT NATIF (design inchangé) ===== */
+/* ===== SELECT NATIF : AUCUN STYLE MODIFICATIF ===== */
+/* On ne touche PAS au select natif - il garde exactement son apparence d'origine */
 .currency-native-select {
-    /* Hérite du style existant du select natif */
-    padding: 3px 6px;
-    font-size: 0.7rem;
-    min-width: 45px;
-    max-width: 50px;
-    background: white;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 12px;
-    color: #333;
-    height: 26px;
-    font-weight: 600;
-    text-align: center;
-    text-align-last: center;
-    cursor: pointer;
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    font-family: inherit;
-}
-
-.currency-native-select:focus {
-    border-color: #1e88e5;
-    box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.15);
-}
-
-/* Desktop : style natif plus grand */
-@media (min-width: 769px) {
-    .currency-native-select {
-        padding: 8px 14px;
-        font-size: 0.9rem;
-        min-width: 80px;
-        max-width: none;
-        height: auto;
-    }
+    /* AUCUNE PROPRIÉTÉ ici - le select reste 100% natif */
 }
 
 /* ===== PANEL CUSTOM (affiché au clic) ===== */
@@ -2341,18 +2308,6 @@ button {
 
 /* Mobile */
 @media (max-width: 768px) {
-    .currency-dropdown-wrapper {
-        display: inline-flex;
-    }
-
-    .currency-native-select {
-        padding: 3px 6px;
-        font-size: 0.7rem;
-        min-width: 45px;
-        max-width: 50px;
-        height: 26px;
-    }
-
     .currency-dropdown-panel {
         max-height: 280px;
         min-width: 150px;
@@ -2363,7 +2318,7 @@ button {
     .currency-dropdown-item {
         padding: 10px 14px;
         font-size: 0.85rem;
-        min-height: 44px; /* WCAG touch target */
+        min-height: 44px;
     }
 
     .currency-dropdown-separator {
