@@ -2223,3 +2223,150 @@ button {
         margin-left: auto;
     }
 }
+
+/* ===== CUSTOM CURRENCY DROPDOWN ===== */
+
+/* Native select: visually hidden but in a11y tree and forms */
+select.currency-native-select {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Trigger: pixel-perfect match of original desktop select */
+.currency-selector .currency-dropdown-trigger,
+.currency-selector-mobile .currency-dropdown-trigger {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 20px;
+    padding: 2px 4px;
+    color: #333;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    width: auto;
+    text-align: center;
+    text-align-last: center;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+    font-family: inherit;
+    line-height: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+/* Transparent header state (hero section, not scrolled) */
+.main-header:not(.scrolled) .currency-selector .currency-dropdown-trigger,
+.main-header:not(.scrolled) .currency-selector-mobile .currency-dropdown-trigger {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* Fixed-position dropdown panel */
+.currency-dropdown-panel {
+    position: fixed;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    max-height: 320px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    min-width: 150px;
+    padding: 6px 0;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.currency-dropdown-panel.open {
+    display: block;
+}
+
+.currency-dropdown-item {
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #333;
+    transition: background-color 0.15s ease;
+    outline: none;
+    user-select: none;
+}
+
+.currency-dropdown-item:hover,
+.currency-dropdown-item:focus {
+    background-color: rgba(30, 136, 229, 0.08);
+    color: var(--primary-blue);
+}
+
+.currency-dropdown-item.active {
+    background-color: rgba(30, 136, 229, 0.12);
+    color: var(--primary-blue);
+    font-weight: 600;
+}
+
+.currency-dropdown-separator {
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 4px 10px;
+    pointer-events: none;
+}
+
+/* Clean WebKit scrollbar */
+.currency-dropdown-panel::-webkit-scrollbar {
+    width: 6px;
+}
+.currency-dropdown-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+.currency-dropdown-panel::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+/* Mobile overrides */
+@media (max-width: 768px) {
+    .currency-selector-mobile .currency-dropdown-trigger {
+        padding: 1px 1px !important;
+        font-size: 0.65rem !important;
+        min-width: 50px !important;
+        max-width: 60px !important;
+        background: white !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 10px !important;
+        color: #333 !important;
+        height: 22px !important;
+        font-weight: 600;
+        text-align: center;
+        text-align-last: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1;
+    }
+
+    .currency-selector .currency-dropdown-trigger {
+        display: none !important;
+    }
+}
+
+@media (min-width: 769px) {
+    .currency-selector-mobile .currency-dropdown-trigger {
+        display: none !important;
+    }
+}
