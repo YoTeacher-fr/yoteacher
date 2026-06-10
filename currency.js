@@ -610,20 +610,47 @@ class CurrencyManager {
         if (selector.tagName !== 'SELECT') return;
 
         const id = selector.id || `currencyDropdown-${++this.dropdownIdCounter}`;
+        
+        // Créer le wrapper qui contient le select natif + le panel custom
         const wrapper = document.createElement('div');
         wrapper.className = 'currency-dropdown-wrapper';
         wrapper.id = id;
 
-        // Bouton trigger avec ARIA complet
-        const trigger = document.createElement('button');
-        trigger.className = 'currency-dropdown-trigger';
-        trigger.type = 'button';
-        trigger.setAttribute('aria-haspopup', 'listbox');
-        trigger.setAttribute('aria-expanded', 'false');
-        trigger.setAttribute('aria-controls', `${id}-panel`);
-        trigger.innerHTML = this._buildTriggerHTML(this.currentCurrency);
-
-        // Panneau
+        // ===== SELECT NATIF (design inchangé) =====
+        // On garde le select natif pour l'apparence fermée
+        const nativeSelect = document.createElement('select');
+        nativeSelect.className = 'currency-native-select';
+        nativeSelect.setAttribute('aria-label', 'Sélectionner une devise');
+        
+        // Générer les options dans l'ordre : épinglées → séparateur → autres
+        // (le séparateur est simulé par une option disabled)
+        this.pinnedCurrencies.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            const s = this.currencySymbols[c] || c;
+            opt.textContent = `${s} ${c}`;
+            if (c === this.currentCurrency) opt.selected = true;
+            nativeSelect.appendChild(opt);
+        });
+        
+        // Option séparateur (disabled, non sélectionnable)
+        const sepOpt = document.createElement('option');
+        sepOpt.disabled = true;
+        sepOpt.textContent = '──────────';
+        nativeSelect.appendChild(sepOpt);
+        
+        this.supportedCurrencies.forEach(c => {
+            if (!this.pinnedCurrencies.includes(c)) {
+                const opt = document.createElement('option');
+                opt.value = c;
+                const s = this.currencySymbols[c] || c;
+                opt.textContent = `${s} ${c}`;
+                if (c === this.currentCurrency) opt.selected = true;
+                nativeSelect.appendChild(opt);
+            }
+        });
+        
+        // ===== PANEL CUSTOM (affiché au clic) =====
         const panel = document.createElement('div');
         panel.id = `${id}-panel`;
         panel.className = 'currency-dropdown-panel';
@@ -651,14 +678,30 @@ class CurrencyManager {
             }
         });
 
-        wrapper.appendChild(trigger);
+        wrapper.appendChild(nativeSelect);
         wrapper.appendChild(panel);
         selector.replaceWith(wrapper);
 
-        trigger.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        // Au clic sur le select natif, empêcher l'ouverture native et ouvrir le custom
+        nativeSelect.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // Empêche l'ouverture du select natif
             this._toggleDropdown(wrapper);
+        });
+        
+        // Fallback clavier
+        nativeSelect.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                this._toggleDropdown(wrapper);
+            }
+        });
+        
+        // Changement via le select natif (fallback si l'utilisateur y arrive quand même)
+        nativeSelect.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val && this.supportedCurrencies.includes(val)) {
+                this.setCurrency(val);
+            }
         });
     }
     
@@ -698,7 +741,6 @@ class CurrencyManager {
 
     _toggleDropdown(wrapper) {
         const panel = wrapper.querySelector('.currency-dropdown-panel');
-        const trigger = wrapper.querySelector('.currency-dropdown-trigger');
         const isOpen = panel.classList.contains('open');
 
         if (isOpen) {
@@ -713,8 +755,6 @@ class CurrencyManager {
 
         // Ouverture
         panel.classList.add('open');
-        trigger.setAttribute('aria-expanded', 'true');
-        trigger.classList.add('open');
         this.activeDropdown = wrapper;
 
         // Gestion du focus : sélectionné ou premier
@@ -739,7 +779,8 @@ class CurrencyManager {
 
     _positionDropdown(wrapper) {
         const panel = wrapper.querySelector('.currency-dropdown-panel');
-        const rect = wrapper.getBoundingClientRect();
+        const nativeSelect = wrapper.querySelector('.currency-native-select');
+        const rect = nativeSelect.getBoundingClientRect();
         const vW = window.innerWidth;
         const vH = window.innerHeight;
 
@@ -786,19 +827,17 @@ class CurrencyManager {
 
         const wrapper = this.activeDropdown;
         const panel = wrapper.querySelector('.currency-dropdown-panel');
-        const trigger = wrapper.querySelector('.currency-dropdown-trigger');
+        const nativeSelect = wrapper.querySelector('.currency-native-select');
 
         panel.classList.remove('open');
-        trigger.setAttribute('aria-expanded', 'false');
-        trigger.classList.remove('open');
 
         // Réinitialiser tabindex sur tous les items
         panel.querySelectorAll('.currency-dropdown-item').forEach(item => {
             item.setAttribute('tabindex', '-1');
         });
 
-        // Retourner le focus sur le trigger
-        trigger.focus();
+        // Retourner le focus sur le select natif
+        nativeSelect.focus();
 
         this.activeDropdown = null;
         this._cleanupListeners();
@@ -876,9 +915,13 @@ class CurrencyManager {
     }
 
     _refreshDropdown(wrapper) {
-        const trigger = wrapper.querySelector('.currency-dropdown-trigger');
-        if (trigger) trigger.innerHTML = this._buildTriggerHTML(this.currentCurrency);
+        const nativeSelect = wrapper.querySelector('.currency-native-select');
+        if (!nativeSelect) return;
 
+        // Mettre à jour la valeur du select natif
+        nativeSelect.value = this.currentCurrency;
+
+        // Mettre à jour les items du panel custom
         wrapper.querySelectorAll('.currency-dropdown-item').forEach(item => {
             const sel = item.dataset.currency === this.currentCurrency;
             item.classList.toggle('selected', sel);

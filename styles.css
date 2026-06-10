@@ -2229,41 +2229,46 @@ button {
     display: inline-block;
 }
 
-.currency-dropdown-trigger {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
+/* ===== SELECT NATIF (design inchangé) ===== */
+.currency-native-select {
+    /* Hérite du style existant du select natif */
+    padding: 3px 6px;
+    font-size: 0.7rem;
+    min-width: 45px;
+    max-width: 50px;
     background: white;
-    border: 1px solid #e0e0e0;
+    border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 12px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
     color: #333;
-    font-family: inherit;
+    height: 26px;
+    font-weight: 600;
+    text-align: center;
+    text-align-last: center;
+    cursor: pointer;
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    font-family: inherit;
 }
 
-.currency-dropdown-trigger:hover,
-.currency-dropdown-trigger:focus-visible {
+.currency-native-select:focus {
     border-color: #1e88e5;
-    box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.15);
+    box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.15);
 }
 
-.currency-dropdown-trigger.open .currency-dropdown-arrow {
-    transform: rotate(180deg);
+/* Desktop : style natif plus grand */
+@media (min-width: 769px) {
+    .currency-native-select {
+        padding: 8px 14px;
+        font-size: 0.9rem;
+        min-width: 80px;
+        max-width: none;
+        height: auto;
+    }
 }
 
-.currency-dropdown-arrow {
-    display: inline-block;
-    font-size: 0.65rem;
-    margin-left: 2px;
-    opacity: 0.6;
-    transition: transform 0.2s;
-}
-
+/* ===== PANEL CUSTOM (affiché au clic) ===== */
 .currency-dropdown-panel {
     position: fixed;
     background: white;
@@ -2340,15 +2345,12 @@ button {
         display: inline-flex;
     }
 
-    .currency-dropdown-trigger {
-        padding: 3px 8px;
+    .currency-native-select {
+        padding: 3px 6px;
         font-size: 0.7rem;
+        min-width: 45px;
+        max-width: 50px;
         height: 26px;
-        gap: 4px;
-    }
-
-    .currency-dropdown-trigger .currency-dropdown-symbol {
-        display: none;
     }
 
     .currency-dropdown-panel {
@@ -2376,9 +2378,7 @@ button {
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
     .currency-dropdown-panel,
-    .currency-dropdown-arrow,
-    .currency-dropdown-item,
-    .currency-dropdown-trigger {
+    .currency-dropdown-item {
         transition: none !important;
     }
 }
