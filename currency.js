@@ -9,9 +9,6 @@ class CurrencyManager {
         this.exchangeRates = {};
         this.isLoading = false;
         
-        // Dropdown global listeners flag
-        this._dropdownGlobalsReady = false;
-        
         // ===== 134 DEVISES SUPPORTÉES =====
         this.supportedCurrencies = [
             'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD',
@@ -122,7 +119,6 @@ class CurrencyManager {
                 }
             }
             
-            this._setupDropdownGlobals();
             this.initCurrencySelectors();
             
             console.log('✅ CurrencyManager prêt, émission d\'événement');
@@ -579,250 +575,53 @@ class CurrencyManager {
     
     initCurrencySelectors() {
         console.log('💱 Initialisation des sélecteurs de devise');
-
+        
         document.querySelectorAll('select[id^="currencySelector"]').forEach(selector => {
             this.initSingleSelector(selector);
         });
-
+        
         const mobileSelector = document.getElementById('currencySelectorMobile');
         if (mobileSelector) {
             this.initSingleSelector(mobileSelector);
         }
-
+        
         console.log('✅ Sélecteurs de devise initialisés');
     }
-
-    /**
-     * Initialize a single currency selector with a custom fixed dropdown.
-     * The closed state looks identical to the native select.
-     */
+    
     initSingleSelector(selector) {
-        if (!selector || selector.dataset.customReady === 'true') return;
-
-        const parent = selector.parentNode;
-        const wrapper = document.createElement('div');
-        wrapper.className = 'currency-custom-dropdown';
-
-        // Keep native select accessible to AT and forms, but visually hidden
-        selector.classList.add('currency-native-select');
-
-        // Trigger: closed state must match the original select appearance
-        const trigger = document.createElement('button');
-        trigger.type = 'button';
-        trigger.className = 'currency-dropdown-trigger';
-        trigger.setAttribute('aria-haspopup', 'listbox');
-        trigger.setAttribute('aria-expanded', 'false');
-        trigger.setAttribute('aria-label', 'Changer la devise');
-
-        const sym = this.currencySymbols[this.currentCurrency] || this.currentCurrency;
-        trigger.textContent = `${sym} ${this.currentCurrency}`;
-
-        // Fixed-position panel
-        const panel = document.createElement('div');
-        panel.className = 'currency-dropdown-panel';
-        panel.setAttribute('role', 'listbox');
-        panel.setAttribute('aria-label', 'Devises disponibles');
-
-        // Build ordered list: priority first, then separator, then others
-        const priority = ['EUR', 'CAD', 'USD', 'GBP'];
-        const others = this.supportedCurrencies.filter(c => !priority.includes(c));
-
-        const buildItem = (code) => {
-            const item = document.createElement('div');
-            item.className = 'currency-dropdown-item';
-            item.setAttribute('role', 'option');
-            item.setAttribute('tabindex', '-1');
-            item.setAttribute('data-value', code);
-            item.setAttribute('aria-selected', code === this.currentCurrency ? 'true' : 'false');
-
-            const uid = `cur-${code}-${Math.random().toString(36).slice(2, 8)}`;
-            item.setAttribute('id', uid);
-
-            const symbol = this.currencySymbols[code] || code;
-            item.textContent = `${symbol} ${code}`;
-
-            if (code === this.currentCurrency) {
-                item.classList.add('active');
-                trigger.setAttribute('aria-activedescendant', uid);
+        if (!selector) return;
+        
+        selector.innerHTML = '';
+        
+        this.supportedCurrencies.forEach(currency => {
+            const option = document.createElement('option');
+            option.value = currency;
+            const symbol = this.currencySymbols[currency] || currency;
+            option.textContent = `${symbol} ${currency}`;
+            
+            if (currency === this.currentCurrency) {
+                option.selected = true;
             }
-
-            item.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.setCurrency(code);
-                this._closeAllDropdowns();
-            });
-
-            return item;
-        };
-
-        priority.forEach(c => panel.appendChild(buildItem(c)));
-
-        const divider = document.createElement('div');
-        divider.className = 'currency-dropdown-separator';
-        divider.setAttribute('role', 'separator');
-        divider.setAttribute('aria-hidden', 'true');
-        panel.appendChild(divider);
-
-        others.forEach(c => panel.appendChild(buildItem(c)));
-
-        wrapper.appendChild(trigger);
-        wrapper.appendChild(panel);
-        parent.insertBefore(wrapper, selector);
-        wrapper.appendChild(selector);
-        selector.dataset.customReady = 'true';
-
-        // Open / close toggle
-        trigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isOpen = panel.classList.contains('open');
-            this._closeAllDropdowns();
-            if (!isOpen) {
-                this._positionDropdown(trigger, panel);
-                panel.classList.add('open');
-                trigger.setAttribute('aria-expanded', 'true');
-                const active = panel.querySelector('.active') || panel.querySelector('.currency-dropdown-item');
-                if (active) active.focus();
-            }
+            
+            selector.appendChild(option);
         });
-
-        // Keyboard navigation
-        trigger.addEventListener('keydown', (e) => this._handleDropdownKeys(e, panel, trigger));
-        panel.addEventListener('keydown', (e) => this._handleDropdownKeys(e, panel, trigger));
-    }
-
-    /** Position dropdown with viewport boundary detection so it never opens off-screen. */
-    _positionDropdown(trigger, panel) {
-        const rect = trigger.getBoundingClientRect();
-        const estHeight = Math.min(panel.scrollHeight || 300, 320);
-        const estWidth = Math.max(rect.width, 150);
-
-        let top = rect.bottom + 6;
-        let left = rect.left;
-
-        const vh = window.innerHeight;
-        const vw = window.innerWidth;
-
-        // Flip upward if overflowing bottom
-        if (top + estHeight > vh - 12) {
-            top = rect.top - estHeight - 6;
-        }
-        // Clamp right edge
-        if (left + estWidth > vw - 12) {
-            left = vw - estWidth - 12;
-        }
-        // Clamp left / top
-        if (left < 12) left = 12;
-        if (top < 12) top = 12;
-
-        panel.style.top = `${top}px`;
-        panel.style.left = `${left}px`;
-        panel.style.minWidth = `${rect.width}px`;
-    }
-
-    /** Close every open custom dropdown. */
-    _closeAllDropdowns() {
-        document.querySelectorAll('.currency-dropdown-panel.open').forEach(p => {
-            p.classList.remove('open');
-            const t = p.parentNode.querySelector('.currency-dropdown-trigger');
-            if (t) {
-                t.setAttribute('aria-expanded', 'false');
-                t.removeAttribute('aria-activedescendant');
-            }
+        
+        selector.addEventListener('change', (e) => {
+            const newCurrency = e.target.value;
+            this.setCurrency(newCurrency);
         });
     }
-
-    /** Full keyboard support: arrows, home/end, enter, space, escape, tab. */
-    _handleDropdownKeys(e, panel, trigger) {
-        const items = Array.from(panel.querySelectorAll('.currency-dropdown-item'));
-        if (!items.length) return;
-
-        let idx = items.findIndex(i => i === document.activeElement);
-        if (idx === -1) idx = items.findIndex(i => i.classList.contains('active'));
-        if (idx === -1) idx = 0;
-
-        switch (e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                idx = (idx + 1) % items.length;
-                items[idx].focus();
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                idx = (idx - 1 + items.length) % items.length;
-                items[idx].focus();
-                break;
-            case 'Home':
-                e.preventDefault();
-                items[0].focus();
-                break;
-            case 'End':
-                e.preventDefault();
-                items[items.length - 1].focus();
-                break;
-            case 'Enter':
-            case ' ':
-                e.preventDefault();
-                if (document.activeElement?.classList.contains('currency-dropdown-item')) {
-                    document.activeElement.click();
-                }
-                break;
-            case 'Escape':
-                e.preventDefault();
-                this._closeAllDropdowns();
-                trigger.focus();
-                break;
-            case 'Tab':
-                this._closeAllDropdowns();
-                break;
-        }
-    }
-
-    /**
-     * Override: update native selects AND custom dropdown triggers
-     * whenever the currency changes (programmatically or via click).
-     */
+    
     updateCurrencySelectors() {
         console.log('💱 Mise à jour des sélecteurs de devise');
-
-        // Native selects (preserve original behavior)
-        document.querySelectorAll('select[id*="currencySelector"]').forEach(sel => {
-            if (sel.value !== this.currentCurrency) sel.value = this.currentCurrency;
-        });
-
-        // Update custom trigger text
-        document.querySelectorAll('.currency-dropdown-trigger').forEach(t => {
-            const sym = this.currencySymbols[this.currentCurrency] || this.currentCurrency;
-            t.textContent = `${sym} ${this.currentCurrency}`;
-        });
-
-        // Update active highlight inside panels
-        document.querySelectorAll('.currency-dropdown-item').forEach(item => {
-            const isActive = item.dataset.value === this.currentCurrency;
-            item.classList.toggle('active', isActive);
-            item.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        });
-    }
-
-    /** One-time global listeners: outside click, resize, scroll. */
-    _setupDropdownGlobals() {
-        if (this._dropdownGlobalsReady) return;
-        this._dropdownGlobalsReady = true;
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.currency-custom-dropdown')) {
-                this._closeAllDropdowns();
+        
+        document.querySelectorAll('select[id*="currencySelector"]').forEach(selector => {
+            if (selector.value !== this.currentCurrency) {
+                selector.value = this.currentCurrency;
             }
         });
-
-        let resizeTimer;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => this._closeAllDropdowns(), 80);
-        });
-
-        window.addEventListener('scroll', () => this._closeAllDropdowns(), { passive: true });
     }
-
+    
     getSymbol(currency = null) {
         if (!currency) {
             currency = this.currentCurrency;
