@@ -300,6 +300,14 @@ document.addEventListener('DOMContentLoaded', () => {
             dashboardLoaded = true;
             isLoadingDashboard = false;
             console.log('✅ Dashboard chargé avec succès');
+
+            // Chargement de l'historique en arrière-plan (ne bloque pas l'affichage)
+            const userForHistory = window.authManager?.getCurrentUser();
+            if (userForHistory && userForHistory.id) {
+                loadLessonHistory(userForHistory.id).catch(err => {
+                    console.warn('⚠️ Erreur chargement historique (arrière-plan):', err.message);
+                });
+            }
         } catch (error) {
             clearTimeout(safetyTimer);
             console.error('Erreur chargement dashboard:', error);
@@ -346,14 +354,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (window.supabase && typeof window.supabase.from === 'function') {
             try {
-                // Chargements en parallèle avec timeout global de 10 secondes
+                // Chargements en parallèle : forfaits + cours à venir (timeout 8s)
                 await withTimeout(
                     Promise.allSettled([
                         loadUserPackages(user.id),
                         loadUpcomingLessons(user.id),
-                        loadLessonHistory(user.id),
                     ]),
-                    10000,
+                    8000,
                     'chargement données dashboard'
                 );
             } catch (error) {
