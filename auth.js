@@ -436,7 +436,9 @@ class AuthManager {
     async signOut() {
         try {
             if (this.supabaseReady && window.supabase) {
-                await supabase.auth.signOut();
+                supabase.auth.signOut().catch(err => {
+                    console.warn('⚠️ signOut serveur silencieux:', err.message);
+                });
             }
             
             this.user = null;
