@@ -354,18 +354,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (window.supabase && typeof window.supabase.from === 'function') {
             try {
-                // Chargements en parallèle : forfaits + cours à venir (timeout 8s)
-                await withTimeout(
-                    Promise.allSettled([
-                        loadUserPackages(user.id),
-                        loadUpcomingLessons(user.id),
-                    ]),
-                    8000,
-                    'chargement données dashboard'
-                );
+                // Chargements en parallèle : forfaits + cours à venir (pas de timeout global)
+                await Promise.allSettled([
+                    loadUserPackages(user.id),
+                    loadUpcomingLessons(user.id),
+                ]);
             } catch (error) {
-                // Timeout global atteint : afficher le dashboard quand même avec ce qui est chargé
-                console.warn('⚠️ Timeout chargement données, affichage partiel:', error.message);
+                // Erreur lors du chargement : afficher le dashboard quand même
+                console.warn('⚠️ Erreur chargement données:', error.message);
                 const nextLessonContent = document.getElementById('nextLessonContent');
                 if (nextLessonContent && !nextLessonContent.innerHTML.trim()) {
                     nextLessonContent.innerHTML = `<div class="no-upcoming"><i class="fas fa-wifi"></i><p>Impossible de charger les données. Vérifiez votre connexion et <button onclick="location.reload()" style="background:none;border:none;color:#3c84f6;cursor:pointer;text-decoration:underline">rafraîchissez</button>.</p></div>`;
@@ -471,16 +467,25 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function loadUserPackages(userId) {
         const container = document.getElementById('packagesContainer');
+        const t0 = performance.now();
         if (!window.packagesManager) {
             showPackageCard('conversation', { 30: 0, 45: 0, 60: 0, expiry: null });
             return;
         }
         try {
-            if (window.supabaseInitialized) await window.supabaseInitialized;
+            if (window.supabaseInitialized) {
+                await withTimeout(window.supabaseInitialized, 3000, 'supabaseInitialized packages');
+            }
             if (!window.supabase || typeof window.supabase.from !== 'function') {
                 throw new Error('Client Supabase non initialisé');
             }
-            const packages = await window.packagesManager.getUserActivePackages(userId);
+            const t1 = performance.now();
+            const packages = await withTimeout(
+                window.packagesManager.getUserActivePackages(userId),
+                5000,
+                'getUserActivePackages'
+            );
+            console.log(`⏱️ loadUserPackages: supabase=${(t1-t0).toFixed(0)}ms, packages=${(performance.now()-t1).toFixed(0)}ms, total=${(performance.now()-t0).toFixed(0)}ms`);
             const packagesByType = {
                 conversation: { 30: 0, 45: 0, 60: 0, expiry: null },
                 curriculum: { 30: 0, 45: 0, 60: 0, expiry: null },
@@ -573,16 +578,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function loadUpcomingLessons(userId) {
+        const t0 = performance.now();
         try {
-            if (window.supabaseInitialized) await window.supabaseInitialized;
+            if (window.supabaseInitialized) {
+                await withTimeout(window.supabaseInitialized, 3000, 'supabaseInitialized upcoming');
+            }
             if (!window.supabase || typeof window.supabase.from !== 'function') {
                 throw new Error('Client Supabase non initialisé');
             }
-            const { data: bookings, error } = await supabase
-                .from('upcoming_bookings')
-                .select('*')
-                .eq('user_id', userId)
-                .order('start_time', { ascending: true });
+            const t1 = performance.now();
+            const { data: bookings, error } = await withTimeout(
+                supabase
+                    .from('upcoming_bookings')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('start_time', { ascending: true }),
+                5000,
+                'upcoming_bookings query'
+            );
+            console.log(`⏱️ loadUpcomingLessons: supabase=${(t1-t0).toFixed(0)}ms, query=${(performance.now()-t1).toFixed(0)}ms, total=${(performance.now()-t0).toFixed(0)}ms`);
             if (error) throw error;
             if (bookings && bookings.length > 0) {
                 console.log('📊 Premier cours récupéré:', {
