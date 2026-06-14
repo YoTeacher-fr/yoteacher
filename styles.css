@@ -2339,7 +2339,7 @@ select.currency-native-select {
     border-radius: 3px;
 }
 
-/* Mobile overrides */
+/* Mobile: .currency-selector-mobile (index.css pages) */
 @media (max-width: 768px) {
     .currency-selector-mobile .currency-dropdown-trigger {
         padding: 1px 1px !important;
@@ -2360,8 +2360,25 @@ select.currency-native-select {
         line-height: 1;
     }
 
+    /* Mobile: .currency-selector (styles.css pages like booking, dashboard) */
     .currency-selector .currency-dropdown-trigger {
-        display: none !important;
+        padding: 3px 6px !important;
+        font-size: 0.7rem !important;
+        min-width: 45px !important;
+        max-width: 50px !important;
+        background: white !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 12px !important;
+        color: #333 !important;
+        display: inline-block !important;
+        height: 26px !important;
+        font-weight: 600;
+        text-align: center;
+        text-align-last: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2;
     }
 }
 
