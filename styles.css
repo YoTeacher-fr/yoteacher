@@ -2358,6 +2358,9 @@ select.currency-native-select {
         overflow: hidden;
         text-overflow: ellipsis;
         line-height: 1;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     /* Mobile: .currency-selector (styles.css pages like booking, dashboard) */
@@ -2370,7 +2373,9 @@ select.currency-native-select {
         border: 1px solid rgba(0, 0, 0, 0.15) !important;
         border-radius: 12px !important;
         color: #333 !important;
-        display: inline-block !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         height: 26px !important;
         font-weight: 600;
         text-align: center;
