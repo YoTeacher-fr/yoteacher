@@ -316,8 +316,7 @@ class CurrencyManager {
             
             const apiSources = [
                 'https://api.exchangerate-api.com/v4/latest/EUR',
-                'https://open.er-api.com/v6/latest/EUR',
-                'https://api.frankfurter.app/latest'
+                'https://open.er-api.com/v6/latest/EUR'
             ];
             
             const apiPromises = apiSources.map(apiUrl => 
