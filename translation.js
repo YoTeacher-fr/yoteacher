@@ -232,7 +232,7 @@ class TranslationManager {
                 'signup.title': 'Inscription - YoTeacher',
                 'signup.subtitle': 'Créez votre compte gratuitement',
                 'signup.full_name': 'Nom complet',
-                'signup.full_name_placeholder': 'Votre nom et prénom',
+                'signup.full_name_placeholder': 'Votre prénom et nom',
                 'signup.password_hint': 'Minimum 6 caractères',
                 'signup.password_placeholder': 'Au moins 6 caractères',
                 'signup.confirm_password': 'Confirmer le mot de passe',
