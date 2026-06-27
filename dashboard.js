@@ -237,29 +237,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updateWelcomeMessage(user) {
-        const welcomeDiv = document.getElementById('welcomeMessage');
-        if (!welcomeDiv) return;
-        const userName = user.profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0];
-        const now = new Date();
-        const hour = now.getHours();
-        let greeting;
-        if (window.translationManager?.getCurrentLanguage() === 'en') {
-            greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-        } else {
-            greeting = hour < 18 ? 'Bonjour' : 'Bonsoir';
-        }
-        let welcomeHTML = `
-            <div class="welcome-message">
-                <h1>${greeting} ${userName} !`;
-        if (user.profile?.is_vip) {
-            const vipText = window.translationManager?.getTranslation('dashboard.vip_member') || 'Membre VIP';
-            welcomeHTML += ` <span class="vip-badge"><i class="fas fa-crown"></i><span>${vipText}</span></span>`;
-        } else {
-            welcomeHTML += ' 👋';
-        }
-        welcomeHTML += `</h1></div>`;
-        welcomeDiv.innerHTML = welcomeHTML;
+    const welcomeDiv = document.getElementById('welcomeMessage');
+    if (!welcomeDiv) return;
+
+    // Récupération du nom complet ou de l'email
+    let userName = user.profile?.full_name || user.user_metadata?.full_name || user.email.split('@')[0];
+    
+    // Extraction du prénom (premier mot)
+    if (userName && userName.includes(' ')) {
+        userName = userName.split(' ')[0];
     }
+
+    const now = new Date();
+    const hour = now.getHours();
+    let greeting;
+    if (window.translationManager?.getCurrentLanguage() === 'en') {
+        greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    } else {
+        greeting = hour < 18 ? 'Bonjour' : 'Bonsoir';
+    }
+
+    let welcomeHTML = `
+        <div class="welcome-message">
+            <h1>${greeting} ${userName} !`;
+    if (user.profile?.is_vip) {
+        const vipText = window.translationManager?.getTranslation('dashboard.vip_member') || 'Membre VIP';
+        welcomeHTML += ` <span class="vip-badge"><i class="fas fa-crown"></i><span>${vipText}</span></span>`;
+    } else {
+        welcomeHTML += ' 👋';
+    }
+    welcomeHTML += `</h1></div>`;
+    welcomeDiv.innerHTML = welcomeHTML;
+}
     
     async function loadDashboard() {
         if (isLoadingDashboard || dashboardLoaded) {
