@@ -1369,7 +1369,7 @@ class TranslationManager {
                 'signup.title': 'Sign Up - YoTeacher',
                 'signup.subtitle': 'Create your account for free',
                 'signup.full_name': 'Full name',
-                'signup.full_name_placeholder': 'Your full name',
+                'signup.full_name_placeholder': 'Your first and last name',
                 'signup.password_hint': 'Minimum 6 characters',
                 'signup.password_placeholder': 'At least 6 characters',
                 'signup.confirm_password': 'Confirm password',
